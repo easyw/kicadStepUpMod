@@ -392,7 +392,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.1.4.7"  # added single instance and utf8 support TESTING qt5
+___ver___ = "7.1.4.8"  # added single instance and utf8 support TESTING qt5
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -6733,11 +6733,20 @@ def onLoadBoard(file_name=None):
                 #add_constraints(s_name)
                 FreeCAD.ActiveDocument.getObject(s_name).Placement = FreeCAD.Placement(FreeCAD.Vector(xp,yp,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
                 #say_time()            
+            elif (base_orig==1):
+                s_name=shift_sketch("PCB_Sketch_draft", [-center_x,center_y],newname)
+                #stop
+                #add_constraints(s_name)
+                FreeCAD.ActiveDocument.getObject(s_name).Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
+                #say_time()            
             else:
                 s_name=shift_sketch("PCB_Sketch_draft", [-center_x,center_y],newname)
                 #stop
                 #add_constraints(s_name)
+                #sayerr('usebasepoint')
+                #sayerr('usedefault')
                 FreeCAD.ActiveDocument.getObject(s_name).Placement = FreeCAD.Placement(FreeCAD.Vector(center_x,center_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
+                #stop
                 #say_time()
             FreeCAD.ActiveDocument.removeObject("PCB_Sketch_draft")
             FreeCADGui.SendMsgToActiveView("ViewFit")

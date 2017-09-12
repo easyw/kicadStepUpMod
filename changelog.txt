@@ -7,7 +7,7 @@ maintained in the same accuracy and aspect in STEP AP214 format. +
 The *kicad StepUp* maintains the usual way to work with kicad, but improves the process
 to work in a collaborative way with mechanical designers bringing near ECAD and MCAD environments. +
 With kicad StepUp you’ll get an exact representation of your physical board in Native 3D PCB
-v7.1.4.6 September/2017
+v7.1.4.8 September/2017
 
 please refer to
 kicadStepUp-starter-Guide.pdf
@@ -246,4 +246,5 @@ Changelog
 - removing sketches in FC0.16 and when exporting automatically
 - added use grid_origin as reference point for placing the board and for sketch!!!
   this will allow to copy sketches between boards releases to keep constraints
+- fixed Sketch position for default use BaseOrigin @ 0,0,0 
 - most clean code and comments done
