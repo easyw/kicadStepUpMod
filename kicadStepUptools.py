@@ -286,6 +286,7 @@
 # removing sketches in FC0.16 and when exporting automatically
 # added use grid_origin as reference point for placing the board and for sketch!!!
    # this will allow to copy sketches between boards releases to keep constraints
+# managed write permissions error message
 # most clean code and comments done
 
 ##todo
@@ -3215,9 +3216,10 @@ default_ksu_config_ini=u"""[info]
 ;; only TWO prefixs are allowed; MUST finish with slash or backslash
 ;prefix3D_1 = C:\\Program Files\\KiCad\share\\kicad\\modules\\packages3d\\
 ;prefix3D_1 = kicad/share/modules/packages3d/
+;prefix3D_1 = /Library/Application Support/kicad/modules/packages3d/
 ;prefix3D_2 = C:\\extra_packages3d\\
-prefix3D_1 = C:\\Cad\\Progetti_K\\a_mod\\a_3Dpkg\\
-prefix3D_2 = 
+prefix3D_1 = C:\\Program Files\\KiCad\share\\kicad\\modules\\packages3d\\
+prefix3D_2 = kicad/share/modules/packages3d/
 [PcbColor]
 ;; pcb color r,g,b e.g. 0.0,0.5,0.0,light green
 ;pcb_color=0.3333,0.3333,0.5,blue
@@ -3256,7 +3258,7 @@ bbox = off default
 placement = useBaseOrigin #place board @ 0,0,0
 [Virtual]
 ;; virtual modules to be or not added to board
-virt = noVirtual
+virt = addVirtual
 ;virt = addVirtual
 ;virt = noVirtual
 [ExportFuse]
@@ -3287,7 +3289,7 @@ mat = enablematerials
 ;mat = enablematerials
 ;mat = nomaterials
 [turntable]
-spin = enabled
+spin = disabled
 ;;turntable spin after loading
 ;spin = disabled
 ;spin = enabled
@@ -3298,7 +3300,7 @@ compound = allowed
 ;compound = disallowed
 ;compound = simplified
 [docking]
-dkmode = float
+dkmode = right
 ;;docking mode
 ;dkmode = left
 ;dkmode = right
@@ -4313,7 +4315,10 @@ def Export2MCAD(blacklisted_model_elements):
     #stop
         __ob__.append(doc.getObject("Board"))
         #import ImportGui
-        ImportGui.export(__ob__,fpath)
+        try:
+            ImportGui.export(__ob__,fpath)
+        except:
+            say_warning("error writing STEP file. You do not have write permissions to save file!")
         #sayerr(__ob__[0].Name)
         del __ob__
         for sk in skl:
@@ -4436,8 +4441,11 @@ def Export2MCAD(blacklisted_model_elements):
     #FreeCAD.getDocument(doc.Name).saveAs(freeCADFileName) #utf-8 test
     #stop
     
-    FreeCAD.getDocument(doc.Name).saveAs((fpath+".FCStd").encode('utf-8'))  #bug in FC need to encode utf-8
-    FreeCAD.ActiveDocument.recompute()
+    try:
+        FreeCAD.getDocument(doc.Name).saveAs((fpath+".FCStd").encode('utf-8'))  #bug in FC need to encode utf-8
+        FreeCAD.ActiveDocument.recompute()
+    except:
+        say_warning("error writing FreeCAD file. You do not have write permissions to save file!")
     #FreeCAD.getDocument(doc.Name).Label = doc.Name
     #FreeCADGui.SendMsgToActiveView("Save")
     #FreeCAD.getDocument(doc.Name).save()

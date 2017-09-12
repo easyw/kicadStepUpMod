@@ -10,7 +10,7 @@ KiCad **StepUp tools** are a FreeCAD Macro and a FreeCAD WorkBench to help in **
 **KiCad StepUp features:** 
 
 - **load kicad board and parts in FreeCAD and export it to STEP** (or IGES) for a full ECAD MCAD collaboration
-- **load kicad_mod footprint in FreeCAD to easy and precisely align**** the mechanical model to kicad footprint**
+- **load kicad_mod footprint in FreeCAD to easy and precisely align the mechanical model to kicad footprint**
 - **convert the STEP 3D model of parts, board, enclosure to VRML with Materials properties** for the best use in kicad
 - **check interference and collisions** for enclosure and footprint design 
 - **design a new pcb Edge with FreeCAD Sketcher and PUSH it to an existing kicad_pcb Board** 
