@@ -376,9 +376,36 @@ class ksuExcDemo:
 
     def __init__(self, exFile):
         self.exFile = str(exFile)
+        self.ext    = self.exFile[self.exFile.rfind('.'):].lower()
+        #print self.ext
+    
+    # 'hierarchy_nav.svg' for Demo
+    #'Pixmap'  : os.path.join( ksuWB_icons_path , 'hierarchy_nav.svg') ,
 
     def GetResources(self):
-        return {"MenuText": str(self.exFile)}
+        if 'pdf' in self.ext:
+            return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'datasheet.svg') ,
+                    'MenuText': str(self.exFile),
+                    'ToolTip' : "Demo files"}
+        elif 'kicad_pcb' in self.ext:
+            return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'importBoard.svg') ,
+                    'MenuText': str(self.exFile),
+                    'ToolTip' : "Demo files"}
+        elif 'kicad_mod' in self.ext:
+            return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'importFP.svg') ,
+                    'MenuText': str(self.exFile),
+                    'ToolTip' : "Demo files"}
+        elif 'fcstd' in self.ext:
+            return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Freecad.svg') ,
+                    'MenuText': str(self.exFile),
+                    'ToolTip' : "Demo files"}        
+        elif 'step' in self.ext:
+            return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'importStep.svg') ,
+                    'MenuText': str(self.exFile),
+                    'ToolTip' : "Demo files"}                    
+        else:
+            return {'MenuText': str(self.exFile),
+                    'ToolTip' : "Demo files"}
 
     def Activated(self):
         FreeCAD.Console.PrintWarning('opening ' + self.exFile + "\r\n")
@@ -454,3 +481,4 @@ class ksuExcDemo:
         #ImportGui.open(os.path.join(exs_dir_path, self.exFile))
         #ImportCQ.open(os.path.join(exs_dir_path, self.exFile))
 
+##
