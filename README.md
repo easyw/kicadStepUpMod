@@ -33,7 +33,7 @@ Download and install your corresponding version of FreeCAD from [wiki Download p
 StepUp Cheat sheet
 ------------------
 
-[kicad StepUp Cheat sheet](demo/kicadStepUp-cheat-sheet.pdf)
+[kicad StepUp Cheat sheet](https://github.com/easyw/kicadStepUpMod/raw/master/demo/kicadStepUp-cheat-sheet.pdf)
 
 ### Requirements
 
