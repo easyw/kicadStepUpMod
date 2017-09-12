@@ -1,0 +1,249 @@
+*kicad StepUp 3D mechanical exporter* for collaborative exchange between KiCad and FreeCAD/MCAD;
+With *kicad StepUp*, it is possible to work in kicad EDA with the same component model data
+available in the *STEP AP214 3D format*, and obtain a 3D STEP AP214 model of the pcb board and
+a complete board assemblies with electronic modules, to be used for *MCAD interchange*.
+The accurate 3D visualization of components on board assemblies in kicad 3dviewer, is
+maintained in the same accuracy and aspect in STEP AP214 format. +
+The *kicad StepUp* maintains the usual way to work with kicad, but improves the process
+to work in a collaborative way with mechanical designers bringing near ECAD and MCAD environments. +
+With kicad StepUp you’ll get an exact representation of your physical board in Native 3D PCB
+v7.1.4.6 September/2017
+
+please refer to
+kicadStepUp-starter-Guide.pdf
+
+
+*Copyright*
+-----------
+This document and kicad StepUp scripts are Copyright © 2015 by Maurice.
+You may distribute it and/or modify it under the terms of either
+the GNU Affero General Public License as published by the Free Software Foundation
+to ensure cooperation with the community in the case of network server software;             *
+for detail see the LICENCE text file.
+http://www.gnu.org/licenses/agpl-3.0.en.html
+Moreover you have to include the original author copyright.
+All trademarks within this guide belong to their legitimate owners.
+Kicad STEPUP (TM) is a TradeMark and cannot be freely useable
+
+Risk disclaimer
+---------------
+*USE 3D CAD DATA AT YOUR OWN RISK *
+*DO NOT RELY UPON ANY INFORMATION FOUND HERE WITHOUT INDEPENDENT VERIFICATION.*
+
+
+Changelog
+---------
+- upgrade kicadstepup version
+- resized font size
+- add bbox and volume images on the starter guide
+- add ksu config more detailed description
+- complete volume_minimum config in doc
+- improved OSX QtGui File Open
+- better arc and line import
+- remove test button
+- enable confirm on exit
+- replace FreeCAD.Console.Message -> say 
+- collision and proximity as microelly
+- added messages on missing emn files
+- added messages on missing models
+- added path to adapt your KISYS3DMOD
+- added blacklist for unwanted modules
+- added messages on blacklisted modules
+- added pcb color attribute
+- added bounding box option
+- added bounding box white list to leave real model on connector or peripheral models
+- added auxorigin, base origin, base point placement option
+- added vrml models z-rotation angle
+- added virtual models option
+- added fusion export option
+- added saving in native format, export to STEP
+- added arcs and circles for calculate board position
+- added idf_to_origin flag for version >6091
+- added reset properties for FC 016 bug
+- added ${KIPRJMOD} support
+- added v3,v4 pcb version support
+- added multi 3D vrml model support
+- added compatibility to kicad version >=3
+- added auto color assigning in bboxes
+- added minimum volume per model
+- added minimum height per model
+- updated findPcbCenter method
+- added support for .stp extension beside .step
+- added support for .igs extension beside .step
+- added support for .iges extension beside .step
+- because of hole sovrapposition prob...
+- cutting hole by hole instead of hole compound
+- added holes_solid var
+- to have holes as solid to garantee cutting
+- handled single circle 
+- used OpenSCAD2Dgeom instead of wire + face (best option)
+- http://www.freecadweb.org/wiki/index.php?title=Macro_Creating_faces_from_a_DXF_file
+- fixed unicode text parsing
+- double option .kicad_pcb .emn
+- in case of non coincidences .emn is more tolerant
+- try to build wires on closed shaped for make the cutting faster
+- try to optimize cutting changing creation/type of holes
+- manage bklist and volume
+- accept with or without /\ at the end of 3Dpath
+- search models in KIPRJMOD and in KISYS3DMOD 
+- removed unicode chars in .kicad_pcb
+- exported wrl, step from python
+- reload & display ini cfg file
+- display/edit ini file with syntax highlight
+- msg first ksu config
+- added warning for import step multi part fixed v3035
+- commented warning in load footprint and in placing step mod if x,y are different from 0 0 0
+- added message if scale are different from 1 1 1
+- non stopping warning for footprint
+- added command line args to load board(/emn)
+- avoid argv in memory in case of opened from  command line
+- used multi cut also for footprint too
+- enabled loadB, loadI, loadF with filename=None to align Mod and Macro
+- enabled Macro & Mod
+- added ico tools info
+- added checkbox export_2_step
+- added export2STEP var in ini file
+- subst print to say
+- fixed cursor wait
+- angle on pads for footprint pads angle i.e. DB25M_V ok
+- improved multipart load checking
+- added virtual checkbox
+- added VRML with material properties exporter
+- added metal grey material
+- added multipart VRML option
+- improved export resolution from %.3f, %.5f to %g
+- added config for material props
+- pad & holes as circles when possible
+- improved multipart load checking
+- removed illegal characters in filenames when exporting VRML and STEP
+- message of missing models at the end
+- implemented caching for 3D models
+- optimized for fusion w/ colors
+- added support for alias i.e. :Kicad3D: as for environment variables
+- added crease angle for wrl export 
+- added support for ${KISYS3DMOD}/ in new 3d viewer path resolver
+- accepting .wrl .step .stp .iges .igs as 3d models directly in kicad_pcb
+- added fixedPosition for aligning part to footprint in assembly2
+- message if scale values are not assigned to 1 1 1
+- added support for wrl offset in position & rotation when loadboard
+- added bbox creation based on scaled values (1mm as base unit)
+- added height and volume blacklist for scaled shapes
+- added error message in case of scale factor not 1:1 for non scaled box
+- fixed base point for lower case settings
+- added single instance
+- added open file type 'rb' 'ab' and write file 'wb' type binary for utf8 full support
+- added fix to rect pads in footprint loader
+- non blocking warning only for scale <> 1
+- fixed minor issues in FC015 loading fp
+- added models3Dprefix as default saving location
+- added $HOME support for unix systems (it doesn't resolve on win)
+- added OCC >=7 FC 0.17 compatibility for Footprint pads, lines, arcs
+- added check if the models3Dprefix is writable, otherwise will write on $HOME
+- added 2nd path to resolver prefix3d_2
+- added wrl materials dialog theme compatibility
+- reduced export file size
+- accept the new Part.LineSegment using yorik help function FC 0.17 >= 9123
+- EdgeCuts for footprint will generate a path on FP loader
+- EdgeCuts in footprint will generate Cuts in Board
+- accepted utf8 for model in kysys3mod or alias
+- checked spaces in name
+- added edge tolerance on vertex coincidence
+- added /n to say() and removed extra /n in each say msg
+- removed print in all doc ()<print "here  ... etc
+- removed unnecessary messages (when non coincident edges)
+- removed extra messages helping debug
+- fixed edge tolerance on FC 017 >9255
+- message when adjusting edges
+- animation when assembled
+- moved config read-write to my own method for full utf-8 support
+- accept utf8 on 3D prefix path
+- accept utf8 on saving loading last path
+- tidy up a bit the utf-8 code
+- regenerate ksu-config if too short
+- enabled upper case on config
+- added message on edge not coincident
+- added turntable section
+- added 'no layers' for pads
+- allowed STEP multipart (creating compound)
+- added exception on import step model
+- added better theme integration
+- improved tolerance on edges <0.005 #edge coincidence tolerance (5000nm = 1/2 centesimo) base is mm
+- updated import IDF mod
+- added font size in config
+- added improved way to load step files as compound from vejmarie
+- accepted lower and upper case for extension (linux is case sensitive os)
+- added align_vrml_step_colors when saving with material properties
+- assigned shininess and specular color for single color Shapes
+- fixed position for rotated fp-modules with offset
+- fixed position for all rotation and offset
+- fixed edge cuts for bottom modules
+- fixed circle in circle edges
+- added tolerance warning > 1e-6 #(1nm) base is mm
+- substituted  (== None) -> (is None)
+- disabling VBO during loading modules to avoid crashing (new bug from 0.17 after 10101)
+- disabling Part-o-Magic observer if exists (not possible without calling the PoM function)
+- added full unicode support for names in compounds
+- removed activateWorkbench("PartWorkbench") if Assembly2 is active
+- added Glass materials to exporting
+- added virtual parts skipped message
+- added recursive App::Part single copy (thx nico!) to compatibility with FC > 10647
+- implemented App::Part also for moving/rotating obj and exporting model
+- added support for opening footprints kicad_mod from command line
+- disabling VBO during loading footprints to avoid crashing (new bug from 0.17 after 10101)
+- removed IDF import
+- removed Move X,Y,Z buttons
+- resetP always enabled
+- collision cb, virtual cb, expstep cb, reset placement cb, setGeometry
+- textEdit -> textBrowser for html links ro tutorials
+- link to local config file on disk
+- moved to icon based GUI
+- minor dock fixing
+- temporary_undock to enable dock left & right memory on edit/help
+- fusion & compound buttons (App::Part compatible)
+- handling bad fusion redirect to compound
+- added toggle on minimize button
+- fixed Qt5 OSX issues
+- removed App. changed to FreeCAD in remaining instances
+- fixed App::Part relative placement
+- started moving toward compatibility to py3
+- small fix to avoid VRML selection when exporting
+- added pcb colors for exporting
+- fixed bug on multiple mixed models per footprint position/rotation
+- compatibility py3
+- added Step_Virtual_Models folder for mechanical parts
+- added workaround for "bug for ImportGui *.iges" -> using "Part.insert"
+- cleaned License for App::Part containers (.License .LicenseURL)
+- added warning_nbr in case of too many missing models
+- added reset placement before exporting wrl & STEP model
+- added warning in case of drill and volume used in config
+- added ReadShapeCompoundMode parameter for step import shapes with colors on LoadBoard and (+)Import Step
+- added ReadShapeCompoundMode var also when (+) importing step models
+- added force_oldGroups to force old method if set to True
+- use_AppPart instead of Groups for FC0.17 > FC_export_min_version="11670"
+- managed Export2MCAD for exporting hierarchy and not if fused selected
+- added semantic parser to speed up .kicad_pcb parsing up to 70 times faster for pcb loading
+- added Top & Bottom containers for STEP models
+- added allow_compound mode 'simplify' to enable fast loading (losing colors)
+- removing empty Top/Bot containers after loading models (only on FC 0.17)
+- added relative 3d path '../'
+- added F.Fab F.CrtYd to loadFootprint function
+- added StepUp WorkBench
+- fixed utf-8 str to Label
+- recurse placement for Collision check ['Placement.multiply']: now it works also with App::Part, Body & Compound in FC0.17
+- added links to pdf files in Help
+- added config value for autoconstraints in sketcher
+- auto constraint coincident points and vertical/horizontal
+- some cleaning on warn messages for wrong scale, missing models
+- boost in cutting drills
+- added sketch button
+- started experimental Sketch support
+- improve help and add sketch functionality
+- auto constraint coincident points and vertical/horizontal
+- edge_width from kicad_pcb
+- managed not supported geometry BSplines & Ellipses with optimized deviation   # loop in App.ActiveDocument.PCB_Sketch.Geometry searching for coincident vertex 
+- aligned Sketch to center of A4 in pcbnew if first time 
+- removing sketches from export 3d to step button
+- removing sketches in FC0.16 and when exporting automatically
+- added use grid_origin as reference point for placing the board and for sketch!!!
+  this will allow to copy sketches between boards releases to keep constraints
+- most clean code and comments done
