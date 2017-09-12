@@ -391,7 +391,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.1.4.6"  # added single instance and utf8 support TESTING qt5
+___ver___ = "7.1.4.7"  # added single instance and utf8 support TESTING qt5
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -6336,7 +6336,205 @@ def check_requirements():
         msg+="when fusing a lot of objects\r\nplease consider to use bbox or blacklist small objects\r\n\r\n"    
     ##start_time=current_milli_time()
 ###
+def add_constraints(s_name):
+    """ adding coincident points constaints """
+    global addConstraints
+    
+    s=FreeCAD.ActiveDocument.getObject(s_name)
+    
+    if hasattr(Part,"LineSegment"):
+        g_geom_points = {
+            Base.Vector: [1],
+            Part.LineSegment: [1, 2],  # first point, last point
+            Part.Circle: [0, 3],  # curve, center
+            Part.ArcOfCircle: [1, 2, 3],  # first point, last point, center
+        }
+    else:
+        g_geom_points = {
+            Base.Vector: [1],
+            Part.Line: [1, 2],  # first point, last point
+            Part.Circle: [0, 3],  # curve, center
+            Part.ArcOfCircle: [1, 2, 3],  # first point, last point, center
+        }
+    points=[]
+    geoms=[]
+    #print len((s.Geometry))
+    #stop
+    for geom_index in range(len((s.Geometry))):
+        point_indexes = g_geom_points[type(s.Geometry[geom_index])]
+        #sayerr(point_indexes), say (geom_index)
+        #if 'Line' in type(PCB_Sketch.Geometry[geom_index]).__name__:
+        
+        if 'ArcOfCircle' in type(s.Geometry[geom_index]).__name__\
+         or 'Line' in type(s.Geometry[geom_index]).__name__:
+            point1 = s.getPoint(geom_index, point_indexes[0])
+            #sayerr(str(point1[0])+';'+str(point1[1]))
+            point2 = s.getPoint(geom_index, point_indexes[1])
+            #sayw(str(point2[0])+';'+str(point1[1]))
+            #points.append([[point1[0],point1[1]],[geom_index],[1]])
+            #points.append([[point2[0],point2[1]],[geom_index],[2]])
+            #points.append([[point1[0],point1[1]],[geom_index]]) #,[1]])
+            #points.append([[point2[0],point2[1]],[geom_index]]) #,[2]])
+            geoms.append([point1[0],point1[1],point2[0],point2[1]])
 
+    #print points
+    def simu_distance(p0, p1):
+        return max (abs(p0[0] - p1[0]), abs(p0[1] - p1[1]))
+    #
+    #print geom
+    cnt=1
+    # print addConstraints, ' constraints'
+    # stop
+    if addConstraints=='all':
+        for i, geo in enumerate(geoms):
+        #for i in range(len(geom)):
+            p_g0_0=[geo[0],geo[1]]
+            p_g0_1=[geo[2],geo[3]]
+            #print p_g0_0,pg_g0_1
+            if abs(p_g0_0[0]-p_g0_1[0])< edge_tolerance:
+                s.addConstraint(Sketcher.Constraint('Vertical',i))
+            elif abs(p_g0_0[1]-p_g0_1[1])< edge_tolerance:
+                s.addConstraint(Sketcher.Constraint('Horizontal',i))
+            j=i+1
+            for geo2 in geoms[(i + 1):]:
+                p_g1_0=[geo2[0],geo2[1]]
+                p_g1_1=[geo2[2],geo2[3]]
+                #rint p_g0_0, p_g0_1
+                #rint p_g1_0, p_g1_1
+                if distance(p_g0_0,p_g1_0)< edge_tolerance:
+                ##App.ActiveDocument.PCB_Sketch.addConstraint(Sketcher.Constraint('Coincident',0,2,3,1)) 
+                    s.addConstraint(Sketcher.Constraint('Coincident',i,1,j,1))
+                    #print i,1,i+1,1
+                elif distance(p_g0_0,p_g1_1)< edge_tolerance:
+                    s.addConstraint(Sketcher.Constraint('Coincident',i,1,j,2))
+                    #print i,1,i+1,2
+                elif distance(p_g0_1,p_g1_0)< edge_tolerance:
+                    s.addConstraint(Sketcher.Constraint('Coincident',i,2,j,1)) 
+                    #print i,2,i+1,1
+                elif distance(p_g0_1,p_g1_1)< edge_tolerance:
+                    s.addConstraint(Sketcher.Constraint('Coincident',i,2,j,2)) 
+                    #print i,2,i+1,2
+                j=j+1
+                cnt=cnt+1
+    elif addConstraints=='coincident':
+        for i, geo in enumerate(geoms):
+        #for i in range(len(geom)):
+            p_g0_0=[geo[0],geo[1]]
+            p_g0_1=[geo[2],geo[3]]
+            #print p_g0_0,pg_g0_1
+            #if addConstraints=='all':
+            #    if abs(p_g0_0[0]-p_g0_1[0])< edge_tolerance:
+            #        s.addConstraint(Sketcher.Constraint('Vertical',i))
+            #    elif abs(p_g0_0[1]-p_g0_1[1])< edge_tolerance:
+            #        s.addConstraint(Sketcher.Constraint('Horizontal',i))
+            j=i+1
+            for geo2 in geoms[(i + 1):]:
+                p_g1_0=[geo2[0],geo2[1]]
+                p_g1_1=[geo2[2],geo2[3]]
+                #rint p_g0_0, p_g0_1
+                #rint p_g1_0, p_g1_1
+                if distance(p_g0_0,p_g1_0)< edge_tolerance:
+                ##App.ActiveDocument.PCB_Sketch.addConstraint(Sketcher.Constraint('Coincident',0,2,3,1)) 
+                    s.addConstraint(Sketcher.Constraint('Coincident',i,1,j,1))
+                    #print i,1,i+1,1
+                elif distance(p_g0_0,p_g1_1)< edge_tolerance:
+                    s.addConstraint(Sketcher.Constraint('Coincident',i,1,j,2))
+                    #print i,1,i+1,2
+                elif distance(p_g0_1,p_g1_0)< edge_tolerance:
+                    s.addConstraint(Sketcher.Constraint('Coincident',i,2,j,1)) 
+                    #print i,2,i+1,1
+                elif distance(p_g0_1,p_g1_1)< edge_tolerance:
+                    s.addConstraint(Sketcher.Constraint('Coincident',i,2,j,2)) 
+                    #print i,2,i+1,2
+                j=j+1
+                cnt=cnt+1
+        #print 'counter ',cnt
+            #print geo2
+            
+###        
+
+def cpy_sketch(sname,nname=None):
+    """ copy Sketch NB Geometry sequence is not conserved!!! """
+    
+    s=FreeCAD.ActiveDocument.getObject(sname)
+    #geoL=len(App.ActiveDocument.getObject(sname).Geometry)
+    if nname is None:
+        nname="Temp_Sketch"
+    tsk= FreeCAD.activeDocument().addObject('Sketcher::SketchObject',nname)
+    tsk.addGeometry(FreeCAD.ActiveDocument.getObject(sname).Geometry)
+    tsk.Placement=FreeCAD.ActiveDocument.getObject(sname).Placement
+    #print tsk.Geometry
+    FreeCAD.ActiveDocument.recompute()
+    #stop
+    return FreeCAD.ActiveDocument.ActiveObject.Name
+## 
+
+def shift_sketch(sname, ofs, nname):
+    """ shift Sketch Geometry (Geom sequence is not conserved!!!) """
+    
+    s1n=cpy_sketch(sname,nname)
+    FreeCAD.ActiveDocument.recompute()
+    s1=FreeCAD.ActiveDocument.getObject(s1n)
+    lg=len (s1.Geometry)
+    #print lg
+    geo=[]
+    for k in range(lg):
+        geo.append(str(FreeCAD.ActiveDocument.getObject(s1.Name).Geometry[k]))
+    #geo=FreeCAD.ActiveDocument.getObject(s1.Name).Geometry
+    for k in range(lg):
+        FreeCAD.ActiveDocument.getObject(s1.Name).addCopy([k],FreeCAD.Vector(ofs[0],-ofs[1],0),False)
+        #print FreeCAD.ActiveDocument.getObject(s1.Name).Geometry[k]
+        #FreeCAD.ActiveDocument.getObject(s1.Name).delGeometry(k)
+    FreeCAD.ActiveDocument.recompute()
+    #print len (s1.Geometry)
+    #stop
+    #print (s1.Geometry) 
+    nlg=len (s1.Geometry)
+    idx_to_del=[]
+    idx_to_del_str=[]
+    #print geo
+    for k in range(nlg):
+        if str(FreeCAD.ActiveDocument.getObject(s1.Name).Geometry[k]) in geo:
+            idx_to_del.append(k)
+    #for j in range (len(idx_to_del)):
+    #    idx_to_del_str.append(str(idx_to_del[j]))
+    #print idx_to_del
+    #stop
+    #print idx_to_del_str
+    for i in range (nlg-1,-1,-1):
+    #    #FreeCAD.ActiveDocument.getObject(s_name).delGeometry(k)
+        #print i
+        if i in idx_to_del:
+            FreeCAD.ActiveDocument.getObject(s1.Name).delGeometry(i)
+    FreeCAD.ActiveDocument.recompute()
+    #FreeCAD.ActiveDocument.getObject(s1.Name).Placement = FreeCAD.Placement(FreeCAD.Vector(2*ofs[0],2*ofs[1],0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
+        
+    #geoL=len(App.ActiveDocument.getObject(sname).Geometry)
+    #Temp_Sketch_Sft= FreeCAD.activeDocument().addObject('Sketcher::SketchObject','Temp_Sketch_Sft')
+    #geo=[]
+    #for k in range(len (s.Geometry)):
+    #    App.ActiveDocument.Temp_Sketch_Sft.addCopy([k],App.Vector(100,100,0),False)
+    #    
+    #    #if 'LineSegment' in type(s.Geometry[k]).__name__:
+    #    ##if 'Line' in type(s.Geometry[k]).__name__:
+    #    #    #ls='<Line segment ({0},{1}) ({2},{3}) >'.format(s.Geometry[k].StartPoint.x+ofs[0],s.Geometry[k].StartPoint.y+ofs[1], s.Geometry[k].EndPoint.x+ofs[0],s.Geometry[k].EndPoint.y+ofs[1])
+    #    #    #geo.append(ls);geo.append(le)
+    #    #    #Temp_Sketch_Sft.addGeometry(FreeCAD.ActiveDocument.getObject(sname).Geometry[k])
+    #    #    #Temp_Sketch_Sft.addGeometry(geo)
+    #    #    spx=s.Geometry[k].StartPoint.x+ofs[0]
+    #    #    spy=s.Geometry[k].StartPoint.y+ofs[1]
+    #    #    epx=s.Geometry[k].EndPoint.x+ofs[0]
+    #    #    epy=s.Geometry[k].EndPoint.y+ofs[1]
+    #    #    
+    #    #    FreeCAD.ActiveDocument.Temp_Sketch_Sft.addGeometry(PLine(Base.Vector(spx,spy,0), Base.Vector(epx,epy,0)))
+    #        
+    #Temp_Sketch_Sft.Placement.Base[0]=FreeCAD.ActiveDocument.getObject(sname).Placement.Base[0]+ofs[0]
+    #Temp_Sketch_Sft.Placement.Base[1]=FreeCAD.ActiveDocument.getObject(sname).Placement.Base[1]+ofs[1]
+    
+    #print Temp_Sketch.Geometry
+    #FreeCAD.ActiveDocument.recompute()
+    return FreeCAD.ActiveDocument.ActiveObject.Name
+## 
     
 ###
 def onLoadBoard(file_name=None):
@@ -13251,207 +13449,6 @@ def createEdge(edg,ofs):
     return k_edg
 ##
 
-def add_constraints(s_name):
-    """ adding coincident points constaints """
-    global addConstraints
-    
-    s=FreeCAD.ActiveDocument.getObject(s_name)
-    
-    if hasattr(Part,"LineSegment"):
-        g_geom_points = {
-            Base.Vector: [1],
-            Part.LineSegment: [1, 2],  # first point, last point
-            Part.Circle: [0, 3],  # curve, center
-            Part.ArcOfCircle: [1, 2, 3],  # first point, last point, center
-        }
-    else:
-        g_geom_points = {
-            Base.Vector: [1],
-            Part.Line: [1, 2],  # first point, last point
-            Part.Circle: [0, 3],  # curve, center
-            Part.ArcOfCircle: [1, 2, 3],  # first point, last point, center
-        }
-    points=[]
-    geoms=[]
-    #print len((s.Geometry))
-    #stop
-    for geom_index in range(len((s.Geometry))):
-        point_indexes = g_geom_points[type(s.Geometry[geom_index])]
-        #sayerr(point_indexes), say (geom_index)
-        #if 'Line' in type(PCB_Sketch.Geometry[geom_index]).__name__:
-        
-        if 'ArcOfCircle' in type(s.Geometry[geom_index]).__name__\
-         or 'Line' in type(s.Geometry[geom_index]).__name__:
-            point1 = s.getPoint(geom_index, point_indexes[0])
-            #sayerr(str(point1[0])+';'+str(point1[1]))
-            point2 = s.getPoint(geom_index, point_indexes[1])
-            #sayw(str(point2[0])+';'+str(point1[1]))
-            #points.append([[point1[0],point1[1]],[geom_index],[1]])
-            #points.append([[point2[0],point2[1]],[geom_index],[2]])
-            #points.append([[point1[0],point1[1]],[geom_index]]) #,[1]])
-            #points.append([[point2[0],point2[1]],[geom_index]]) #,[2]])
-            geoms.append([point1[0],point1[1],point2[0],point2[1]])
-
-    #print points
-    def simu_distance(p0, p1):
-        return max (abs(p0[0] - p1[0]), abs(p0[1] - p1[1]))
-    #
-    #print geom
-    cnt=1
-    # print addConstraints, ' constraints'
-    # stop
-    if addConstraints=='all':
-        for i, geo in enumerate(geoms):
-        #for i in range(len(geom)):
-            p_g0_0=[geo[0],geo[1]]
-            p_g0_1=[geo[2],geo[3]]
-            #print p_g0_0,pg_g0_1
-            if abs(p_g0_0[0]-p_g0_1[0])< edge_tolerance:
-                s.addConstraint(Sketcher.Constraint('Vertical',i))
-            elif abs(p_g0_0[1]-p_g0_1[1])< edge_tolerance:
-                s.addConstraint(Sketcher.Constraint('Horizontal',i))
-            j=i+1
-            for geo2 in geoms[(i + 1):]:
-                p_g1_0=[geo2[0],geo2[1]]
-                p_g1_1=[geo2[2],geo2[3]]
-                #rint p_g0_0, p_g0_1
-                #rint p_g1_0, p_g1_1
-                if distance(p_g0_0,p_g1_0)< edge_tolerance:
-                ##App.ActiveDocument.PCB_Sketch.addConstraint(Sketcher.Constraint('Coincident',0,2,3,1)) 
-                    s.addConstraint(Sketcher.Constraint('Coincident',i,1,j,1))
-                    #print i,1,i+1,1
-                elif distance(p_g0_0,p_g1_1)< edge_tolerance:
-                    s.addConstraint(Sketcher.Constraint('Coincident',i,1,j,2))
-                    #print i,1,i+1,2
-                elif distance(p_g0_1,p_g1_0)< edge_tolerance:
-                    s.addConstraint(Sketcher.Constraint('Coincident',i,2,j,1)) 
-                    #print i,2,i+1,1
-                elif distance(p_g0_1,p_g1_1)< edge_tolerance:
-                    s.addConstraint(Sketcher.Constraint('Coincident',i,2,j,2)) 
-                    #print i,2,i+1,2
-                j=j+1
-                cnt=cnt+1
-    elif addConstraints=='coincident':
-        for i, geo in enumerate(geoms):
-        #for i in range(len(geom)):
-            p_g0_0=[geo[0],geo[1]]
-            p_g0_1=[geo[2],geo[3]]
-            #print p_g0_0,pg_g0_1
-            #if addConstraints=='all':
-            #    if abs(p_g0_0[0]-p_g0_1[0])< edge_tolerance:
-            #        s.addConstraint(Sketcher.Constraint('Vertical',i))
-            #    elif abs(p_g0_0[1]-p_g0_1[1])< edge_tolerance:
-            #        s.addConstraint(Sketcher.Constraint('Horizontal',i))
-            j=i+1
-            for geo2 in geoms[(i + 1):]:
-                p_g1_0=[geo2[0],geo2[1]]
-                p_g1_1=[geo2[2],geo2[3]]
-                #rint p_g0_0, p_g0_1
-                #rint p_g1_0, p_g1_1
-                if distance(p_g0_0,p_g1_0)< edge_tolerance:
-                ##App.ActiveDocument.PCB_Sketch.addConstraint(Sketcher.Constraint('Coincident',0,2,3,1)) 
-                    s.addConstraint(Sketcher.Constraint('Coincident',i,1,j,1))
-                    #print i,1,i+1,1
-                elif distance(p_g0_0,p_g1_1)< edge_tolerance:
-                    s.addConstraint(Sketcher.Constraint('Coincident',i,1,j,2))
-                    #print i,1,i+1,2
-                elif distance(p_g0_1,p_g1_0)< edge_tolerance:
-                    s.addConstraint(Sketcher.Constraint('Coincident',i,2,j,1)) 
-                    #print i,2,i+1,1
-                elif distance(p_g0_1,p_g1_1)< edge_tolerance:
-                    s.addConstraint(Sketcher.Constraint('Coincident',i,2,j,2)) 
-                    #print i,2,i+1,2
-                j=j+1
-                cnt=cnt+1
-        #print 'counter ',cnt
-            #print geo2
-            
-        #p00=[geom[i][0],geom[i][1]];p01=[geom[i][2],geom[i][3]]
-        #for g in geom[(i + 1):]:
-        #    p10=[g[0],g[1]];p11=[g[2],g[3]]
-        #    #print p00,'-',p01,'-',p10,'-',p11
-        #    if distance(p00,p10)< edge_tolerance:
-        #        s.addConstraint(Sketcher.Constraint('Coincident',p00[0],p00[1],p10[0],p10[1])) 
-        #    elif distance(p00,p11)< edge_tolerance:
-        #        s.addConstraint(Sketcher.Constraint('Coincident',p00[0],p00[1],p11[0],p11[1])) 
-        #    elif distance(p01,p10)< edge_tolerance:
-        #        s.addConstraint(Sketcher.Constraint('Coincident',p01[0],p01[1],p10[0],p10[1])) 
-        #    elif distance(p01,p11)< edge_tolerance:
-        #        s.addConstraint(Sketcher.Constraint('Coincident',p01[0],p01[1],p11[0],p11[1])) 
-    # for i in range(len(geom)):
-    #     p00=[geom[i][0],geom[i][1]];p01=[geom[i][2],geom[i][3]]
-    #     for g in geom[(i + 1):]:
-    #         p10=[g[0],g[1]];p11=[g[2],g[3]]
-    #         #print p00,'-',p01,'-',p10,'-',p11
-    #         if distance(p00,p10)< edge_tolerance:
-    #             s.addConstraint(Sketcher.Constraint('Coincident',p00[0],p00[1],p10[0],p10[1])) 
-    #         elif distance(p00,p11)< edge_tolerance:
-    #             s.addConstraint(Sketcher.Constraint('Coincident',p00[0],p00[1],p11[0],p11[1])) 
-    #         elif distance(p01,p10)< edge_tolerance:
-    #             s.addConstraint(Sketcher.Constraint('Coincident',p01[0],p01[1],p10[0],p10[1])) 
-    #         elif distance(p01,p11)< edge_tolerance:
-    #             s.addConstraint(Sketcher.Constraint('Coincident',p01[0],p01[1],p11[0],p11[1])) 
-    #         #j=j+1
-                #print g,'*',geom[i+1]
-                #print 'near points'
-    #lgm=points[-1][1][0]
-    #print lgm
-    #for i in range(lgm):
-    #    print points[i][0][1]][i]
-    #    #for i, p in enumerate points[
-        
-        
-    #stop
-    # print points
-    # lp=len(points)
-    # idxs=[]
-    # idx2=[]
-    # for i in range(lp):
-    #     idxs.append(i)
-    # while len(idxs)>0:
-    #     idx2=[]
-    #     p0 = points[idxs[0]]
-    #     j=0
-    #     for i in range(1,len(idxs)):
-    #         p = points[idxs[i]]
-    #         print p0,'\n',i,' ',p
-    #         if distance(p0[0],p[0])< edge_tolerance:
-    #             sayerr('near points')
-    #             s.addConstraint(Sketcher.Constraint('Coincident',p0[1][0],p0[2][0],p[1][0],p[2][0])) 
-    #         else:
-    #             sayw('far points')
-    #             idx2.append(i)
-    #     #j=j+1
-    #     if len(idx2)>0:
-    #         idxs=idx2
-    #     else:
-    #         idxs=[]
-    #     print idxs
-    #for i, point in enumerate(points):
-    #    for point2 in points[(i + 1):]:
-    #        #print point,';',point2
-    #        if distance(point[0],point2[0])< edge_tolerance:
-    #        #if simu_distance(point[0],point2[0]) < edge_tolerance:
-    #            #say('found 00')
-    #            s.addConstraint(Sketcher.Constraint('Coincident',point[1][0],point[2][0],point2[1][0],point2[2][0])) 
-    #            print point[1][0],point[2][0],point2[1][0],point2[2][0]
-    #for i, point in enumerate(points):
-    #    #j=0
-    #    for point2 in points[(i + 1):]:
-    #        #print point,';',point2
-    #        if distance(point[0],point2[0])< edge_tolerance:
-    #        #if simu_distance(point[0],point2[0]) < edge_tolerance:
-    #            #print i,' ',j
-    #            #print point,' ',point2
-    #            #sayerr('near points')
-    #            #say('found 00')
-    #            #print point[1][0],point[2][0],point2[1][0],point2[2][0]
-    #            s.addConstraint(Sketcher.Constraint('Coincident',point[1][0],point[2][0],point2[1][0],point2[2][0])) 
-    #        #j=j+1 
-###        
-
-
-
 def Discretize(skt_name):
     ##http://forum.freecadweb.org/viewtopic.php?f=12&t=16336#p129468
     ##Discretizes the edge and returns a list of points.
@@ -13629,89 +13626,6 @@ def find_skt_in_Doc():
     return sk_list
     
 ###
-
-def cpy_sketch(sname,nname=None):
-    """ copy Sketch NB Geometry sequence is not conserved!!! """
-    
-    s=FreeCAD.ActiveDocument.getObject(sname)
-    #geoL=len(App.ActiveDocument.getObject(sname).Geometry)
-    if nname is None:
-        nname="Temp_Sketch"
-    tsk= FreeCAD.activeDocument().addObject('Sketcher::SketchObject',nname)
-    tsk.addGeometry(FreeCAD.ActiveDocument.getObject(sname).Geometry)
-    tsk.Placement=FreeCAD.ActiveDocument.getObject(sname).Placement
-    #print tsk.Geometry
-    FreeCAD.ActiveDocument.recompute()
-    #stop
-    return FreeCAD.ActiveDocument.ActiveObject.Name
-## 
-
-def shift_sketch(sname, ofs, nname):
-    """ shift Sketch Geometry (Geom sequence is not conserved!!!) """
-    
-    s1n=cpy_sketch(sname,nname)
-    FreeCAD.ActiveDocument.recompute()
-    s1=FreeCAD.ActiveDocument.getObject(s1n)
-    lg=len (s1.Geometry)
-    #print lg
-    geo=[]
-    for k in range(lg):
-        geo.append(str(FreeCAD.ActiveDocument.getObject(s1.Name).Geometry[k]))
-    #geo=FreeCAD.ActiveDocument.getObject(s1.Name).Geometry
-    for k in range(lg):
-        FreeCAD.ActiveDocument.getObject(s1.Name).addCopy([k],FreeCAD.Vector(ofs[0],-ofs[1],0),False)
-        #print FreeCAD.ActiveDocument.getObject(s1.Name).Geometry[k]
-        #FreeCAD.ActiveDocument.getObject(s1.Name).delGeometry(k)
-    FreeCAD.ActiveDocument.recompute()
-    #print len (s1.Geometry)
-    #stop
-    #print (s1.Geometry) 
-    nlg=len (s1.Geometry)
-    idx_to_del=[]
-    idx_to_del_str=[]
-    #print geo
-    for k in range(nlg):
-        if str(FreeCAD.ActiveDocument.getObject(s1.Name).Geometry[k]) in geo:
-            idx_to_del.append(k)
-    #for j in range (len(idx_to_del)):
-    #    idx_to_del_str.append(str(idx_to_del[j]))
-    #print idx_to_del
-    #stop
-    #print idx_to_del_str
-    for i in range (nlg-1,-1,-1):
-    #    #FreeCAD.ActiveDocument.getObject(s_name).delGeometry(k)
-        #print i
-        if i in idx_to_del:
-            FreeCAD.ActiveDocument.getObject(s1.Name).delGeometry(i)
-    FreeCAD.ActiveDocument.recompute()
-    #FreeCAD.ActiveDocument.getObject(s1.Name).Placement = FreeCAD.Placement(FreeCAD.Vector(2*ofs[0],2*ofs[1],0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
-        
-    #geoL=len(App.ActiveDocument.getObject(sname).Geometry)
-    #Temp_Sketch_Sft= FreeCAD.activeDocument().addObject('Sketcher::SketchObject','Temp_Sketch_Sft')
-    #geo=[]
-    #for k in range(len (s.Geometry)):
-    #    App.ActiveDocument.Temp_Sketch_Sft.addCopy([k],App.Vector(100,100,0),False)
-    #    
-    #    #if 'LineSegment' in type(s.Geometry[k]).__name__:
-    #    ##if 'Line' in type(s.Geometry[k]).__name__:
-    #    #    #ls='<Line segment ({0},{1}) ({2},{3}) >'.format(s.Geometry[k].StartPoint.x+ofs[0],s.Geometry[k].StartPoint.y+ofs[1], s.Geometry[k].EndPoint.x+ofs[0],s.Geometry[k].EndPoint.y+ofs[1])
-    #    #    #geo.append(ls);geo.append(le)
-    #    #    #Temp_Sketch_Sft.addGeometry(FreeCAD.ActiveDocument.getObject(sname).Geometry[k])
-    #    #    #Temp_Sketch_Sft.addGeometry(geo)
-    #    #    spx=s.Geometry[k].StartPoint.x+ofs[0]
-    #    #    spy=s.Geometry[k].StartPoint.y+ofs[1]
-    #    #    epx=s.Geometry[k].EndPoint.x+ofs[0]
-    #    #    epy=s.Geometry[k].EndPoint.y+ofs[1]
-    #    #    
-    #    #    FreeCAD.ActiveDocument.Temp_Sketch_Sft.addGeometry(PLine(Base.Vector(spx,spy,0), Base.Vector(epx,epy,0)))
-    #        
-    #Temp_Sketch_Sft.Placement.Base[0]=FreeCAD.ActiveDocument.getObject(sname).Placement.Base[0]+ofs[0]
-    #Temp_Sketch_Sft.Placement.Base[1]=FreeCAD.ActiveDocument.getObject(sname).Placement.Base[1]+ofs[1]
-    
-    #print Temp_Sketch.Geometry
-    #FreeCAD.ActiveDocument.recompute()
-    return FreeCAD.ActiveDocument.ActiveObject.Name
-## 
 
 def export_pcb(fname=None):
     global last_fp_path, test_flag, start_time
