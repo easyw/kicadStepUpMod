@@ -30,6 +30,11 @@ Download and install your corresponding version of FreeCAD from [wiki Download p
 - automatically using the [FreeCAD Add-on Manager](https://github.com/FreeCAD/FreeCAD-addons) (bundled in to 0.17 dev version under Tools Menu)
 - manually by copying the kicadStepUpMod folder to the Mod sub-directory of the FreeCAD application.
 
+StepUp Cheat sheet
+------------------
+
+[kicad StepUp Cheat sheet](demo/kicadStepUp-cheat-sheet.pdf)
+
 ### Requirements
 
 - **FreeCAD** 0.15 4671 or **0.16 >= 6712** or **0.17 >= 11707**
