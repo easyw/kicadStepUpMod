@@ -389,7 +389,7 @@ class ksuExcDemo:
                     'MenuText': str(self.exFile),
                     'ToolTip' : "Demo files"}
         elif 'kicad_pcb' in self.ext:
-            return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'importBoard.svg') ,
+            return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'importPCB.svg'), #'importBoard.svg') ,
                     'MenuText': str(self.exFile),
                     'ToolTip' : "Demo files"}
         elif 'kicad_mod' in self.ext:
