@@ -21,14 +21,14 @@ ksuWB_icons_path =  os.path.join( ksuWBpath, 'Resources', 'icons')
 global main_ksu_Icon
 main_ksu_Icon = os.path.join( ksuWB_icons_path , 'kicad-StepUp-tools-WB.svg')
 
-
+ksu_wb_version='v 7.1.0'
 #try:
 #    from FreeCADGui import Workbench
 #except ImportError as e:
 #    FreeCAD.Console.PrintWarning("error")
     
 class ksuWB ( Workbench ):
-    global main_ksu_Icon
+    global main_ksu_Icon, ksu_wb_version
     
     "kicad StepUp WB object"
     Icon = main_ksu_Icon
@@ -58,7 +58,7 @@ class ksuWB ( Workbench ):
  
     def Activated(self):
                 # do something here if needed...
-        Msg ("ksuWB.Activated()\n")
+        Msg ("ksuWB.Activated("+ksu_wb_version+")\n")
  
     def Deactivated(self):
                 # do something here if needed...

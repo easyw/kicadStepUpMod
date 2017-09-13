@@ -50,6 +50,7 @@ class ksuTools:
         #else:
         #    return True
         #import kicadStepUptools
+        import os, sys
         return True
  
     def Activated(self):
@@ -409,7 +410,7 @@ class ksuExcDemo:
 
     def Activated(self):
         FreeCAD.Console.PrintWarning('opening ' + self.exFile + "\r\n")
-
+        import os, sys
         # So we can open the "Open File" dialog
         mw = FreeCADGui.getMainWindow()
 
@@ -430,8 +431,17 @@ class ksuExcDemo:
         FC_minorV=int(FreeCAD.Version()[1])
 
         if ext.lower()==".pdf":
-            import subprocess
-            subprocess.Popen([fnameDemo],shell=True)
+            import subprocess, sys
+            if sys.platform == "linux" or sys.platform == "linux2":
+                # linux
+                subprocess.call(["xdg-open", fnameDemo])
+            if sys.platform == "darwin":
+                # osx
+                cmd_open = 'open '+fnameDemo
+                os.system(cmd_open) #win, osx
+            else:
+                # win
+                subprocess.Popen([fnameDemo],shell=True)
         elif ext.lower()==".kicad_pcb" or ext.lower()==".kicad_mod":
             #FreeCAD.Console.PrintMessage(abs_ksu_path + "\r\n")
             #FreeCAD.Console.PrintMessage(stepfname + "\r\n")
