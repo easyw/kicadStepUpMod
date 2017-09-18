@@ -247,4 +247,5 @@ Changelog
 - added use grid_origin as reference point for placing the board and for sketch!!!
   this will allow to copy sketches between boards releases to keep constraints
 - fixed Sketch position for default use BaseOrigin @ 0,0,0 
+- fixed App::Part list inverted after FC 12090 https://github.com/FreeCAD/FreeCAD/pull/916
 - most clean code and comments done

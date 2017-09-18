@@ -287,6 +287,7 @@
 # added use grid_origin as reference point for placing the board and for sketch!!!
    # this will allow to copy sketches between boards releases to keep constraints
 # managed write permissions error message
+# fixed App::Part list inverted after FC 12090 https://github.com/FreeCAD/FreeCAD/pull/916
 # most clean code and comments done
 
 ##todo
@@ -392,7 +393,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.1.4.8"  # added single instance and utf8 support TESTING qt5
+___ver___ = "7.1.4.9"  # added single instance and utf8 support TESTING qt5
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -3972,6 +3973,7 @@ def reset_prop_shapes(obj,doc,App,Gui):
     r=[]
     t=s.copy()
     for i in t.childShapes():
+        #print t.childShapes
         c=i.copy()
         c.Placement=t.Placement.multiply(c.Placement)
         r.append((i,c))
@@ -4532,8 +4534,13 @@ def create_compound(count,modelnm):  #create compound function when a multipart 
             counter+=1
             if counter > count:
                 ##sayw(ObJ.TypeId)
-                FreeCADGui.Selection.addSelection(ObJ)
+                if 'App::Plane' not in ObJ.TypeId and 'App::Origin' not in ObJ.TypeId and 'App::Line' not in ObJ.TypeId:
+                    FreeCADGui.Selection.addSelection(ObJ)
         sel = FreeCADGui.Selection.getSelection()
+        lsel = len (sel)
+        #print lsel
+        #print sel[lsel-1].Label
+        #stop
         #mycompound_new=FreeCAD.activeDocument().ActiveObject
         #sayw (sel.Type)
         #sayw (sel[0].TypeId)
@@ -4547,6 +4554,8 @@ def create_compound(count,modelnm):  #create compound function when a multipart 
                 mycompound=FreeCAD.activeDocument().getObject(sel[0].Name)
                 FreeCADGui.Selection.addSelection(mycompound)
                 sayw('single Compound part')
+        #print sel[0].TypeId
+        #stop
         if 'App::Part' in sel[0].TypeId:  #from FC 0.17-10647 multipart STEPs are loded as App::Part
             sc_list=[]
             recurse_node(sel[0],sel[0].Placement, sc_list)
@@ -4563,6 +4572,28 @@ def create_compound(count,modelnm):  #create compound function when a multipart 
             mycompound=FreeCAD.activeDocument().ActiveObject
             if 1:
                 FreeCAD.ActiveDocument.getObject(FreeCADGui.Selection.getSelection()[0].Name).removeObjectsFromDocument()
+                FreeCAD.ActiveDocument.removeObject(FreeCADGui.Selection.getSelection()[0].Name)
+            else:
+                FreeCADGui.Selection.removeSelection(FreeCADGui.Selection.getSelection()[0])
+            FreeCADGui.Selection.addSelection(FreeCAD.activeDocument().ActiveObject)
+            FreeCAD.ActiveDocument.recompute()
+            #simple_copy(FreeCAD.activeDocument().ActiveObject)
+        elif 'App::Part' in sel[lsel-1].TypeId:  #from FC 0.17-12090 multipart STEPs are loded as App::Part and have a list inverted
+            sc_list=[]
+            recurse_node(sel[lsel-1],sel[lsel-1].Placement, sc_list)
+        #else:  #from FC 0.17-10647 multipart STEPs are loded as App::Part
+            sc_list_compound=[]
+            for o in sc_list:
+                if 'Part' in o.TypeId and 'App::Part' not in o.TypeId:
+                    sc_list_compound.append(o)
+            FreeCAD.ActiveDocument.recompute()
+            #sayw(sc_list_compound)
+            #stop
+            FreeCAD.activeDocument().addObject("Part::Compound",FreeCADGui.Selection.getSelection()[lsel-1].Label+"_mp")
+            FreeCAD.activeDocument().ActiveObject.Links = sc_list_compound #[FreeCAD.activeDocument().Part__Feature,FreeCAD.activeDocument().Shape,]
+            mycompound=FreeCAD.activeDocument().ActiveObject
+            if 1:
+                FreeCAD.ActiveDocument.getObject(FreeCADGui.Selection.getSelection()[lsel-1].Name).removeObjectsFromDocument()
                 FreeCAD.ActiveDocument.removeObject(FreeCADGui.Selection.getSelection()[0].Name)
             else:
                 FreeCADGui.Selection.removeSelection(FreeCADGui.Selection.getSelection()[0])
