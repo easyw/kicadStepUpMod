@@ -248,4 +248,5 @@ Changelog
   this will allow to copy sketches between boards releases to keep constraints
 - fixed Sketch position for default use BaseOrigin @ 0,0,0 
 - fixed App::Part list inverted after FC 12090 https://github.com/FreeCAD/FreeCAD/pull/916
+- fixed case of pcb with one drill only
 - most clean code and comments done

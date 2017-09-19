@@ -288,6 +288,7 @@
    # this will allow to copy sketches between boards releases to keep constraints
 # managed write permissions error message
 # fixed App::Part list inverted after FC 12090 https://github.com/FreeCAD/FreeCAD/pull/916
+# fixed case of pcb with one drill only
 # most clean code and comments done
 
 ##todo
@@ -393,7 +394,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.1.4.9"  # added single instance and utf8 support TESTING qt5
+___ver___ = "7.1.5.0"  # added single instance and utf8 support TESTING qt5
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -11771,7 +11772,10 @@ def DrawPCB(mypcb):
             shape_base=shapes[0]
             shapes=shapes[1:]
             #fc_016=True
-            shape = shape_base.fuse(shapes)
+            if len(HoleList)>1:  #more than one drill
+                shape = shape_base.fuse(shapes)
+            else:   #one drill ONLY
+                shape = shape_base
             #Part.show(shape)
             #stop
             cut_base = cut_base.cut(shape)
