@@ -289,6 +289,7 @@
 # managed write permissions error message
 # fixed App::Part list inverted after FC 12090 https://github.com/FreeCAD/FreeCAD/pull/916
 # fixed case of pcb with one drill only
+# minor fix when exporting wrl from multi objects 
 # most clean code and comments done
 
 ##todo
@@ -394,7 +395,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.1.5.0"  # added single instance and utf8 support TESTING qt5
+___ver___ = "7.1.5.1"  # added single instance and utf8 support TESTING qt5
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -3035,6 +3036,7 @@ def go_export(fPathName):
         if wrl_selected==False:
             say(fPathName)
             say(objs[0].Label)
+            lbl=objs[0].Label
             #say(objs)
             #export(objs, fullFilePathName, scale=None)
             export(objs, fPathName, 0.3937)
@@ -3049,7 +3051,10 @@ def go_export(fPathName):
             exportS=False;exportV=False
             say("Do not select VRML object(s)!")
             say_single_obj()
-            
+        lbl='empty'
+        if len(objs)>0:
+            lbl=objs[0].Label
+        return lbl
 ###
 def exportStep(objs, ffPathName):
     #Export fused object
@@ -3939,6 +3944,7 @@ def reset_prop(obj,doc,App,Gui):
     newObj =FreeCAD.ActiveDocument.addObject('Part::Feature',obj.Name)
     newObj.Shape=FreeCAD.ActiveDocument.getObject(obj.Name).Shape
     FreeCAD.ActiveDocument.ActiveObject.Label=FreeCAD.ActiveDocument.getObject(obj.Name).Label
+    #tsp = FreeCADGui.ActiveDocument.ActiveObject.Transparency=FreeCADGui.ActiveDocument.getObject(obj.Name).Transparency
     final_Label=FreeCAD.ActiveDocument.getObject(obj.Name).Label
     #say(final_Label)
     FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.getObject(obj.Name).ShapeColor
@@ -3962,6 +3968,7 @@ def reset_prop(obj,doc,App,Gui):
     FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.Common.LineColor
     FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.Common.PointColor
     FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.Common.DiffuseColor
+    #FreeCADGui.ActiveDocument.ActiveObject.Transparency=tsp
     FreeCAD.ActiveDocument.removeObject("Common")
     FreeCAD.ActiveDocument.recompute()
     #
@@ -3988,6 +3995,7 @@ def reset_prop_shapes(obj,doc,App,Gui):
     FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(obj.Name).LineColor
     FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(obj.Name).PointColor
     FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.getObject(obj.Name).DiffuseColor
+    #FreeCADGui.ActiveDocument.ActiveObject.Transparency=FreeCADGui.ActiveDocument.getObject(obj.Name).Transparency
     #FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.getObject(obj.Name).ShapeColor
     #FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(obj.Name).LineColor
     #FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(obj.Name).PointColor
@@ -4026,6 +4034,7 @@ def reset_prop_shapes2(obj,doc,App,Gui):
     FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(obj.Name).LineColor
     FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(obj.Name).PointColor
     FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.getObject(obj.Name).DiffuseColor
+    #FreeCADGui.ActiveDocument.ActiveObject.Transparency=FreeCADGui.ActiveDocument.getObject(obj.Name).Transparency
     new_label=obj.Label
     FreeCAD.ActiveDocument.removeObject(obj.Name)
     FreeCAD.ActiveDocument.recompute()
@@ -4045,6 +4054,7 @@ def copy_objs(obj,doc):
     FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(obj.Name).LineColor
     FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(obj.Name).PointColor
     FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.getObject(obj.Name).DiffuseColor
+    #FreeCADGui.ActiveDocument.ActiveObject.Transparency=FreeCADGui.ActiveDocument.getObject(obj.Name).Transparency
     FreeCAD.ActiveDocument.recompute()
     #App.ActiveDocument.ActiveObject.ViewObject.Visibility = False
     
@@ -7125,11 +7135,12 @@ def routineScaleVRML():
                     #say(fullFilePathName)
         else:
             say(fullFilePathName)
-        go_export(fullFilePathName)
+        lbl=go_export(fullFilePathName)
         path, fname = os.path.split(fullFilePathName)
         #fname=os.path.splitext(fname)[0]
         #fname=objs[0].Label
-        fname=FreeCAD.ActiveDocument.ActiveObject.Label  #step reset placement
+        ##fname=FreeCAD.ActiveDocument.ActiveObject.Label  #step reset placement
+        fname=lbl  #step reset placement
         #removing not allowed chars
         translation_table = dict.fromkeys(map(ord, '<>:"/\|?*,;:\\'), None)
         fname=fname.translate(translation_table)
