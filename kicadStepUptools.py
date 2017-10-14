@@ -3060,9 +3060,9 @@ def go_export(fPathName):
             exportS=False;exportV=False
             say("Do not select VRML object(s)!")
             say_single_obj()
-        lbl='empty'
-        if len(objs)>0:
-            lbl=objs[0].Label
+        #lbl='empty'
+        #if len(objs)>0:
+        #    lbl=objs[0].Label
         return lbl
 ###
 def exportStep(objs, ffPathName):
