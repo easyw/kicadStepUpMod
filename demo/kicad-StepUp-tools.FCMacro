@@ -290,10 +290,14 @@
 # fixed App::Part list inverted after FC 12090 https://github.com/FreeCAD/FreeCAD/pull/916
 # fixed case of pcb with one drill only
 # minor fix when exporting wrl from multi objects 
+# fixed Sketch inverted
+# fixed tabify
+# added better support for Body (hidden Parts)
 # most clean code and comments done
 
 ##todo
 
+## convert Bspline to Arcs https://github.com/FreeCAD/FreeCAD/commit/6d9cf80
 ## add edit and help to WB menu (self unresolved)
 ## copy objects and apply absolute placement to each one, then check collisions
 ## remove print and makesketch
@@ -395,7 +399,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.1.5.1"  # added single instance and utf8 support TESTING qt5
+___ver___ = "7.1.5.2"  # added single instance and utf8 support TESTING qt5
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -1901,6 +1905,7 @@ def close_ksu():
         say(doc.Label)
     
 def tabify():
+    cv = t.findChild(QtGui.QDockWidget, "Combo View")
     if KSUWidget and cv:
         dw=t.findChildren(QtGui.QDockWidget)
         #### if (1):
@@ -1912,7 +1917,10 @@ def tabify():
         #### ##         print ("ksu tab!")
         #### ## if not (ksu_in_tab):
         #### #else:
-        t.tabifyDockWidget(cv,KSUWidget)                
+        try:
+            t.tabifyDockWidget(cv,KSUWidget)                
+        except:
+            pass
         k_tab = t.findChild(QtGui.QDockWidget, "kicadStepUp") #"kicad StepUp 3D tools")
         k_tab.activateWindow()
         k_tab.raise_()
@@ -2360,8 +2368,9 @@ def recurse_node(obj,plcm,scl):  # recursive function to make a simple copy of A
                 recurse_node(o,new_plcm,scl)
             else:
                 if "Sketcher" not in o.TypeId:
-                    simple_cpy_plc(o,plcm)
-                    scl.append(FreeCAD.ActiveDocument.ActiveObject)
+                    if FreeCADGui.ActiveDocument.getObject(o.Name).Visibility:
+                        simple_cpy_plc(o,plcm)
+                        scl.append(FreeCAD.ActiveDocument.ActiveObject)
 
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
@@ -13419,18 +13428,33 @@ def getBoardOutline():
                             ])
                         #elif type(j.Geometry[k]).__name__ == 'ArcOfCircle':
                         elif 'ArcOfCircle' in type(j.Geometry[k]).__name__:
-                            outline.append([
-                                'arc',
-                                j.Geometry[k].Radius, 
-                                j.Geometry[k].Center.x, 
-                                j.Geometry[k].Center.y, 
-                                j.Geometry[k].FirstParameter, 
-                                j.Geometry[k].LastParameter,
-                                j.Geometry[k].Axis[0],
-                                j.Geometry[k].Axis[1],
-                                j.Geometry[k].Axis[2],
-                                j.Geometry[k]
-                            ])
+                            i=j.Geometry[k]
+                            if i.XAxis.x < 0:   ## da cambiare
+                                outline.append([
+                                    'arc',
+                                    i.Radius, 
+                                    i.Center.x, 
+                                    i.Center.y, 
+                                    i.LastParameter+pi,
+                                    i.FirstParameter+pi, 
+                                    -i.Axis[0],
+                                    i.Axis[1],
+                                    i.Axis[2],
+                                    i
+                                ])
+                            else:
+                                outline.append([
+                                    'arc',
+                                    i.Radius, 
+                                    i.Center.x, 
+                                    i.Center.y, 
+                                    i.LastParameter,
+                                    i.FirstParameter+pi, 
+                                    i.Axis[0],
+                                    i.Axis[1],
+                                    i.Axis[2],
+                                    i
+                                ])
                         else:
                             #print j.Geometry[k],'; not supported'
                             to_discretize.append(k)
@@ -13616,18 +13640,33 @@ def check_geom(sk_name, ofs=None):
             ])
         #elif type(j.Geometry[k]).__name__ == 'ArcOfCircle':
         elif 'ArcOfCircle' in type(j.Geometry[k]).__name__:
-            outline.append([
-                'arc',
-                j.Geometry[k].Radius, 
-                j.Geometry[k].Center.x+ofs[0], 
-                j.Geometry[k].Center.y+ofs[1], 
-                j.Geometry[k].FirstParameter+ofs[0], 
-                j.Geometry[k].LastParameter+ofs[1],
-                j.Geometry[k].Axis[0],
-                j.Geometry[k].Axis[1],
-                j.Geometry[k].Axis[2],
-                j.Geometry[k]
-            ])
+            i=j.Geometry[k]
+            if i.XAxis.x < 0:  #da cambiare
+                outline.append([
+                    'arc',
+                    i.Radius, 
+                    i.Center.x, 
+                    i.Center.y, 
+                    i.LastParameter+pi,
+                    i.FirstParameter+pi, 
+                    -i.Axis[0],
+                    i.Axis[1],
+                    i.Axis[2],
+                    i
+                ])
+            else:
+                outline.append([
+                    'arc',
+                    i.Radius, 
+                    i.Center.x, 
+                    i.Center.y, 
+                    i.LastParameter,
+                    i.FirstParameter+pi, 
+                    i.Axis[0],
+                    i.Axis[1],
+                    i.Axis[2],
+                    i
+                ])
         else:
             #print j.Geometry[k],'; not supported'
             to_discretize.append(j.Geometry[k])
