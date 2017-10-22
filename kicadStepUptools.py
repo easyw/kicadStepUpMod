@@ -290,13 +290,14 @@
 # fixed App::Part list inverted after FC 12090 https://github.com/FreeCAD/FreeCAD/pull/916
 # fixed case of pcb with one drill only
 # minor fix when exporting wrl from multi objects 
-# fixed Sketch inverted
 # fixed tabify
 # added better support for Body (hidden Parts)
+# fixed a regression in Sketch
 # most clean code and comments done
 
 ##todo
 
+## to be fixed Sketch inverted
 ## convert Bspline to Arcs https://github.com/FreeCAD/FreeCAD/commit/6d9cf80
 ## add edit and help to WB menu (self unresolved)
 ## copy objects and apply absolute placement to each one, then check collisions
@@ -399,7 +400,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.1.5.2"  # added single instance and utf8 support TESTING qt5
+___ver___ = "7.1.5.3"  # added single instance and utf8 support TESTING qt5
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -13428,33 +13429,47 @@ def getBoardOutline():
                             ])
                         #elif type(j.Geometry[k]).__name__ == 'ArcOfCircle':
                         elif 'ArcOfCircle' in type(j.Geometry[k]).__name__:
-                            i=j.Geometry[k]
-                            if i.XAxis.x < 0:   ## da cambiare
-                                outline.append([
-                                    'arc',
-                                    i.Radius, 
-                                    i.Center.x, 
-                                    i.Center.y, 
-                                    i.LastParameter+pi,
-                                    i.FirstParameter+pi, 
-                                    -i.Axis[0],
-                                    i.Axis[1],
-                                    i.Axis[2],
-                                    i
-                                ])
-                            else:
-                                outline.append([
-                                    'arc',
-                                    i.Radius, 
-                                    i.Center.x, 
-                                    i.Center.y, 
-                                    i.LastParameter,
-                                    i.FirstParameter+pi, 
-                                    i.Axis[0],
-                                    i.Axis[1],
-                                    i.Axis[2],
-                                    i
-                                ])
+                            outline.append([
+                                'arc',
+                                j.Geometry[k].Radius, 
+                                j.Geometry[k].Center.x, 
+                                j.Geometry[k].Center.y, 
+                                j.Geometry[k].FirstParameter, 
+                                j.Geometry[k].LastParameter,
+                                j.Geometry[k].Axis[0],
+                                j.Geometry[k].Axis[1],
+                                j.Geometry[k].Axis[2],
+                                j.Geometry[k]
+                            ])
+                            # i=j.Geometry[k]
+                            # sayerr('Xaxis1a')
+                            # if 0: #i.XAxis.x < 0:   ## da cambiare this is not available on FC0.16
+                            #     sayerr('Xaxis1b')
+                            #     outline.append([
+                            #         'arc',
+                            #         i.Radius, 
+                            #         i.Center.x, 
+                            #         i.Center.y, 
+                            #         i.LastParameter+pi,
+                            #         i.FirstParameter+pi, 
+                            #         -i.Axis[0],
+                            #         i.Axis[1],
+                            #         i.Axis[2],
+                            #         i
+                            #     ])
+                            # else:
+                            #     outline.append([
+                            #         'arc',
+                            #         i.Radius, 
+                            #         i.Center.x, 
+                            #         i.Center.y, 
+                            #         i.LastParameter,
+                            #         i.FirstParameter+pi, 
+                            #         i.Axis[0],
+                            #         i.Axis[1],
+                            #         i.Axis[2],
+                            #         i
+                            #     ])
                         else:
                             #print j.Geometry[k],'; not supported'
                             to_discretize.append(k)
@@ -13564,7 +13579,8 @@ def Discretize(skt_name):
     f=Part.makePolygon(l)
     Part.show(f)
     sh_name=FreeCAD.ActiveDocument.ActiveObject.Name
-    Draft.makeSketch(FreeCAD.ActiveDocument.ActiveObject,autoconstraints=True)
+    FreeCAD.ActiveDocument.recompute() 
+    Draft.makeSketch(FreeCAD.ActiveDocument.getObject(sh_name),autoconstraints=True)
     s_name=FreeCAD.ActiveDocument.ActiveObject.Name
     FreeCAD.ActiveDocument.removeObject(sh_name)
     FreeCAD.ActiveDocument.removeObject(skt_name)
@@ -13640,33 +13656,47 @@ def check_geom(sk_name, ofs=None):
             ])
         #elif type(j.Geometry[k]).__name__ == 'ArcOfCircle':
         elif 'ArcOfCircle' in type(j.Geometry[k]).__name__:
-            i=j.Geometry[k]
-            if i.XAxis.x < 0:  #da cambiare
-                outline.append([
-                    'arc',
-                    i.Radius, 
-                    i.Center.x, 
-                    i.Center.y, 
-                    i.LastParameter+pi,
-                    i.FirstParameter+pi, 
-                    -i.Axis[0],
-                    i.Axis[1],
-                    i.Axis[2],
-                    i
-                ])
-            else:
-                outline.append([
-                    'arc',
-                    i.Radius, 
-                    i.Center.x, 
-                    i.Center.y, 
-                    i.LastParameter,
-                    i.FirstParameter+pi, 
-                    i.Axis[0],
-                    i.Axis[1],
-                    i.Axis[2],
-                    i
-                ])
+            outline.append([
+                'arc',
+                j.Geometry[k].Radius, 
+                j.Geometry[k].Center.x+ofs[0], 
+                j.Geometry[k].Center.y+ofs[1], 
+                j.Geometry[k].FirstParameter+ofs[0], 
+                j.Geometry[k].LastParameter+ofs[1],
+                j.Geometry[k].Axis[0],
+                j.Geometry[k].Axis[1],
+                j.Geometry[k].Axis[2],
+                j.Geometry[k]
+            ])
+            # i=j.Geometry[k]
+            # sayerr('Xaxis2a')
+            # if 0: #i.XAxis.x < 0:  #da cambiare  this is not available on FC0.16
+            #     sayerr('Xaxis2b')
+            #     outline.append([
+            #         'arc',
+            #         i.Radius, 
+            #         i.Center.x, 
+            #         i.Center.y, 
+            #         i.LastParameter+pi,
+            #         i.FirstParameter+pi, 
+            #         -i.Axis[0],
+            #         i.Axis[1],
+            #         i.Axis[2],
+            #         i
+            #     ])
+            # else:
+            #     outline.append([
+            #         'arc',
+            #         i.Radius, 
+            #         i.Center.x, 
+            #         i.Center.y, 
+            #         i.LastParameter,
+            #         i.FirstParameter+pi, 
+            #         i.Axis[0],
+            #         i.Axis[1],
+            #         i.Axis[2],
+            #         i
+            #     ])
         else:
             #print j.Geometry[k],'; not supported'
             to_discretize.append(j.Geometry[k])
@@ -13901,6 +13931,7 @@ def export_pcb(fname=None):
                         else:
                            sk_to_conv.append(obj.Name)
                 for s in sk_to_conv:
+                    #sayerr(s)
                     ns=Discretize(s)
                     offset1=[-FreeCAD.ActiveDocument.getObject(sk_name).Placement.Base[0],-FreeCAD.ActiveDocument.getObject(sk_name).Placement.Base[1]]
                     elist, to_dis=check_geom(ns,offset1)

@@ -250,7 +250,7 @@ Changelog
 - fixed App::Part list inverted after FC 12090 https://github.com/FreeCAD/FreeCAD/pull/916
 - fixed case of pcb with one drill only
 - minor fix when exporting wrl from multi objects 
-- fixed Sketch inverted
 - fixed tabify
 - added better support for Body (hidden Parts)
+- fixed a regression in Sketch
 - most clean code and comments done
