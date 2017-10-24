@@ -293,12 +293,12 @@
 # fixed tabify
 # added better support for Body (hidden Parts)
 # fixed a regression in Sketch
+# fixed Sketch inverted
+# converted Bspline to Arcs https://github.com/FreeCAD/FreeCAD/commit/6d9cf80
 # most clean code and comments done
 
 ##todo
 
-## to be fixed Sketch inverted
-## convert Bspline to Arcs https://github.com/FreeCAD/FreeCAD/commit/6d9cf80
 ## add edit and help to WB menu (self unresolved)
 ## copy objects and apply absolute placement to each one, then check collisions
 ## remove print and makesketch
@@ -400,7 +400,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.1.5.3"  # added single instance and utf8 support TESTING qt5
+___ver___ = "7.1.5.4"  # added single instance and utf8 support TESTING qt5
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -424,13 +424,14 @@ global full_placement, shape_col, align_vrml_step_colors
 global timer_Collisions, last_3d_path, expanded_view, mingui
 global textEdit_dim_base, textEdit_dim_hide #textEdit dimensions for hiding showing text content
 global warning_nbr, original_filename, edge_width, load_sketch, grid_orig, dvm, pt_osx, pt_lnx, dqd, running_time
-global addConstraints
+global addConstraints, precision
 
 original_filename=""
 edge_width = None
 load_sketch=True 
 dvm = 3.0 # obsolete: discretizer multiplier factor
 dqd = 0.02 #discretize(QuasiDeflection=d) => gives a list of points with a maximum deflection 'd' to the edge (faster)
+precision = 0.1 # precision in spline or bezier conversion
 pt_osx=False #platform OSX
 pt_lnx=False #platform Linux
 running_time = 0
@@ -13564,7 +13565,7 @@ def Discretize(skt_name):
     ##and a curvature deflection of 'c'. Optionally a minimum number of points
     ##can be set which by default is set to 2. 
 
-    global dvm, dqd
+    global dvm, dqd, precision
 
     # lng=(abs(FreeCAD.ActiveDocument.getObject(skt_name).Shape.BoundBox.XLength)+abs(FreeCAD.ActiveDocument.getObject(skt_name).Shape.BoundBox.YLength))
     # dv=int(dvm*lng) #discretize auto setting
@@ -13573,18 +13574,69 @@ def Discretize(skt_name):
     # if dv < 20:
     #     dv=20
     b=FreeCAD.ActiveDocument.getObject(skt_name)
-    #l=b.Shape.copy().discretize(dv)
-    #l=b.Shape.copy().discretize(QuasiDeflection=0.02)
-    l=b.Shape.copy().discretize(QuasiDeflection=dqd)
-    f=Part.makePolygon(l)
-    Part.show(f)
-    sh_name=FreeCAD.ActiveDocument.ActiveObject.Name
-    FreeCAD.ActiveDocument.recompute() 
-    Draft.makeSketch(FreeCAD.ActiveDocument.getObject(sh_name),autoconstraints=True)
-    s_name=FreeCAD.ActiveDocument.ActiveObject.Name
-    FreeCAD.ActiveDocument.removeObject(sh_name)
-    FreeCAD.ActiveDocument.removeObject(skt_name)
-    FreeCAD.ActiveDocument.recompute() 
+    shp1=b.Shape.copy()
+    #e = shp1.Edges[0].Curve
+    e = shp1.Edges[0] #.Curve
+    #sayerr(e.Curve)
+    #print DraftGeomUtils.geomType(e)
+    #if isinstance(e.Curve,Part.BSplineCurve):
+    #    sayerr('geomType BSP')
+    #Part.show(shp1)
+    newShapeList = []
+    newShapes = []
+    if isinstance(e.Curve,Part.BSplineCurve):
+        say('found BSpline')
+        edges = []
+        arcs = e.Curve.toBiArcs(precision)
+        #print arcs
+        for i in arcs:
+            edges.append(Part.Edge(i))
+        w = Part.Wire([Part.Edge(i) for i in edges])
+        Part.show(w)
+        w_name=FreeCAD.ActiveDocument.ActiveObject.Name
+        newShapeList.append(w_name)
+        wn=FreeCAD.ActiveDocument.getObject(w_name)
+        newShapes.append(wn)
+        sketch = Draft.makeSketch(newShapes[0],autoconstraints=True)
+        #FreeCAD.ActiveDocument.ActiveObject.Label="Sketch_dxf"
+        sname=FreeCAD.ActiveDocument.ActiveObject.Name
+        geom=[]
+        ## recreating a correct geometry
+        for i in sketch.Geometry:
+            if isinstance(i,Part.ArcOfCircle) and i.XAxis.x < 0:
+                arc=Part.ArcOfCircle(i.Circle,i.FirstParameter+pi,i.LastParameter+pi)
+                arc.XAxis.x = -arc.XAxis.x
+                geom.append(arc)
+            else:
+                geom.append(i)                
+        tsk= FreeCAD.activeDocument().addObject('Sketcher::SketchObject','Sketch_result')
+        tsk.addGeometry(geom)
+        tsk.Placement=FreeCAD.ActiveDocument.getObject(sname).Placement
+        FreeCAD.ActiveDocument.removeObject(sname)
+        #print tsk.Geometry
+        for w in newShapes[1:]:
+            Draft.makeSketch([w],addTo=sketch)    
+        #stop
+        #for wire in wires:
+        #    FreeCAD.ActiveDocument.removeObject(wire.Name)
+        for wnm in newShapeList:
+            FreeCAD.ActiveDocument.removeObject(wnm)
+        FreeCAD.ActiveDocument.removeObject(skt_name)
+        FreeCAD.ActiveDocument.recompute() 
+        s_name=tsk.Name
+    else: #ellipses
+        #l=b.Shape.copy().discretize(dv)
+        #l=b.Shape.copy().discretize(QuasiDeflection=0.02)
+        l=b.Shape.copy().discretize(QuasiDeflection=dqd)
+        f=Part.makePolygon(l)
+        Part.show(f)
+        sh_name=FreeCAD.ActiveDocument.ActiveObject.Name
+        FreeCAD.ActiveDocument.recompute() 
+        Draft.makeSketch(FreeCAD.ActiveDocument.getObject(sh_name),autoconstraints=True)
+        s_name=FreeCAD.ActiveDocument.ActiveObject.Name
+        FreeCAD.ActiveDocument.removeObject(sh_name)
+        FreeCAD.ActiveDocument.removeObject(skt_name)
+        FreeCAD.ActiveDocument.recompute() 
     return s_name
     #stop
 
@@ -13913,6 +13965,7 @@ def export_pcb(fname=None):
                     if (obj.TypeId=="Part::Feature") or (obj.TypeId=="Sketcher::SketchObject"):
                         obj_list_prev.append(obj.Name)
                 Draft.draftify(FreeCAD.ActiveDocument.getObject(t_name),delete=True)
+                #Draft.draftify(FreeCAD.ActiveDocument.getObject(t_name),delete=False)
                 FreeCAD.ActiveDocument.recompute()
                 #stop
                 obj_list_after=[]
@@ -13931,7 +13984,7 @@ def export_pcb(fname=None):
                         else:
                            sk_to_conv.append(obj.Name)
                 for s in sk_to_conv:
-                    #sayerr(s)
+                    #sayerr(s) ## 
                     ns=Discretize(s)
                     offset1=[-FreeCAD.ActiveDocument.getObject(sk_name).Placement.Base[0],-FreeCAD.ActiveDocument.getObject(sk_name).Placement.Base[1]]
                     elist, to_dis=check_geom(ns,offset1)
