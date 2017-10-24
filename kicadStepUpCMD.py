@@ -407,6 +407,7 @@ class ksuTools3D2D:
             for o in objs:
                 Draft.makeShape2DView(o,vec)
         else:
+            reply = QtGui.QMessageBox.information(None,"Warning", "select something\to project it to a 2D shape in the document")
             FreeCAD.Console.PrintError('select something\to project it to a 2D shape in the document\n')
 #
 
@@ -442,85 +443,106 @@ class ksuTools2D2Sketch:
                 for obj in FreeCADGui.Selection.getSelection():
                     FreeCADGui.ActiveDocument.getObject(obj.Name).Visibility=False
                 FreeCAD.ActiveDocument.recompute()
+                FC_majorV=int(FreeCAD.Version()[0])
+                FC_minorV=int(FreeCAD.Version()[1])
                 wires,_faces = Draft.downgrade(faceobj,delete=True)
+                if FC_majorV==0 and FC_minorV<=16:
+                    try:
+                        sketch = Draft.makeSketch(wires[0:1])
+                        sketch.Label = "Sketch_converted"
+                        for wire in wires[1:]:
+                            Draft.makeSketch([wire],addTo=sketch)
+                        sname=FreeCAD.ActiveDocument.ActiveObject.Name
+                    except:
+                        sname=FreeCAD.ActiveDocument.ActiveObject.Name
+                        FreeCAD.ActiveDocument.removeObject(sname)
+                        reply = QtGui.QMessageBox.information(None,"Error", "BSplines not supported in FC0.16\nUse FC0.17")
+                    #sname=FreeCAD.ActiveDocument.ActiveObject.Name
+                    for wire in wires:
+                        FreeCAD.ActiveDocument.removeObject(wire.Name)
                 #FreeCAD.Console.PrintWarning("\nConverting Bezier curves to Arcs\n")                                
-                newShapeList = []
-                newShapes = []
-                #stop
-                for wire in wires:
-                    for e in wire.Shape.Edges:
-                        if DraftGeomUtils.geomType(e) == "BSplineCurve":
-                            #print 'found BSpline'
-                            found_BCurve=True
-                            edges = []
-                            arcs = e.Curve.toBiArcs(precision)
-                            #print arcs
-                            for i in arcs:
-                                edges.append(Part.Edge(i))
-                            w = Part.Wire([Part.Edge(i) for i in edges])
-                            Part.show(w)
-                            w_name=FreeCAD.ActiveDocument.ActiveObject.Name
-                            newShapeList.append(w_name)
-                            wn=FreeCAD.ActiveDocument.getObject(w_name)
-                            newShapes.append(wn)
-                        elif DraftGeomUtils.geomType(e) == "BezierCurve":
-                            #print 'found BezierCurve'
-                            found_BCurve=True
-                            edges = []
-                            newspline = e.Curve.toBSpline()
-                            arcs = newspline.toBiArcs(precision)
-                            for i in arcs:
-                                edges.append(Part.Edge(i))
-                            w = Part.Wire([Part.Edge(i) for i in edges])
-                            Part.show(w)
-                            w_name=FreeCAD.ActiveDocument.ActiveObject.Name
-                            newShapeList.append(w_name)
-                            wn=FreeCAD.ActiveDocument.getObject(w_name)
-                            newShapes.append(wn)
-                            #if 'spline' in e.Curve:
-                                #w = Part.Wire(e)
-                                #w_name =WireDiscretize(w)
-                            #stop
-                        else:
-                            #print 'found STD Geom'
-                            w = Part.Wire(e)
-                            Part.show(w)
-                            newShapes.append(w)
-                            w_name = FreeCAD.ActiveDocument.ActiveObject.Name
-                            newShapeList.append(w_name)
-                            
-                #stop
-                #print newShapes
-                sketch = Draft.makeSketch(newShapes[0])
-                FreeCAD.ActiveDocument.ActiveObject.Label="Sketch_dxf"
-                sname=FreeCAD.ActiveDocument.ActiveObject.Name
+                #wires,_faces = Draft.downgrade(faceobj,delete=True)
+                else:
+                    newShapeList = []
+                    newShapes = []
+                    found_BCurve=False
+                    #stop
+                    for wire in wires:
+                        for e in wire.Shape.Edges:
+                            if DraftGeomUtils.geomType(e) == "BSplineCurve":
+                                #print 'found BSpline'
+                                found_BCurve=True
+                                edges = []
+                                arcs = e.Curve.toBiArcs(precision)
+                                #print arcs
+                                for i in arcs:
+                                    edges.append(Part.Edge(i))
+                                w = Part.Wire([Part.Edge(i) for i in edges])
+                                Part.show(w)
+                                w_name=FreeCAD.ActiveDocument.ActiveObject.Name
+                                newShapeList.append(w_name)
+                                wn=FreeCAD.ActiveDocument.getObject(w_name)
+                                newShapes.append(wn)
+                            elif DraftGeomUtils.geomType(e) == "BezierCurve":
+                                #print 'found BezierCurve'
+                                found_BCurve=True
+                                edges = []
+                                newspline = e.Curve.toBSpline()
+                                arcs = newspline.toBiArcs(precision)
+                                for i in arcs:
+                                    edges.append(Part.Edge(i))
+                                w = Part.Wire([Part.Edge(i) for i in edges])
+                                Part.show(w)
+                                w_name=FreeCAD.ActiveDocument.ActiveObject.Name
+                                newShapeList.append(w_name)
+                                wn=FreeCAD.ActiveDocument.getObject(w_name)
+                                newShapes.append(wn)
+                                #if 'spline' in e.Curve:
+                                    #w = Part.Wire(e)
+                                    #w_name =WireDiscretize(w)
+                                #stop
+                            else:
+                                #print 'found STD Geom'
+                                w = Part.Wire(e)
+                                Part.show(w)
+                                newShapes.append(w)
+                                w_name = FreeCAD.ActiveDocument.ActiveObject.Name
+                                newShapeList.append(w_name)
+                                
+                    #stop
+                    #print newShapes
+                    sketch = Draft.makeSketch(newShapes[0])
+                    FreeCAD.ActiveDocument.ActiveObject.Label="Sketch_conv"
+                    sname=FreeCAD.ActiveDocument.ActiveObject.Name
                 
-                for w in newShapes[1:]:
-                    Draft.makeSketch([w],addTo=sketch)    
-                    #Draft.makeSketch([w])    
-                #stop
-                for wire in wires:
-                    FreeCAD.ActiveDocument.removeObject(wire.Name)
-                for wnm in newShapeList:
-                    FreeCAD.ActiveDocument.removeObject(wnm)
-
-                if found_BCurve==True:
-                    geom=[]
-                    ## recreating a correct geometry
-                    for i in sketch.Geometry:
-                        if isinstance(i,Part.ArcOfCircle) and i.XAxis.x < 0:
-                            arc=Part.ArcOfCircle(i.Circle,i.FirstParameter+math.pi,i.LastParameter+math.pi)
-                            arc.XAxis.x = -arc.XAxis.x
-                            geom.append(arc)
-                        else:
-                            geom.append(i)                
-                    tsk= FreeCAD.activeDocument().addObject('Sketcher::SketchObject','Sketch_converted')
-                    tsk.addGeometry(geom)
-                    tsk.Placement=FreeCAD.ActiveDocument.getObject(sname).Placement
-                    FreeCAD.ActiveDocument.removeObject(sname)
-                    #print tsk.Geometry
-                    FreeCAD.ActiveDocument.recompute()
-                pass
+                    for w in newShapes[1:]:
+                        Draft.makeSketch([w],addTo=sketch)    
+                        #Draft.makeSketch([w])    
+                    #stop
+                    for wire in wires:
+                        FreeCAD.ActiveDocument.removeObject(wire.Name)
+                    for wnm in newShapeList:
+                        FreeCAD.ActiveDocument.removeObject(wnm)
+    
+                    if found_BCurve==True:
+                        geom=[]
+                        ## recreating a correct geometry
+                        for i in sketch.Geometry:
+                            if isinstance(i,Part.ArcOfCircle) and i.XAxis.x < 0:
+                                arc=Part.ArcOfCircle(i.Circle,i.FirstParameter+math.pi,i.LastParameter+math.pi)
+                                arc.XAxis.x = -arc.XAxis.x
+                                geom.append(arc)
+                            else:
+                                geom.append(i)                
+                        tsk= FreeCAD.activeDocument().addObject('Sketcher::SketchObject','Sketch_converted')
+                        tsk.addGeometry(geom)
+                        tsk.Placement=FreeCAD.ActiveDocument.getObject(sname).Placement
+                        FreeCAD.ActiveDocument.removeObject(sname)
+                        #print tsk.Geometry
+                        FreeCAD.ActiveDocument.recompute()
+                    else:
+                        FreeCAD.ActiveDocument.getObject(sname).Label="Sketch_converted"
+                    pass
             except Part.OCCError: # Exception: #
                 FreeCAD.Console.PrintError('Error in source %s (%s)' % (faceobj.Name,faceobj.Label)+"\n")
         else:
@@ -566,6 +588,7 @@ class ksuTools2DtoFace:
                 FreeCAD.Console.PrintError('Error in source %s (%s)' % (faceobj.Name,faceobj.Label)+"\n")
         else:
             #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
+            reply = QtGui.QMessageBox.information(None,"Warning", "Select elements to be converted to Face")
             FreeCAD.Console.PrintWarning("Select elements to be converted to Face\n")             
 
 FreeCADGui.addCommand('ksuTools2DtoFace',ksuTools2DtoFace())
