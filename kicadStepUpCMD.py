@@ -391,24 +391,28 @@ class ksuTools3D2D:
         FreeCAD.Console.PrintMessage('projecting the selected object to a 2D shape in the document\n')
         faces = []
         objs = []
-        vec = FreeCADGui.ActiveDocument.ActiveView.getViewDirection().negative()
-        sel = FreeCADGui.Selection.getSelectionEx()
-        if FreeCADGui.Selection.getSelectionEx():
-            for s in sel:
-                objs.append(s.Object)
-                for e in s.SubElementNames:
-                    if "Face" in e:
-                        faces.append(int(e[4:])-1)
-            #print(objs,faces)
-            ##if len(objs) == 1:
-            ##    if faces:
-            ##        Draft.makeShape2DView(objs[0],vec,facenumbers=faces)
-            ##        #return
-            for o in objs:
-                Draft.makeShape2DView(o,vec)
+        if FreeCAD.ActiveDocument is not None:
+            vec = FreeCADGui.ActiveDocument.ActiveView.getViewDirection().negative()
+            sel = FreeCADGui.Selection.getSelectionEx()
+            if FreeCADGui.Selection.getSelectionEx():
+                for s in sel:
+                    objs.append(s.Object)
+                    for e in s.SubElementNames:
+                        if "Face" in e:
+                            faces.append(int(e[4:])-1)
+                #print(objs,faces)
+                ##if len(objs) == 1:
+                ##    if faces:
+                ##        Draft.makeShape2DView(objs[0],vec,facenumbers=faces)
+                ##        #return
+                for o in objs:
+                    Draft.makeShape2DView(o,vec)
+            else:
+                reply = QtGui.QMessageBox.information(None,"Warning", "select something\nto project it to a 2D shape in the document")
+                FreeCAD.Console.PrintError('select something\nto project it to a 2D shape in the document\n')
         else:
-            reply = QtGui.QMessageBox.information(None,"Warning", "select something\to project it to a 2D shape in the document")
-            FreeCAD.Console.PrintError('select something\to project it to a 2D shape in the document\n')
+            reply = QtGui.QMessageBox.information(None,"Warning", "select something\nto project it to a 2D shape in the document")
+            FreeCAD.Console.PrintError('select something\nto project it to a 2D shape in the document\n')
 #
 
 FreeCADGui.addCommand('ksuTools3D2D',ksuTools3D2D())
@@ -420,7 +424,7 @@ class ksuTools2D2Sketch:
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , '2DtoSketch.svg') , # the name of a svg file available in the resources
                      'MenuText': "ksu 2D to Sketch" ,
-                     'ToolTip' : "2D object to Sketch"}
+                     'ToolTip' : "2D object (or DXF) to Sketch"}
  
     def IsActive(self):
         return True
@@ -547,6 +551,7 @@ class ksuTools2D2Sketch:
                 FreeCAD.Console.PrintError('Error in source %s (%s)' % (faceobj.Name,faceobj.Label)+"\n")
         else:
             #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
+            reply = QtGui.QMessageBox.information(None,"Warning", "Select elements to be converted to Sketch")
             FreeCAD.Console.PrintWarning("Select elements to be converted to Sketch\n")             
         
         pass
@@ -560,7 +565,7 @@ class ksuTools2DtoFace:
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , '2DtoFace.svg') , # the name of a svg file available in the resources
                      'MenuText': "ksu 2D to Face" ,
-                     'ToolTip' : "2D object to Surface for extruding"}
+                     'ToolTip' : "2D object (or DXF) to Surface for extruding"}
  
     def IsActive(self):
         return True
