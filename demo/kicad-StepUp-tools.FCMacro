@@ -400,7 +400,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.1.5.4"  # added single instance and utf8 support TESTING qt5
+___ver___ = "7.1.5.5"  # added single instance and utf8 support TESTING qt5
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -13576,67 +13576,85 @@ def Discretize(skt_name):
     b=FreeCAD.ActiveDocument.getObject(skt_name)
     shp1=b.Shape.copy()
     #e = shp1.Edges[0].Curve
-    e = shp1.Edges[0] #.Curve
+    #skList=[]
+    newShapeList = []
+    newShapes = []
+    for e in shp1.Edges:
+    ##e = shp1.Edges[0] #.Curve
     #sayerr(e.Curve)
     #print DraftGeomUtils.geomType(e)
     #if isinstance(e.Curve,Part.BSplineCurve):
     #    sayerr('geomType BSP')
     #Part.show(shp1)
-    newShapeList = []
-    newShapes = []
-    if isinstance(e.Curve,Part.BSplineCurve):
-        say('found BSpline')
-        edges = []
-        arcs = e.Curve.toBiArcs(precision)
-        #print arcs
-        for i in arcs:
-            edges.append(Part.Edge(i))
-        w = Part.Wire([Part.Edge(i) for i in edges])
-        Part.show(w)
-        w_name=FreeCAD.ActiveDocument.ActiveObject.Name
-        newShapeList.append(w_name)
-        wn=FreeCAD.ActiveDocument.getObject(w_name)
-        newShapes.append(wn)
-        sketch = Draft.makeSketch(newShapes[0],autoconstraints=True)
-        #FreeCAD.ActiveDocument.ActiveObject.Label="Sketch_dxf"
-        sname=FreeCAD.ActiveDocument.ActiveObject.Name
-        geom=[]
-        ## recreating a correct geometry
-        for i in sketch.Geometry:
-            if isinstance(i,Part.ArcOfCircle) and i.XAxis.x < 0:
-                arc=Part.ArcOfCircle(i.Circle,i.FirstParameter+pi,i.LastParameter+pi)
-                arc.XAxis.x = -arc.XAxis.x
-                geom.append(arc)
-            else:
-                geom.append(i)                
-        tsk= FreeCAD.activeDocument().addObject('Sketcher::SketchObject','Sketch_result')
-        tsk.addGeometry(geom)
-        tsk.Placement=FreeCAD.ActiveDocument.getObject(sname).Placement
-        FreeCAD.ActiveDocument.removeObject(sname)
-        #print tsk.Geometry
-        for w in newShapes[1:]:
-            Draft.makeSketch([w],addTo=sketch)    
-        #stop
-        #for wire in wires:
-        #    FreeCAD.ActiveDocument.removeObject(wire.Name)
-        for wnm in newShapeList:
-            FreeCAD.ActiveDocument.removeObject(wnm)
-        FreeCAD.ActiveDocument.removeObject(skt_name)
-        FreeCAD.ActiveDocument.recompute() 
-        s_name=tsk.Name
-    else: #ellipses
-        #l=b.Shape.copy().discretize(dv)
-        #l=b.Shape.copy().discretize(QuasiDeflection=0.02)
-        l=b.Shape.copy().discretize(QuasiDeflection=dqd)
-        f=Part.makePolygon(l)
-        Part.show(f)
-        sh_name=FreeCAD.ActiveDocument.ActiveObject.Name
-        FreeCAD.ActiveDocument.recompute() 
-        Draft.makeSketch(FreeCAD.ActiveDocument.getObject(sh_name),autoconstraints=True)
-        s_name=FreeCAD.ActiveDocument.ActiveObject.Name
-        FreeCAD.ActiveDocument.removeObject(sh_name)
-        FreeCAD.ActiveDocument.removeObject(skt_name)
-        FreeCAD.ActiveDocument.recompute() 
+        if isinstance(e.Curve,Part.BSplineCurve):
+            say('found BSpline')
+            edges = []
+            arcs = e.Curve.toBiArcs(precision)
+            #print arcs
+            for i in arcs:
+                edges.append(Part.Edge(i))
+            w = Part.Wire([Part.Edge(i) for i in edges])
+            Part.show(w)
+            w_name=FreeCAD.ActiveDocument.ActiveObject.Name
+            newShapeList.append(w_name)
+            wn=FreeCAD.ActiveDocument.getObject(w_name)
+            newShapes.append(wn)
+        else: #ellipses
+            #l=b.Shape.copy().discretize(dv)
+            #l=b.Shape.copy().discretize(QuasiDeflection=0.02)
+            l=b.Shape.copy().discretize(QuasiDeflection=dqd)
+            f=Part.makePolygon(l)
+            Part.show(f)
+            sh_name=FreeCAD.ActiveDocument.ActiveObject.Name
+            newShapeList.append(sh_name)
+            newShapes.append(f)
+            #FreeCAD.ActiveDocument.recompute() 
+        
+    sketch = Draft.makeSketch(newShapes[0],autoconstraints=True)
+    #FreeCAD.ActiveDocument.ActiveObject.Label="Sketch_dxf"
+    sname=FreeCAD.ActiveDocument.ActiveObject.Name
+    for w in newShapes[1:]:
+        Draft.makeSketch([w],addTo=sketch)    
+    geom=[]
+    ## recreating a correct geometry
+    for i in sketch.Geometry:
+        if isinstance(i,Part.ArcOfCircle) and i.XAxis.x < 0:
+            arc=Part.ArcOfCircle(i.Circle,i.FirstParameter+pi,i.LastParameter+pi)
+            arc.XAxis.x = -arc.XAxis.x
+            geom.append(arc)
+        else:
+            geom.append(i)                
+    tsk= FreeCAD.activeDocument().addObject('Sketcher::SketchObject','Sketch_result')
+    tsk.addGeometry(geom)
+    tsk.Placement=FreeCAD.ActiveDocument.getObject(sname).Placement
+    FreeCAD.ActiveDocument.removeObject(sname)
+    #print tsk.Geometry
+    ##for w in newShapes[1:]:
+    ##    Draft.makeSketch([w],addTo=sketch)    
+    #stop
+    #for wire in wires:
+    #    FreeCAD.ActiveDocument.removeObject(wire.Name)
+    for wnm in newShapeList:
+        FreeCAD.ActiveDocument.removeObject(wnm)
+    FreeCAD.ActiveDocument.removeObject(skt_name)
+    FreeCAD.ActiveDocument.recompute() 
+    s_name=tsk.Name
+        
+        #else: #ellipses
+        #    #l=b.Shape.copy().discretize(dv)
+        #    #l=b.Shape.copy().discretize(QuasiDeflection=0.02)
+        #    l=b.Shape.copy().discretize(QuasiDeflection=dqd)
+        #    f=Part.makePolygon(l)
+        #    Part.show(f)
+        #    sh_name=FreeCAD.ActiveDocument.ActiveObject.Name
+        #    FreeCAD.ActiveDocument.recompute() 
+        #    Draft.makeSketch(FreeCAD.ActiveDocument.getObject(sh_name),autoconstraints=True)
+        #    s_name=FreeCAD.ActiveDocument.ActiveObject.Name
+        #    FreeCAD.ActiveDocument.removeObject(sh_name)
+        #    FreeCAD.ActiveDocument.removeObject(skt_name)
+        #    FreeCAD.ActiveDocument.recompute() 
+    
+    
     return s_name
     #stop
 
@@ -14026,10 +14044,18 @@ def export_pcb(fname=None):
             msgr="new Edge pushed to kicad board!\n"
             msgr+="file saved to "+fpath+"\n"
             msgr+="backup file saved to "+foname
-            if len (not_supported) > 2:
-                msg+="<br><b>found downgraded Geometry:<br>"+not_supported[:-2]+"!</b>"
-                msgr+="\nfound downgraded Geometry: "+not_supported[:-2]+"!"
-            
+            lns=len (not_supported) 
+            print lns
+            if lns > 2:
+                if lns < 103: # writing only some geometry not supported
+                    msg+="<br><b>found downgraded Geometry:<br>"+not_supported[:-2]+"!</b>"
+                    msgr+="\nfound downgraded Geometry: "+not_supported[:-2]+"!"
+                else:
+                    nss=not_supported[:-2]
+                    nss=nss[:101]+'... <br> ...'
+                    msg+="<br><b>found downgraded Geometry:<br>"+nss+"</b>"
+                    msgr+="\nfound downgraded Geometry: "+not_supported[:-2]+"!"
+                
             say(msgr)
             say_info(msg)
             if not edge_pcb_exists:
