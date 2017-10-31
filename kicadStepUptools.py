@@ -400,7 +400,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.1.5.6"  # added single instance and utf8 support TESTING qt5
+___ver___ = "7.1.5.7"  # added single instance and utf8 support TESTING qt5
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -13443,9 +13443,9 @@ def getBoardOutline():
                             #     j.Geometry[k].Center.x, 
                             #     j.Geometry[k].Center.y
                             # ])
-                        elif type(j.Geometry[k]).__name__ == 'ArcOfCircle':
+                        #elif type(j.Geometry[k]).__name__ == 'ArcOfCircle':
                         #elif isinstance(j.Geometry[k].Curve,Part.Circle)
-                        #elif 'ArcOfCircle' in type(j.Geometry[k]).__name__:
+                        elif 'ArcOfCircle' in type(j.Geometry[k]).__name__:
                             #if isinstance(j.Shape.Edges[k].Curve,Part.Circle):
                             #sayw(type(j.Geometry[k]))
                             #sayerr(j.Shape.Edges[k].Curve)
@@ -13569,7 +13569,7 @@ def createEdge(edg,ofs):
         axisZ = edg[8]
         
         angle = degrees(sA - eA) # * (-1)
-        sayerr(angle)
+        # sayerr(angle)
         
         ##x1 = radius * cos(sA) + xs
         ##y1 = (radius * sin(sA)) * (-1) + ys
@@ -13577,7 +13577,7 @@ def createEdge(edg,ofs):
         #ys = (edg[11][1]) * (-1) 
         ## sA = atan2(edg[10][1]-edg[3], edg[10][0]-edg[2])
         ## eA = atan2(edg[11][1]-edg[3], edg[11][0]-edg[2])
-        sayerr(edg[12])
+        # sayerr(edg[12])
         
         if  1: #angle ==< 0:
             x1 = edg[10][0] 
@@ -13671,7 +13671,9 @@ def Discretize(skt_name):
             newShapes.append(f)
             #FreeCAD.ActiveDocument.recompute() 
         
-    sketch = Draft.makeSketch(newShapes[0],autoconstraints=True)
+    ## sketch = Draft.makeSketch(newShapes[0],autoconstraints=True)
+    sketch = Draft.makeSketch(FreeCAD.ActiveDocument.getObject(newShapeList[0]),autoconstraints=True)
+    
     #FreeCAD.ActiveDocument.ActiveObject.Label="Sketch_dxf"
     sname=FreeCAD.ActiveDocument.ActiveObject.Name
     for w in newShapes[1:]:
