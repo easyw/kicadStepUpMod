@@ -400,7 +400,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.1.5.5"  # added single instance and utf8 support TESTING qt5
+___ver___ = "7.1.5.6"  # added single instance and utf8 support TESTING qt5
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -13413,35 +13413,62 @@ def getBoardOutline():
                         #if type(j.Geometry[k]).__name__ == 'LineSegment':
                         if 'LineSegment' in type(j.Geometry[k]).__name__:
                         #if 'Line' in type(j.Geometry[k]).__name__:
+                            sk_ge=j.Geometry[k].toShape() #needed to fix some issue on sketch geometry building
                             outline.append([
                                 'line',
-                                j.Geometry[k].StartPoint.x,
-                                j.Geometry[k].StartPoint.y,
-                                j.Geometry[k].EndPoint.x,
-                                j.Geometry[k].EndPoint.y
+                                sk_ge.Edges[0].Vertexes[0].Point.x,
+                                sk_ge.Edges[0].Vertexes[0].Point.y,
+                                sk_ge.Edges[0].Vertexes[1].Point.x,
+                                sk_ge.Edges[0].Vertexes[1].Point.y
                             ])
+                            # outline.append([
+                            #     'line',
+                            #     j.Geometry[k].StartPoint.x,
+                            #     j.Geometry[k].StartPoint.y,
+                            #     j.Geometry[k].EndPoint.x,
+                            #     j.Geometry[k].EndPoint.y
+                            # ])
                         #elif type(j.Geometry[k]).__name__ == 'Circle':
                         elif 'Circle' in type(j.Geometry[k]).__name__ and not 'ArcOfCircle' in type(j.Geometry[k]).__name__:
+                            sk_ge=j.Geometry[k].toShape()  #needed to fix some issue on sketch geometry building
                             outline.append([
                                 'circle',
-                                j.Geometry[k].Radius,
-                                j.Geometry[k].Center.x, 
-                                j.Geometry[k].Center.y
+                                sk_ge.Edges[0].Curve.Radius,
+                                sk_ge.Edges[0].Curve.Center.x,
+                                sk_ge.Edges[0].Curve.Center.y
                             ])
-                        #elif type(j.Geometry[k]).__name__ == 'ArcOfCircle':
-                        elif 'ArcOfCircle' in type(j.Geometry[k]).__name__:
+                            # outline.append([
+                            #     'circle',
+                            #     j.Geometry[k].Radius,
+                            #     j.Geometry[k].Center.x, 
+                            #     j.Geometry[k].Center.y
+                            # ])
+                        elif type(j.Geometry[k]).__name__ == 'ArcOfCircle':
+                        #elif isinstance(j.Geometry[k].Curve,Part.Circle)
+                        #elif 'ArcOfCircle' in type(j.Geometry[k]).__name__:
+                            #if isinstance(j.Shape.Edges[k].Curve,Part.Circle):
+                            #sayw(type(j.Geometry[k]))
+                            #sayerr(j.Shape.Edges[k].Curve)
+                            sk_ge=j.Geometry[k].toShape() #needed to fix some issue on sketch geometry building
                             outline.append([
                                 'arc',
                                 j.Geometry[k].Radius, 
-                                j.Geometry[k].Center.x, 
-                                j.Geometry[k].Center.y, 
+                                sk_ge.Edges[0].Curve.Center.x,
+                                sk_ge.Edges[0].Curve.Center.y,
                                 j.Geometry[k].FirstParameter, 
                                 j.Geometry[k].LastParameter,
                                 j.Geometry[k].Axis[0],
                                 j.Geometry[k].Axis[1],
                                 j.Geometry[k].Axis[2],
-                                j.Geometry[k]
+                                j.Geometry[k],
+                                sk_ge.Edges[0].Vertexes[0].Point,
+                                sk_ge.Edges[0].Vertexes[1].Point,
+                                sk_ge.Edges[0].Orientation
                             ])
+                            
+                            ##j.Geometry[k].Center.x, 
+                            ##j.Geometry[k].Center.y, 
+                                
                             # i=j.Geometry[k]
                             # sayerr('Xaxis1a')
                             # if 0: #i.XAxis.x < 0:   ## da cambiare this is not available on FC0.16
@@ -13519,19 +13546,49 @@ def createEdge(edg,ofs):
     #    self.addCircle(edg[1:], 'Edge.Cuts', 0.01)
     elif edg[0] == 'arc':
         #print edg
+        #print 2*pi
+        #use_rotation=False
+        #if abs(abs(edg[5])-2*pi) <= edge_tolerance:
+        #    print '2PI'
+        #    use_rotation=True
         radius = edg[1]
         xs = edg[2]
         ys = (edg[3]) * (-1)
+        #if 0: #use_rotation:
+        #    sayerr('2PI')
+        #    sayerr('check edge orientation!!!')
+        #    #eA = edg[4]+pi
+        #    #sA = edg[5]+pi
+        #    eA = edg[4]-pi/2
+        #    sA = edg[5]-pi/2
+        #else:
         sA = edg[4]
         eA = edg[5]
         axisX = edg[6]
         axisY = edg[7]
         axisZ = edg[8]
         
-        x1 = radius * cos(sA) + xs
-        y1 = (radius * sin(sA)) * (-1) + ys
-        #y1 = (radius * sin(sA)) * + ys
         angle = degrees(sA - eA) # * (-1)
+        sayerr(angle)
+        
+        ##x1 = radius * cos(sA) + xs
+        ##y1 = (radius * sin(sA)) * (-1) + ys
+        #xs = edg[11][0] 
+        #ys = (edg[11][1]) * (-1) 
+        ## sA = atan2(edg[10][1]-edg[3], edg[10][0]-edg[2])
+        ## eA = atan2(edg[11][1]-edg[3], edg[11][0]-edg[2])
+        sayerr(edg[12])
+        
+        if  1: #angle ==< 0:
+            x1 = edg[10][0] 
+            y1 = (edg[10][1]) * (-1) 
+            x2 = edg[11][0] 
+            y2 = (edg[11][1]) * (-1) 
+        else:
+            x1 = edg[11][0] 
+            y1 = (edg[11][1]) * (-1) 
+        
+        #y1 = (radius * sin(sA)) * + ys
         #print axisX, axisY,axisZ
         #print 'coord     xs, ys, x1, y1 ', xs,';', ys,';', x1,';', y1,';',angle
         
@@ -13542,7 +13599,11 @@ def createEdge(edg,ofs):
         #self.getMinY(ys)
         #self.getMinX(x1)
         #self.getMinY(y1)
-        
+        # Draft.makePoint(xs, -ys, 0)
+        # Draft.makePoint(x1, -y1, 0)
+        # #Draft.makePoint(mp[0],mp[1],mp[2])
+        # Draft.makePoint(x2, -y2, 0)
+
         #self.pcbElem.append(['gr_arc', xs, ys, x1, y1, curve, width, layer])
         k_edg = "  (gr_arc (start {0} {1}) (end {2} {3}) (angle {4}) (layer {6}) (width {5}))"\
                    .format(xs+ofs[0], ys+ofs[1], x1+ofs[0], y1+ofs[1], angle, edge_width, 'Edge.Cuts')
@@ -13709,34 +13770,68 @@ def check_geom(sk_name, ofs=None):
                 continue
         if 'LineSegment' in type(j.Geometry[k]).__name__:
         #if 'Line' in type(j.Geometry[k]).__name__:
+            sk_ge=j.Geometry[k].toShape() #needed to fix some issue on sketch geometry building
             outline.append([
                 'line',
-                j.Geometry[k].StartPoint.x+ofs[0],
-                j.Geometry[k].StartPoint.y+ofs[1],
-                j.Geometry[k].EndPoint.x+ofs[0],
-                j.Geometry[k].EndPoint.y+ofs[1]
+                sk_ge.Edges[0].Vertexes[0].Point.x+ofs[0],
+                sk_ge.Edges[0].Vertexes[0].Point.y+ofs[1],
+                sk_ge.Edges[0].Vertexes[1].Point.x+ofs[0],
+                sk_ge.Edges[0].Vertexes[1].Point.y+ofs[1]
             ])
+            # outline.append([
+            #     'line',
+            #     j.Geometry[k].StartPoint.x+ofs[0],
+            #     j.Geometry[k].StartPoint.y+ofs[1],
+            #     j.Geometry[k].EndPoint.x+ofs[0],
+            #     j.Geometry[k].EndPoint.y+ofs[1]
+            # ])
         #elif type(j.Geometry[k]).__name__ == 'Circle':
         elif 'Circle' in type(j.Geometry[k]).__name__ and not 'ArcOfCircle' in type(j.Geometry[k]).__name__:
+            sk_ge=j.Geometry[k].toShape() #needed to fix some issue on sketch geometry building
             outline.append([
                 'circle',
-                j.Geometry[k].Radius,
-                j.Geometry[k].Center.x+ofs[0], 
-                j.Geometry[k].Center.y+ofs[1]
+                sk_ge.Edges[0].Curve.Radius,
+                sk_ge.Edges[0].Curve.Center.x+ofs[0], 
+                sk_ge.Edges[0].Curve.Center.y+ofs[1] 
             ])
+            #outline.append([
+            #    'circle',
+            #    j.Geometry[k].Radius,
+            #    j.Geometry[k].Center.x+ofs[0], 
+            #    j.Geometry[k].Center.y+ofs[1]
+            #])
         #elif type(j.Geometry[k]).__name__ == 'ArcOfCircle':
         elif 'ArcOfCircle' in type(j.Geometry[k]).__name__:
+            #outline.append([
+            #    'arc',
+            #    j.Geometry[k].Radius, 
+            #    j.Geometry[k].Center.x+ofs[0], 
+            #    j.Geometry[k].Center.y+ofs[1], 
+            #    j.Geometry[k].FirstParameter+ofs[0], 
+            #    j.Geometry[k].LastParameter+ofs[1],
+            #    j.Geometry[k].Axis[0],
+            #    j.Geometry[k].Axis[1],
+            #    j.Geometry[k].Axis[2],
+            #    j.Geometry[k],
+            #    j.Shape.Edges[k].Vertexes[0].Point,
+            #    j.Shape.Edges[k].Vertexes[1].Point,
+            #    j.Shape.Edges[k].Orientation
+            #])
+            sk_ge=j.Geometry[k].toShape() #needed to fix some issue on sketch geometry building
             outline.append([
                 'arc',
                 j.Geometry[k].Radius, 
-                j.Geometry[k].Center.x+ofs[0], 
-                j.Geometry[k].Center.y+ofs[1], 
-                j.Geometry[k].FirstParameter+ofs[0], 
+                sk_ge.Edges[0].Curve.Center.x+ofs[0],
+                sk_ge.Edges[0].Curve.Center.y+ofs[1],
+                j.Geometry[k].FirstParameter+ofs[0],
                 j.Geometry[k].LastParameter+ofs[1],
                 j.Geometry[k].Axis[0],
                 j.Geometry[k].Axis[1],
                 j.Geometry[k].Axis[2],
-                j.Geometry[k]
+                j.Geometry[k],
+                sk_ge.Edges[0].Vertexes[0].Point,
+                sk_ge.Edges[0].Vertexes[1].Point,
+                sk_ge.Edges[0].Orientation
             ])
             # i=j.Geometry[k]
             # sayerr('Xaxis2a')
@@ -14026,6 +14121,7 @@ def export_pcb(fname=None):
             #newcontent = newcontent.replace(/\((?=[^.]*$)/, "")
             #newcontent = re.sub(r'(.*)\)', r'', replace, flags=re.MULTILINE)
             new_border=''
+            #print new_edge_list
             for border in new_edge_list:
                 new_border=new_border+os.linesep+createEdge(border,offset)
                 #sayw(createEdge(border))
@@ -14045,7 +14141,7 @@ def export_pcb(fname=None):
             msgr+="file saved to "+fpath+"\n"
             msgr+="backup file saved to "+foname
             lns=len (not_supported) 
-            print lns
+            #print lns
             if lns > 2:
                 if lns < 103: # writing only some geometry not supported
                     msg+="<br><b>found downgraded Geometry:<br>"+not_supported[:-2]+"!</b>"
