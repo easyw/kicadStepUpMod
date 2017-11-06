@@ -400,7 +400,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.1.5.7"  # added single instance and utf8 support TESTING qt5
+___ver___ = "7.1.5.8"  # added single instance and utf8 support TESTING qt5
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -6674,6 +6674,7 @@ def onLoadBoard(file_name=None):
                 if hasattr(mypcb.setup, 'grid_origin'):
                     #say('aux_axis_origin' + str(mypcb.setup.aux_axis_origin))
                     xp=-mypcb.setup.grid_origin[0]; yp=mypcb.setup.grid_origin[1]
+                    sayw('grid origin found @ ('+str(xp)+', '+str(yp)+')') 
                 else:
                     say('grid origin not found\nplacing at center of an A4')
                     xp=-148.5;yp=98.5
@@ -6684,6 +6685,7 @@ def onLoadBoard(file_name=None):
                 #xp=getAuxAxisOrigin()[0]; yp=-getAuxAxisOrigin()[1]  #offset of the board & modules
                 if hasattr(mypcb.setup, 'aux_axis_origin'):
                     #say('aux_axis_origin' + str(mypcb.setup.aux_axis_origin))
+                    sayw('aux origin used') 
                     xp=-mypcb.setup.aux_axis_origin[0]; yp=mypcb.setup.aux_axis_origin[1]
                 else:
                     say('aux origin not used') 
@@ -13925,7 +13927,14 @@ def find_skt_in_Doc():
     return sk_list
     
 ###
-
+##  getGridOrigin
+def getGridOrigin(dt):
+    match = re.search(r'\(grid_origin (.+?) (.+?)\)', dt, re.MULTILINE|re.DOTALL)
+    if match is not None:
+        return [float(match.group(1)), float(match.group(2))];
+    else:
+        return None
+##
 def export_pcb(fname=None):
     global last_fp_path, test_flag, start_time
     global configParser, configFilePath, start_time
@@ -13933,6 +13942,7 @@ def export_pcb(fname=None):
     global board_base_point_x, board_base_point_y, real_board_pos_x, real_board_pos_y
     global pcb_path, use_AppPart, force_oldGroups
     global original_filename
+    global off_x, off_y
     sayw('exporting new pcb edges')
     doc=FreeCAD.ActiveDocument
     #filePath=last_pcb_path
@@ -14004,7 +14014,15 @@ def export_pcb(fname=None):
                 edge_pcb_exists=True
             if not edge_pcb_exists and len(re.findall('\s\(fp_circle(.+?)Edge(.+?)\)\)\r\n|\(fp_circle(.+?)Edge(.+?)\)\)\r|\(fp_circle(.+?)Edge(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
                 edge_pcb_exists=True
-            
+ 
+            oft=getGridOrigin(data)
+            #print oft
+            gof=False
+            if oft is not None:
+                off_x=oft[0];off_y=-oft[1]
+                offset = oft
+                gof=True
+  
             if edge_pcb_exists:
                 #offset=[0,0]
                 doc=FreeCAD.ActiveDocument
@@ -14023,7 +14041,8 @@ def export_pcb(fname=None):
                         offset=[bbpx,bbpy]
                     else:
                         offset=[off_x,-off_y]
-                    
+                    if gof and grid_orig==1:
+                        offset=[off_x,-off_y]
                     #print offset
                     #stop
                     say('pcb edge exists')
