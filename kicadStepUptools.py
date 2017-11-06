@@ -400,7 +400,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.1.5.8"  # added single instance and utf8 support TESTING qt5
+___ver___ = "7.1.5.9"  # added single instance and utf8 support TESTING qt5
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -14059,9 +14059,13 @@ def export_pcb(fname=None):
                     say_warning("""<b>to push a new release of Edge to a kicad board<br>with an existing Edge<br>you need to load the board with StepUp first""")
                     stop
             else:
-                sayw('pcb edge does not exist, aligning sketch to center of A4 page')
                 #[148.5, -98.5] center of A4 page
-                offset=[148.5,98.5]
+                if gof and grid_orig==1:
+                    sayw('pcb edge does not exist, aligning sketch to Grid Origin')
+                    offset=[off_x,-off_y]
+                else:
+                    sayw('pcb edge does not exist, aligning sketch to center of A4 page')
+                    offset=[148.5,98.5]
                 ##sel = FreeCADGui.Selection.getSelection()
                 ##if len (sel) >0:
                 ##    #sayw(doc.Name)

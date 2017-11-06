@@ -256,4 +256,5 @@ Changelog
 - fixed Arc orientation when creating Sketch from dxf,svg
 - improved FC0.16 compatibility
 - aligned GridOrigin also in case of Sketch copy/paste from empty board
+- aligned pushing pcb to GridOrigin from empty Sketch/Board (only GridOrigin set)
 - most clean code and comments done
