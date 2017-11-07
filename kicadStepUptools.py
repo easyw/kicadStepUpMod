@@ -400,7 +400,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.1.5.9"  # added single instance and utf8 support TESTING qt5
+___ver___ = "7.1.6.0"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -14102,8 +14102,12 @@ def export_pcb(fname=None):
                     #print obj.TypeId
                     if (obj.TypeId=="Part::Feature") or (obj.TypeId=="Sketcher::SketchObject"):
                         obj_list_prev.append(obj.Name)
-                Draft.draftify(FreeCAD.ActiveDocument.getObject(t_name),delete=True)
+                #Draft.draftify(FreeCAD.ActiveDocument.getObject(t_name),delete=True)
                 #Draft.draftify(FreeCAD.ActiveDocument.getObject(t_name),delete=False)
+                b=FreeCAD.ActiveDocument.getObject(t_name)
+                shp1=b.Shape.copy()
+                Part.show(shp1)
+                FreeCAD.ActiveDocument.removeObject(t_name)
                 FreeCAD.ActiveDocument.recompute()
                 #stop
                 obj_list_after=[]
