@@ -295,6 +295,12 @@
 # fixed a regression in Sketch
 # fixed Sketch inverted
 # converted Bspline to Arcs https://github.com/FreeCAD/FreeCAD/commit/6d9cf80
+# fixed Arc orientation when creating Sketch from dxf,svg
+# improved FC0.16 compatibility
+# aligned GridOrigin also in case of Sketch copy/paste from empty board
+# aligned pushing pcb to GridOrigin from empty Sketch/Board (only GridOrigin set)
+# removed draftify bugged function
+# added support for arc of 360 deg
 # most clean code and comments done
 
 ##todo
@@ -400,7 +406,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.1.6.0"  
+___ver___ = "7.1.6.1"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -8274,7 +8280,10 @@ def getArc(layer, content, oType):
         else:
             width = 0
 
-        [x2, y2] = rotPoint2([x1, y1], [xs, ys], curve)
+        if abs(curve)==360: 
+            [x2, y2] = [xs, ys]
+        else:
+            [x2, y2] = rotPoint2([x1, y1], [xs, ys], curve)
 
         data.append([x1, y1 * (-1), x2, y2 * (-1), curve, width])
     #
@@ -8763,7 +8772,15 @@ def createArc(p1, p2, curve, width=0.02, cap='round'):
 
 ###
 def addArc_3(p1, p2, curve, width=0, cap='round'):
-    return createArc(p1, p2, curve, width, cap)
+    #print curve, ' arc angle' 
+    if abs(curve) == 360:
+        #print p1
+        #print p2
+        r = sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
+        #print r
+        return createCircle(p1[0], p1[1], r, width)
+    else:
+        return createArc(p1, p2, curve, width, cap)
 
 ###
 def addLine_2(x1, y1, x2, y2, width=0.01):
@@ -14342,16 +14359,4 @@ if KSUWidget.style().metaObject().className()== "QStyleSheetStyle":
 ## 
 ## if QtGui.QApplication.style().metaObject().className() == "QStyleSheetStyle":
 ##     form.setStyleSheet('QPushButton {border-radius: 0px; padding: 1px 2px;}')
-
-#
-#Word size: 64-bit
-#Version: 0.15.4671 (Git)
-#Branch: releases/FreeCAD-0-15
-#Python version: 2.7.5
-#Qt version: 4.8.6
-#Coin version: 3.1.3
-#SoQt version: 1.5.0
-#OCC version: 6.7.0
-#
-
 
