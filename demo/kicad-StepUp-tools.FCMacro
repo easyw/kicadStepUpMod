@@ -301,6 +301,7 @@
 # aligned pushing pcb to GridOrigin from empty Sketch/Board (only GridOrigin set)
 # removed draftify bugged function
 # added support for arc of 360 deg
+# added oval exception if only one value is done
 # most clean code and comments done
 
 ##todo
@@ -406,7 +407,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.1.6.1"  
+___ver___ = "7.1.6.2"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -11338,7 +11339,12 @@ def DrawPCB(mypcb):
                         xs=p.at[0]+m.at[0];ys=-p.at[1]-m.at[1]
                         #x1=mc.end[0]+m.at[0];y1=-mc.end[1]-m.at[1]
                         #radius = float(p.drill[0])/2 #sqrt((xs - x1) ** 2 + (ys - y1) ** 2)
-                        rx=float(p.drill[0]);ry=float(p.drill[1])
+                        rx=float(p.drill[0])
+                        #print p.drill
+                        if len(p.drill)>2:
+                            ry=float(p.drill[1])
+                        else:
+                            ry=rx
                         #print(p.at[0],p.at[1], p.drill[0])
                         [x1, y1] = rotPoint2([xs, ys], [m.at[0], -m.at[1]], m_angle)
                         if holes_solid:
