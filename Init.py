@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#-*- coding: utf-8 -*-
 #****************************************************************************
 #*                                                                          *
 #*  Kicad STEPUP (TM) (3D kicad board and models to STEP) for FreeCAD       *

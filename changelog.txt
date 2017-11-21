@@ -7,7 +7,7 @@ maintained in the same accuracy and aspect in STEP AP214 format. +
 The *kicad StepUp* maintains the usual way to work with kicad, but improves the process
 to work in a collaborative way with mechanical designers bringing near ECAD and MCAD environments. +
 With kicad StepUp you’ll get an exact representation of your physical board in Native 3D PCB
-v7.1.6.2 November/2017
+v7.1.6.3 November/2017
 
 please refer to
 kicadStepUp-starter-Guide.pdf
@@ -260,4 +260,6 @@ Changelog
 - removed draftify bugged function
 - added support for arc of 360 deg
 - added oval exception if only one value is done
+- starting py3 compatibility
+- added offset in mm after kicad_pcb version 20171114
 - most clean code and comments done

@@ -302,10 +302,13 @@
 # removed draftify bugged function
 # added support for arc of 360 deg
 # added oval exception if only one value is done
+# starting py3 compatibility
+# added offset in mm after kicad_pcb version 20171114
 # most clean code and comments done
 
 ##todo
 
+## completing py3 compatibility
 ## add edit and help to WB menu (self unresolved)
 ## copy objects and apply absolute placement to each one, then check collisions
 ## remove print and makesketch
@@ -407,7 +410,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.1.6.2"  
+___ver___ = "7.1.6.4"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -431,8 +434,9 @@ global full_placement, shape_col, align_vrml_step_colors
 global timer_Collisions, last_3d_path, expanded_view, mingui
 global textEdit_dim_base, textEdit_dim_hide #textEdit dimensions for hiding showing text content
 global warning_nbr, original_filename, edge_width, load_sketch, grid_orig, dvm, pt_osx, pt_lnx, dqd, running_time
-global addConstraints, precision
+global addConstraints, precision, conv_offs
 
+conv_offs = 1.0 #conversion offset from decimils to mm pcb version >= 20171114
 original_filename=""
 edge_width = None
 load_sketch=True 
@@ -455,7 +459,7 @@ align_vrml_step_colors=True
 textEdit_dim_base=(176,36,305,453) #default value
 textEdit_dim_hide=(30000,30000,0,0) #hide value fake position
 
-
+last_pcb_path=u'' #py3
 exportS=True
 last_file_path=''
 pcb_path =u''
@@ -575,6 +579,25 @@ global FC_export_min_version
 FC_export_min_version="11670"  #11670 latest JM
 
 ##--------------------------------------------------------------------------------------
+py2=False
+try:  ## maui py3
+    unicode = unicode
+except NameError:
+    # 'unicode' is undefined, must be Python 3
+    str = str
+    unicode = str
+    bytes = bytes
+    basestring = (str,bytes)
+else:
+    # 'unicode' exists, must be Python 2
+    str = str
+    unicode = unicode
+    bytes = str
+    basestring = basestring
+    py2=True
+
+
+
 '''
 S-Expression parser written in Python
 
@@ -697,7 +720,10 @@ class Sexp(object):
         self._value = SexpValueDict() if value is None else value 
 
     def __len__(self):
-        return len(self._value)
+        try:
+            return len(self._value)
+        except:
+            return 0 #maui py3
 
     def __getitem__(self,key):
         v = self._value[key]
@@ -1293,11 +1319,11 @@ def parseSexp(sexp):
     stack = []
     out = []
     if logger.isEnabledFor(logging.DEBUG):
-    	logger.debug("%-6s %-14s %-44s %-s" % tuple("term value out stack".split()))
+        logger.debug("%-6s %-14s %-44s %-s" % tuple("term value out stack".split()))
     for termtypes in re.finditer(parseSexp.regex, sexp):
         term, value = [(t,v) for t,v in termtypes.groupdict().items() if v][0]
-    	if logger.isEnabledFor(logging.DEBUG):
-	    logging.debug("%-7s %-14s %-44r %-r" % (term, value, out, stack))
+        if logger.isEnabledFor(logging.DEBUG):
+            logging.debug("%-7s %-14s %-44r %-r" % (term, value, out, stack))
         if   term == 'l': # left bracket
             stack.append(out)
             out = []
@@ -1783,10 +1809,10 @@ metal_bronze="""material DEF MET-BRONZE Material {
         transparency 0.0
         }"""
        
-#bronze 	0.2125 	0.1275 	0.054 	0.714 	0.4284 	0.18144 	0.393548 	0.271906 	0.166721 	0.2
+#bronze     0.2125  0.1275  0.054   0.714   0.4284  0.18144     0.393548    0.271906    0.166721    0.2
 #http://devernay.free.fr/cours/opengl/materials.html
 
-#silver 	0.19225 	0.19225 	0.19225 	0.50754 	0.50754 	0.50754 	0.508273 	0.508273 	0.508273 	0.4
+#silver     0.19225     0.19225     0.19225     0.50754     0.50754     0.50754     0.508273    0.508273    0.508273    0.4
 metal_silver="""material DEF MET-SILVER Material {
         ambientIntensity 0.022727
         diffuseColor 0.50754 0.50754 0.50754
@@ -4666,6 +4692,8 @@ def Load_models(pcbThickness,modules):
     global off_x, off_y, volume_minimum, height_minimum, bbox_all, bbox_list
     global whitelisted_model_elements, models3D_prefix, models3D_prefix2, last_pcb_path, full_placement
     global allow_compound, compound_found, bklist, force_transparency, warning_nbr, use_AppPart
+    global conv_offs
+    
     #say (modules)
     missing_models = ''
     compound_found=False
@@ -6618,6 +6646,8 @@ def onLoadBoard(file_name=None):
     global last_fp_path, last_pcb_path, plcmnt, xp, yp, exportFusing
     global ignore_utf8, ignore_utf8_incfg, pcb_path, disable_VBO, use_AppPart, force_oldGroups
     global original_filename, edge_width, load_sketch, grid_orig, warning_nbr, running_time, addConstraints
+    global conv_offs
+    
     default_value='/'
     clear_console()
     #lastPcb_dir='C:/Cad/Progetti_K/ksu-test'
@@ -11051,7 +11081,7 @@ def OSCD2Dg_edgestofaces(edges,algo=3,eps=0.001):
 def DrawPCB(mypcb):
     global start_time, use_AppPart, force_oldGroups, min_drill_size
     global addVirtual, load_sketch, off_x, off_y, aux_orig, grid_orig
-    global running_time
+    global running_time, conv_offs
 
     say("PCB Loader ")
     ## NB use always float() to guarantee number not string!!!
@@ -11083,6 +11113,10 @@ def DrawPCB(mypcb):
     if version>=4:
         Edge_Cuts_lvl=44
         Top_lvl=0
+    conv_offs=1.0
+    if version >= 20171114:
+        conv_offs=25.4
+    
     #sayerr(mypcb.layers['0'])
     for lynbr in mypcb.layers: #getting layers name
         if float(lynbr) == Top_lvl:
@@ -11248,7 +11282,13 @@ def DrawPCB(mypcb):
                 error_scale_module=True
             #model_list.append(mdl_name[0])
             #model=model_list[j]+'.wrl'
-            model=md[0].decode("utf-8")
+            #if py2:
+            if sys.version_info[0] == 2: #py2
+                model=md[0].decode("utf-8")
+                #stop
+            else: #py3
+                model=md[0] # py3 .decode("utf-8")
+            #print (model, ' MODEL')
             if (virtual==1 and addVirtual==0):
                 model_name='no3Dmodel'
                 side='noLayer'
@@ -11283,6 +11323,11 @@ def DrawPCB(mypcb):
                 # sayerr(params)
                 if len(mdl_name) > 0:
                     # model_name, rot_comb, warn, pos_vrml, rotz_vrml, scale_vrml = get3DParams(mdl_name,params, rot, virtual)
+                    #sayerr(md.at.xyz)
+                    if conv_offs != 1: #pcb version >= 20171114 (offset wrl in mm)
+                        ofs=[md.at.xyz[0]/conv_offs,md.at.xyz[1]/conv_offs,md.at.xyz[2]/conv_offs]
+                    else:
+                        ofs=md.at.xyz
                     line = []
                     line.append(model_name)
                     line.append(m_x)
@@ -11290,7 +11335,7 @@ def DrawPCB(mypcb):
                     line.append(m_rot-md.rotate.xyz[2])
                     line.append(side)
                     line.append(warn)
-                    line.append(md.at.xyz) #pos_vrml)
+                    line.append(ofs) #(md.at.xyz) #pos_vrml)
                     line.append(md.rotate.xyz) #rotz_vrml)
                     #sayerr(rotz_vrml)
                     line.append(md.scale.xyz) #scale_vrml)
@@ -13538,7 +13583,7 @@ def getBoardOutline():
                                     not_supported=not_supported + str_geom.strip('<').strip('>').strip(' object')+'; '
                             #continue
                     ##break
-                except Exception, e:
+                except Exception as e:
                     FreeCAD.Console.PrintWarning('1. ' + str(e) + "\n")
 
     return outline, not_supported, to_discretize, construction_geom

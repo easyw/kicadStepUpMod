@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 #****************************************************************************
 #*                                                                          *
 #*  Kicad STEPUP (TM) (3D kicad board and models to STEP) for FreeCAD       *
@@ -21,7 +21,7 @@ ksuWB_icons_path =  os.path.join( ksuWBpath, 'Resources', 'icons')
 global main_ksu_Icon
 main_ksu_Icon = os.path.join( ksuWB_icons_path , 'kicad-StepUp-tools-WB.svg')
 
-ksu_wb_version='v 7.3.0'
+ksu_wb_version='v 7.4.0'
 #try:
 #    from FreeCADGui import Workbench
 #except ImportError as e:

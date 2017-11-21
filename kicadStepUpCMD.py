@@ -11,7 +11,7 @@
 #*                                                                          *
 
 import FreeCAD,FreeCADGui
-import FreeCAD, FreeCADGui, Part, os
+import FreeCAD, FreeCADGui, Part, os, sys
 import imp, os, sys, tempfile
 import FreeCAD, FreeCADGui, Draft, DraftGeomUtils, OpenSCAD2Dgeom
 from PySide import QtGui
@@ -23,6 +23,13 @@ import math
 precision = 0.1 # precision in spline or bezier conversion
 
 reload_Gui=False#True
+
+def reload_lib(lib):
+    if (sys.version_info > (3, 0)):
+        import importlib
+        importlib.reload(lib)
+    else:
+        reload (lib)
 
 ksuWBpath = os.path.dirname(ksu_locator.__file__)
 #sys.path.append(ksuWB + '/Gui')
@@ -60,7 +67,7 @@ class ksuTools:
     def Activated(self):
         # do something here...
         import kicadStepUptools
-        reload( kicadStepUptools )
+        reload_lib( kicadStepUptools )
         FreeCAD.Console.PrintWarning( 'active :)\n' )
         #import kicadStepUptools
  
@@ -89,7 +96,7 @@ class ksuToolsOpenBoard:
         #if not kicadStepUptools.checkInstance():
         #    reload( kicadStepUptools )
         if reload_Gui:
-            reload( kicadStepUptools )
+            reload_lib( kicadStepUptools )
         #from kicadStepUptools import onPushPCB
         #FreeCAD.Console.PrintWarning( 'active :)\n' )
         kicadStepUptools.onLoadBoard()
@@ -125,7 +132,7 @@ class ksuToolsLoadFootprint:
         #if not kicadStepUptools.checkInstance():
         #    reload( kicadStepUptools )
         if reload_Gui:
-            reload( kicadStepUptools )
+            reload_lib( kicadStepUptools )
         #FreeCAD.Console.PrintWarning( 'active :)\n' )
         kicadStepUptools.onLoadFootprint()
 
@@ -154,7 +161,7 @@ class ksuToolsExportModel:
         #if not kicadStepUptools.checkInstance():
         #    reload( kicadStepUptools )
         if reload_Gui:
-            reload( kicadStepUptools )
+            reload_lib( kicadStepUptools )
         #from kicadStepUptools import onPushPCB
         #FreeCAD.Console.PrintWarning( 'active :)\n' )
       ##evaluate to read cfg and get materials value???
@@ -193,7 +200,7 @@ class ksuToolsImport3DStep:
         #if not kicadStepUptools.checkInstance():
         #    reload( kicadStepUptools )
         if reload_Gui:
-            reload( kicadStepUptools )
+            reload_lib( kicadStepUptools )
         #from kicadStepUptools import onPushPCB
         #FreeCAD.Console.PrintWarning( 'active :)\n' )
         kicadStepUptools.Import3DModelF()
@@ -223,7 +230,7 @@ class ksuToolsExport3DStep:
         #if not kicadStepUptools.checkInstance():
         #    reload( kicadStepUptools )
         if reload_Gui:
-            reload( kicadStepUptools )
+            reload_lib( kicadStepUptools )
         #from kicadStepUptools import onPushPCB
         #FreeCAD.Console.PrintWarning( 'active :)\n' )
         kicadStepUptools.Export3DStepF()
@@ -253,7 +260,7 @@ class ksuToolsMakeUnion:
         #if not kicadStepUptools.checkInstance():
         #    reload( kicadStepUptools )
         if reload_Gui:
-            reload( kicadStepUptools )
+            reload_lib( kicadStepUptools )
         #from kicadStepUptools import onPushPCB
         #FreeCAD.Console.PrintWarning( 'active :)\n' )
         kicadStepUptools.group_part_union()
@@ -283,7 +290,7 @@ class ksuToolsMakeCompound:
         #if not kicadStepUptools.checkInstance():
         #    reload( kicadStepUptools )
         if reload_Gui:
-            reload( kicadStepUptools )
+            reload_lib( kicadStepUptools )
         #from kicadStepUptools import onPushPCB
         #FreeCAD.Console.PrintWarning( 'active :)\n' )
         kicadStepUptools.group_part()
@@ -313,7 +320,7 @@ class ksuToolsPushPCB:
         #if not kicadStepUptools.checkInstance():
         #    reload( kicadStepUptools )
         if reload_Gui:
-            reload( kicadStepUptools )
+            reload_lib( kicadStepUptools )
         #from kicadStepUptools import onPushPCB
         #FreeCAD.Console.PrintWarning( 'active :)\n' )
         kicadStepUptools.PushPullPCB()
@@ -368,7 +375,7 @@ class ksuToolsCollisions:
         #if not kicadStepUptools.checkInstance():
         #    reload( kicadStepUptools )
         if reload_Gui:
-            reload( kicadStepUptools )
+            reload_lib( kicadStepUptools )
         #FreeCAD.Console.PrintWarning( 'active :)\n' )
         kicadStepUptools.routineCollisions()
 
@@ -678,7 +685,7 @@ class ksuExcDemo:
             import kicadStepUptools
             #    reload( kicadStepUptools )
             if reload_Gui:
-                reload( kicadStepUptools )
+                reload_lib( kicadStepUptools )
             from kicadStepUptools import open, create_axis #onLoadBoard, onLoadFootprint
             if ext.lower()==".kicad_mod":
                 dname= (demo_model).split('.')[0].replace('-','_')
