@@ -304,11 +304,14 @@
 # added oval exception if only one value is done
 # starting py3 compatibility
 # added offset in mm after kicad_pcb version 20171114
+# moved edgestofaces to internal function
 # most clean code and comments done
 
 ##todo
 
 ## completing py3 compatibility
+## check utf-8 directories and spaces compatibility
+
 ## add edit and help to WB menu (self unresolved)
 ## copy objects and apply absolute placement to each one, then check collisions
 ## remove print and makesketch
@@ -410,7 +413,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.1.6.4"  
+___ver___ = "7.1.6.6"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -8383,6 +8386,17 @@ def getwrlData(source):
         #wrl_pos=(xp_vrml,yp_vrml,zp_vrml)
     #say(wrl_pos);
     #    
+    if re.search(r'\(offset\s+\(xyz+\s(.+?)\)', model, re.MULTILINE|re.DOTALL) is not None:
+        pos_vrml = re.search(r'\(offset\s+\(xyz+\s(.+?)\)', model, re.MULTILINE|re.DOTALL).groups(0)[0]
+        #pos_vrml=pos_vrml[5:]
+        wrl_pos=pos_vrml.split(" ")
+        xp_vrml=wrl_pos[0]
+        #say('alive')
+        yp_vrml=wrl_pos[1]
+        zp_vrml=wrl_pos[2]
+        #say(wrl_pos);
+        #wrl_pos=(xp_vrml,yp_vrml,zp_vrml)
+    #
     scale_vrml=['1', '1', '1']
     if re.search(r'\(scale\s+(.+?)\)', model, re.MULTILINE|re.DOTALL) is not None:
         sc_vrml = re.search(r'\(scale\s+(.+?)\)', model, re.MULTILINE|re.DOTALL).groups(0)[0]
@@ -10684,9 +10698,14 @@ class OSCD2Dg_Overlappingfaces():
         dchildren=[]
         for child in isinsidedict.get(parent,[]):
             direct = True
-            for key, value in isinsidedict.iteritems():
-                if key != parent and child in value and parent not in value:
-                    direct = False
+            if py2:
+                for key, value in isinsidedict.iteritems():
+                    if key != parent and child in value and parent not in value:
+                        direct = False
+            else:
+                for key, value in isinsidedict.items():
+                    if key != parent and child in value and parent not in value:
+                        direct = False            
             if direct:
                 dchildren.append(child)
         return dchildren
@@ -10762,7 +10781,7 @@ class OSCD2Dg_Overlappingfaces():
                             newlist=value[:] #we work on a shallow copy of isinsidedict
                             newlist.remove(tfi)
                             isinsidedict[key]=newlist
-                
+               
         def hasnoparent(faceindex):
             if (sys.version_info > (3, 0)):  #py3
                 for smalllist in self.isinsidedict.values():
@@ -10978,7 +10997,9 @@ def OSCD2Dg_fusefaces(faces):
     if len(faces)==1:
         return faces[0]
     else:
+        from functools import reduce
         return reduce(lambda p1,p2: p1.fuse(p2),faces)
+
 #
 def OSCD2Dg_subtractfaces2(faces):
     '''Sort faces, check if they overlap. Subtract overlapping face and fuse
@@ -11325,7 +11346,10 @@ def DrawPCB(mypcb):
                     # model_name, rot_comb, warn, pos_vrml, rotz_vrml, scale_vrml = get3DParams(mdl_name,params, rot, virtual)
                     #sayerr(md.at.xyz)
                     if conv_offs != 1: #pcb version >= 20171114 (offset wrl in mm)
-                        ofs=[md.at.xyz[0]/conv_offs,md.at.xyz[1]/conv_offs,md.at.xyz[2]/conv_offs]
+                        if hasattr(md,'at'):
+                            ofs=[md.at.xyz[0]/conv_offs,md.at.xyz[1]/conv_offs,md.at.xyz[2]/conv_offs]
+                        if hasattr(md,'offset'):
+                            ofs=[md.offset.xyz[0]/conv_offs,md.offset.xyz[1]/conv_offs,md.offset.xyz[2]/conv_offs]
                     else:
                         ofs=md.at.xyz
                     line = []

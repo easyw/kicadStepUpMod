@@ -444,7 +444,11 @@ class ksuTools2D2Sketch:
                 FreeCADGui.Selection.getSelection() if hasattr(obj,'Shape')),[])
                 #for edge in edges:
                 #    print "geomType ",DraftGeomUtils.geomType(edge)
-                face = OpenSCAD2Dgeom.edgestofaces(edges)
+                ##face = OpenSCAD2Dgeom.edgestofaces(edges)
+                import kicadStepUptools
+                if reload_Gui:
+                    reload_lib( kicadStepUptools )
+                face = kicadStepUptools.OSCD2Dg_edgestofaces(edges,3 , kicadStepUptools.edge_tolerance)
                 #face = OpenSCAD2DgeomMau.edgestofaces(edges)
                 face.check() # reports errors
                 face.fix(0,0,0)
@@ -587,7 +591,11 @@ class ksuTools2DtoFace:
                 FreeCADGui.Selection.getSelection() if hasattr(obj,'Shape')),[])
                 #for edge in edges:
                 #    print "geomType ",DraftGeomUtils.geomType(edge)
-                face = OpenSCAD2Dgeom.edgestofaces(edges)
+                import kicadStepUptools
+                if reload_Gui:
+                    reload_lib( kicadStepUptools )
+                face = kicadStepUptools.OSCD2Dg_edgestofaces(edges,3 , kicadStepUptools.edge_tolerance)
+                ##face = OpenSCAD2Dgeom.edgestofaces(edges)
                 #face = OpenSCAD2DgeomMau.edgestofaces(edges)
                 face.check() # reports errors
                 face.fix(0,0,0)
