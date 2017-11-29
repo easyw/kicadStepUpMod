@@ -305,6 +305,7 @@
 # starting py3 compatibility
 # added offset in mm after kicad_pcb version 20171114
 # moved edgestofaces to internal function
+# fixed ellipses
 # most clean code and comments done
 
 ##todo
@@ -413,7 +414,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.1.6.6"  
+___ver___ = "7.1.6.7"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -13757,13 +13758,21 @@ def Discretize(skt_name):
         else: #ellipses
             #l=b.Shape.copy().discretize(dv)
             #l=b.Shape.copy().discretize(QuasiDeflection=0.02)
-            l=b.Shape.copy().discretize(QuasiDeflection=dqd)
+            w = Part.Wire(e)
+            Part.show(w)
+            w_name=FreeCAD.ActiveDocument.ActiveObject.Name
+            #newShapeList.append(w_name)
+            wn=FreeCAD.ActiveDocument.getObject(w_name)
+            #newShapes.append(wn)
+            l=wn.Shape.copy().discretize(QuasiDeflection=dqd)
+            #l=b.Shape.copy().discretize(QuasiDeflection=dqd)
             f=Part.makePolygon(l)
             Part.show(f)
             sh_name=FreeCAD.ActiveDocument.ActiveObject.Name
             newShapeList.append(sh_name)
             newShapes.append(f)
-            #FreeCAD.ActiveDocument.recompute() 
+            FreeCAD.ActiveDocument.removeObject(w_name)
+            FreeCAD.ActiveDocument.recompute() 
         
     ## sketch = Draft.makeSketch(newShapes[0],autoconstraints=True)
     sketch = Draft.makeSketch(FreeCAD.ActiveDocument.getObject(newShapeList[0]),autoconstraints=True)
