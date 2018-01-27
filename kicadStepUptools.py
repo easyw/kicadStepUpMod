@@ -1835,23 +1835,75 @@ metal_copper="""material DEF MET-COPPER Material {
         transparency 0.0
         }"""
 #specularColor 0.780612 0.598604 0.000000
+
+
+       
+
+led_grey="""material DEF LED-GREY Material {
+        ambientIntensity 0.494
+        diffuseColor 0.27 0.25 0.27
+        specularColor 0.5 0.5 0.6
+        emissiveColor 0.0 0.0 0.0
+        shininess 0.35
+        transparency 0.10
+        }"""
+     
+
+led_black="""material DEF LED-BLACK Material {
+        ambientIntensity 0.494
+        diffuseColor 0.1 0.05 0.1
+        specularColor 0.6 0.5 0.6
+        emissiveColor 0.0 0.0 0.0
+        shininess 0.5
+        transparency 0.0
+        }"""
+
+glass_green="""material DEF GLASS-GREEN Material {
+        ambientIntensity 0.250000
+        diffuseColor 0.000000 0.75 0.44
+        specularColor 0.915152 0.915152 0.915152
+        emissiveColor 0.000000 0.000000 0.000000
+        shininess 0.642424
+        transparency 0.39
+        }"""
+
+glass_orange="""material DEF GLASS-ORANGE Material {
+        ambientIntensity 0.250000
+        diffuseColor 0.75 0.44 0.000000
+        specularColor 0.915152 0.915152 0.915152
+        emissiveColor 0.000000 0.000000 0.000000
+        shininess 0.642424
+        transparency 0.39
+        }"""
+
         
-material_properties_names=["as is","metal grey pins","metal grey","gold pins","black body","resistor black body",\
-                           "grey body","dark grey body","brown body","light brown body","blue body",\
-                           "green body","orange body","red_body","pink body","yellow body","white body","light brown label",\
-                           "led red","led green","led blue","led yellow","led white","glass grey","glass gold","glass blue", "pcb green", "pcb blue", "pcb black",\
+material_properties_names=["as is","metal grey pins","metal grey","gold pins",
+                           "black body","resistor black body","grey body","dark grey body","brown body",\
+                           "light brown body","blue body","green body","orange body","red_body",\
+                           "pink body","yellow body","white body",\
+                           "light brown label",\
+                           "led red","led green","led blue","led yellow","led white", "led grey", "led black",\
+                           "glass grey","glass gold","glass blue","glass green","glass orange", \
+                           "pcb green", "pcb blue", "pcb black",\
                            "metal aluminum", "metal bronze", "metal silver", "metal copper"]
-material_properties=[as_is,metal_grey_pins,metal_grey,gold_pins,black_body,resistor_black_body,\
-                     grey_body,dark_grey_body,brown_body,light_brown_body,blue_body,\
-                     green_body,orange_body,red_body,pink_body,yellow_body,white_body,light_brown_label,\
-                     led_red,led_green,led_blue,led_yellow,led_white, glass_grey, glass_gold, glass_blue, pcb_green, pcb_blue, pcb_black,\
+material_properties=[as_is, metal_grey_pins, metal_grey, gold_pins,\
+                     black_body,resistor_black_body, grey_body,dark_grey_body,brown_body,\
+                     light_brown_body,blue_body, green_body,orange_body,red_body,\
+                     pink_body,yellow_body,white_body,
+                     light_brown_label,\
+                     led_red,led_green,led_blue,led_yellow,led_white, led_grey, led_black, \
+                     glass_grey, glass_gold, glass_blue, glass_green,glass_orange, \
+                     pcb_green, pcb_blue, pcb_black,\
                      metal_aluminum, metal_bronze, metal_silver, metal_copper]
 
-material_properties_diffuse=[(0.,0.,0.),(0.824,0.820,0.781),( 0.298, 0.298, 0.298),(0.859,0.738,0.496), (0.148, 0.145, 0.145), (0.082, 0.086, 0.094),\
-                             (0.250, 0.262, 0.281), (0.273, 0.273, 0.273), (0.379, 0.270, 0.215), (0.883, 0.711, 0.492), (0.137, 0.402, 0.727),\
-                             (0.340, 0.680, 0.445), (0.809, 0.426, 0.148), (0.700, 0.100, 0.050), (0.578, 0.336, 0.352), (0.832, 0.680, 0.066), (0.895, 0.891, 0.813), (0.691, 0.664, 0.598),\
-                             (0.700, 0.100, 0.050), (0.400, 0.700, 0.150), (0.100, 0.250, 0.700), (0.98, 0.840, 0.066), (0.895, 0.891, 0.813),\
-                             (0.400769, 0.441922, 0.459091), (0.566681, 0.580872, 0.580874), (0.000000, 0.631244, 0.748016), (0.07, 0.3, 0.12), (0.07, 0.12, 0.3), (0.16, 0.16, 0.16), \
+material_properties_diffuse=[(0.,0.,0.),(0.824,0.820,0.781),( 0.298, 0.298, 0.298),(0.859,0.738,0.496), \
+                             (0.148, 0.145, 0.145), (0.082, 0.086, 0.094),(0.250, 0.262, 0.281), (0.273, 0.273, 0.273), (0.379, 0.270, 0.215), \
+                             (0.883, 0.711, 0.492), (0.137, 0.402, 0.727),(0.340, 0.680, 0.445), (0.809, 0.426, 0.148), (0.700, 0.100, 0.050), \
+                             (0.578, 0.336, 0.352), (0.832, 0.680, 0.066), (0.895, 0.891, 0.813), \
+                             (0.691, 0.664, 0.598), \
+                             (0.700, 0.100, 0.050), (0.400, 0.700, 0.150), (0.100, 0.250, 0.700), (0.98, 0.840, 0.066), (0.895, 0.891, 0.813),(0.27, 0.25, 0.27), (0.1, 0.05, 0.1),\
+                             (0.400769, 0.441922, 0.459091), (0.566681, 0.580872, 0.580874), (0.000000, 0.631244, 0.748016), (0.000000, 0.75, 0.44), (0.75, 0.44, 0.0), \
+                             (0.07, 0.3, 0.12), (0.07, 0.12, 0.3), (0.16, 0.16, 0.16), \
                              (0.372322, 0.371574, 0.373173), (0.714, 0.4284, 0.18144), (0.50754, 0.50754, 0.50754), (0.7038, 0.27048, 0.0828)] # (0.314286, 0.074365, 0.000000)]
 
 #FreeCAD.Console.PrintMessage (len (material_properties_names))
