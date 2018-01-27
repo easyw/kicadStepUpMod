@@ -306,6 +306,7 @@
 # added offset in mm after kicad_pcb version 20171114
 # moved edgestofaces to internal function
 # fixed ellipses
+# added new materials
 # most clean code and comments done
 
 ##todo
@@ -414,7 +415,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.1.6.7"  
+___ver___ = "7.1.6.8"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
