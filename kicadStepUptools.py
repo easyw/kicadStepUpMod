@@ -14210,7 +14210,7 @@ def export_pcb(fname=None):
                 doc=FreeCAD.ActiveDocument
                 ksu_found=False;skt_name='';pcb_found=False
                 for obj in doc.Objects:
-                    if ("PCB_Sketch" in obj.Name):
+                    if ("PCB_Sketch" in obj.Name) or ("PCB_Sketch" in obj.Label):
                         ksu_found=True
                         skt_name=obj.Name
                     if ("Pcb" in obj.Name):
