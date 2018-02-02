@@ -448,19 +448,30 @@ class ksuTools2D2Sketch:
                 import kicadStepUptools
                 if reload_Gui:
                     reload_lib( kicadStepUptools )
-                face = kicadStepUptools.OSCD2Dg_edgestofaces(edges,3 , kicadStepUptools.edge_tolerance)
                 #face = OpenSCAD2DgeomMau.edgestofaces(edges)
-                face.check() # reports errors
-                face.fix(0,0,0)
-                faceobj = FreeCAD.ActiveDocument.addObject('Part::Feature',"Face")
-                faceobj.Label = "Face"
-                faceobj.Shape = face
-                for obj in FreeCADGui.Selection.getSelection():
-                    FreeCADGui.ActiveDocument.getObject(obj.Name).Visibility=False
-                FreeCAD.ActiveDocument.recompute()
                 FC_majorV=int(FreeCAD.Version()[0])
                 FC_minorV=int(FreeCAD.Version()[1])
-                wires,_faces = Draft.downgrade(faceobj,delete=True)
+                using_draft_makeSketch=False
+                try:
+                    face = kicadStepUptools.OSCD2Dg_edgestofaces(edges,3 , kicadStepUptools.edge_tolerance)
+                    face.check() # reports errors
+                    face.fix(0,0,0)
+                    faceobj = FreeCAD.ActiveDocument.addObject('Part::Feature',"Face")
+                    faceobj.Label = "Face"
+                    faceobj.Shape = face
+                    for obj in FreeCADGui.Selection.getSelection():
+                        FreeCADGui.ActiveDocument.getObject(obj.Name).Visibility=False
+                    FreeCAD.ActiveDocument.recompute()
+                    wires,_faces = Draft.downgrade(faceobj,delete=True)
+                except:
+                    import Draft
+                    sk = Draft.makeSketch(FreeCADGui.Selection.getSelection(),autoconstraints=True)
+                    sk.Label = "Sketch_converted"
+                    sname=FreeCAD.ActiveDocument.ActiveObject.Name
+                    using_draft_makeSketch=True
+                    for obj in FreeCADGui.Selection.getSelection():
+                        FreeCADGui.ActiveDocument.getObject(obj.Name).Visibility=False
+                    
                 if FC_majorV==0 and FC_minorV<=16:
                     try:
                         sketch = Draft.makeSketch(wires[0:1])
@@ -477,7 +488,7 @@ class ksuTools2D2Sketch:
                         FreeCAD.ActiveDocument.removeObject(wire.Name)
                 #FreeCAD.Console.PrintWarning("\nConverting Bezier curves to Arcs\n")                                
                 #wires,_faces = Draft.downgrade(faceobj,delete=True)
-                else:
+                elif using_draft_makeSketch == False:
                     newShapeList = []
                     newShapes = []
                     found_BCurve=False

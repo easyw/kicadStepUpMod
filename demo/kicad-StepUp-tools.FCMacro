@@ -307,6 +307,7 @@
 # moved edgestofaces to internal function
 # fixed ellipses
 # added new materials
+# improved bspline to arcs
 # most clean code and comments done
 
 ##todo
@@ -415,7 +416,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.1.6.8"  
+___ver___ = "7.1.6.9"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -439,7 +440,9 @@ global full_placement, shape_col, align_vrml_step_colors
 global timer_Collisions, last_3d_path, expanded_view, mingui
 global textEdit_dim_base, textEdit_dim_hide #textEdit dimensions for hiding showing text content
 global warning_nbr, original_filename, edge_width, load_sketch, grid_orig, dvm, pt_osx, pt_lnx, dqd, running_time
-global addConstraints, precision, conv_offs
+global addConstraints, precision, conv_offs, maxRadius
+
+maxRadius = 500.0 # 500mm maxRadius of arc from bspline
 
 conv_offs = 1.0 #conversion offset from decimils to mm pcb version >= 20171114
 original_filename=""
@@ -10892,6 +10895,7 @@ def OSCD2Dg_superWireReverse(debuglist,closed=False):
     # print "here 7"
     # print debuglist
     newedges = []
+    edge_added=False
     for i in range(len(debuglist)):
         curr = debuglist[i]
         if i == 0:
@@ -11081,7 +11085,8 @@ def OSCD2Dg_edgestowires(edgelist,eps=0.001):
                 #w2=fcgeo.superWire(path,tobeclosed)
                 #print "here 6a"
                 w2=OSCD2Dg_superWireReverse(debug,tobeclosed)
-                wirelist.append(w2)
+                if w2 is not None:
+                    wirelist.append(w2)
             else:#this locks up FreeCAD
                 #print "here 6b"
                 comp=Part.Compound(path)
@@ -13669,7 +13674,7 @@ def getBoardOutline():
 
 
 def createEdge(edg,ofs):
-    global edge_width
+    global edge_width, maxRadius
     
     #print edg
     k_edg=''
@@ -13683,7 +13688,14 @@ def createEdge(edg,ofs):
     #    if y < self.minY:
     #        self.minY = y
     if edg[0] == 'line':
-        k_edg = "  (gr_line (start {0} {1}) (end {2} {3}) (angle 90) (layer {5}) (width {4}))".format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edge_width, 'Edge.Cuts')
+        if 0: #abs(edg[1]+ofs[0])>500 or abs(edg[2]+ofs[1])>500:
+            print edg
+            stop
+            k_edg = "  (gr_line (start {0} {1}) (end {2} {3}) (angle 90) (layer {5}) (width {4}))"\
+                        .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edge_width, 'Edge.Cuts')
+        else:
+            k_edg = "  (gr_line (start {0} {1}) (end {2} {3}) (angle 90) (layer {5}) (width {4}))"\
+                        .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edge_width, 'Edge.Cuts')
         #k_edg +=os.linesep
         #.format('{0:.10f}').format(edg[1] + abs(0), '{0:.10f}').format(edg[2] + abs(0), '{0:.10f}').format(edg[3] + abs(0), '{0:.10f}').format(edg[4] + abs(0), 'Edge.Cuts', edge_width)
     elif edg[0] == 'circle':
@@ -13751,12 +13763,20 @@ def createEdge(edg,ofs):
         # Draft.makePoint(x1, -y1, 0)
         # #Draft.makePoint(mp[0],mp[1],mp[2])
         # Draft.makePoint(x2, -y2, 0)
-
-        #self.pcbElem.append(['gr_arc', xs, ys, x1, y1, curve, width, layer])
-        k_edg = "  (gr_arc (start {0} {1}) (end {2} {3}) (angle {4}) (layer {6}) (width {5}))"\
-                   .format(xs+ofs[0], ys+ofs[1], x1+ofs[0], y1+ofs[1], angle, edge_width, 'Edge.Cuts')
-        #.format(
-        #            '{0:.10f}'.format(i[1] + abs(self.minX)), '{0:.10f}'.format(i[2] + abs(self.minY)), '{0:.10f}'.format(i[3] + abs(self.minX)), '{0:.10f}'.format(i[4] + abs(self.minY)), i[5], i[6], i[7]))
+        
+        if abs(xs) > maxRadius or abs(ys) > maxRadius:
+            k_edg = "  (gr_line (start {0} {1}) (end {2} {3}) (angle 0) (layer {5}) (width {4}))"\
+                        .format(x1+ofs[0], y1+ofs[1], x2+ofs[0], y2+ofs[1], edge_width, 'Edge.Cuts')
+            #k_edg = "  (gr_line (start {0} {1}) (end {2} {3}) (angle 90) (layer {5}) (width {4}))"\
+            #            .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edge_width, 'Edge.Cuts')
+            #print xs + ofs[0]
+            #stop
+        else:
+            #self.pcbElem.append(['gr_arc', xs, ys, x1, y1, curve, width, layer])
+            k_edg = "  (gr_arc (start {0} {1}) (end {2} {3}) (angle {4}) (layer {6}) (width {5}))"\
+                    .format(xs+ofs[0], ys+ofs[1], x1+ofs[0], y1+ofs[1], angle, edge_width, 'Edge.Cuts')
+            #.format(
+            #            '{0:.10f}'.format(i[1] + abs(self.minX)), '{0:.10f}'.format(i[2] + abs(self.minY)), '{0:.10f}'.format(i[3] + abs(self.minX)), '{0:.10f}'.format(i[4] + abs(self.minY)), i[5], i[6], i[7]))
     #    self.addArc(edg[1:], 'Edge.Cuts', 0.01)
     return k_edg
 ##
@@ -13991,6 +14011,11 @@ def check_geom(sk_name, ofs=None):
                 sk_ge.Edges[0].Vertexes[1].Point,
                 sk_ge.Edges[0].Orientation
             ])
+            ## maxRadius=3500
+            ## sayerr(j.Geometry[k].Radius)
+            ## stop
+            ##if j.Geometry[k].Radius > maxRadius:
+            ##    sayerr(j.Geometry[k].Radius)
             # i=j.Geometry[k]
             # sayerr('Xaxis2a')
             # if 0: #i.XAxis.x < 0:  #da cambiare  this is not available on FC0.16
@@ -14096,7 +14121,8 @@ def export_pcb(fname=None):
     global board_base_point_x, board_base_point_y, real_board_pos_x, real_board_pos_y
     global pcb_path, use_AppPart, force_oldGroups
     global original_filename
-    global off_x, off_y
+    global off_x, off_y, maxRadius
+    
     sayw('exporting new pcb edges')
     doc=FreeCAD.ActiveDocument
     #filePath=last_pcb_path
@@ -14139,20 +14165,22 @@ def export_pcb(fname=None):
         now=str(tml.tm_year)+'-'+str(tml.tm_mon)+'-'+str(tml.tm_mday)+'-'+str(tml.tm_hour)+'.'+str(tml.tm_min)+'.'+str(tml.tm_sec)
         foname=os.path.join(path, name+'-bkp-'+now+ext+'-bak')
         pcb_push=True
-        try:
-            #with codecs.open(foname,'w', encoding='utf-8') as ofile:
-            #    ofile.write(data)
-            #    ofile.close()
-            copyfile(fpath, foname)
-            say('file copied')
-        except:
-            msg="""<b>problem in writing permissions to kicad board!</b><br><br>"""
-            msg+="<b>file saving aborted to<br>"+fpath+"</b><br><br>"
-            msgr="problem in writing permissions to kicad board!\n"
-            msgr+="file saving aborted to "+fpath+"\n"
-            pcb_push=False
-            say(msgr)
-            say_info(msg)
+        testing=False
+        if testing is not True:
+            try:
+                #with codecs.open(foname,'w', encoding='utf-8') as ofile:
+                #    ofile.write(data)
+                #    ofile.close()
+                copyfile(fpath, foname)
+                say('file copied')
+            except:
+                msg="""<b>problem in writing permissions to kicad board!</b><br><br>"""
+                msg+="<b>file saving aborted to<br>"+fpath+"</b><br><br>"
+                msgr="problem in writing permissions to kicad board!\n"
+                msgr+="file saving aborted to "+fpath+"\n"
+                pcb_push=False
+                say(msgr)
+                say_info(msg)
         if pcb_push==True:    
             #stop
             edge_pcb_exists=False
@@ -14188,7 +14216,10 @@ def export_pcb(fname=None):
                     if ("Pcb" in obj.Name):
                         ksu_found=True
                         pcb_found=True
-                if ksu_found==True:
+                testing=False
+                if testing is True:
+                    off_x=0;off_y=0
+                if ksu_found==True or testing==True:
                     if pcb_found==True:
                         bbpx=-FreeCAD.ActiveDocument.getObject('Pcb').Placement.Base[0]+FreeCAD.ActiveDocument.getObject(skt_name).Placement.Base[0]
                         bbpy=FreeCAD.ActiveDocument.getObject('Pcb').Placement.Base[1]-FreeCAD.ActiveDocument.getObject(skt_name).Placement.Base[1]
@@ -14279,13 +14310,15 @@ def export_pcb(fname=None):
                             FreeCAD.ActiveDocument.recompute() 
                         else:
                            sk_to_conv.append(obj.Name)
+                keep_sketch_converted=False #False
                 for s in sk_to_conv:
                     #sayerr(s) ## 
                     ns=Discretize(s)
                     offset1=[-FreeCAD.ActiveDocument.getObject(sk_name).Placement.Base[0],-FreeCAD.ActiveDocument.getObject(sk_name).Placement.Base[1]]
                     elist, to_dis=check_geom(ns,offset1)
                     new_edge_list=new_edge_list+elist
-                    FreeCAD.ActiveDocument.removeObject(ns)
+                    if not keep_sketch_converted:
+                        FreeCAD.ActiveDocument.removeObject(ns)
                     FreeCAD.ActiveDocument.recompute()
                     #print new_edge_list
                 #stop
@@ -14305,7 +14338,31 @@ def export_pcb(fname=None):
             #newcontent = re.sub(r'(.*)\)', r'', replace, flags=re.MULTILINE)
             new_border=''
             #print new_edge_list
+            ## maxRadius # 4000 = 4m max lenght for KiCad
+            #edge_nbr=0
+            sanitized_edge_list=[]
             for border in new_edge_list:
+                #print border # [0]
+                if 'arc' in border[0]:
+                    #print border[0]
+                    if abs(float(border[3])) > maxRadius:
+                        #print 'too big radius= ',border[3]
+                        #print 'border len= ', len(border)
+                        #points=border [10].x
+                        p1x = float(border [10].x);p1y=float(border [10].y)
+                        #print p1x, ' ',p1y
+                        p2x = float(border [11].x);p2y=float(border [11].y)
+                        #print '1st point ', border [10],' 2nd point ', border [11]
+                        sanitized_edge_list.append(['line',p1x,p1y,p2x,p2y])
+                    else:
+                        sanitized_edge_list.append(border)
+                else:
+                    sanitized_edge_list.append(border)
+                #edge_nbr=edge_nbr+1
+            #print sanitized_edge_list
+            #stop
+            #for border in new_edge_list:
+            for border in sanitized_edge_list:
                 new_border=new_border+os.linesep+createEdge(border,offset)
                 #sayw(createEdge(border))
             #stop

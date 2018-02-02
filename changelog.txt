@@ -7,7 +7,7 @@ maintained in the same accuracy and aspect in STEP AP214 format. +
 The *kicad StepUp* maintains the usual way to work with kicad, but improves the process
 to work in a collaborative way with mechanical designers bringing near ECAD and MCAD environments. +
 With kicad StepUp you’ll get an exact representation of your physical board in Native 3D PCB
-v7.1.6.8 January 2018
+v7.1.6.9 January 2018
 
 please refer to
 kicadStepUp-starter-Guide.pdf
@@ -265,4 +265,5 @@ Changelog
 - moved edgestofaces to internal function
 - fixed ellipses
 - added new materials
+- improved bspline to arcs
 - most clean code and comments done
