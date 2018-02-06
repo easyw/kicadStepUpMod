@@ -419,7 +419,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.1.7.3"  
+___ver___ = "7.1.7.4"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -9889,7 +9889,7 @@ def routineDrawFootPrint(content,name):
     HoleList=[]
     THPList=[]
     for pad in getPadsList(content):
-        #say(pad)
+        #sayerr(pad)
         #
         #   pads.append({'x': x, 'y': y, 'rot': rot, 'padType': pType, 'padShape': pShape, 'rx': drill_x, 'ry': drill_y, 'dx': dx, 'dy': dy, 'holeType': hType, 'xOF': xOF, 'yOF': yOF, 'layers': layers})
         pType = pad['padType']
@@ -9953,13 +9953,19 @@ def routineDrawFootPrint(content,name):
                 BotPadList.append(obj)
         if rx!=0:
             #obj=createHole2(xs,ys,rx,ry,"oval") #need to be separated instructions
-            obj=createHole2(xs,ys,rx,ry,pShape) #need to be separated instructions
+            #print pShape
+            #stop
+            hole_tp=hType.strip()
+            sayw(hole_tp)
+            obj=createHole2(xs,ys,rx,ry,hole_tp) #need to be separated instructions
+            ##obj=createHole2(xs,ys,rx,ry,pShape) #need to be separated instructions
             #say(HoleList)
             if rot!=0:
                 rotateObj(obj, [xs, ys, rot])
             HoleList.append(obj)
             #obj2=createTHPlate(xs,ys,rx,ry,"oval")
-            obj2=createTHPlate(xs,ys,rx,ry,pShape)
+            obj2=createTHPlate(xs,ys,rx,ry,hole_tp)
+            ##obj2=createTHPlate(xs,ys,rx,ry,pShape)
             THPList.append(obj2)
             if rot!=0:
                 rotateObj(obj2, [xs, ys, rot])
