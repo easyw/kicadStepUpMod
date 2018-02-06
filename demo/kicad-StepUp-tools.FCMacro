@@ -308,10 +308,13 @@
 # fixed ellipses
 # added new materials
 # improved bspline to arcs
+# added footprint exporter (smd,th, npth [rect, oval, circle]) (bspline not allowed)
 # most clean code and comments done
 
 ##todo
 
+## check "{0:.3f}".format for pushpcb & Pushfootprint
+## allow bspline on fp generator
 ## completing py3 compatibility
 ## check utf-8 directories and spaces compatibility
 
@@ -416,7 +419,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.1.6.9"  
+___ver___ = "7.1.7.3"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -440,9 +443,10 @@ global full_placement, shape_col, align_vrml_step_colors
 global timer_Collisions, last_3d_path, expanded_view, mingui
 global textEdit_dim_base, textEdit_dim_hide #textEdit dimensions for hiding showing text content
 global warning_nbr, original_filename, edge_width, load_sketch, grid_orig, dvm, pt_osx, pt_lnx, dqd, running_time
-global addConstraints, precision, conv_offs, maxRadius
+global addConstraints, precision, conv_offs, maxRadius, pad_nbr
 
 maxRadius = 500.0 # 500mm maxRadius of arc from bspline
+pad_nbr = 1 #first nbr of fp pads
 
 conv_offs = 1.0 #conversion offset from decimils to mm pcb version >= 20171114
 original_filename=""
@@ -13529,8 +13533,561 @@ def PushPullPCB():
             msg="""select one Sketch to be pushed to kicad board!"""
             sayerr(msg)
             say_warning(msg)
+##
+def PushFootprint():
+#def onExport3DStep(self):
+    global last_3d_path, start_time, load_sketch
+    #say("export3DSTEP")
+    if load_sketch==False:
+        msg="""<b>Edge editing NOT supported on FC0.15!</b><br>please upgrade your FC release"""
+        say_warning(msg)
+        msg="Edge editing NOT supported on FC0.15!"
+        sayerr(msg)            
+    #if 0:
+    #if FreeCAD.ActiveDocument is None:
+    #    FreeCAD.newDocument("PCB_Sketch")
+    #    PCB_Sketch= FreeCAD.activeDocument().addObject('Sketcher::SketchObject','PCB_Sketch')
+    #    offset=[0.0,0.0] #offset=[148.5,98.5]
+    #    FreeCAD.activeDocument().PCB_Sketch.Placement = FreeCAD.Placement(FreeCAD.Vector(offset[0],offset[1]),FreeCAD.Rotation(0.000000,0.000000,0.000000,1.000000))
+    #    FreeCAD.getDocument('PCB_Sketch').recompute()
+    #    FreeCADGui.SendMsgToActiveView("ViewFit")
+    else:
+        sel = FreeCADGui.Selection.getSelection()
+        if len (sel) >= 1:
+            #sayw(doc.Name)
+            if "Sketch" in sel[0].TypeId or "Group" in sel[0].TypeId:
+                if "Group" in sel[0].TypeId:
+                    for o in FreeCAD.ActiveDocument.Objects:
+                        FreeCADGui.Selection.addSelection(o)
+                cfg_read_all()
+                if last_3d_path is "":
+                    last_3d_path=last_pcb_path
+                    sayw(last_pcb_path)
+                #getSaveFileName(self,"saveFlle","Result.txt",filter ="txt (*.txt *.)")
+                testing=False #False
+                if not testing:
+                    Filter=""
+                    name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Push Footprint to KiCad module ...",
+                        last_3d_path, "*.kicad_mod")
+                else:
+                    if os.path.isdir("d:/Temp/"):
+                        name='d:/Temp/ex2.kicad_mod'
+                    elif os.path.isdir("c:/Temp/"):
+                        name='c:/Temp/ex2.kicad_mod'                        
+                #say(name)
+                if name:
+                    #if os.path.exists(name):
+                    last_fp_path=os.path.dirname(name)
+                    start_time=current_milli_time()
+                    export_footprint(name)
+                    #else:
+                    #    msg="""Save to <b>an EXISTING KiCad pcb file</b> to update your Edge!"""
+                    #    say_warning(msg)
+                    #    msg="Save to an EXISTING KiCad pcb file to update your Edge!"
+                    #    sayerr(msg)
+            else:
+                msg="""Select Group or Sketch/Text elements to be converted to KiCad Footprint!"""
+                sayerr(msg)
+                say_warning(msg)
+        else:
+            msg="""Select Group or Sketch/Text elements to be converted to KiCad Footprint!"""
+            sayerr(msg)
+            say_warning(msg)
+###
+def export_footprint(fname=None):
+    global last_fp_path, test_flag, start_time
+    global configParser, configFilePath, start_time
+    global ignore_utf8, ignore_utf8_incfg, disable_PoM_Observer
+    global board_base_point_x, board_base_point_y, real_board_pos_x, real_board_pos_y
+    global pcb_path, use_AppPart, force_oldGroups
+    global original_filename
+    global off_x, off_y, maxRadius, pad_nbr
     
+    sayw('exporting new footprint')
+    doc=FreeCAD.ActiveDocument
+    #print fname
+    if fname is None:
+        sayerr('missing fp file name') 
+        stop
+    #    fpath=original_filename
+    else:
+        fpath=fname
+    
+    sayerr('saving to '+fpath)
+    #stop
+    
+    if len(fpath) > 0:
+        #new_edge_list=getBoardOutline()
+        #say (new_edge_list)
+        cfg_read_all()
+        path, fname = os.path.split(fpath)
+        name=os.path.splitext(fname)[0]
+        ext=os.path.splitext(fname)[1]
+        fpth = os.path.dirname(os.path.abspath(fpath))
+        #filePath = os.path.split(os.path.realpath(__file__))[0]
+        #say ('my file path '+fpath)
+        # stop
+        if fpth == "":
+            fpth = "."
+        last_fp_path = fpth
+        last_fp_path = re.sub("\\\\", "/", last_fp_path)
+        ini_vars[11] = last_fp_path
+        cfg_update_all()
+        #sayerr(name+':'+ext)
+        new_edge_list, not_supported, to_discretize, construction_geom = getBoardOutline()
+        #print new_edge_list, to_discretize
+        ## first step: limiting support for arcs and lines
+        
+        new_border=u''
+        #print new_edge_list
+        ## maxRadius # 4000 = 4m max lenght for KiCad
+        #edge_nbr=0
+        sanitized_edge_list=[]
+        for border in new_edge_list:
+            #print border # [0]
+            if 'arc' in border[0]:
+                #print border[0]
+                if abs(float(border[3])) > maxRadius:
+                    #print 'too big radius= ',border[3]
+                    #print 'border len= ', len(border)
+                    #points=border [10].x
+                    p1x = float("{0:.3f}".format(border [10].x));p1y=float("{0:.3f}".format(border [10].y))
+                    #print p1x, ' ',p1y
+                    p2x = float("{0:.3f}".format(border [11].x));p2y=float("{0:.3f}".format(border [11].y))
+                    #print '1st point ', border [10],' 2nd point ', border [11]
+                    sanitized_edge_list.append(['line',p1x,p1y,p2x,p2y,border[13]])
+                else:
+                    sanitized_edge_list.append(border)
+            else:
+                sanitized_edge_list.append(border)
+            #edge_nbr=edge_nbr+1
+        #print sanitized_edge_list
+        #stop
+        #for border in new_edge_list:
+        reference=u"FC_"; value=u"Val_"; fp_name='fc_footprint'
+        xr= 0.0; yr=1.0;xv= 0.0; yv=-1.0
+        #sel = FreeCADGui.Selection.getSelection()
+        for o in FreeCAD.ActiveDocument.Objects:
+        #if sel[0].TypeId =='App::DocumentObjectGroup':
+            if o.TypeId =='App::DocumentObjectGroup':
+                fp_name=o.Label
+            else:
+                fp_name = FreeCAD.ActiveDocument.Name
+            if o.TypeId =='App::Annotation':
+                if 'Ref' in o.LabelText[0]:
+                    reference=o.Label
+                    xr=o.Position.x;yr=-o.Position.y
+                elif 'Val' in o.LabelText[0]:
+                    value=o.Label
+                    xv=o.Position.x;yv=-o.Position.y
 
+        header=u"(module "+fp_name+" (layer F.Cu) (tedit 5A74E519)"+os.linesep
+        header=header+"  (descr \""+fp_name+" StepUp generated footprint\")"+os.linesep
+        header=header+"  (fp_text reference "+reference+u" (at "+str(xr)+" "+str(yr)+") (layer F.SilkS)"+os.linesep
+        header=header+"  (effects (font (size 1.0 1.0) (thickness 0.15)))"+os.linesep
+        header=header+"  )"+os.linesep
+        header=header+"  (fp_text value "+value+u" (at "+str(xv)+" "+str(yv)+") (layer F.SilkS)"+os.linesep
+        header=header+"    (effects (font (size 1.0 1.0) (thickness 0.15)))"+os.linesep
+        header=header+"  )"+os.linesep
+        header=header+"  (fp_text user %R (at "+str(xr)+" "+str(yr)+") (layer F.Fab)"+os.linesep
+        header=header+"    (effects (font (size 1 1) (thickness 0.15)))"+os.linesep
+        header=header+"  )"
+
+        offset=[0,0]
+        drills=[];psmd=[];pth=[];pnpth=[]
+        #edge_thick=0.15 #; lyr='F.SilkS'
+        # lyr=border[len(border-1):]
+        for border in sanitized_edge_list:
+            lyr=border[(len(border)-1):][0]
+            if 'CrtYd' in lyr:
+                edge_thick=float(lyr.split('_')[2])
+                lyr=u'F.CrtYd'
+            elif 'Silks' in lyr:
+                edge_thick=float(lyr.split('_')[2])
+                lyr=u'F.SilkS'
+            elif 'Fab' in lyr:
+                edge_thick=float(lyr.split('_')[2])
+                lyr=u'F.Fab'
+            elif 'Cuts' in lyr:
+                edge_thick=float(lyr.split('_')[2])
+                lyr=u'Edge.Cuts'
+            elif 'Pads_SMD' in lyr:
+                edge_thick=0.
+                lyr=u'Pads_SMD'
+                psmd.append(border)
+            elif 'Pads_TH' in lyr:
+                edge_thick=0.
+                lyr=u'Pads_TH'
+                pth.append(border)
+            elif 'Drills' in lyr:
+                edge_thick=0.
+                lyr=u'Drills'
+                drills.append(border)
+            elif 'NPTH' in lyr:
+                edge_thick=0.
+                lyr=u'NPTH'
+                pnpth.append(border)
+            if lyr != 'Pads_SMD' and lyr != 'Pads_TH' and lyr != 'Drills' and lyr != 'NPTH':
+                #print border, ' BORDER'
+                #if len (border)>0:
+                new_border=new_border+os.linesep+createFp(border,offset, lyr, edge_thick)
+            #sayw(createEdge(border))
+        #stop
+        newcontent=u''+header
+        #new_edge=new_border+os.linesep+')'+os.linesep
+        #newcontent=newcontent+new_edge+u' '
+        if len (new_border)>0:
+            newcontent=newcontent+new_border #+os.linesep
+        #print newcontent
+
+        npad=u''
+        mpad=[]
+        nline=1
+        pad_nbr=1
+        found_arc=False
+        for pad in psmd:
+            if pad[0]=='circle':
+                npad=npad+os.linesep+createFpPad(pad,offset,u'SMD')
+            elif pad[0]=='line' and not found_arc:
+                mpad.append(pad)
+                if nline>=4:
+                    npad=npad+os.linesep+createFpPad(mpad,offset,u'SMD')
+                    nline=0
+                    mpad=[]
+                nline=nline+1
+            elif pad[0]=='arc' or (pad[0]=='line' and found_arc):
+                found_arc=True
+                mpad.append(pad)
+                if nline>=4:
+                    npad=npad+os.linesep+createFpPad(mpad,offset,u'SMD')
+                    nline=0
+                    mpad=[]
+                    found_arc=False
+                nline=nline+1
+        if len (npad)>0:
+            newcontent=newcontent+npad+os.linesep
+            sayw('created SMD pads')
+
+        #print psmd
+        mdrills=[]
+        pad_nbr=1
+        nline=1
+        drill_pos=[]
+        found_arc=False
+        sayerr(drills)
+        for drill in drills:
+            #sayerr(drill)
+            if drill[0]=='circle':
+                #ret=createFpPad(drill,offset,u'Drills')
+                #sayw(ret)
+                drill_pos.append(createFpPad(drill,offset,u'Drills'))
+            # elif drill[0]=='line' and not found_arc:
+            #     mdrills.append(drill)
+            #     if nline>=4:
+            #         #ndrill=ndrill+os.linesep+createFpPad(mdrills,offset,u'Drills')
+            #         drill_pos.append(createFpPad(mdrill,offset,u'Drills'))
+            #         nline=0
+            #         mdrills=[]
+            #     nline=nline+1
+            elif drill[0]=='arc' or (drill[0]=='line' and found_arc):
+                found_arc=True
+                mdrills.append(drill)
+                #print('arc or line + '+str(nline))
+                if nline>=4:
+                    #ndrill=ndrill+os.linesep+createFpPad(mdrills,offset,u'Drills')
+                    drill_pos.append(createFpPad(mdrills,offset,u'Drills'))
+                    nline=0
+                    mdrills=[]
+                    found_arc=False
+                nline=nline+1
+        #sayw(drill_pos)
+        ## drill_pos (cntX,cntY,sizeX,sizeY)
+        if len (drill_pos)>0:
+            #newcontent=newcontent+os.linesep+')'+os.linesep+u' '       
+            sayw ('collected drills centers and positions')
+        
+        npad=u''
+        mpad=[]
+        nline=1
+        pad_nbr=1
+        found_arc=False
+        for pad in pth:
+            if pad[0]=='circle':
+                npad=npad+os.linesep+createFpPad(pad,offset,u'TH', drill_pos)
+            elif pad[0]=='line' and not found_arc:
+                mpad.append(pad)
+                if nline>=4:
+                    npad=npad+os.linesep+createFpPad(mpad,offset,u'TH', drill_pos)
+                    nline=0
+                    mpad=[]
+                nline=nline+1
+            elif pad[0]=='arc' or (pad[0]=='line' and found_arc):
+                found_arc=True
+                mpad.append(pad)
+                if nline>=4:
+                    npad=npad+os.linesep+createFpPad(mpad,offset,u'TH', drill_pos)
+                    nline=0
+                    mpad=[]
+                    found_arc=False
+                nline=nline+1
+                
+        #print 'len pad '+str(len(npad))
+        
+        #print newcontent
+        if len (npad)>0:
+            newcontent=newcontent+npad+os.linesep
+            say('created TH pads')
+        
+        npad=u''
+        mpad=[]
+        nline=1
+        pad_nbr=1
+        found_arc=False
+        for pad in pnpth:
+            if pad[0]=='circle':
+                npad=npad+os.linesep+createFpPad(pad,offset,u'NPTH', drill_pos)
+            elif pad[0]=='line' and not found_arc:
+                mpad.append(pad)
+                if nline>=4:
+                    npad=npad+os.linesep+createFpPad(mpad,offset,u'NPTH', drill_pos)
+                    nline=0
+                    mpad=[]
+                nline=nline+1
+            elif pad[0]=='arc' or (pad[0]=='line' and found_arc):
+                found_arc=True
+                mpad.append(pad)
+                if nline>=4:
+                    npad=npad+os.linesep+createFpPad(mpad,offset,u'NPTH', drill_pos)
+                    nline=0
+                    mpad=[]
+                    found_arc=False
+                nline=nline+1
+                
+        #print 'len pad '+str(len(npad))
+        
+        #print newcontent
+        if len (npad)>0:
+            newcontent=newcontent+npad+os.linesep
+            say('created NPTH pads')
+        newcontent=newcontent+')'+os.linesep+u' '       
+        
+        with codecs.open(fpath,'w', encoding='utf-8') as ofile:
+            ofile.write(newcontent)
+            ofile.close()        
+        say_time()
+        msg="""<b>new Footprint pushed to kicad footprint!</b><br><br>"""
+        msg+="<b>file saved to<br>"+fpath+"</b><br><br>"
+        msgr="new Footprint pushed to kicad footprint!\n"
+        msgr+="file saved to "+fpath+"\n"
+        lns=len (not_supported) 
+        #print lns
+        if lns > 2:
+            if lns < 103: # writing only some geometry not supported
+                msg+="<br><b>found downgraded Geometry:<br>"+not_supported[:-2]+"!</b>"
+                msgr+="\nfound downgraded Geometry: "+not_supported[:-2]+"!"
+            else:
+                nss=not_supported[:-2]
+                nss=nss[:101]+'... <br> ...'
+                msg+="<br><b>found downgraded Geometry:<br>"+nss+"</b>"
+                msgr+="\nfound downgraded Geometry: "+not_supported[:-2]+"!"
+            
+        say(msgr)
+        say_info(msg)
+        #if not edge_pcb_exists:
+        #    msg="<b>close your FC Sketch<br>and reload the kicad_pcb file</b>"
+        #    say_warning(msg)
+        
+            
+###
+def createFpPad(pad,offset,tp, _drills=None):
+    global pad_nbr, edge_tolerance
+    
+    if tp=='SMD':
+        if pad[0]=='circle':
+            sayerr('circle pad nbr.'+str(pad_nbr))
+            px=pad[2];py=pad[3]*-1;sx=2*pad[1];sy=2*pad[1]
+            pdl ="  (pad "+str(pad_nbr)+" smd circle (at "+str(px)+" "+str(py)+") (size "+str(sx)+" "+str(sy)+") (layers F.Cu F.Paste F.Mask))"
+            pad_nbr=pad_nbr+1
+            say(pad)
+            return pdl
+        elif pad[0][0]=='line':
+            sayerr('rect pad nbr.'+str(pad_nbr))
+            px=(pad[0][1]+pad[0][3])/2;py=(pad[1][2]+pad[1][4])/-2;sx=abs(pad[0][1]-pad[0][3]);sy=abs(pad[1][2]-pad[1][4])
+            pdl ="  (pad "+str(pad_nbr)+" smd rect (at "+str(px)+" "+str(py)+") (size "+str(sx)+" "+str(sy)+") (layers F.Cu F.Paste F.Mask))"
+            pad_nbr=pad_nbr+1
+            say(pad);sayw(pdl)
+            return pdl
+        elif pad[0][0]=='arc':
+            sayerr('arc pad nbr.'+str(pad_nbr))
+            #print pad
+            r1=pad[0][1]; cx1=pad[0][2]; cy1=pad[0][3]
+            #print 'r1 ', r1, ' c1 ', cx1,',',cy1
+            r2=pad[1][1]; cx2=pad[1][2]; cy2=pad[1][3]
+            #print 'r2 ', r2, ' c2 ', cx2,',',cy2
+            #stop
+            px=((cx1-r1)+(cx2+r2))/2;py=((cy1-r1)+(cy2+r2))/-2;sx=abs((cx1-r1)-(cx2+r2));sy=abs((cy1-r1)-(cy2+r2))
+            pdl ="  (pad "+str(pad_nbr)+" smd oval (at "+str(px)+" "+str(py)+") (size "+str(sx)+" "+str(sy)+") (layers F.Cu F.Paste F.Mask))"
+            pad_nbr=pad_nbr+1
+            say(pad);sayw(pdl)
+            return pdl
+        else:
+            return u''
+    elif tp=='Drills':  #getting center and size
+        if pad[0]=='circle':
+            sayerr('circle drill')
+            px=pad[2];py=pad[3]*-1;sx=2*pad[1];sy=2*pad[1]
+            drl =[px,py,sx,sy]
+            pad_nbr=pad_nbr+1
+            #say(drl)
+            return drl
+        elif pad[0][0]=='arc':
+            sayerr('oval drill')
+            #print pad
+            r1=pad[0][1]; cx1=pad[0][2]; cy1=pad[0][3]
+            #print 'r1 ', r1, ' c1 ', cx1,',',cy1
+            r2=pad[1][1]; cx2=pad[1][2]; cy2=pad[1][3]
+            #print 'r2 ', r2, ' c2 ', cx2,',',cy2
+            #stop
+            ## different method for horizontal and vertical
+            if abs(cx1-cx2)>edge_tolerance: # horizontal
+                px=((cx1-r1)+(cx2+r2))/2;py=((cy1-r1)+(cy2+r2))/-2;sx=abs(cx1-cx2)+2*r2;sy=2*r2
+            else: #vertical
+                px=((cx1-r1)+(cx2+r2))/2;py=((cy1-r1)+(cy2+r2))/-2;sx=2*r2;sy=abs(cy1-cy2)+2*r2
+            drl =[px,py,sx,sy]
+            pad_nbr=pad_nbr+1
+            #say(pad);sayw(drl)
+            return drl
+        else:
+            return u''
+    elif tp=='TH' or tp=='NPTH':  #getting center and size
+        if tp=='TH':
+            ptp='thru_hole'
+        else:
+            ptp='np_thru_hole'
+        found_drill=False
+        if pad[0]=='circle':
+            sayerr('circle pad nbr.'+str(pad_nbr))
+            cx=pad[2];cy=pad[3]*-1;sx=2*pad[1];sy=2*pad[1]
+            if len(_drills)>0:
+                for d in _drills:
+                    if d[0] > cx-sx/2 and d[0] < cx+sx/2 and d[1] > cy-sy/2 and d[1] < cy+sy/2:
+                        sayw('drill in pad found!')
+                        found_drill=True
+                        break
+                #drl_size=[d[2],d[3]]
+                ### OFFSET
+                if found_drill:
+                    if d[2]!=d[3]:
+                        drill_str="(drill oval "+str(d[2])+" "+str(d[3]) #+")"
+                    else:
+                        drill_str="(drill "+str(d[2]) #+")"
+                    if abs(d[0]-cx)>edge_tolerance or abs(d[1]-cy)>edge_tolerance:
+                    #if d[0] != cx or d[1] != cy:
+                        drill_str=drill_str+" (offset "+str(cx-d[0])+" "+str(cy-d[1])+"))" #+")"
+                        cx=d[0];cy=d[1]
+                    else:
+                        drill_str=drill_str+")"
+                else:
+                    drill_str="(drill 0)"
+            else:
+                drill_str=""
+            if sx==sy:
+                pshp='circle'
+            else:
+                pshp='oval'
+            pdl ="  (pad "+str(pad_nbr)+" "+ptp+" "+pshp+" (at "+str(cx)+" "+str(cy)+") (size "+str(sx)+" "+str(sy)+") "+drill_str+" (layers *.Cu *.Mask))"
+            pad_nbr=pad_nbr+1
+            say(pad)
+            return pdl
+        elif pad[0][0]=='line':
+            say(_drills)
+            sayerr('rect pad nbr.'+str(pad_nbr))
+            cx=(pad[0][1]+pad[0][3])/2;cy=(pad[1][2]+pad[1][4])/-2;sx=abs(pad[0][1]-pad[0][3]);sy=abs(pad[1][2]-pad[1][4])
+            found_drill=False
+            if len(_drills)>0:
+                for d in _drills:
+                    if d[0] > cx-sx/2 and d[0] < cx+sx/2 and d[1] > cy-sy/2 and d[1] < cy+sy/2:
+                        sayw('drill in pad found! '+str(d[0])+','+str(d[1])+'/'+str(cx)+','+str(cy)+':'+str(sx)+','+str(sy))
+                        found_drill=True
+                        break
+                #drl_size=[d[2],d[3]]
+                ### OFFSET
+                if found_drill:
+                    if d[2]!=d[3]:
+                        drill_str="(drill oval "+str(d[2])+" "+str(d[3]) #+")"
+                    else:
+                        drill_str="(drill "+str(d[2]) #+")"
+                    if abs(d[0]-cx)>edge_tolerance or abs(d[1]-cy)>edge_tolerance:
+                        drill_str=drill_str+" (offset "+str(cx-d[0])+" "+str(cy-d[1])+"))" #+")"
+                        cx=d[0];cy=d[1]
+                    else:
+                        drill_str=drill_str+")"
+                else:
+                    drill_str="(drill 0)"
+            else:
+                drill_str=""
+            pdl ="  (pad "+str(pad_nbr)+" "+ptp+" rect (at "+str(cx)+" "+str(cy)+") (size "+str(sx)+" "+str(sy)+") "+drill_str+" (layers *.Cu *.Mask))"
+            #pdl ="  (pad "+str(pad_nbr)+" thru_hole rect (at "+str(px)+" "+str(py)+") (size "+str(sx)+" "+str(sy)+") (layers F.Cu F.Paste F.Mask))"
+            pad_nbr=pad_nbr+1
+            say(pad);sayw(pdl)
+            return pdl
+        elif pad[0][0]=='arc':
+            sayerr('arc pad nbr.'+str(pad_nbr))
+            #print pad
+            r1=pad[0][1]; cx1=pad[0][2]; cy1=pad[0][3]
+            #print 'r1 ', r1, ' c1 ', cx1,',',cy1
+            r2=pad[1][1]; cx2=pad[1][2]; cy2=pad[1][3]
+            #print 'r2 ', r2, ' c2 ', cx2,',',cy2
+            #stop
+            ## different method for horizontal and vertical
+            #if cx1!=cx2: # horizontal
+            #    cx=((cx1-r1)+(cx2+r2))/2;cy=((cy1-r1)+(cy2+r2))/-2;sx=abs((cx1-r1)-(cx2+r2));sy=abs((cy1-r1)-(cy2+r2))
+            #else:
+            #    cx=((cx1-r1)+(cx2+r2))/2;cy=((cy1-r1)+(cy2+r2))/-2;sx=abs((cx1-r1)-(cx2+r2));sy=abs((cy2-r2)-(cy1+r1))
+            ## different method for horizontal and vertical
+            if abs(cx1-cx2)>edge_tolerance: # horizontal
+                cx=((cx1-r1)+(cx2+r2))/2;cy=((cy1-r1)+(cy2+r2))/-2;sx=abs(cx1-cx2)+2*r2;sy=2*r2
+            else: #vertical
+                cx=((cx1-r1)+(cx2+r2))/2;cy=((cy1-r1)+(cy2+r2))/-2;sx=2*r2;sy=abs(cy1-cy2)+2*r2            
+            #cx=((cx1-r1)+(cx2+r2))/2;cy=((cy1-r1)+(cy2+r2))/-2;sx=abs((cx1-r1)-(cx2+r2));sy=abs((cy1-r1)-(cy2+r2))
+            
+            found_drill=False
+            if len(_drills)>0:
+                for d in _drills:
+                    if d[0] > cx-sx/2 and d[0] < cx+sx/2 and d[1] > cy-sy/2 and d[1] < cy+sy/2:
+                        sayw('drill in pad found!')
+                        found_drill=True
+                        break
+                #drl_size=[d[2],d[3]]
+                ### OFFSET
+                if found_drill:
+                    if d[2]!=d[3]:
+                        drill_str="(drill oval "+str(d[2])+" "+str(d[3]) #+")"
+                    else:
+                        drill_str="(drill "+str(d[2]) #+")"
+                    if abs(d[0]-cx)>edge_tolerance or abs(d[1]-cy)>edge_tolerance:
+                    #if d[0] != cx or d[1] != cy:
+                        drill_str=drill_str+" (offset "+str(cx-d[0])+" "+str(cy-d[1])+"))" #+")"
+                        cx=d[0];cy=d[1]
+                    else:
+                        drill_str=drill_str+")"
+                else:
+                    drill_str="(drill 0)"
+            else:
+                drill_str=""
+            pdl ="  (pad "+str(pad_nbr)+" "+ptp+" oval (at "+str(cx)+" "+str(cy)+") (size "+str(sx)+" "+str(sy)+") "+drill_str+" (layers *.Cu *.Mask))"
+            #pdl ="  (pad "+str(pad_nbr)+" "+ptp+" oval (at "+str(cx)+" "+str(cy)+") (size "+str(sx)+" "+str(sy)+") (layers F.Cu F.Paste F.Mask))"
+            pad_nbr=pad_nbr+1
+            say(pad);sayw(pdl)
+            return pdl
+        else:
+            return u''
+    ##--------------------------------------------##
+    else:
+        return u''
+    pass
+
+###
 def getBoardOutline():
     if not FreeCAD.activeDocument():
         return False
@@ -13572,7 +14129,8 @@ def getBoardOutline():
                                 sk_ge.Edges[0].Vertexes[0].Point.x,
                                 sk_ge.Edges[0].Vertexes[0].Point.y,
                                 sk_ge.Edges[0].Vertexes[1].Point.x,
-                                sk_ge.Edges[0].Vertexes[1].Point.y
+                                sk_ge.Edges[0].Vertexes[1].Point.y,
+                                j.Label
                             ])
                             # outline.append([
                             #     'line',
@@ -13588,7 +14146,8 @@ def getBoardOutline():
                                 'circle',
                                 sk_ge.Edges[0].Curve.Radius,
                                 sk_ge.Edges[0].Curve.Center.x,
-                                sk_ge.Edges[0].Curve.Center.y
+                                sk_ge.Edges[0].Curve.Center.y,
+                                j.Label
                             ])
                             # outline.append([
                             #     'circle',
@@ -13616,7 +14175,8 @@ def getBoardOutline():
                                 j.Geometry[k],
                                 sk_ge.Edges[0].Vertexes[0].Point,
                                 sk_ge.Edges[0].Vertexes[1].Point,
-                                sk_ge.Edges[0].Orientation
+                                sk_ge.Edges[0].Orientation,
+                                j.Label
                             ])
                             
                             ##j.Geometry[k].Center.x, 
@@ -13653,7 +14213,7 @@ def getBoardOutline():
                             #     ])
                         else:
                             #print j.Geometry[k],'; not supported'
-                            to_discretize.append(k)
+                            to_discretize.append(k)  #to_discretize.append(k, j.Label)
                             str_geom=str(j.Geometry[k])
                             if 'ArcOfEllipse' in str_geom:
                                 str_geom='ArcOfEllipse'
@@ -13687,19 +14247,21 @@ def createEdge(edg,ofs):
     #def getMinY(self, y):
     #    if y < self.minY:
     #        self.minY = y
+
+    layer='Edge.Cuts'
     if edg[0] == 'line':
         if 0: #abs(edg[1]+ofs[0])>500 or abs(edg[2]+ofs[1])>500:
             print edg
             stop
             k_edg = "  (gr_line (start {0} {1}) (end {2} {3}) (angle 90) (layer {5}) (width {4}))"\
-                        .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edge_width, 'Edge.Cuts')
+                        .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edge_width, layer)
         else:
             k_edg = "  (gr_line (start {0} {1}) (end {2} {3}) (angle 90) (layer {5}) (width {4}))"\
-                        .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edge_width, 'Edge.Cuts')
+                        .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edge_width, layer)
         #k_edg +=os.linesep
         #.format('{0:.10f}').format(edg[1] + abs(0), '{0:.10f}').format(edg[2] + abs(0), '{0:.10f}').format(edg[3] + abs(0), '{0:.10f}').format(edg[4] + abs(0), 'Edge.Cuts', edge_width)
     elif edg[0] == 'circle':
-        k_edg = "  (gr_circle (center {0} {1}) (end {2} {1}) (layer {4}) (width {3}))".format(edg[2]+ofs[0], -edg[3]+ofs[1], edg[2]+ofs[0]-edg[1], edge_width, 'Edge.Cuts')
+        k_edg = "  (gr_circle (center {0} {1}) (end {2} {1}) (layer {4}) (width {3}))".format(edg[2]+ofs[0], -edg[3]+ofs[1], edg[2]+ofs[0]-edg[1], edge_width, layer)
         #k_edg +=os.linesep
                     #.format(
                     #'{0:.10f}'.format(i[1] + abs(self.minX)), '{0:.10f}'.format(i[2] + abs(self.minY)), '{0:.10f}'.format(
@@ -13766,7 +14328,7 @@ def createEdge(edg,ofs):
         
         if abs(xs) > maxRadius or abs(ys) > maxRadius:
             k_edg = "  (gr_line (start {0} {1}) (end {2} {3}) (angle 0) (layer {5}) (width {4}))"\
-                        .format(x1+ofs[0], y1+ofs[1], x2+ofs[0], y2+ofs[1], edge_width, 'Edge.Cuts')
+                        .format(x1+ofs[0], y1+ofs[1], x2+ofs[0], y2+ofs[1], edge_width, layer)
             #k_edg = "  (gr_line (start {0} {1}) (end {2} {3}) (angle 90) (layer {5}) (width {4}))"\
             #            .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edge_width, 'Edge.Cuts')
             #print xs + ofs[0]
@@ -13774,7 +14336,118 @@ def createEdge(edg,ofs):
         else:
             #self.pcbElem.append(['gr_arc', xs, ys, x1, y1, curve, width, layer])
             k_edg = "  (gr_arc (start {0} {1}) (end {2} {3}) (angle {4}) (layer {6}) (width {5}))"\
-                    .format(xs+ofs[0], ys+ofs[1], x1+ofs[0], y1+ofs[1], angle, edge_width, 'Edge.Cuts')
+                    .format(xs+ofs[0], ys+ofs[1], x1+ofs[0], y1+ofs[1], angle, edge_width, layer)
+            #.format(
+            #            '{0:.10f}'.format(i[1] + abs(self.minX)), '{0:.10f}'.format(i[2] + abs(self.minY)), '{0:.10f}'.format(i[3] + abs(self.minX)), '{0:.10f}'.format(i[4] + abs(self.minY)), i[5], i[6], i[7]))
+    #    self.addArc(edg[1:], 'Edge.Cuts', 0.01)
+    return k_edg
+##
+def createFp(edg,ofs,layer, edge_thick):
+    global edge_width, maxRadius
+    
+    #print edg
+    k_edg=''
+    #if edge_width is None:
+    #    edge_width=0.16
+    #def getMinX(self, x):
+    #    if x < self.minX:
+    #        self.minX = x
+    #        
+    #def getMinY(self, y):
+    #    if y < self.minY:
+    #        self.minY = y
+    ## writing fp
+    ln='fp_line'
+    ac='fp_arc'
+    cr='fp_circle'
+    if edg[0] == 'line':
+        if 0: #abs(edg[1]+ofs[0])>500 or abs(edg[2]+ofs[1])>500:
+            print edg
+            stop
+            k_edg = "  ("+ln+" (start {0} {1}) (end {2} {3}) (angle 90) (layer {5}) (width {4}))"\
+                        .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edge_thick, layer)
+        else:
+            k_edg = "  ("+ln+" (start {0} {1}) (end {2} {3}) (layer {5}) (width {4}))"\
+                        .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edge_thick, layer)
+        #k_edg +=os.linesep
+        #.format('{0:.10f}').format(edg[1] + abs(0), '{0:.10f}').format(edg[2] + abs(0), '{0:.10f}').format(edg[3] + abs(0), '{0:.10f}').format(edg[4] + abs(0), 'Edge.Cuts', edge_width)
+    elif edg[0] == 'circle':
+        k_edg = "  ("+cr+" (center {0} {1}) (end {2} {1}) (layer {4}) (width {3}))".format(edg[2]+ofs[0], -edg[3]+ofs[1], edg[2]+ofs[0]-edg[1], edge_thick, layer)
+        #k_edg +=os.linesep
+                    #.format(
+                    #'{0:.10f}'.format(i[1] + abs(self.minX)), '{0:.10f}'.format(i[2] + abs(self.minY)), '{0:.10f}'.format(
+    #    self.addCircle(edg[1:], 'Edge.Cuts', 0.01)
+    elif edg[0] == 'arc':
+        #print edg
+        #print 2*pi
+        #use_rotation=False
+        #if abs(abs(edg[5])-2*pi) <= edge_tolerance:
+        #    print '2PI'
+        #    use_rotation=True
+        radius = edg[1]
+        xs = edg[2]
+        ys = (edg[3]) * (-1)
+        #if 0: #use_rotation:
+        #    sayerr('2PI')
+        #    sayerr('check edge orientation!!!')
+        #    #eA = edg[4]+pi
+        #    #sA = edg[5]+pi
+        #    eA = edg[4]-pi/2
+        #    sA = edg[5]-pi/2
+        #else:
+        sA = edg[4]
+        eA = edg[5]
+        axisX = edg[6]
+        axisY = edg[7]
+        axisZ = edg[8]
+        
+        angle = degrees(sA - eA) # * (-1)
+        # sayerr(angle)
+        
+        ##x1 = radius * cos(sA) + xs
+        ##y1 = (radius * sin(sA)) * (-1) + ys
+        #xs = edg[11][0] 
+        #ys = (edg[11][1]) * (-1) 
+        ## sA = atan2(edg[10][1]-edg[3], edg[10][0]-edg[2])
+        ## eA = atan2(edg[11][1]-edg[3], edg[11][0]-edg[2])
+        # sayerr(edg[12])
+        
+        if  1: #angle ==< 0:
+            x1 = edg[10][0] 
+            y1 = (edg[10][1]) * (-1) 
+            x2 = edg[11][0] 
+            y2 = (edg[11][1]) * (-1) 
+        else:
+            x1 = edg[11][0] 
+            y1 = (edg[11][1]) * (-1) 
+        
+        #y1 = (radius * sin(sA)) * + ys
+        #print axisX, axisY,axisZ
+        #print 'coord     xs, ys, x1, y1 ', xs,';', ys,';', x1,';', y1,';',angle
+        
+        #if angle > 180:
+        #    angle = 360 - angle
+                        
+        #self.getMinX(xs)
+        #self.getMinY(ys)
+        #self.getMinX(x1)
+        #self.getMinY(y1)
+        # Draft.makePoint(xs, -ys, 0)
+        # Draft.makePoint(x1, -y1, 0)
+        # #Draft.makePoint(mp[0],mp[1],mp[2])
+        # Draft.makePoint(x2, -y2, 0)
+        
+        if abs(xs) > maxRadius or abs(ys) > maxRadius:
+            k_edg = "  ("+ln+" (start {0} {1}) (end {2} {3}) (layer {5}) (width {4}))"\
+                        .format(x1+ofs[0], y1+ofs[1], x2+ofs[0], y2+ofs[1], edge_thick, layer)
+            #k_edg = "  (gr_line (start {0} {1}) (end {2} {3}) (angle 90) (layer {5}) (width {4}))"\
+            #            .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edge_width, 'Edge.Cuts')
+            #print xs + ofs[0]
+            #stop
+        else:
+            #self.pcbElem.append(['gr_arc', xs, ys, x1, y1, curve, width, layer])
+            k_edg = "  ("+ac+" (start {0} {1}) (end {2} {3}) (angle {4}) (layer {6}) (width {5}))"\
+                    .format(xs+ofs[0], ys+ofs[1], x1+ofs[0], y1+ofs[1], angle, edge_thick, layer)
             #.format(
             #            '{0:.10f}'.format(i[1] + abs(self.minX)), '{0:.10f}'.format(i[2] + abs(self.minY)), '{0:.10f}'.format(i[3] + abs(self.minX)), '{0:.10f}'.format(i[4] + abs(self.minY)), i[5], i[6], i[7]))
     #    self.addArc(edg[1:], 'Edge.Cuts', 0.01)

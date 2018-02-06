@@ -15,6 +15,7 @@ KiCad **StepUp tools** are a FreeCAD Macro and a FreeCAD WorkBench to help in **
 - **check interference and collisions** for enclosure and footprint design 
 - **design a new pcb Edge with FreeCAD Sketcher and PUSH it to an existing kicad_pcb Board** 
 - **PULL a pcb Edge from a kicad_pcb Board**, edit it in FC Sketcher and PUSH it back to kicad
+- **design a new footprint in FreeCAD to get the power of Sketch in footprints**
 - **generate Blender compatible VRML files**
 
 Please see [KiCad Info forum](https://forum.kicad.info/search?q=step) or [FreeCAD forum](https://forum.freecadweb.org/viewtopic.php?f=24&t=14276) to discuss or report issues regarding this Addon.

@@ -453,6 +453,7 @@ class ksuTools2D2Sketch:
                 FC_minorV=int(FreeCAD.Version()[1])
                 using_draft_makeSketch=False
                 try:
+                    faceobj=None
                     face = kicadStepUptools.OSCD2Dg_edgestofaces(edges,3 , kicadStepUptools.edge_tolerance)
                     face.check() # reports errors
                     face.fix(0,0,0)
@@ -465,7 +466,14 @@ class ksuTools2D2Sketch:
                     wires,_faces = Draft.downgrade(faceobj,delete=True)
                 except:
                     import Draft
+                    if faceobj is not None:
+                        FreeCAD.ActiveDocument.removeObject(faceobj.Name)
+                    sk = None
                     sk = Draft.makeSketch(FreeCADGui.Selection.getSelection(),autoconstraints=True)
+                    if sk is None:
+                        reply = QtGui.QMessageBox.information(None,"Warning", "Select edge elements to be converted to Sketch")
+                        FreeCAD.Console.PrintWarning("Select edge elements to be converted to Sketch\n")
+                        stop
                     sk.Label = "Sketch_converted"
                     sname=FreeCAD.ActiveDocument.ActiveObject.Name
                     using_draft_makeSketch=True
@@ -627,6 +635,35 @@ class ksuTools2DtoFace:
 FreeCADGui.addCommand('ksuTools2DtoFace',ksuTools2DtoFace())
 
 #####
+class ksuToolsFootprintGen:
+    "ksu tools Footprint generator object"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'exportFootprint.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksu Footprint generator" ,
+                     'ToolTip' : "Footprint editor and exporter"}
+ 
+    def IsActive(self):
+        return True
+ 
+    def Activated(self):
+        # do something here...
+        if FreeCADGui.Selection.getSelection():
+            sel=FreeCADGui.Selection.getSelection()
+            #for edge in edges:
+            #    print "geomType ",DraftGeomUtils.geomType(edge)
+            import kicadStepUptools
+            if reload_Gui:
+                reload_lib( kicadStepUptools )
+            kicadStepUptools.PushFootprint()
+        else:
+            #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
+            reply = QtGui.QMessageBox.information(None,"Warning", "Select Group or Sketch/Text elements to be converted to KiCad Footprint")
+            FreeCAD.Console.PrintWarning("Select Group or Sketch/Text elements to be converted to KiCad Footprint\n")             
+
+FreeCADGui.addCommand('ksuToolsFootprintGen',ksuToolsFootprintGen())
+
+#####
 class ksuExcDemo:
     exFile = None
 
@@ -730,7 +767,8 @@ class ksuExcDemo:
                 fnameDemo=fnameDemo.rstrip(ext)+'-fc16'+ ext
                 FreeCAD.Console.PrintWarning('opening ' + fnameDemo + "\r\n")
             FreeCAD.open(fnameDemo)
-            FreeCADGui.activeDocument().activeView().viewAxonometric()
+            if 'footprint' not in fnameDemo:
+                FreeCADGui.activeDocument().activeView().viewAxonometric()
         elif ext.lower()==".step":
             if FC_majorV==0 and FC_minorV <17:
                 fnameDemo=fnameDemo.rstrip(ext)+'-fc16'+ ext

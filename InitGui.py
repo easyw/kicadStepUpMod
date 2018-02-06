@@ -21,7 +21,7 @@ ksuWB_icons_path =  os.path.join( ksuWBpath, 'Resources', 'icons')
 global main_ksu_Icon
 main_ksu_Icon = os.path.join( ksuWB_icons_path , 'kicad-StepUp-tools-WB.svg')
 
-ksu_wb_version='v 7.4.1'
+ksu_wb_version='v 7.4.3'
 #try:
 #    from FreeCADGui import Workbench
 #except ImportError as e:
@@ -41,14 +41,16 @@ class ksuWB ( Workbench ):
     
     def Initialize(self):
         import kicadStepUpCMD
-        submenu = ['demo.kicad_pcb','d-pak.kicad_mod', 'demo-sketch.FCStd', 'demo.step', 'kicadStepUp-cheat-sheet.pdf', 'kicad-3D-to-MCAD.pdf' ]
+        submenu = ['demo.kicad_pcb','d-pak.kicad_mod', 'demo-sketch.FCStd', 'demo.step',\
+                   'footprint-template.FCStd', 'footprint-Edge-template.FCStd', 'kicadStepUp-cheat-sheet.pdf', 'kicad-3D-to-MCAD.pdf' ]
         dirs = self.ListDemos()
 
         #self.appendToolbar("ksu Tools", ["ksuTools"])
         self.appendToolbar("ksu Tools", ["ksuTools","ksuToolsOpenBoard","ksuToolsLoadFootprint",\
                            "ksuToolsExportModel","ksuToolsPushPCB","ksuToolsCollisions", \
                            "ksuToolsImport3DStep","ksuToolsExport3DStep","ksuToolsMakeUnion",\
-                           "ksuToolsMakeCompound", "ksuTools3D2D", "ksuTools2D2Sketch", "ksuTools2DtoFace"])
+                           "ksuToolsMakeCompound", "ksuTools3D2D", "ksuTools2D2Sketch", "ksuTools2DtoFace",\
+                           "ksuToolsFootprintGen"])
         
         #self.appendMenu("ksu Tools", ["ksuTools","ksuToolsEdit"])
         self.appendMenu("ksu Tools", ["ksuTools"])
@@ -80,6 +82,7 @@ class ksuWB ( Workbench ):
 ###
 
 dirs = ksuWB.ListDemos()
+#print dirs
 #FreeCADGui.addCommand('ksuWBOpenDemo', ksuOpenDemo())
 #dirs = ksuWB.ListDemos()
 for curFile in dirs:
