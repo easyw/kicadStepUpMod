@@ -692,6 +692,10 @@ class ksuExcDemo:
             return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Freecad.svg') ,
                     'MenuText': str(self.exFile),
                     'ToolTip' : "Demo files"}        
+        elif 'dxf' in self.ext:
+            return {'Pixmap'  : os.path.join( ksuWB_icons_path , '2D-frame.svg') ,
+                    'MenuText': str(self.exFile),
+                    'ToolTip' : "Demo files"}        
         elif 'step' in self.ext:
             return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'importStep.svg') ,
                     'MenuText': str(self.exFile),
@@ -776,6 +780,13 @@ class ksuExcDemo:
             import ImportGui
             ImportGui.open(fnameDemo)
             FreeCADGui.activeDocument().activeView().viewAxonometric()
+            FreeCADGui.SendMsgToActiveView("ViewFit")
+        elif ext.lower()==".dxf":
+            #import ImportGui
+            import importDXF
+            importDXF.open(fnameDemo)
+            #ImportGui.open(fnameDemo)
+            #FreeCADGui.activeDocument().activeView().viewAxonometric()
             FreeCADGui.SendMsgToActiveView("ViewFit")
         #if ext==".pdf":
         #    subprocess.Popen([file],shell=True)

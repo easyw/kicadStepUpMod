@@ -21,7 +21,7 @@ ksuWB_icons_path =  os.path.join( ksuWBpath, 'Resources', 'icons')
 global main_ksu_Icon
 main_ksu_Icon = os.path.join( ksuWB_icons_path , 'kicad-StepUp-tools-WB.svg')
 
-ksu_wb_version='v 7.4.3'
+ksu_wb_version='v 7.4.4'
 #try:
 #    from FreeCADGui import Workbench
 #except ImportError as e:
@@ -42,7 +42,8 @@ class ksuWB ( Workbench ):
     def Initialize(self):
         import kicadStepUpCMD
         submenu = ['demo.kicad_pcb','d-pak.kicad_mod', 'demo-sketch.FCStd', 'demo.step',\
-                   'footprint-template.FCStd', 'footprint-Edge-template.FCStd', 'kicadStepUp-cheat-sheet.pdf', 'kicad-3D-to-MCAD.pdf' ]
+                   'footprint-template.FCStd', 'footprint-Edge-template.FCStd', 'footprint-template-roundrect-polylines.FCStd',\
+                   'footprint-RF-antenna.FCStd', 'RF-antenna-dxf.dxf', 'kicadStepUp-cheat-sheet.pdf', 'kicad-3D-to-MCAD.pdf' ]
         dirs = self.ListDemos()
 
         #self.appendToolbar("ksu Tools", ["ksuTools"])

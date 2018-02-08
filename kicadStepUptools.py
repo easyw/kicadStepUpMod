@@ -419,7 +419,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.1.7.4"  
+___ver___ = "7.1.7.5"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -13667,18 +13667,20 @@ def export_footprint(fname=None):
             else:
                 sanitized_edge_list.append(border)
             #edge_nbr=edge_nbr+1
-        #print sanitized_edge_list
-        #stop
+        # print '------------------'
+        # print sanitized_edge_list
+        ####stop
         #for border in new_edge_list:
         reference=u"FC_"; value=u"Val_"; fp_name='fc_footprint'
         xr= 0.0; yr=1.0;xv= 0.0; yv=-1.0
+        fp_name = FreeCAD.ActiveDocument.Name
         #sel = FreeCADGui.Selection.getSelection()
         for o in FreeCAD.ActiveDocument.Objects:
         #if sel[0].TypeId =='App::DocumentObjectGroup':
             if o.TypeId =='App::DocumentObjectGroup':
                 fp_name=o.Label
-            else:
-                fp_name = FreeCAD.ActiveDocument.Name
+            #else:
+            #    fp_name = FreeCAD.ActiveDocument.Name
             if o.TypeId =='App::Annotation':
                 if 'Ref' in o.LabelText[0]:
                     reference=o.Label
@@ -13689,10 +13691,10 @@ def export_footprint(fname=None):
 
         header=u"(module "+fp_name+" (layer F.Cu) (tedit 5A74E519)"+os.linesep
         header=header+"  (descr \""+fp_name+" StepUp generated footprint\")"+os.linesep
-        header=header+"  (fp_text reference "+reference+u" (at "+str(xr)+" "+str(yr)+") (layer F.SilkS)"+os.linesep
+        header=header+"  (fp_text reference \""+reference+u"\" (at "+str(xr)+" "+str(yr)+") (layer F.SilkS)"+os.linesep
         header=header+"  (effects (font (size 1.0 1.0) (thickness 0.15)))"+os.linesep
         header=header+"  )"+os.linesep
-        header=header+"  (fp_text value "+value+u" (at "+str(xv)+" "+str(yv)+") (layer F.SilkS)"+os.linesep
+        header=header+"  (fp_text value \""+value+u"\" (at "+str(xv)+" "+str(yv)+") (layer F.SilkS)"+os.linesep
         header=header+"    (effects (font (size 1.0 1.0) (thickness 0.15)))"+os.linesep
         header=header+"  )"+os.linesep
         header=header+"  (fp_text user %R (at "+str(xr)+" "+str(yr)+") (layer F.Fab)"+os.linesep
@@ -13701,6 +13703,7 @@ def export_footprint(fname=None):
 
         offset=[0,0]
         drills=[];psmd=[];pth=[];pnpth=[]
+        pply=[];prrect=[]
         #edge_thick=0.15 #; lyr='F.SilkS'
         # lyr=border[len(border-1):]
         for border in sanitized_edge_list:
@@ -13733,7 +13736,20 @@ def export_footprint(fname=None):
                 edge_thick=0.
                 lyr=u'NPTH'
                 pnpth.append(border)
-            if lyr != 'Pads_SMD' and lyr != 'Pads_TH' and lyr != 'Drills' and lyr != 'NPTH':
+            elif 'Pads_Poly' in lyr:
+                edge_thick=0.
+                lyr=u'Pads_Poly'
+                pply.append(border)
+            elif 'Pads_Round_Rect' in lyr:
+                edge_thick=0.
+                lyr=u'Pads_Round_Rect'
+                prrect.append(border)
+            
+            #sayw(prrect); sayw(pply)
+            #sayw(pth)
+            
+            if lyr != 'Pads_SMD' and lyr != 'Pads_TH' and lyr != 'Drills' and lyr != 'NPTH'\
+                                 and lyr!='Pads_Poly' and lyr!='Pads_Round_Rect':
                 #print border, ' BORDER'
                 #if len (border)>0:
                 new_border=new_border+os.linesep+createFp(border,offset, lyr, edge_thick)
@@ -13745,7 +13761,7 @@ def export_footprint(fname=None):
         if len (new_border)>0:
             newcontent=newcontent+new_border #+os.linesep
         #print newcontent
-
+        ### ----------SMD-------------------------------
         npad=u''
         mpad=[]
         nline=1
@@ -13773,14 +13789,14 @@ def export_footprint(fname=None):
         if len (npad)>0:
             newcontent=newcontent+npad+os.linesep
             sayw('created SMD pads')
-
+        ### ----------Drills-------------------------------
         #print psmd
         mdrills=[]
         pad_nbr=1
         nline=1
         drill_pos=[]
         found_arc=False
-        sayerr(drills)
+        #sayerr(drills)
         for drill in drills:
             #sayerr(drill)
             if drill[0]=='circle':
@@ -13811,7 +13827,7 @@ def export_footprint(fname=None):
         if len (drill_pos)>0:
             #newcontent=newcontent+os.linesep+')'+os.linesep+u' '       
             sayw ('collected drills centers and positions')
-        
+        ### ----------TH-------------------------------      
         npad=u''
         mpad=[]
         nline=1
@@ -13843,7 +13859,7 @@ def export_footprint(fname=None):
         if len (npad)>0:
             newcontent=newcontent+npad+os.linesep
             say('created TH pads')
-        
+        ### ----------NPTH-------------------------------
         npad=u''
         mpad=[]
         nline=1
@@ -13870,13 +13886,111 @@ def export_footprint(fname=None):
                 nline=nline+1
                 
         #print 'len pad '+str(len(npad))
-        
         #print newcontent
         if len (npad)>0:
             newcontent=newcontent+npad+os.linesep
             say('created NPTH pads')
-        newcontent=newcontent+')'+os.linesep+u' '       
+        ### ----------Round Rect-------------------------------
+        npad=u''
+        mpad=[]
+        nline=1
+        pad_nbr=1
+        found_arc=False
+        for pad in prrect:
+            #sayerr(pad)
+            #if pad[0]=='circle':
+            #    npad=npad+os.linesep+createFpPad(pad,offset,u'NPTH', drill_pos)
+            if pad[0]=='line' and not found_arc:
+                mpad.append(pad)
+                nline=nline+1
+            elif pad[0]=='arc' or (pad[0]=='line' and found_arc):
+                found_arc=True
+                mpad.append(pad)
+                if nline>=8:
+                    #print npad
+                    #print 'mpad';print mpad
+                    #stop
+                    npad=npad+os.linesep+createFpPad(mpad,offset,u'RoundRect', drill_pos)
+                    nline=0
+                    mpad=[]
+                    found_arc=False
+                nline=nline+1
+        #print npad        
         
+        #print 'len pad '+str(len(npad))
+        #print newcontent
+        if len (npad)>0:
+            newcontent=newcontent+npad+os.linesep
+            say('created Round Rect pads')
+        ### ----------Poly reference Pad-------------------------------
+        #print psmd
+        polypad=[]
+        polypad=pply
+        pad_nbr=1
+        nline=1
+        polypad_pos=[]
+        found_arc=False
+        #sayerr(polypad)
+        for circ_pad in polypad:
+            #sayerr(drill)
+            if circ_pad[0]=='circle':
+                #ret=createFpPad(drill,offset,u'Drills')
+                #sayw(ret)
+                polypad_pos.append(createFpPad(circ_pad,offset,u'Drills'))
+            # elif drill[0]=='line' and not found_arc:
+            #     mdrills.append(drill)
+            #     if nline>=4:
+            #         #ndrill=ndrill+os.linesep+createFpPad(mdrills,offset,u'Drills')
+            #         drill_pos.append(createFpPad(mdrill,offset,u'Drills'))
+            #         nline=0
+            #         mdrills=[]
+            #     nline=nline+1
+            
+        #sayw(drill_pos)
+        ## drill_pos (cntX,cntY,sizeX,sizeY)
+        if len (polypad_pos)>0:
+            #newcontent=newcontent+os.linesep+')'+os.linesep+u' '       
+            sayw ('collected poly pads centers and positions')
+        ### ----------Poly-------------------------------
+        #polypad_pos=[]  ### TBC polypad inside poly sketch
+        #sayerr(pply)
+        #sayerr(polypad_pos)
+        npad=u''
+        mpad=[]
+        nline=1
+        pad_nbr=1
+        poly_closed=False
+        for pad in pply:
+            #sayerr(pad)
+            #if pad[0]=='circle':
+            #    npad=npad+os.linesep+createFpPad(pad,offset,u'NPTH', drill_pos)
+            if pad[0]=='line':
+                mpad.append(pad)
+                if len(mpad)>1:
+                    if mpad[0][1]==pad[3] and mpad[0][2]==pad[4]:
+                        sayerr('poly closed')
+                        poly_closed=True
+                        nline=1
+                        #pad_nbr=pad_nbr+1
+                else:
+                    nline=nline+1
+            if poly_closed:
+                #print npad
+                #print 'mpad';print mpad
+                poly_closed=False
+                npad=npad+os.linesep+createFpPad(mpad,offset,u'Poly', polypad_pos)
+                nline=1
+                mpad=[]
+            #nline=nline+1
+        #print npad        
+        
+        #print 'len pad '+str(len(npad))
+        #print newcontent
+        if len (npad)>0:
+            newcontent=newcontent+npad+os.linesep
+            say('created Poly pads')
+        ### ---------- wrtiting file --------------------
+        newcontent=newcontent+')'+os.linesep+u' '       
         with codecs.open(fpath,'w', encoding='utf-8') as ofile:
             ofile.write(newcontent)
             ofile.close()        
@@ -13914,14 +14028,14 @@ def createFpPad(pad,offset,tp, _drills=None):
             px=pad[2];py=pad[3]*-1;sx=2*pad[1];sy=2*pad[1]
             pdl ="  (pad "+str(pad_nbr)+" smd circle (at "+str(px)+" "+str(py)+") (size "+str(sx)+" "+str(sy)+") (layers F.Cu F.Paste F.Mask))"
             pad_nbr=pad_nbr+1
-            say(pad)
+            #say(pad)
             return pdl
         elif pad[0][0]=='line':
             sayerr('rect pad nbr.'+str(pad_nbr))
             px=(pad[0][1]+pad[0][3])/2;py=(pad[1][2]+pad[1][4])/-2;sx=abs(pad[0][1]-pad[0][3]);sy=abs(pad[1][2]-pad[1][4])
             pdl ="  (pad "+str(pad_nbr)+" smd rect (at "+str(px)+" "+str(py)+") (size "+str(sx)+" "+str(sy)+") (layers F.Cu F.Paste F.Mask))"
             pad_nbr=pad_nbr+1
-            say(pad);sayw(pdl)
+            #say(pad);sayw(pdl)
             return pdl
         elif pad[0][0]=='arc':
             sayerr('arc pad nbr.'+str(pad_nbr))
@@ -13934,7 +14048,7 @@ def createFpPad(pad,offset,tp, _drills=None):
             px=((cx1-r1)+(cx2+r2))/2;py=((cy1-r1)+(cy2+r2))/-2;sx=abs((cx1-r1)-(cx2+r2));sy=abs((cy1-r1)-(cy2+r2))
             pdl ="  (pad "+str(pad_nbr)+" smd oval (at "+str(px)+" "+str(py)+") (size "+str(sx)+" "+str(sy)+") (layers F.Cu F.Paste F.Mask))"
             pad_nbr=pad_nbr+1
-            say(pad);sayw(pdl)
+            #say(pad);sayw(pdl)
             return pdl
         else:
             return u''
@@ -13970,6 +14084,7 @@ def createFpPad(pad,offset,tp, _drills=None):
             ptp='thru_hole'
         else:
             ptp='np_thru_hole'
+        
         found_drill=False
         if pad[0]=='circle':
             sayerr('circle pad nbr.'+str(pad_nbr))
@@ -14003,10 +14118,10 @@ def createFpPad(pad,offset,tp, _drills=None):
                 pshp='oval'
             pdl ="  (pad "+str(pad_nbr)+" "+ptp+" "+pshp+" (at "+str(cx)+" "+str(cy)+") (size "+str(sx)+" "+str(sy)+") "+drill_str+" (layers *.Cu *.Mask))"
             pad_nbr=pad_nbr+1
-            say(pad)
+            #say(pad)
             return pdl
         elif pad[0][0]=='line':
-            say(_drills)
+            #say(_drills)
             sayerr('rect pad nbr.'+str(pad_nbr))
             cx=(pad[0][1]+pad[0][3])/2;cy=(pad[1][2]+pad[1][4])/-2;sx=abs(pad[0][1]-pad[0][3]);sy=abs(pad[1][2]-pad[1][4])
             found_drill=False
@@ -14035,7 +14150,7 @@ def createFpPad(pad,offset,tp, _drills=None):
             pdl ="  (pad "+str(pad_nbr)+" "+ptp+" rect (at "+str(cx)+" "+str(cy)+") (size "+str(sx)+" "+str(sy)+") "+drill_str+" (layers *.Cu *.Mask))"
             #pdl ="  (pad "+str(pad_nbr)+" thru_hole rect (at "+str(px)+" "+str(py)+") (size "+str(sx)+" "+str(sy)+") (layers F.Cu F.Paste F.Mask))"
             pad_nbr=pad_nbr+1
-            say(pad);sayw(pdl)
+            #say(pad);sayw(pdl)
             return pdl
         elif pad[0][0]=='arc':
             sayerr('arc pad nbr.'+str(pad_nbr))
@@ -14084,11 +14199,164 @@ def createFpPad(pad,offset,tp, _drills=None):
             pdl ="  (pad "+str(pad_nbr)+" "+ptp+" oval (at "+str(cx)+" "+str(cy)+") (size "+str(sx)+" "+str(sy)+") "+drill_str+" (layers *.Cu *.Mask))"
             #pdl ="  (pad "+str(pad_nbr)+" "+ptp+" oval (at "+str(cx)+" "+str(cy)+") (size "+str(sx)+" "+str(sy)+") (layers F.Cu F.Paste F.Mask))"
             pad_nbr=pad_nbr+1
-            say(pad);sayw(pdl)
+            #say(pad);sayw(pdl)
             return pdl
         else:
             return u''
     ##--------------------------------------------##
+    elif tp=='RoundRect':
+        found_drill=False
+        if pad[0][0]=='line':
+            #say(_drills)
+            sayerr('round rect pad nbr.'+str(pad_nbr))
+            cx=(pad[0][1]+pad[0][3])/2;cy=(pad[1][2]+pad[1][4])/-2;sx=abs(pad[0][1]-pad[0][3])+2*pad[4][1];sy=abs(pad[1][2]-pad[1][4])+2*pad[4][1]
+            r=pad[4][1]
+            rratio=r/min(sx,sy)
+            #sayerr('center='+str(cx)+','+str(cy)+' size='+str(sx)+','+str(sy))
+            found_drill=False
+            if len(_drills)>0:
+                for d in _drills:
+                    if d[0] > cx-sx/2 and d[0] < cx+sx/2 and d[1] > cy-sy/2 and d[1] < cy+sy/2:
+                        sayw('drill in pad found! '+str(d[0])+','+str(d[1])+'/'+str(cx)+','+str(cy)+':'+str(sx)+','+str(sy))
+                        found_drill=True
+                        ptp='thru_hole'
+                        p_layers='(layers *.Cu *.Mask)'
+                        break
+                #drl_size=[d[2],d[3]]
+                ### OFFSET
+                if found_drill:
+                    if d[2]!=d[3]:
+                        drill_str="(drill oval "+str(d[2])+" "+str(d[3]) #+")"
+                    else:
+                        drill_str="(drill "+str(d[2]) #+")"
+                    if abs(d[0]-cx)>edge_tolerance or abs(d[1]-cy)>edge_tolerance:
+                        drill_str=drill_str+" (offset "+str(cx-d[0])+" "+str(cy-d[1])+"))" #+")"
+                        cx=d[0];cy=d[1]
+                    else:
+                        drill_str=drill_str+")"
+                else:
+                    #drill_str="(drill 0)"
+                    ptp='smd'
+                    drill_str=""
+                    p_layers='(layers F.Cu F.Paste F.Mask)'
+            else:
+                drill_str=""
+                ptp='smd'
+                p_layers='(layers F.Cu F.Paste F.Mask)'
+            #rratio=0.25  ### TBD
+            pdl ="  (pad "+str(pad_nbr)+" "+ptp+" roundrect (at "+str(cx)+" "+str(cy)+") (size "+\
+                 str(sx)+" "+str(sy)+") "+drill_str+" "+p_layers+"(roundrect_rratio "+str(rratio)+"))"
+            #pdl ="  (pad "+str(pad_nbr)+" thru_hole rect (at "+str(px)+" "+str(py)+") (size "+str(sx)+" "+str(sy)+") (layers F.Cu F.Paste F.Mask))"
+            pad_nbr=pad_nbr+1
+            #say(pad);sayw(pdl)
+            return pdl
+    ##--------------------------------------------##
+    elif tp=='Poly':
+        found_drill=False
+        wr=[]
+        if pad[0][0]=='line':
+            #sayw(pad)
+            pts="      (gr_poly (pts"+os.linesep
+            segments_nbr=len(pad)
+            i=1
+            for lines in pad:
+                #if i<segments_nbr:
+                #    pts=pts+"         (xy "+str(lines[1])+" "+str(-1*lines[2])+") (xy "+str(lines[3])+" "+str(-1*lines[4])+")"+os.linesep
+                #else:
+                #    pts=pts+"         (xy "+str(lines[1])+" "+str(-1*lines[2])+")) (width 0))"+os.linesep
+                wr.append(Part.makeLine((lines[1], lines[2],0.0),(lines[3], lines[4],0.0)))
+                i=i+1
+            ant=Part.Wire(wr)
+            #sayw( ant.isClosed() )
+            #Part.show(ant)
+            face = Part.Face(ant)
+            Part.show(face)
+            shpName=FreeCAD.ActiveDocument.ActiveObject.Name
+            #say( FreeCAD.ActiveDocument.ActiveObject.Label)
+            shape= FreeCAD.ActiveDocument.ActiveObject.Shape
+            if len(_drills)>0:
+                for d in _drills:
+                    #print d
+                    point=FreeCAD.Vector(d[0],-1*d[1],0)
+                    if shape.isInside(point,0,True):
+                        sayw('pad in poly found! '+str(d[0])+','+str(-1*d[1]))
+                        found_drill=True
+                        break
+            FreeCAD.ActiveDocument.removeObject(shpName)
+            if found_drill:
+                i=1
+                for lines in pad:
+                    if i<segments_nbr:
+                        pts=pts+"         (xy "+str(lines[1]-d[0])+" "+str(-1*lines[2]-d[1])+") (xy "+str(lines[3]-d[0])+" "+str(-1*lines[4]-d[1])+")"+os.linesep
+                    else:
+                        pts=pts+"         (xy "+str(lines[1]-d[0])+" "+str(-1*lines[2]-d[1])+")) (width 0))"+os.linesep
+                    i=i+1
+                pad_ref="  (pad "+str(pad_nbr)+" smd custom (at "+str(d[0])+" "+str(d[1])+" ) (size "+str(d[2])+" "+str(d[2])+") (layers F.Cu F.Paste F.Mask)"+os.linesep
+                pad_ref=pad_ref+"    (zone_connect 0)"+os.linesep
+                pad_ref=pad_ref+"    (options (clearance outline) (anchor circle))"+os.linesep
+                pad_ref=pad_ref+"    (primitives"+os.linesep
+                #pad_ref=pad_ref+"    (gr_poly (pts"+os.linesep
+                pad_ref=pad_ref+pts
+                pad_ref=pad_ref+"    ))"+os.linesep
+                #sayerr(pad_ref)
+                pad_nbr=pad_nbr+1
+                found_drill=False
+            else:
+                sayerr("missing reference pad for polyline pad")
+                stop
+            #Part.show(face)
+              #(pad 1 smd custom (at 1 2) (size 0.2 0.2) (layers F.Cu F.Paste F.Mask)
+              #(zone_connect 0)
+              #(options (clearance outline) (anchor circle))
+              #(primitives
+              #(gr_poly (pts
+              #    (xy -3.0 1.0) (xy -4.0 1.0) (xy -3.0 -2.0) (xy -0.5 -2.0) (xy 1.0 -4.0)
+              #    (xy 4.0 -2.0) (xy 5.0 2.0) (xy 1.0 3.0)) (width 0))
+              #))
+            #sayerr(pts)
+            
+            #say(_drills)
+            # sayerr('poly rect pad nbr.'+str(pad_nbr))
+            # p1=(pad[0][1],pad[0][2]);p2=(pad[0][3]+pad[0][4])
+            # sayerr('segment='+p1+','+p2
+            # found_drill=False
+            # if len(_drills)>0:
+            #     for d in _drills:
+            #         if d[0] > cx-sx/2 and d[0] < cx+sx/2 and d[1] > cy-sy/2 and d[1] < cy+sy/2:
+            #             sayw('drill in pad found! '+str(d[0])+','+str(d[1])+'/'+str(cx)+','+str(cy)+':'+str(sx)+','+str(sy))
+            #             found_drill=True
+            #             ptp='thru_hole'
+            #             p_layers='(layers *.Cu *.Mask)'
+            #             break
+            #     #drl_size=[d[2],d[3]]
+            #     ### OFFSET
+            #     if found_drill:
+            #         if d[2]!=d[3]:
+            #             drill_str="(drill oval "+str(d[2])+" "+str(d[3]) #+")"
+            #         else:
+            #             drill_str="(drill "+str(d[2]) #+")"
+            #         if abs(d[0]-cx)>edge_tolerance or abs(d[1]-cy)>edge_tolerance:
+            #             drill_str=drill_str+" (offset "+str(cx-d[0])+" "+str(cy-d[1])+"))" #+")"
+            #             cx=d[0];cy=d[1]
+            #         else:
+            #             drill_str=drill_str+")"
+            #     else:
+            #         #drill_str="(drill 0)"
+            #         ptp='smd'
+            #         drill_str=""
+            #         p_layers='(layers F.Cu F.Paste F.Mask)'
+            # else:
+            #     drill_str=""
+            #     ptp='smd'
+            #     p_layers='(layers F.Cu F.Paste F.Mask)'
+            # #rratio=0.25  ### TBD
+            # pdl ="  (pad "+str(pad_nbr)+" "+ptp+" roundrect (at "+str(cx)+" "+str(cy)+") (size "+\
+            #      str(sx)+" "+str(sy)+") "+drill_str+" "+p_layers+"(roundrect_rratio "+str(rratio)+"))"
+            # #pdl ="  (pad "+str(pad_nbr)+" thru_hole rect (at "+str(px)+" "+str(py)+") (size "+str(sx)+" "+str(sy)+") (layers F.Cu F.Paste F.Mask))"
+            # pad_nbr=pad_nbr+1
+            # say(pad);sayw(pdl)
+            # return pdl
+            return pad_ref
     else:
         return u''
     pass
@@ -14257,7 +14525,7 @@ def createEdge(edg,ofs):
     layer='Edge.Cuts'
     if edg[0] == 'line':
         if 0: #abs(edg[1]+ofs[0])>500 or abs(edg[2]+ofs[1])>500:
-            print edg
+            #print edg
             stop
             k_edg = "  (gr_line (start {0} {1}) (end {2} {3}) (angle 90) (layer {5}) (width {4}))"\
                         .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edge_width, layer)
@@ -14368,7 +14636,7 @@ def createFp(edg,ofs,layer, edge_thick):
     cr='fp_circle'
     if edg[0] == 'line':
         if 0: #abs(edg[1]+ofs[0])>500 or abs(edg[2]+ofs[1])>500:
-            print edg
+            #print edg
             stop
             k_edg = "  ("+ln+" (start {0} {1}) (end {2} {3}) (angle 90) (layer {5}) (width {4}))"\
                         .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edge_thick, layer)
