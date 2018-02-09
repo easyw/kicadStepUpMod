@@ -664,6 +664,61 @@ class ksuToolsFootprintGen:
 FreeCADGui.addCommand('ksuToolsFootprintGen',ksuToolsFootprintGen())
 
 #####
+class ksuToolsSimpleCopy:
+    "ksu tools Simple Copy object"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'simple_copy.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksuu Simple Copy" ,
+                     'ToolTip' : "Simple Copy object"}
+ 
+    def IsActive(self):
+        return True
+ 
+    def Activated(self):
+        # do something here...
+        if FreeCADGui.Selection.getSelection():
+            sel=FreeCADGui.Selection.getSelection()
+            def mk_str(input):
+                if (sys.version_info > (3, 0)):  #py3
+                    if isinstance(input, str):
+                        return input
+                    else:
+                        input =  input.encode('utf-8')
+                        return input
+                else:  #py2
+                    if type(input) == unicode:
+                        input =  input.encode('utf-8')
+                        return input
+                    else:
+                        return input
+            ##
+            if len(sel)!=1:
+                    msg="Select ONLY one object to be copied!\n"
+                    reply = QtGui.QMessageBox.information(None,"Warning", msg)
+                    FreeCAD.Console.PrintWarning(msg)             
+            else:
+                obj_tocopy=sel[0]
+                cp_label=mk_str(obj_tocopy.Label)+u'_sc'
+                if hasattr(FreeCAD.ActiveDocument.getObject(obj_tocopy.Name), "Shape"):
+                    FreeCAD.ActiveDocument.addObject('Part::Feature',cp_label).Shape=FreeCAD.ActiveDocument.getObject(obj_tocopy.Name).Shape
+                    FreeCAD.ActiveDocument.ActiveObject.Label=cp_label
+                    FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).ShapeColor
+                    FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).LineColor
+                    FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).PointColor
+                    FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).DiffuseColor
+                    FreeCADGui.ActiveDocument.ActiveObject.Transparency=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).Transparency
+                    FreeCAD.ActiveDocument.recompute()
+                else:
+                    FreeCAD.Console.PrintWarning("Select object with a \"Shape\" to be copied!\n")             
+        else:
+            #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
+            reply = QtGui.QMessageBox.information(None,"Warning", "Select ONLY one object to be copied!")
+            FreeCAD.Console.PrintWarning("Select ONLY one object to be copied!\n")             
+
+FreeCADGui.addCommand('ksuToolsSimpleCopy',ksuToolsSimpleCopy())
+
+#####
 class ksuExcDemo:
     exFile = None
 

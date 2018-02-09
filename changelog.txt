@@ -268,4 +268,5 @@ Changelog
 - improved bspline to arcs
 - started footprint exporter (smd [rect, oval, circle])
 - added Round Rectangles and Poly Lines (for RF design)
+- simple copy button added
 - most clean code and comments done
