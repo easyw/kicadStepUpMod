@@ -451,52 +451,54 @@ class ksuTools2D2Sketch:
                 #face = OpenSCAD2DgeomMau.edgestofaces(edges)
                 FC_majorV=int(FreeCAD.Version()[0])
                 FC_minorV=int(FreeCAD.Version()[1])
-                using_draft_makeSketch=False
-                try:
-                    faceobj=None
-                    face = kicadStepUptools.OSCD2Dg_edgestofaces(edges,3 , kicadStepUptools.edge_tolerance)
-                    face.check() # reports errors
-                    face.fix(0,0,0)
-                    faceobj = FreeCAD.ActiveDocument.addObject('Part::Feature',"Face")
-                    faceobj.Label = "Face"
-                    faceobj.Shape = face
-                    for obj in FreeCADGui.Selection.getSelection():
-                        FreeCADGui.ActiveDocument.getObject(obj.Name).Visibility=False
-                    FreeCAD.ActiveDocument.recompute()
-                    wires,_faces = Draft.downgrade(faceobj,delete=True)
-                except:
-                    import Draft
-                    if faceobj is not None:
-                        FreeCAD.ActiveDocument.removeObject(faceobj.Name)
-                    sk = None
-                    sk = Draft.makeSketch(FreeCADGui.Selection.getSelection(),autoconstraints=True)
-                    if sk is None:
-                        reply = QtGui.QMessageBox.information(None,"Warning", "Select edge elements to be converted to Sketch")
-                        FreeCAD.Console.PrintWarning("Select edge elements to be converted to Sketch\n")
-                        stop
-                    sk.Label = "Sketch_converted"
-                    sname=FreeCAD.ActiveDocument.ActiveObject.Name
-                    using_draft_makeSketch=True
-                    for obj in FreeCADGui.Selection.getSelection():
-                        FreeCADGui.ActiveDocument.getObject(obj.Name).Visibility=False
-                    
-                if FC_majorV==0 and FC_minorV<=16:
+                using_draft_makeSketch=True
+                faceobj=None
+                if not using_draft_makeSketch or (FC_majorV==0 and FC_minorV<=16):
                     try:
-                        sketch = Draft.makeSketch(wires[0:1])
-                        sketch.Label = "Sketch_converted"
-                        for wire in wires[1:]:
-                            Draft.makeSketch([wire],addTo=sketch)
-                        sname=FreeCAD.ActiveDocument.ActiveObject.Name
+                        faceobj=None
+                        face = kicadStepUptools.OSCD2Dg_edgestofaces(edges,3 , kicadStepUptools.edge_tolerance)
+                        face.check() # reports errors
+                        face.fix(0,0,0)
+                        faceobj = FreeCAD.ActiveDocument.addObject('Part::Feature',"Face")
+                        faceobj.Label = "Face"
+                        faceobj.Shape = face
+                        for obj in FreeCADGui.Selection.getSelection():
+                            FreeCADGui.ActiveDocument.getObject(obj.Name).Visibility=False
+                        FreeCAD.ActiveDocument.recompute()
+                        wires,_faces = Draft.downgrade(faceobj,delete=True)
                     except:
+                        import Draft
+                        if faceobj is not None:
+                            FreeCAD.ActiveDocument.removeObject(faceobj.Name)
+                        sk = None
+                        sk = Draft.makeSketch(FreeCADGui.Selection.getSelection(),autoconstraints=True)
+                        if sk is None:
+                            reply = QtGui.QMessageBox.information(None,"Warning", "Select edge elements to be converted to Sketch\nBSplines and Bezier curves are not supported by this tool")
+                            FreeCAD.Console.PrintWarning("Select edge elements to be converted to Sketch\nBSplines and Bezier curves are not supported by this tool\n")
+                            stop
+                        sk.Label = "Sketch_converted"
                         sname=FreeCAD.ActiveDocument.ActiveObject.Name
-                        FreeCAD.ActiveDocument.removeObject(sname)
-                        reply = QtGui.QMessageBox.information(None,"Error", "BSplines not supported in FC0.16\nUse FC0.17")
-                    #sname=FreeCAD.ActiveDocument.ActiveObject.Name
-                    for wire in wires:
-                        FreeCAD.ActiveDocument.removeObject(wire.Name)
-                #FreeCAD.Console.PrintWarning("\nConverting Bezier curves to Arcs\n")                                
-                #wires,_faces = Draft.downgrade(faceobj,delete=True)
-                elif using_draft_makeSketch == False:
+                        using_draft_makeSketch=True
+                        for obj in FreeCADGui.Selection.getSelection():
+                            FreeCADGui.ActiveDocument.getObject(obj.Name).Visibility=False
+                    
+                    if FC_majorV==0 and FC_minorV>=16:
+                        try:
+                            sketch = Draft.makeSketch(wires[0:1])
+                            sketch.Label = "Sketch_converted"
+                            for wire in wires[1:]:
+                                Draft.makeSketch([wire],addTo=sketch)
+                            sname=FreeCAD.ActiveDocument.ActiveObject.Name
+                        except:
+                            sname=FreeCAD.ActiveDocument.ActiveObject.Name
+                            FreeCAD.ActiveDocument.removeObject(sname)
+                            reply = QtGui.QMessageBox.information(None,"Error", "BSplines not supported in FC0.16\nUse FC0.17")
+                        #sname=FreeCAD.ActiveDocument.ActiveObject.Name
+                        for wire in wires:
+                            FreeCAD.ActiveDocument.removeObject(wire.Name)
+                    #FreeCAD.Console.PrintWarning("\nConverting Bezier curves to Arcs\n")                                
+                    #wires,_faces = Draft.downgrade(faceobj,delete=True)
+                ##elif using_draft_makeSketch == False:
                     newShapeList = []
                     newShapes = []
                     found_BCurve=False
@@ -556,7 +558,7 @@ class ksuTools2D2Sketch:
                         FreeCAD.ActiveDocument.recompute()
                         FreeCAD.ActiveDocument.getObject(sname).Label="Sketch_converted"
                         #Draft.makeSketch([w])    
-                    else:
+                    elif FC_majorV==0 and FC_minorV>=16:
                         if len (newBSlEdges)>0:
                             sketch = FreeCAD.activeDocument().addObject('Sketcher::SketchObject','Sketch_conv')
                             sname = sketch.Name
@@ -579,6 +581,22 @@ class ksuTools2D2Sketch:
                     for wnm in newShapeList:
                         FreeCAD.ActiveDocument.removeObject(wnm)
                     FreeCAD.ActiveDocument.recompute()
+                else:
+                    import Draft
+                    if faceobj is not None:
+                        FreeCAD.ActiveDocument.removeObject(faceobj.Name)
+                    sk = None
+                    sk = Draft.makeSketch(FreeCADGui.Selection.getSelection(),autoconstraints=True)
+                    if sk is None:
+                        reply = QtGui.QMessageBox.information(None,"Warning", "Select edge elements to be converted to Sketch")
+                        FreeCAD.Console.PrintWarning("Select edge elements to be converted to Sketch\n")
+                        stop
+                    sk.Label = "Sketch_converted"
+                    sname=FreeCAD.ActiveDocument.ActiveObject.Name
+                    using_draft_makeSketch=True
+                    for obj in FreeCADGui.Selection.getSelection():
+                        FreeCADGui.ActiveDocument.getObject(obj.Name).Visibility=False
+                        
             except Part.OCCError: # Exception: #
                 FreeCAD.Console.PrintError('Error in source %s (%s)' % (faceobj.Name,faceobj.Label)+"\n")
         else:
