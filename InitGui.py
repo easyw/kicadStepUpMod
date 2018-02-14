@@ -43,7 +43,8 @@ class ksuWB ( Workbench ):
         import kicadStepUpCMD
         submenu = ['demo.kicad_pcb','d-pak.kicad_mod', 'demo-sketch.FCStd', 'demo.step',\
                    'footprint-template.FCStd', 'footprint-Edge-template.FCStd', 'footprint-template-roundrect-polylines.FCStd',\
-                   'footprint-RF-antenna.FCStd', 'RF-antenna-dxf.dxf', 'kicadStepUp-cheat-sheet.pdf', 'kicad-3D-to-MCAD.pdf' ]
+                   'footprint-RF-antenna.FCStd', 'footprint-RF-antenna-w-solder-Mask.FCStd', 'RF-antenna-dxf.dxf', \
+                   'kicadStepUp-cheat-sheet.pdf', 'kicad-3D-to-MCAD.pdf' ]
         dirs = self.ListDemos()
 
         #self.appendToolbar("ksu Tools", ["ksuTools"])
