@@ -783,13 +783,14 @@ class ksuToolsCheckSolid:
                     reply = QtGui.QMessageBox.information(None,"Warning", msg)
                     FreeCAD.Console.PrintWarning(msg)             
             else:
+                non_solids=''
                 for o in sel:
                     if hasattr(o,"Shape"):
                         if len(o.Shape.Solids)>0:
                             i_say(mk_str(o.Label)+' Solid object(s) NBR : '+str(len(o.Shape.Solids)))
                         else:
                             i_sayerr(mk_str(o.Label)+' object is NOT a Solid')
-                            reply = QtGui.QMessageBox.information(None,"Warning", mk_str(o.Label)+' object is NOT a Solid')
+                            non_solids+=mk_str(o.Label)+';<br>'
                         if len(o.Shape.Shells)>0:
                             i_say(mk_str(o.Label)+' Shell object(s) NBR : '+str(len(o.Shape.Shells)))
                         if len(o.Shape.Compounds)>0:
@@ -797,7 +798,9 @@ class ksuToolsCheckSolid:
                         if len(o.Shape.CompSolids)>0:
                             i_say(mk_str(o.Label)+' CompSolids object(s) NBR : '+str(len(o.Shape.CompSolids)))
                     else:
-                        FreeCAD.Console.PrintWarning("Select object with a \"Shape\" to be checked!\n")             
+                        FreeCAD.Console.PrintWarning("Select object with a \"Shape\" to be checked!\n")
+                if len (non_solids)>0:
+                    reply = QtGui.QMessageBox.information(None,"Warning", 'List of <b>NOT Solid</b> object(s):<br>'+non_solids)
         else:
             #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
             reply = QtGui.QMessageBox.information(None,"Warning", "Select one or more object(s) to be checked!")
