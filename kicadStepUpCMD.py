@@ -687,7 +687,7 @@ class ksuToolsSimpleCopy:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'simple_copy.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksuu Simple Copy" ,
+                     'MenuText': "ksu Simple Copy" ,
                      'ToolTip' : "Simple Copy object"}
  
     def IsActive(self):
@@ -735,6 +735,75 @@ class ksuToolsSimpleCopy:
             FreeCAD.Console.PrintWarning("Select ONLY one object to be copied!\n")             
 
 FreeCADGui.addCommand('ksuToolsSimpleCopy',ksuToolsSimpleCopy())
+
+#####
+#####
+class ksuToolsCheckSolid:
+    "ksu tools Check Solid property"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'ShapeInfo_check.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksu Check Solid property" ,
+                     'ToolTip' : "Check Solid property"}
+ 
+    def IsActive(self):
+        return True
+ 
+    def Activated(self):
+        # do something here...
+        if FreeCADGui.Selection.getSelection():
+            sel=FreeCADGui.Selection.getSelection()
+            def mk_str(input):
+                if (sys.version_info > (3, 0)):  #py3
+                    if isinstance(input, str):
+                        return input
+                    else:
+                        input =  input.encode('utf-8')
+                        return input
+                else:  #py2
+                    if type(input) == unicode:
+                        input =  input.encode('utf-8')
+                        return input
+                    else:
+                        return input
+            def i_say(msg):
+                FreeCAD.Console.PrintMessage(msg)
+                FreeCAD.Console.PrintMessage('\n')
+            
+            def i_sayw(msg):
+                FreeCAD.Console.PrintWarning(msg)
+                FreeCAD.Console.PrintWarning('\n')
+                
+            def i_sayerr(msg):
+                FreeCAD.Console.PrintError(msg)
+                FreeCAD.Console.PrintWarning('\n')
+            ##
+            if len(sel)<1:
+                    msg="Select one or more object(s) to be checked!\n"
+                    reply = QtGui.QMessageBox.information(None,"Warning", msg)
+                    FreeCAD.Console.PrintWarning(msg)             
+            else:
+                for o in sel:
+                    if hasattr(o,"Shape"):
+                        if len(o.Shape.Solids)>0:
+                            i_say(mk_str(o.Label)+' Solid object(s) NBR : '+str(len(o.Shape.Solids)))
+                        else:
+                            i_sayerr(mk_str(o.Label)+' object is NOT a Solid')
+                            reply = QtGui.QMessageBox.information(None,"Warning", mk_str(o.Label)+' object is NOT a Solid')
+                        if len(o.Shape.Shells)>0:
+                            i_say(mk_str(o.Label)+' Shell object(s) NBR : '+str(len(o.Shape.Shells)))
+                        if len(o.Shape.Compounds)>0:
+                            i_say(mk_str(o.Label)+' Compound object(s) NBR : '+str(len(o.Shape.Compounds)))
+                        if len(o.Shape.CompSolids)>0:
+                            i_say(mk_str(o.Label)+' CompSolids object(s) NBR : '+str(len(o.Shape.CompSolids)))
+                    else:
+                        FreeCAD.Console.PrintWarning("Select object with a \"Shape\" to be checked!\n")             
+        else:
+            #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
+            reply = QtGui.QMessageBox.information(None,"Warning", "Select one or more object(s) to be checked!")
+            FreeCAD.Console.PrintWarning("Select one or more object(s) to be checked!\n")             
+
+FreeCADGui.addCommand('ksuToolsCheckSolid',ksuToolsCheckSolid())
 
 #####
 class ksuExcDemo:

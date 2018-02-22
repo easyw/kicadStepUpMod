@@ -272,4 +272,5 @@ Changelog
 - improved TH, NPTH and SMD pads
 - bspline allowed on footprint F_Silks
 - solder Mask Zones for Polylines
+- added Check for Solid property
 - most clean code and comments done

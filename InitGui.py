@@ -21,7 +21,7 @@ ksuWB_icons_path =  os.path.join( ksuWBpath, 'Resources', 'icons')
 global main_ksu_Icon
 main_ksu_Icon = os.path.join( ksuWB_icons_path , 'kicad-StepUp-tools-WB.svg')
 
-ksu_wb_version='v 7.4.8'
+ksu_wb_version='v 7.4.9'
 #try:
 #    from FreeCADGui import Workbench
 #except ImportError as e:
@@ -51,7 +51,7 @@ class ksuWB ( Workbench ):
         self.appendToolbar("ksu Tools", ["ksuTools","ksuToolsOpenBoard","ksuToolsLoadFootprint",\
                            "ksuToolsExportModel","ksuToolsPushPCB","ksuToolsCollisions", \
                            "ksuToolsImport3DStep","ksuToolsExport3DStep","ksuToolsMakeUnion",\
-                           "ksuToolsMakeCompound", "ksuToolsSimpleCopy", "ksuTools3D2D", "ksuTools2D2Sketch", "ksuTools2DtoFace",\
+                           "ksuToolsMakeCompound", "ksuToolsSimpleCopy", "ksuToolsCheckSolid", "ksuTools3D2D", "ksuTools2D2Sketch", "ksuTools2DtoFace",\
                            "ksuToolsFootprintGen"])
         
         #self.appendMenu("ksu Tools", ["ksuTools","ksuToolsEdit"])
