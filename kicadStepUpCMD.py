@@ -711,28 +711,29 @@ class ksuToolsSimpleCopy:
                     else:
                         return input
             ##
-            if len(sel)!=1:
-                    msg="Select ONLY one object to be copied!\n"
+            if len(sel)<1:
+                    msg="Select at least one object with Shape to be copied!\n"
                     reply = QtGui.QMessageBox.information(None,"Warning", msg)
                     FreeCAD.Console.PrintWarning(msg)             
             else:
-                obj_tocopy=sel[0]
-                cp_label=mk_str(obj_tocopy.Label)+u'_sc'
-                if hasattr(FreeCAD.ActiveDocument.getObject(obj_tocopy.Name), "Shape"):
-                    FreeCAD.ActiveDocument.addObject('Part::Feature',cp_label).Shape=FreeCAD.ActiveDocument.getObject(obj_tocopy.Name).Shape
-                    FreeCAD.ActiveDocument.ActiveObject.Label=cp_label
-                    FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).ShapeColor
-                    FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).LineColor
-                    FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).PointColor
-                    FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).DiffuseColor
-                    FreeCADGui.ActiveDocument.ActiveObject.Transparency=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).Transparency
-                    FreeCAD.ActiveDocument.recompute()
-                else:
-                    FreeCAD.Console.PrintWarning("Select object with a \"Shape\" to be copied!\n")             
+                for obj_tocopy in sel:
+                #obj_tocopy=sel[0]
+                    cp_label=mk_str(obj_tocopy.Label)+u'_sc'
+                    if hasattr(FreeCAD.ActiveDocument.getObject(obj_tocopy.Name), "Shape"):
+                        FreeCAD.ActiveDocument.addObject('Part::Feature',cp_label).Shape=FreeCAD.ActiveDocument.getObject(obj_tocopy.Name).Shape
+                        FreeCAD.ActiveDocument.ActiveObject.Label=cp_label
+                        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).ShapeColor
+                        FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).LineColor
+                        FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).PointColor
+                        FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).DiffuseColor
+                        FreeCADGui.ActiveDocument.ActiveObject.Transparency=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).Transparency
+                        FreeCAD.ActiveDocument.recompute()
+                    #else:
+                    #    FreeCAD.Console.PrintWarning("Select object with a \"Shape\" to be copied!\n")             
         else:
             #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
-            reply = QtGui.QMessageBox.information(None,"Warning", "Select ONLY one object to be copied!")
-            FreeCAD.Console.PrintWarning("Select ONLY one object to be copied!\n")             
+            reply = QtGui.QMessageBox.information(None,"Warning", "Select at least one object with Shape to be copied!")
+            FreeCAD.Console.PrintWarning("Select at least one object with Shape to be copied!\n")             
 
 FreeCADGui.addCommand('ksuToolsSimpleCopy',ksuToolsSimpleCopy())
 
@@ -784,12 +785,14 @@ class ksuToolsCheckSolid:
                     FreeCAD.Console.PrintWarning(msg)             
             else:
                 non_solids=''
+                solids=''
                 for o in sel:
                     if hasattr(o,"Shape"):
                         if len(o.Shape.Solids)>0:
                             i_say(mk_str(o.Label)+' Solid object(s) NBR : '+str(len(o.Shape.Solids)))
+                            solids+=mk_str(o.Label)+';<br>'
                         else:
-                            i_sayerr(mk_str(o.Label)+' object is NOT a Solid')
+                            i_sayerr(mk_str(o.Label)+' object is a NON Solid')
                             non_solids+=mk_str(o.Label)+';<br>'
                         if len(o.Shape.Shells)>0:
                             i_say(mk_str(o.Label)+' Shell object(s) NBR : '+str(len(o.Shape.Shells)))
@@ -800,7 +803,9 @@ class ksuToolsCheckSolid:
                     else:
                         FreeCAD.Console.PrintWarning("Select object with a \"Shape\" to be checked!\n")
                 if len (non_solids)>0:
-                    reply = QtGui.QMessageBox.information(None,"Warning", 'List of <b>NOT Solid</b> object(s):<br>'+non_solids)
+                    reply = QtGui.QMessageBox.information(None,"Warning", 'List of <b>NON Solid</b> object(s):<br>'+non_solids)
+                if len (solids)>0:
+                    reply = QtGui.QMessageBox.information(None,"Info", 'List of <b>Solid</b> object(s):<br>'+solids)
         else:
             #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
             reply = QtGui.QMessageBox.information(None,"Warning", "Select one or more object(s) to be checked!")
