@@ -7,7 +7,7 @@ maintained in the same accuracy and aspect in STEP AP214 format. +
 The *kicad StepUp* maintains the usual way to work with kicad, but improves the process
 to work in a collaborative way with mechanical designers bringing near ECAD and MCAD environments. +
 With kicad StepUp you’ll get an exact representation of your physical board in Native 3D PCB
-v7.1.7.8 February 2018
+v7.1.7.9 February 2018
 
 please refer to
 kicadStepUp-starter-Guide.pdf
@@ -273,4 +273,6 @@ Changelog
 - bspline allowed on footprint F_Silks
 - solder Mask Zones for Polylines
 - added Check for Solid property
+- ZLength for BBox height
+- skipped Points in geometry of sketch
 - most clean code and comments done
