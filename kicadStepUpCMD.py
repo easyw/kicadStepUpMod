@@ -790,16 +790,25 @@ class ksuToolsCheckSolid:
                     if hasattr(o,"Shape"):
                         if len(o.Shape.Solids)>0:
                             i_say(mk_str(o.Label)+' Solid object(s) NBR : '+str(len(o.Shape.Solids)))
-                            solids+=mk_str(o.Label)+';<br>'
+                            solids+=mk_str(o.Label)+'<br>'
+                            if '.[solid]' not in o.Label:
+                                o.Label=mk_str(o.Label)+'.[solid]'
                         else:
                             i_sayerr(mk_str(o.Label)+' object is a NON Solid')
-                            non_solids+=mk_str(o.Label)+';<br>'
+                            non_solids+=mk_str(o.Label)+'<br>'
                         if len(o.Shape.Shells)>0:
                             i_say(mk_str(o.Label)+' Shell object(s) NBR : '+str(len(o.Shape.Shells)))
+                            if '.[shell]' not in o.Label and '.[solid]' not in o.Label:
+                                o.Label=mk_str(o.Label)+'.[shell]'
                         if len(o.Shape.Compounds)>0:
                             i_say(mk_str(o.Label)+' Compound object(s) NBR : '+str(len(o.Shape.Compounds)))
+                            if '.[compound]' not in o.Label and '.[solid]' not in o.Label and '.[shell]' not in o.Label:
+                                o.Label=mk_str(o.Label)+'.[compound]'
                         if len(o.Shape.CompSolids)>0:
                             i_say(mk_str(o.Label)+' CompSolids object(s) NBR : '+str(len(o.Shape.CompSolids)))
+                            if '.[compsolid]' not in o.Label and '.[solid]' not in o.Label and '.[shell]' not in o.Label\
+                                 and '.[compound]' not in o.Label:
+                                o.Label=mk_str(o.Label)+'.[compsolid]'
                     else:
                         FreeCAD.Console.PrintWarning("Select object with a \"Shape\" to be checked!\n")
                 if len (non_solids)>0:
