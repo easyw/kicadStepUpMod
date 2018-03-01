@@ -738,6 +738,141 @@ class ksuToolsSimpleCopy:
 FreeCADGui.addCommand('ksuToolsSimpleCopy',ksuToolsSimpleCopy())
 
 #####
+class ksuToolsDeepCopy:
+    "ksu tools PartDN Copy object"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'deep_copy.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksu PartDN Copy" ,
+                     'ToolTip' : "PartDN Copy object\nwith relative placement"}
+ 
+    def IsActive(self):
+        return True
+ 
+    def Activated(self):
+        # do something here...
+        if FreeCADGui.Selection.getSelection():
+            sel=FreeCADGui.Selection.getSelection()        
+            if len(sel)!=1:
+                    msg="Select ONE Part Design Next object to be copied!\n"
+                    reply = QtGui.QMessageBox.information(None,"Warning", msg)
+                    FreeCAD.Console.PrintWarning(msg)             
+            else:
+                doc = FreeCAD.activeDocument()
+                FreeCADGui.ActiveDocument.getObject(sel[0].Name).Visibility=False
+                deep_copy(doc)
+        else:
+            #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
+            reply = QtGui.QMessageBox.information(None,"Warning", "Select ONE Part Design Next object to be copied!")
+            FreeCAD.Console.PrintWarning("Select ONE Part Design Next object to be copied!\n")             
+        
+FreeCADGui.addCommand('ksuToolsDeepCopy',ksuToolsDeepCopy())
+#####
+__Name__ = 'Deep Copy'
+__Help__ = 'Select a part and launch'
+__Author__ = 'galou_breizh'
+
+###
+def mk_str_u(input):
+    if (sys.version_info > (3, 0)):  #py3
+        if isinstance(input, str):
+            return input
+        else:
+            input =  input.encode('utf-8')
+            return input
+    else:  #py2
+        if type(input) == unicode:
+            input =  input.encode('utf-8')
+            return input
+        else:
+            return input
+###
+make_compound = False
+
+# import FreeCAD as app,FreeCADGui as gui
+
+# from FreeCAD import app
+# from FreeCAD import gui
+
+
+def deep_copy(doc):
+    for sel_object in FreeCADGui.Selection.getSelectionEx():
+        deep_copy_part(doc, sel_object.Object)
+
+
+def deep_copy_part(doc, part):
+    if part.TypeId != 'App::Part' and part.Type.Id != 'PartDesign::Body':
+        # Part is not a part, return.
+        return
+
+    copied_subobjects = []
+    for o in get_all_subobjects(part):
+        wrong_types = [
+                'App::Origin',
+                'App::Plane',
+                'App::Line',
+                'App::Part',
+                'PartDesign::Body',
+                'Sketcher::SketchObject'
+                ]
+        if o.TypeId in wrong_types:
+            continue
+        copied_subobjects += copy_subobject(doc, o)
+
+    if make_compound:
+        compound = doc.addObject('Part::Compound', mk_str_u(part.Label)+'_copy')
+        compound.Links = copied_subobjects
+    doc.recompute()
+
+
+def get_all_subobjects(part):
+    """Recursively get all subobjects"""
+    l = part.OutList
+    for o in l:
+        l += get_all_subobjects(o)
+    return l
+
+
+def copy_subobject(doc, o):
+    gui_doc = FreeCADGui.getDocument(doc.Name)
+    gui_o = o.ViewObject
+    copied_object = []
+    try:
+        copy = doc.addObject(o.TypeId, o.Name)
+        copy.Shape = o.Shape
+        #copy.Label = 'Copy of ' + o.Label
+        copy.Label = mk_str_u(o.Label)+'.(copy)'
+        copy.Placement = get_recursive_inverse_placement(o).inverse()
+
+        gui_copy = copy.ViewObject
+        gui_copy.ShapeColor = gui_o.ShapeColor
+        gui_copy.LineColor = gui_o.LineColor
+        gui_copy.PointColor = gui_o.PointColor
+        gui_copy.DiffuseColor = gui_o.DiffuseColor
+        gui_copy.Transparency = gui_o.Transparency
+    except AttributeError:
+        pass
+    else:
+        copied_object = [copy]
+    return copied_object
+
+def get_recursive_inverse_placement(o):
+    # We browse the parent in reverse order so we have to multipy the inverse
+    # placements and return the inverse placement.
+    # Note that we cannot rely on o.InListRecursive because the order there is
+    # not reliable.
+    p = o.Placement.inverse()
+    for parent in o.InList:
+        if parent.TypeId == 'App::Part':
+            p = p.multiply(get_recursive_inverse_placement(parent))
+            break
+    return p
+
+#if __name__ == "__main__":
+#    doc = app.activeDocument()
+#    deep_copy(doc)
+#####
+
 #####
 class ksuToolsCheckSolid:
     "ksu tools Check Solid property"

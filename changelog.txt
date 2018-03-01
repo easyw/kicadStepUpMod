@@ -275,4 +275,5 @@ Changelog
 - added Check for Solid property
 - ZLength for BBox height
 - skipped Points in geometry of sketch
+- added single copy and PDN copy (object flattening)
 - most clean code and comments done
