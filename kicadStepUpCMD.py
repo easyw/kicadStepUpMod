@@ -19,6 +19,7 @@ import ksu_locator
 # from kicadStepUptools import onLoadBoard, onLoadFootprint
 import math
 
+__ksuCMD_version__='1.4.0'
 
 precision = 0.1 # precision in spline or bezier conversion
 
@@ -740,6 +741,12 @@ FreeCADGui.addCommand('ksuToolsSimpleCopy',ksuToolsSimpleCopy())
 #####
 class ksuToolsDeepCopy:
     "ksu tools PartDN Copy object"
+
+    __Name__ = 'Deep Copy'
+    __Help__ = 'Select a part and launch'
+    __Author__ = 'galou_breizh'
+
+###
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'deep_copy.svg') , # the name of a svg file available in the resources
@@ -768,11 +775,6 @@ class ksuToolsDeepCopy:
         
 FreeCADGui.addCommand('ksuToolsDeepCopy',ksuToolsDeepCopy())
 #####
-__Name__ = 'Deep Copy'
-__Help__ = 'Select a part and launch'
-__Author__ = 'galou_breizh'
-
-###
 def mk_str_u(input):
     if (sys.version_info > (3, 0)):  #py3
         if isinstance(input, str):
@@ -801,55 +803,56 @@ def deep_copy(doc):
 
 
 def deep_copy_part(doc, part):
-    if part.TypeId != 'App::Part' and part.Type.Id != 'PartDesign::Body':
+    if part.TypeId != 'App::Part':
         # Part is not a part, return.
         return
 
     copied_subobjects = []
     for o in get_all_subobjects(part):
-        wrong_types = [
-                'App::Origin',
-                'App::Plane',
-                'App::Line',
-                'App::Part',
-                'PartDesign::Body',
-                'Sketcher::SketchObject'
-                ]
-        if o.TypeId in wrong_types:
-            continue
         copied_subobjects += copy_subobject(doc, o)
 
     if make_compound:
-        compound = doc.addObject('Part::Compound', mk_str_u(part.Label)+'_copy')
+        compound = doc.addObject('Part::Compound', mk_str_u(part.Label)+'_(copy)')
         compound.Links = copied_subobjects
     doc.recompute()
 
 
-def get_all_subobjects(part):
-    """Recursively get all subobjects"""
-    l = part.OutList
-    for o in l:
-        l += get_all_subobjects(o)
+def get_all_subobjects(o):
+    """Recursively get all subobjects
+    
+    Subobjects of objects having a Shape attribute are not included otherwise each
+    single feature of the object would be copied. The result is that bodies,
+    compounds, and the result of boolean operations will be converted into a
+    simple copy of their shape.
+    """
+    if hasattr(o, 'Shape'):
+        return []
+    # With the assumption that the attribute InList is ordered, only add the
+    # subobject if o is the direct parent, i.e. the first in InList.
+    l = [so for so in o.OutList if so.InList and so.InList[0] is o]
+    for subobject in l:
+        l += get_all_subobjects(subobject)
     return l
 
 
 def copy_subobject(doc, o):
-    gui_doc = FreeCADGui.getDocument(doc.Name)
-    gui_o = o.ViewObject
     copied_object = []
+    if not hasattr(o, 'Shape'):
+        return copied_object
+    vo_o = o.ViewObject
     try:
-        copy = doc.addObject(o.TypeId, o.Name)
+        copy = doc.addObject('Part::Feature', o.Name + '_Shape')
         copy.Shape = o.Shape
         #copy.Label = 'Copy of ' + o.Label
-        copy.Label = mk_str_u(o.Label)+'.(copy)'
+        copy.Label = o.Label+'.(copy)'
         copy.Placement = get_recursive_inverse_placement(o).inverse()
 
-        gui_copy = copy.ViewObject
-        gui_copy.ShapeColor = gui_o.ShapeColor
-        gui_copy.LineColor = gui_o.LineColor
-        gui_copy.PointColor = gui_o.PointColor
-        gui_copy.DiffuseColor = gui_o.DiffuseColor
-        gui_copy.Transparency = gui_o.Transparency
+        vo_copy = copy.ViewObject
+        vo_copy.ShapeColor = vo_o.ShapeColor
+        vo_copy.LineColor = vo_o.LineColor
+        vo_copy.PointColor = vo_o.PointColor
+        vo_copy.DiffuseColor = vo_o.DiffuseColor
+        vo_copy.Transparency = vo_o.Transparency
     except AttributeError:
         pass
     else:
@@ -861,11 +864,11 @@ def get_recursive_inverse_placement(o):
     # placements and return the inverse placement.
     # Note that we cannot rely on o.InListRecursive because the order there is
     # not reliable.
+    # TODO: see if this cannot be replaced with o.getGlobalPlacement().
     p = o.Placement.inverse()
-    for parent in o.InList:
-        if parent.TypeId == 'App::Part':
-            p = p.multiply(get_recursive_inverse_placement(parent))
-            break
+    parent = o.getParentGeoFeatureGroup()
+    if parent:
+        p = p.multiply(get_recursive_inverse_placement(parent))
     return p
 
 #if __name__ == "__main__":
