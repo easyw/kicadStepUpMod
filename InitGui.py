@@ -21,15 +21,15 @@ ksuWBpath = os.path.dirname(ksu_locator.__file__)
 #sys.path.append(ksuWB + '/Gui')
 ksuWB_icons_path =  os.path.join( ksuWBpath, 'Resources', 'icons')
 
-global main_ksu_Icon, wb_activated
+global main_ksu_Icon, wbk_activated
 main_ksu_Icon = os.path.join( ksuWB_icons_path , 'kicad-StepUp-tools-WB.svg')
-wb_activated=False
+wbk_activated=False
 
-ksu_wb_version='v 7.5.1'
-global myurl
-myurl='https://github.com/easyw/kicadStepUpMod'
-global mycommits
-mycommits=58 #v7.5.1
+ksu_wb_version='v 7.5.2'
+global myurlKWB
+myurlKWB='https://github.com/easyw/kicadStepUpMod'
+global mycommitsKWB
+mycommitsKWB=59 #v7.5.2
 
 
 #try:
@@ -39,7 +39,7 @@ mycommits=58 #v7.5.1
 
 
 class ksuWB ( Workbench ):
-    global main_ksu_Icon, ksu_wb_version, myurl, mycommits, wb_activated
+    global main_ksu_Icon, ksu_wb_version, myurlKWB, mycommitsKWB, wbk_activated
     
     "kicad StepUp WB object"
     Icon = main_ksu_Icon
@@ -82,10 +82,10 @@ class ksuWB ( Workbench ):
         else:
             upd=pg.GetBool("checkUpdates")
         def check_updates(url, commit_nbr):
-            global wb_activated
+            global wbk_activated
             import urllib2, re
             from urllib2 import Request, urlopen, URLError, HTTPError
-            wb_activated=True
+            wbk_activated=True
             req = Request(url)
             
             try:
@@ -124,7 +124,7 @@ class ksuWB ( Workbench ):
                     msg="""
                     <font color=red>PLEASE UPDATE "kicadStepUpMod" WB!!!</font>
                     <br>through \"Tools\" \"Addon manager\" Menu
-                    <br><a href=\""""+myurl+"""\">kicad StepUp WB</a>
+                    <br><a href=\""""+myurlKWB+"""\">kicad StepUp WB</a>
                     <br>
                     <br>set \'checkUpdates\' to \'False\' to avoid this checking
                     <br>in \"Tools\", \"Edit Parameters\",<br>\"Preferences\"->\"Mod\"->\"kicadStepUp\"
@@ -135,8 +135,8 @@ class ksuWB ( Workbench ):
                     FreeCAD.Console.PrintMessage('the WB is Up to Date\n')
                 #<li class="commits">
         ##
-        if not wb_activated and upd:
-            check_updates(myurl, mycommits)
+        if not wbk_activated and upd:
+            check_updates(myurlKWB, mycommitsKWB)
  
     def Deactivated(self):
                 # do something here if needed...
