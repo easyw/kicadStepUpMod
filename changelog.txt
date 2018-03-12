@@ -277,4 +277,5 @@ Changelog
 - skipped Points in geometry of sketch
 - added single copy and PDN copy (object flattening)
 - added Zip open of STEP file(s)
+- added option to check updates
 - most clean code and comments done

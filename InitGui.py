@@ -29,7 +29,7 @@ ksu_wb_version='v 7.5.1'
 global myurl
 myurl='https://github.com/easyw/kicadStepUpMod'
 global mycommits
-mycommits=57 #v7.5.1
+mycommits=58 #v7.5.1
 
 
 #try:
@@ -168,4 +168,3 @@ for curFile in dirs:
 FreeCADGui.addWorkbench(ksuWB)
 
 
-#check_updates(myurl, mycommits)
