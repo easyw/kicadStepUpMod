@@ -11,6 +11,9 @@
 #*                                                                          *
 
 import FreeCAD, FreeCADGui, Part, os, sys
+import urllib2, re
+from urllib2 import Request, urlopen, URLError, HTTPError
+
 import ksu_locator
 from kicadStepUpCMD import *
 
@@ -18,17 +21,25 @@ ksuWBpath = os.path.dirname(ksu_locator.__file__)
 #sys.path.append(ksuWB + '/Gui')
 ksuWB_icons_path =  os.path.join( ksuWBpath, 'Resources', 'icons')
 
-global main_ksu_Icon
+global main_ksu_Icon, wb_activated
 main_ksu_Icon = os.path.join( ksuWB_icons_path , 'kicad-StepUp-tools-WB.svg')
+wb_activated=False
 
-ksu_wb_version='v 7.5.0'
+ksu_wb_version='v 7.5.1'
+global myurl
+myurl='https://github.com/easyw/kicadStepUpMod'
+global mycommits
+mycommits=57 #v7.5.1
+
+
 #try:
 #    from FreeCADGui import Workbench
 #except ImportError as e:
 #    FreeCAD.Console.PrintWarning("error")
-    
+
+
 class ksuWB ( Workbench ):
-    global main_ksu_Icon, ksu_wb_version
+    global main_ksu_Icon, ksu_wb_version, myurl, mycommits, wb_activated
     
     "kicad StepUp WB object"
     Icon = main_ksu_Icon
@@ -63,6 +74,69 @@ class ksuWB ( Workbench ):
     def Activated(self):
                 # do something here if needed...
         Msg ("ksuWB.Activated("+ksu_wb_version+")\n")
+        from PySide import QtGui
+        pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+        if pg.IsEmpty():
+            pg.SetBool("checkUpdates",1)
+            upd=True
+        else:
+            upd=pg.GetBool("checkUpdates")
+        def check_updates(url, commit_nbr):
+            global wb_activated
+            import urllib2, re
+            from urllib2 import Request, urlopen, URLError, HTTPError
+            wb_activated=True
+            req = Request(url)
+            
+            try:
+                response = urlopen(req)
+            except HTTPError as e:
+                FreeCAD.Console.PrintWarning('The server couldn\'t fulfill the request.')
+                FreeCAD.Console.PrintWarning('Error code: ' + str(e.code)+'\n')
+            except URLError as e:
+                FreeCAD.Console.PrintWarning('We failed to reach a server.\n')
+                FreeCAD.Console.PrintWarning('Reason: '+ str(e.reason)+'\n')
+            else:
+                # everything is fine
+                the_page = response.read()
+                # print the_page
+                str2='<li class=\"commits\">'
+                pos=the_page.find(str2)
+                str_commits=(the_page[pos:pos+600])
+                # print str_commits
+                pos=str_commits.find('<span class=\"num text-emphasized\">')
+                commits=(str_commits[pos:pos+200])
+                commits=commits.replace('<span class=\"num text-emphasized\">','')
+                #commits=commits.strip(" ")
+                #exp = re.compile("\s-[^\S\r\n]")
+                #print exp
+                #nbr_commits=''
+                my_commits=re.sub('[\s+]', '', commits)
+                pos=my_commits.find('</span>')
+                #print my_commits
+                nbr_commits=my_commits[:pos]
+                nbr_commits=nbr_commits.replace(',','')
+                nbr_commits=nbr_commits.replace('.','')
+                
+                FreeCAD.Console.PrintMessage(url+'-> commits:'+str(nbr_commits)+'\n')
+                if commit_nbr < int(nbr_commits):
+                    FreeCAD.Console.PrintError('PLEASE UPDATE "kicadStepUpMod" WB!!!\n')
+                    msg="""
+                    <font color=red>PLEASE UPDATE "kicadStepUpMod" WB!!!</font>
+                    <br>through \"Tools\" \"Addon manager\" Menu
+                    <br><a href=\""""+myurl+"""\">kicad StepUp WB</a>
+                    <br>
+                    <br>set \'checkUpdates\' to \'False\' to avoid this checking
+                    <br>in \"Tools\", \"Edit Parameters\",<br>\"Preferences\"->\"Mod\"->\"kicadStepUp\"
+                    """
+                    QtGui.qApp.restoreOverrideCursor()
+                    reply = QtGui.QMessageBox.information(None,"Warning", msg)
+                else:
+                    FreeCAD.Console.PrintMessage('the WB is Up to Date\n')
+                #<li class="commits">
+        ##
+        if not wb_activated and upd:
+            check_updates(myurl, mycommits)
  
     def Deactivated(self):
                 # do something here if needed...
@@ -80,6 +154,7 @@ class ksuWB ( Workbench ):
         dirs.sort()
 
         return dirs
+    ##
 
 ###
 
@@ -91,3 +166,6 @@ for curFile in dirs:
     FreeCADGui.addCommand(curFile, ksuExcDemo(curFile))
 
 FreeCADGui.addWorkbench(ksuWB)
+
+
+#check_updates(myurl, mycommits)
