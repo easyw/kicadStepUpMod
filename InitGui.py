@@ -25,11 +25,11 @@ global main_ksu_Icon, wbk_activated
 main_ksu_Icon = os.path.join( ksuWB_icons_path , 'kicad-StepUp-tools-WB.svg')
 wbk_activated=False
 
-ksu_wb_version='v 7.5.2'
+ksu_wb_version='v 7.5.3'
 global myurlKWB
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=59 #v7.5.2
+mycommitsKWB=60 #v7.5.3
 
 
 #try:
@@ -79,6 +79,15 @@ class ksuWB ( Workbench ):
         if pg.IsEmpty():
             pg.SetBool("checkUpdates",1)
             upd=True
+            FreeCAD.Console.PrintError('new \'check for updates\' feature added!!!\n')
+            msg="""
+            <font color=red>new \'check for updates\' feature added!!!</font>
+            <br>
+            <br>set \'checkUpdates\' to \'False\' to avoid this checking
+            <br>in \"Tools\", \"Edit Parameters\",<br>\"Preferences\"->\"Mod\"->\"kicadStepUp\"
+            """
+            QtGui.qApp.restoreOverrideCursor()
+            reply = QtGui.QMessageBox.information(None,"Warning", msg)
         else:
             upd=pg.GetBool("checkUpdates")
         def check_updates(url, commit_nbr):
