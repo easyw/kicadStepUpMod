@@ -11,7 +11,7 @@
 #*                                                                          *
 
 import FreeCAD, FreeCADGui, Part, os, sys
-import urllib2, re
+import urllib2, re, time
 from urllib2 import Request, urlopen, URLError, HTTPError
 
 import ksu_locator
@@ -21,15 +21,14 @@ ksuWBpath = os.path.dirname(ksu_locator.__file__)
 #sys.path.append(ksuWB + '/Gui')
 ksuWB_icons_path =  os.path.join( ksuWBpath, 'Resources', 'icons')
 
-global main_ksu_Icon, wbk_activated
+global main_ksu_Icon
 main_ksu_Icon = os.path.join( ksuWB_icons_path , 'kicad-StepUp-tools-WB.svg')
-wbk_activated=False
 
-ksu_wb_version='v 7.5.4'
+ksu_wb_version='v 7.5.5'
 global myurlKWB
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=61 #v7.5.4
+mycommitsKWB=62 #v7.5.5
 
 
 #try:
@@ -39,7 +38,7 @@ mycommitsKWB=61 #v7.5.4
 
 
 class ksuWB ( Workbench ):
-    global main_ksu_Icon, ksu_wb_version, myurlKWB, mycommitsKWB, wbk_activated
+    global main_ksu_Icon, ksu_wb_version, myurlKWB, mycommitsKWB
     
     "kicad StepUp WB object"
     Icon = main_ksu_Icon
@@ -75,10 +74,17 @@ class ksuWB ( Workbench ):
                 # do something here if needed...
         Msg ("ksuWB.Activated("+ksu_wb_version+")\n")
         from PySide import QtGui
+        import time
+        
         pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+        tnow = int(time.time())
+        oneday = 86400
         if pg.IsEmpty():
             pg.SetBool("checkUpdates",1)
             upd=True
+            pg.SetInt("updateDaysInterval",1)
+            pg.SetInt("lastCheck",tnow-2*oneday)
+            interval=True
             FreeCAD.Console.PrintError('new \'check for updates\' feature added!!!\n')
             msg="""
             <font color=red>new \'check for updates\' feature added!!!</font>
@@ -90,11 +96,21 @@ class ksuWB ( Workbench ):
             reply = QtGui.QMessageBox.information(None,"Warning", msg)
         else:
             upd=pg.GetBool("checkUpdates")
+        time_interval = pg.GetInt("updateDaysInterval")
+        if time_interval <= 0:
+            time_interval = 1
+            pg.SetInt("updateDaysInterval",1)
+        nowTimeCheck = int(time.time())
+        lastTimeCheck = pg.GetInt("lastCheck")
+        #print (nowTimeCheck - lastTimeCheck)/(oneday*time_interval)
+        if time_interval <= 0 or ((nowTimeCheck - lastTimeCheck)/(oneday*time_interval) >= 1):
+            interval = True
+            pg.SetInt("lastCheck",tnow)
+        else:
+            interval = False
         def check_updates(url, commit_nbr):
-            global wbk_activated
             import urllib2, re
             from urllib2 import Request, urlopen, URLError, HTTPError
-            wbk_activated=True
             req = Request(url)
             
             try:
@@ -144,7 +160,7 @@ class ksuWB ( Workbench ):
                     FreeCAD.Console.PrintMessage('the WB is Up to Date\n')
                 #<li class="commits">
         ##
-        if not wbk_activated and upd:
+        if upd and interval:
             check_updates(myurlKWB, mycommitsKWB)
  
     def Deactivated(self):
