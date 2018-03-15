@@ -427,7 +427,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.1.7.9"  
+___ver___ = "7.1.8.0"   #March 2018
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -13620,6 +13620,90 @@ def PushFootprint():
             msg="""Select Group or Sketch/Text elements to be converted to KiCad Footprint!"""
             sayerr(msg)
             say_warning(msg)
+###
+
+def simplify_sketch():
+    global maxRadius
+    
+    doc = FreeCAD.ActiveDocument
+    sel = FreeCADGui.Selection.getSelection()
+    if len(sel)==1:
+        new_edge_list, not_supported, to_discretize, construction_geom = getBoardOutline()
+        ## support for arcs, lines and bsplines in F_Silks
+        sel = FreeCADGui.Selection.getSelection()
+        sk_name=None
+        sk_name=sel[0].Name
+        sk_label=sel[0].Label
+        if len(to_discretize)>0 and sk_name is not None:
+            FreeCADGui.ActiveDocument.getObject(sk_name).Visibility=False # hidden Sketch
+            #sel = FreeCADGui.Selection.getSelection()
+            #for s in sel:
+            #    if 'F_Silks' in s.Label:
+            #        sk_name=s.Name
+            #if len (sel)==1:
+                #sk_name=sel[0].Name
+            t_name=cpy_sketch(sk_name)
+            ###t_sk=FreeCAD.ActiveDocument.copyObject(FreeCAD.ActiveDocument.getObject(sk_name))
+            elist, to_dis=check_geom(t_name)
+            #Draft.clone(FreeCAD.ActiveDocument.getObject(sk_name),copy=True)
+            #clone_name=App.ActiveDocument.ActiveObject.Name
+            ## remove_basic_geom(t_name, to_dis)
+            ##remove_basic_geom(t_sk.Name, to_discretize)
+            ##elist, to_dis=check_geom(t_sk.Name)
+            #print elist
+            #stop
+            obj_list_prev=[]
+            for obj in doc.Objects:
+                #print obj.TypeId
+                if (obj.TypeId=="Part::Feature") or (obj.TypeId=="Sketcher::SketchObject"):
+                    obj_list_prev.append(obj.Name)
+            #Draft.draftify(FreeCAD.ActiveDocument.getObject(t_name),delete=True)
+            #Draft.draftify(FreeCAD.ActiveDocument.getObject(t_name),delete=False)
+            b=FreeCAD.ActiveDocument.getObject(t_name)
+            shp1=b.Shape.copy()
+            Part.show(shp1)
+            FreeCAD.ActiveDocument.removeObject(t_name)
+            FreeCAD.ActiveDocument.recompute()
+            #stop
+            obj_list_after=[]
+            for obj in doc.Objects:
+                if (obj.TypeId=="Part::Feature") or (obj.TypeId=="Sketcher::SketchObject")\
+                   or (obj.TypeId=="Part::Part2DObjectPython"):
+                    if obj.Name not in obj_list_prev:
+                        obj_list_after.append(obj.Name)
+            #print obj_list_after #, obj_list_prev
+            sk_to_conv=[]
+            for obj in doc.Objects:
+                if obj.Name in obj_list_after:
+                    if (obj.TypeId=="Part::Part2DObjectPython"):
+                        FreeCAD.ActiveDocument.removeObject(obj.Name)
+                        FreeCAD.ActiveDocument.recompute() 
+                    else:
+                       sk_to_conv.append(obj.Name)
+            keep_sketch_converted=True #False
+            for s in sk_to_conv:
+                #sayerr(s) ## 
+                ns=Discretize(s)
+                offset1=[-FreeCAD.ActiveDocument.getObject(sk_name).Placement.Base[0],-FreeCAD.ActiveDocument.getObject(sk_name).Placement.Base[1]]
+                elist, to_dis=check_geom(ns,offset1)
+                for e in elist:
+                    #print e[(len(e)-1):][0]
+                    e[(len(e)-1)]=sk_label
+                    #print e[(len(e)-1):][0]
+                #stop
+                new_edge_list=new_edge_list+elist
+                if not keep_sketch_converted:
+                    FreeCAD.ActiveDocument.removeObject(ns)
+                else:
+                    FreeCAD.ActiveDocument.getObject(ns).Label=sel[0].Label+'_simplified'
+                FreeCAD.ActiveDocument.recompute()
+            #############  end discretizing
+        else:
+            sayw('nothing to simplify')
+        # to do: evaluate sanitize check
+        ####stop
+
+
 ###
 def export_footprint(fname=None):
     global last_fp_path, test_flag, start_time

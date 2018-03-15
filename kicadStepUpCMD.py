@@ -19,7 +19,7 @@ import ksu_locator
 # from kicadStepUptools import onLoadBoard, onLoadFootprint
 import math
 
-__ksuCMD_version__='1.4.0'
+__ksuCMD_version__='1.4.1'
 
 precision = 0.1 # precision in spline or bezier conversion
 
@@ -652,6 +652,33 @@ class ksuTools2DtoFace:
             FreeCAD.Console.PrintWarning("Select elements to be converted to Face\n")             
 
 FreeCADGui.addCommand('ksuTools2DtoFace',ksuTools2DtoFace())
+
+#####
+
+class ksuToolsSimplifySketck:
+    "ksu tools Simplify Sketch object"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'SimplifySketch.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksu Simplify Sketch" ,
+                     'ToolTip' : "Simplifying Sketch to Arcs and Lines"}
+ 
+    def IsActive(self):
+        return True
+ 
+    def Activated(self):
+        # do something here...
+        if len(FreeCADGui.Selection.getSelection()):
+            import kicadStepUptools
+            if reload_Gui:
+                reload_lib( kicadStepUptools )
+            kicadStepUptools.simplify_sketch()
+        else:
+            #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
+            reply = QtGui.QMessageBox.information(None,"Warning", "Select ONE Sketch to be Simplified")
+            FreeCAD.Console.PrintWarning("Select ONE Sketch to be Simplified\n")             
+
+FreeCADGui.addCommand('ksuToolsSimplifySketck',ksuToolsSimplifySketck())
 
 #####
 class ksuToolsFootprintGen:

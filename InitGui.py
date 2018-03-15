@@ -25,11 +25,11 @@ global main_ksu_Icon, wbk_activated
 main_ksu_Icon = os.path.join( ksuWB_icons_path , 'kicad-StepUp-tools-WB.svg')
 wbk_activated=False
 
-ksu_wb_version='v 7.5.3'
+ksu_wb_version='v 7.5.4'
 global myurlKWB
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=60 #v7.5.3
+mycommitsKWB=61 #v7.5.4
 
 
 #try:
@@ -63,7 +63,7 @@ class ksuWB ( Workbench ):
                            "ksuToolsExportModel","ksuToolsPushPCB","ksuToolsCollisions", \
                            "ksuToolsImport3DStep","ksuToolsExport3DStep","ksuToolsMakeUnion",\
                            "ksuToolsMakeCompound", "ksuToolsSimpleCopy", "ksuToolsDeepCopy", "ksuToolsCheckSolid", "ksuTools3D2D", "ksuTools2D2Sketch", "ksuTools2DtoFace",\
-                           "ksuToolsFootprintGen"])
+                           "ksuToolsSimplifySketck", "ksuToolsFootprintGen"])
         
         #self.appendMenu("ksu Tools", ["ksuTools","ksuToolsEdit"])
         self.appendMenu("ksu Tools", ["ksuTools"])
