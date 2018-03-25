@@ -10,9 +10,21 @@
 #*  Kicad STEPUP (TM) is a TradeMark and cannot be freely useable           *
 #*                                                                          *
 
+ksu_wb_version='v 7.5.6'
+global myurlKWB
+myurlKWB='https://github.com/easyw/kicadStepUpMod'
+global mycommitsKWB
+mycommitsKWB=63 #v7.5.6
+
 import FreeCAD, FreeCADGui, Part, os, sys
-import urllib2, re, time
-from urllib2 import Request, urlopen, URLError, HTTPError
+import re, time
+
+if (sys.version_info > (3, 0)):  #py3
+    import urllib
+    from urllib import request, error #URLError, HTTPError
+else:  #py2
+    import urllib2
+    from urllib2 import Request, urlopen, URLError, HTTPError
 
 import ksu_locator
 from kicadStepUpCMD import *
@@ -23,12 +35,6 @@ ksuWB_icons_path =  os.path.join( ksuWBpath, 'Resources', 'icons')
 
 global main_ksu_Icon
 main_ksu_Icon = os.path.join( ksuWB_icons_path , 'kicad-StepUp-tools-WB.svg')
-
-ksu_wb_version='v 7.5.5'
-global myurlKWB
-myurlKWB='https://github.com/easyw/kicadStepUpMod'
-global mycommitsKWB
-mycommitsKWB=62 #v7.5.5
 
 
 #try:
@@ -109,21 +115,41 @@ class ksuWB ( Workbench ):
         else:
             interval = False
         def check_updates(url, commit_nbr):
-            import urllib2, re
-            from urllib2 import Request, urlopen, URLError, HTTPError
-            req = Request(url)
-            
-            try:
-                response = urlopen(req)
-            except HTTPError as e:
-                FreeCAD.Console.PrintWarning('The server couldn\'t fulfill the request.')
-                FreeCAD.Console.PrintWarning('Error code: ' + str(e.code)+'\n')
-            except URLError as e:
-                FreeCAD.Console.PrintWarning('We failed to reach a server.\n')
-                FreeCAD.Console.PrintWarning('Reason: '+ str(e.reason)+'\n')
-            else:
+            import re, sys
+            resp_ok = False
+            if (sys.version_info > (3, 0)):  #py3
+                import urllib
+                from urllib import request, error #URLError, HTTPError
+                req = request.Request(url)
+                try:
+                    response = request.urlopen(req)
+                    resp_ok = True
+                    the_page = response.read().decode("utf-8") 
+                except error.HTTPError as e:
+                    FreeCAD.Console.PrintWarning('The server couldn\'t fulfill the request.')
+                    FreeCAD.Console.PrintWarning('Error code: ' + str(e.code)+'\n')
+                except error.URLError as e:
+                    FreeCAD.Console.PrintWarning('We failed to reach a server.\n')
+                    FreeCAD.Console.PrintWarning('Reason: '+ str(e.reason)+'\n')
+                
+            else:  #py2
+                import urllib2
+                from urllib2 import Request, urlopen, URLError, HTTPError
+                req = Request(url)
+                try:
+                    response = urlopen(req)
+                    resp_ok = True
+                    the_page = response.read()
+                except HTTPError as e:
+                    FreeCAD.Console.PrintWarning('The server couldn\'t fulfill the request.')
+                    FreeCAD.Console.PrintWarning('Error code: ' + str(e.code)+'\n')
+                except URLError as e:
+                    FreeCAD.Console.PrintWarning('We failed to reach a server.\n')
+                    FreeCAD.Console.PrintWarning('Reason: '+ str(e.reason)+'\n')          
+                
+            if resp_ok:            
                 # everything is fine
-                the_page = response.read()
+                #the_page = response.read()
                 # print the_page
                 str2='<li class=\"commits\">'
                 pos=the_page.find(str2)
