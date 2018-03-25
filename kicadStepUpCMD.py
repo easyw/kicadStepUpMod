@@ -19,7 +19,7 @@ import ksu_locator
 # from kicadStepUptools import onLoadBoard, onLoadFootprint
 import math
 
-__ksuCMD_version__='1.4.1'
+__ksuCMD_version__='1.4.2'
 
 precision = 0.1 # precision in spline or bezier conversion
 
@@ -778,7 +778,7 @@ class ksuToolsDeepCopy:
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'deep_copy.svg') , # the name of a svg file available in the resources
                      'MenuText': "ksu PartDN Copy" ,
-                     'ToolTip' : "PartDN Copy object\nwith relative placement"}
+                     'ToolTip' : "PartDN Copy object\nwith relative placement\n[flattened model]"}
  
     def IsActive(self):
         return True
@@ -835,8 +835,12 @@ def deep_copy_part(doc, part):
         return
 
     copied_subobjects = []
+    copied_subobjects_Names = []
     for o in get_all_subobjects(part):
-        copied_subobjects += copy_subobject(doc, o)
+        if o.Name not in copied_subobjects_Names:
+            copied_subobjects_Names.append(o.Name)
+            copied_subobjects += copy_subobject(doc, o)
+            copied_subobjects_Names.append(o.Name)
 
     if make_compound:
         compound = doc.addObject('Part::Compound', mk_str_u(part.Label)+'_(copy)')
@@ -864,7 +868,7 @@ def get_all_subobjects(o):
 
 def copy_subobject(doc, o):
     copied_object = []
-    if not hasattr(o, 'Shape'):
+    if not hasattr(o, 'Shape') or o.TypeId == 'Sketcher::SketchObject':
         return copied_object
     vo_o = o.ViewObject
     try:
@@ -897,11 +901,178 @@ def get_recursive_inverse_placement(o):
     if parent:
         p = p.multiply(get_recursive_inverse_placement(parent))
     return p
+##
+def toggle_highlight_subtree(objs):
+    def addsubobjs(obj,totoggleset):
+        totoggle.add(obj)
+        for subobj in obj.OutList:
+            addsubobjs(subobj,totoggleset)
 
-#if __name__ == "__main__":
-#    doc = app.activeDocument()
-#    deep_copy(doc)
+    import FreeCAD
+    totoggle=set()
+    for obj in objs:
+        addsubobjs(obj,totoggle)
+    checkinlistcomplete =False
+    while not checkinlistcomplete:
+        for obj in totoggle:
+            if (obj not in objs) and (frozenset(obj.InList) - totoggle):
+                totoggle.toggle(obj)
+                break
+        else:
+            checkinlistcomplete = True
+    obj_tree=objs[1:len(objs)]
+    for obj in totoggle:
+        if 'Compound' not in FreeCADGui.ActiveDocument.getObject(obj.Name).TypeId: # and 'App::Part' not in Gui.ActiveDocument.getObject(obj.Name).TypeId:
+            if 'Part' in obj.TypeId:
+                if obj not in obj_tree:
+                    FreeCADGui.Selection.addSelection(obj)
+                else:
+                    FreeCADGui.Selection.removeSelection(obj)
+        else:
+            if hide_compound==True:
+                FreeCADGui.ActiveDocument.getObject(obj.Name).Visibility=False
+
 #####
+def toggle_visibility_subtree(objs):
+    def addsubobjs(obj,totoggleset):
+        totoggle.add(obj)
+        for subobj in obj.OutList:
+            addsubobjs(subobj,totoggleset)
+
+    import FreeCAD
+    totoggle=set()
+    for obj in objs:
+        addsubobjs(obj,totoggle)
+    checkinlistcomplete =False
+    while not checkinlistcomplete:
+        for obj in totoggle:
+            if (obj not in objs) and (frozenset(obj.InList) - totoggle):
+                totoggle.toggle(obj)
+                break
+        else:
+            checkinlistcomplete = True
+    for obj in totoggle:
+        if 'Compound' not in FreeCADGui.ActiveDocument.getObject(obj.Name).TypeId:
+            if 'Part' in obj.TypeId or 'Sketch' in obj.TypeId:
+            #if 'Part::Feature' in obj.TypeId or 'App::Part' in obj.TypeId:
+                #if obj.Visibility==True:
+                if FreeCADGui.ActiveDocument.getObject(obj.Name).Visibility==True:
+                    #obj.Document.getObject(obj.Name).Visibility=False
+                    FreeCADGui.ActiveDocument.getObject(obj.Name).Visibility=False
+                else:
+                    FreeCADGui.ActiveDocument.getObject(obj.Name).Visibility=True
+        else:
+            if hide_compound==True:
+                FreeCADGui.ActiveDocument.getObject(obj.Name).Visibility=False
+
+#####
+def toggle_transparency_subtree(objs):
+    def addsubobjs(obj,totoggleset):
+        totoggle.add(obj)
+        for subobj in obj.OutList:
+            addsubobjs(subobj,totoggleset)
+
+    import FreeCAD
+    doc=FreeCADGui.ActiveDocument
+    totoggle=set()
+    for obj in objs:
+        addsubobjs(obj,totoggle)
+    checkinlistcomplete =False
+    while not checkinlistcomplete:
+        for obj in totoggle:
+            if (obj not in objs) and (frozenset(obj.InList) - totoggle):
+                totoggle.toggle(obj)
+                break
+        else:
+            checkinlistcomplete = True
+    for obj in totoggle:
+        #if 'App::Part' not in obj.TypeId and 'Part::Feature' in obj.TypeId:
+        if 'App::Part' not in obj.TypeId and 'Part' in obj.TypeId:
+            #if obj.Visibility==True:
+            if doc.getObject(obj.Name).Transparency == 0:
+                #obj.Document.getObject(obj.Name).Visibility=False
+                doc.getObject(obj.Name).Transparency = 70
+            else:
+                doc.getObject(obj.Name).Transparency = 0
+##
+class ksuToolsTransparencyToggle:
+    "ksu tools Transparency Toggle"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'transparency_toggle.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksu Transparency Toggle" ,
+                     'ToolTip' : "Selection Transparency Toggle"}
+ 
+    def IsActive(self):
+        return True
+ 
+    def Activated(self):
+        # do something here...
+        if FreeCADGui.Selection.getSelection():
+            sel=FreeCADGui.Selection.getSelection()
+            doc=FreeCADGui.ActiveDocument
+            for obj in sel:
+                if "App::Part" not in obj.TypeId:
+                    if doc.getObject(obj.Name).Transparency == 0:
+                        doc.getObject(obj.Name).Transparency = 70
+                    else:
+                        doc.getObject(obj.Name).Transparency = 0
+                else:
+                    toggle_transparency_subtree(FreeCADGui.Selection.getSelection())
+        else:
+            #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
+            reply = QtGui.QMessageBox.information(None,"Warning", "Select one or more object(s) to change its transparency!")
+            FreeCAD.Console.PrintWarning("Select one or more object(s) to change its transparency!\n")             
+
+FreeCADGui.addCommand('ksuToolsTransparencyToggle',ksuToolsTransparencyToggle())
+
+#####
+
+##
+class ksuToolsHighlightToggle:
+    "ksu tools Highlight Toggle"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'select_toggle.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksu Highlight Toggle" ,
+                     'ToolTip' : "Selection Highlight Toggle"}
+ 
+    def IsActive(self):
+        return True
+ 
+    def Activated(self):
+        # do something here...
+        if FreeCADGui.Selection.getSelection():
+            toggle_highlight_subtree(FreeCADGui.Selection.getSelection())
+        else:
+            #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
+            reply = QtGui.QMessageBox.information(None,"Warning", "Select one or more object(s) to be highlighted!")
+            FreeCAD.Console.PrintWarning("Select one or more object(s) to be highlighted!\n")             
+
+FreeCADGui.addCommand('ksuToolsHighlightToggle',ksuToolsHighlightToggle())
+
+#####
+class ksuToolsVisibilityToggle:
+    "ksu tools Visibility Toggle"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'visibility_toggle.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksu Visibility Toggle" ,
+                     'ToolTip' : "Selection Visibility Toggle"}
+ 
+    def IsActive(self):
+        return True
+ 
+    def Activated(self):
+        # do something here...
+        if FreeCADGui.Selection.getSelection():
+            toggle_visibility_subtree(FreeCADGui.Selection.getSelection())
+        else:
+            #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
+            reply = QtGui.QMessageBox.information(None,"Warning", "Select one or more object(s) to toggle visibility!")
+            FreeCAD.Console.PrintWarning("Select one or more object(s) to toggle visibility!\n")             
+
+FreeCADGui.addCommand('ksuToolsVisibilityToggle',ksuToolsVisibilityToggle())
 
 #####
 class ksuToolsCheckSolid:
