@@ -10,11 +10,11 @@
 #*  Kicad STEPUP (TM) is a TradeMark and cannot be freely useable           *
 #*                                                                          *
 
-ksu_wb_version='v 7.5.7'
+ksu_wb_version='v 7.5.8'
 global myurlKWB
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=65 #v7.5.7
+mycommitsKWB=66 #v7.5.8
 
 import FreeCAD, FreeCADGui, Part, os, sys
 import re, time
@@ -171,11 +171,16 @@ class ksuWB ( Workbench ):
                 nbr_commits=nbr_commits.replace('.','')
                 
                 FreeCAD.Console.PrintMessage(url+'-> commits:'+str(nbr_commits)+'\n')
-                if commit_nbr < int(nbr_commits):
+                delta = int(nbr_commits) - commit_nbr
+                if delta > 0:
+                    s = ""
+                    if delta >1:
+                        s="s"
                     FreeCAD.Console.PrintError('PLEASE UPDATE "kicadStepUpMod" WB!!!\n')
                     msg="""
                     <font color=red>PLEASE UPDATE "kicadStepUpMod" WB!!!</font>
                     <br>through \"Tools\" \"Addon manager\" Menu
+                    <br><br><b>your release is """+str(delta)+""" commit"""+s+""" behind</b><br>
                     <br><a href=\""""+myurlKWB+"""\">kicad StepUp WB</a>
                     <br>
                     <br>set \'checkUpdates\' to \'False\' to avoid this checking
