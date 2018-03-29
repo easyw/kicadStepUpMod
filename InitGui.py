@@ -10,11 +10,11 @@
 #*  Kicad STEPUP (TM) is a TradeMark and cannot be freely useable           *
 #*                                                                          *
 
-ksu_wb_version='v 7.5.8'
+ksu_wb_version='v 7.5.9'
 global myurlKWB
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=66 #v7.5.8
+mycommitsKWB=67 #v7.5.9
 
 import FreeCAD, FreeCADGui, Part, os, sys
 import re, time
@@ -176,9 +176,9 @@ class ksuWB ( Workbench ):
                     s = ""
                     if delta >1:
                         s="s"
-                    FreeCAD.Console.PrintError('PLEASE UPDATE "kicadStepUpMod" WB!!!\n')
+                    FreeCAD.Console.PrintError('PLEASE UPDATE "kicadStepUpMod" WB.\n')
                     msg="""
-                    <font color=red>PLEASE UPDATE "kicadStepUpMod" WB!!!</font>
+                    <font color=red>PLEASE UPDATE "kicadStepUpMod" WB.</font>
                     <br>through \"Tools\" \"Addon manager\" Menu
                     <br><br><b>your release is """+str(delta)+""" commit"""+s+""" behind</b><br>
                     <br><a href=\""""+myurlKWB+"""\">kicad StepUp WB</a>
