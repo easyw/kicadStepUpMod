@@ -29,7 +29,7 @@ __url__ =    "http://www.freecadweb.org"
 
 import os,zipfile,FreeCAD,tempfile,sys
 
-___ZipVersion___ = "1.0.1"
+___ZipVersion___ = "1.0.2"
 
 try:
     import __builtin__ as builtin #py2
@@ -100,10 +100,7 @@ def read(filename):
             print('fname ',f)
             tempdir = tempfile.gettempdir() # get the current temporary directory
             tempfilepath = os.path.join(tempdir,fname) # + ext)
-            with builtin.open(tempfilepath, 'w') as fl: #py3
-                fl.write(file_content)
-            #ImportGui.insert(filepath)
-            
+            z.extract(fname, tempdir)
             doc=FreeCAD.ActiveDocument
             ImportGui.insert(tempfilepath,doc.Name)
             FreeCADGui.SendMsgToActiveView("ViewFit")
@@ -112,3 +109,23 @@ def read(filename):
             except OSError:
                 FreeCAD.Console.PrintError("error on removing "+tempfilepath+" file")
             pass
+        elif '.fcstd' in f.lower(): #\
+            fname=f
+            tempdir = tempfile.gettempdir() # get the current temporary directory
+            tempfilepath = os.path.join(tempdir,fname) # + ext)
+            z.extract(fname, tempdir)
+            doc=FreeCAD.ActiveDocument
+            i=0
+            for obj in FreeCAD.ActiveDocument.Objects:
+                i+=1
+            if i==0:
+                FreeCAD.closeDocument(doc.Name)            
+            FreeCAD.open(tempfilepath)
+            #ImportGui.insert(tempfilepath,doc.Name)
+            FreeCADGui.SendMsgToActiveView("ViewFit")
+            try:
+                os.remove(tempfilepath)
+            except OSError:
+                FreeCAD.Console.PrintError("error on removing "+tempfilepath+" file")
+            pass
+            
