@@ -317,6 +317,7 @@
 # ZLength for BBox height
 # added Check for Solid property
 # skipped Points in geometry of sketch
+# added loading pad poly in fp
 # most clean code and comments done
 
 ##todo
@@ -427,7 +428,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.1.8.0"   #March 2018
+___ver___ = "7.1.8.1"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -5096,6 +5097,7 @@ def Load_models(pcbThickness,modules):
                         #ImportGui.insert(module_path_n,FreeCAD.ActiveDocument.Name)
                         try:
                             ImportGui.insert(module_path,FreeCAD.ActiveDocument.Name)
+                            #sayerr('loading first time!!!')
                             counterTmp=0
                             for ObJ in doc1.Objects:
                                 counterTmp+=1#stop
@@ -5160,7 +5162,7 @@ def Load_models(pcbThickness,modules):
                             FreeCAD.activeDocument().removeObject(newobj.Name)
                     else:
                         use_cache=1
-                        #say("use_cache")
+                        #sayw("using cache!!!")
                     #say(loaded_models);say(" models")
                     #say(str(len(loaded_model_objs))+" nbr loaded objs")
                     if use_cache:
@@ -5194,6 +5196,7 @@ def Load_models(pcbThickness,modules):
                             idxO=i
                     if loaded_models_skipped[idxO]!="skip":
                         if use_cache:
+                            sayw('copying from cache')
                             ##impPart=copy_objs(loaded_model_objs[idxO],FreeCAD.ActiveDocument, FreeCAD,FreeCADGui)
                             ### FreeCAD.ActiveDocument.addObject('Part::Feature',loaded_model_objs[idxO].Label).Shape=loaded_model_objs[idxO].Shape
                             ### #FreeCAD.ActiveDocument.ActiveObject.Label=obj.Label
@@ -8558,6 +8561,9 @@ def getPadsList(content):
                     sayerr('NO LAYERS on PAD') #test utf-8 test pads
                 data = re.search(r'\(drill(\s+oval\s+|\s+)(.*?)(\s+[-0-9\.]*?|)(\s+\(offset\s+(.*?)\s+(.*?)\)|)\)', j)
                 data_off = re.search(r'\(offset\s+([0-9\.-]+?)\s+([0-9\.-]+?)\)', j)
+                pnts = re.search(r'\(gr_poly\s\(pts(.*?)\)\s\(width', j, re.MULTILINE|re.DOTALL)
+                #if pnts is not None:
+                #    print pnts.groups(0)[0].split('(xy')
                 #
                 x = float(x)
                 y = float(y) * (-1)
@@ -8609,7 +8615,8 @@ def getPadsList(content):
                         yOF = float(data[5])
                 ##
                 #say(data)
-                pads.append({'x': x, 'y': y, 'rot': rot, 'padType': pType, 'padShape': pShape, 'rx': drill_x, 'ry': drill_y, 'dx': dx, 'dy': dy, 'holeType': hType, 'xOF': xOF, 'yOF': yOF, 'layers': layers})
+                pads.append({'x': x, 'y': y, 'rot': rot, 'padType': pType, 'padShape': pShape, 'rx': drill_x, 'ry': drill_y, 'dx': dx, 'dy': dy, \
+                             'holeType': hType, 'xOF': xOF, 'yOF': yOF, 'layers': layers, 'points': pnts})
 
     #say(pads)
     #
@@ -9850,6 +9857,83 @@ def routineDrawFootPrint_old(content,name):  #for FC = 0.15
     #pads_found=getPadsList(content)
 
 ###
+def createPoly(x, y, sx, sy, dcx,dcy,dx,dy,pShape, layer, poly_points):
+    #createPad3(x1, y1, dx, dy, xs,  ys,rx,ry,pShape,'top')
+    #createPad3(x,  y,  sx,sy,  dcx,dcy,dx,dy,type,layer):
+    pts=[]
+    bv = Base.Vector
+    p0 = poly_points[0].split(' ')
+    if layer == 'top':
+    #if top==True:
+        thick=-0.01
+        z_offset=0
+    else:
+        thick=0.01
+        z_offset=-1.6
+    for p in poly_points:
+        pc = p.split(' ')                
+        pts.append(bv(float(pc[1])+x,-1*float(pc[2][0:pc[2].index(')')])+y,z_offset))
+        # print (float(pc[1])+x1,-1*float(pc[2][0:pc[2].index(')')])+y1,z_offset)
+    # closing poly
+    pts.append(bv(float(p0[1])+x,-1*float(p0[2][0:p0[2].index(')')])+y,z_offset))
+    # print (float(p0[1])+x1,-1*float(p0[2][0:p0[2].index(')')])+y1,z_offset)
+    # f = Draft.makeWire(pts,closed=True)
+    # obj=f.Shape.copy()
+    lshape_wire = Part.makePolygon(pts) 
+    mypad = Part.Face(lshape_wire)
+    Part.show(mypad)
+    FreeCAD.ActiveDocument.ActiveObject.Label="mypad"
+    pad_name=FreeCAD.ActiveDocument.ActiveObject.Name
+    if dx!=0:
+        perc=100 #drill always oval
+        tp=0
+        mydrill=addPadLong2(dcx, dcy, dx, dy, perc, tp, z_offset)
+        # workaround FC 0.17 OCC 7
+        try:
+            if float(Part.OCC_VERSION.split('.')[0]) >= 7:
+                mydrill.reverse()
+        except:
+            pass
+        if test_flag_pads==True:
+            Part.show(mydrill)
+            FreeCAD.ActiveDocument.ActiveObject.Label="mydrill"
+            drill_name=FreeCAD.ActiveDocument.ActiveObject.Name
+        myannular=addPadLong2(dcx, dcy, dx+0.01, dy+0.01, perc, tp, z_offset)
+        if test_flag_pads==True:
+            Part.show(myannular)
+            FreeCAD.ActiveDocument.ActiveObject.Label="myannular"
+            ann_name=FreeCAD.ActiveDocument.ActiveObject.Name
+        myhole=addPadLong2(dcx, dcy, dx, dy, perc, tp, z_offset)
+        if test_flag_pads==True:
+            Part.show(myhole)
+            FreeCAD.ActiveDocument.ActiveObject.Label="myhole"
+        #wire = [mypad,mydrill] 
+        wire = [mydrill] 
+        drl = Part.Face(wire) 
+        #Part.show(drl)
+        face = mypad.cut(drl)
+        extr = face.extrude(FreeCAD.Vector(0,0,thick))
+        #Part.show(extr);stop
+        if test_flag_pads==True:
+            Part.show(extr)
+            FreeCAD.ActiveDocument.ActiveObject.Label="drilled_pad"
+        FreeCAD.ActiveDocument.removeObject(pad_name)
+        FreeCAD.ActiveDocument.recompute()
+    else:
+        face = Part.Face(mypad)
+        extr = face.extrude(FreeCAD.Vector(0,0,thick))
+        #Part.show(extr)
+        #FreeCAD.ActiveDocument.ActiveObject.Label="smd_pad"
+        FreeCAD.ActiveDocument.removeObject(pad_name)
+        FreeCAD.ActiveDocument.recompute()
+
+    #extr = sface.extrude(FreeCAD.Vector(0,0,-.01))
+    #Part.show(extr)
+    #stop
+    
+    return extr
+    
+###
 def routineDrawFootPrint(content,name):
     global rot_wrl
     #for item in content:
@@ -9917,6 +10001,10 @@ def routineDrawFootPrint(content,name):
         rx=drill_x
         ry=drill_y
         numberOfLayers = pad['layers'].split(' ')
+        pnts = pad['points']
+        #if pnts is not None:
+        #    sayw(pnts.groups(0)[0].split('(xy'))
+            #sayw(pnts)
         #say(str(rx))
         #say(numberOfLayers)
         #if pType=="thru_hole":
@@ -9947,7 +10035,14 @@ def routineDrawFootPrint(content,name):
                 bot=True
             if top==True:
                 #mypad=addPadLong(x1, y1, dx, dy, perc, 0, 0)
-                mypad=createPad3(x1, y1, dx, dy, xs,ys,rx,ry,pShape,'top')
+                if pShape=='custom':
+                    #sayw(pnts.groups(0)[0].split('(xy'))
+                    poly_points=pnts.groups(0)[0].split('(xy')[1:]
+                    mypad=createPoly(x1, y1, dx, dy, xs,ys,rx,ry,pShape,'top', poly_points)
+                #print TopPadList
+                #stop
+                else:
+                    mypad=createPad3(x1, y1, dx, dy, xs,ys,rx,ry,pShape,'top')
                 ##pad pos x,y; pad size x,y; drillcenter x,y; drill size x,y, layer
                 obj=mypad
                 if rot!=0:
@@ -9955,7 +10050,12 @@ def routineDrawFootPrint(content,name):
                 TopPadList.append(obj)
             if bot==True:
                 #mypad=addPadLong(x1, y1, dx, dy, perc, 0, -1.6)
-                mypad=createPad3(x1, y1, dx, dy, xs,ys,rx,ry,pShape,'bot')
+                if pShape=='custom':
+                    #sayw(pnts.groups(0)[0].split('(xy'))
+                    poly_points=pnts.groups(0)[0].split('(xy')[1:]
+                    mypad=createPoly(x1, y1, dx, dy, xs,ys,rx,ry,pShape,'bot', poly_points)
+                else:
+                    mypad=createPad3(x1, y1, dx, dy, xs,ys,rx,ry,pShape,'bot')
                 ##pad pos x,y; pad size x,y; drillcenter x,y; drill size x,y, layerobj=mypad
                 obj=mypad
                 if rot!=0:
@@ -9980,6 +10080,8 @@ def routineDrawFootPrint(content,name):
             if rot!=0:
                 rotateObj(obj2, [xs, ys, rot])
 
+        
+        #say(pType+"here")
         ### cmt- #da gestire: pad type trapez
 
     FrontSilk = []
