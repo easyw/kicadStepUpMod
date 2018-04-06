@@ -428,7 +428,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.1.8.3"  
+___ver___ = "7.1.8.4"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -2477,7 +2477,7 @@ def recurse_node(obj,plcm,scl):  # recursive function to make a simple copy of A
                 new_plcm=get_node_plc(o,obj)
                 recurse_node(o,new_plcm,scl)
             else:
-                if "Sketcher" not in o.TypeId:
+                if "Sketcher" not in o.TypeId and "DocumentObjectGroup" not in o.TypeId:
                     if FreeCADGui.ActiveDocument.getObject(o.Name).Visibility:
                         simple_cpy_plc(o,plcm)
                         scl.append(FreeCAD.ActiveDocument.ActiveObject)
