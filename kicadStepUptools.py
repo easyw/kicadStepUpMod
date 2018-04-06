@@ -428,7 +428,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.1.8.2"  
+___ver___ = "7.1.8.3"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -8562,6 +8562,10 @@ def getPadsList(content):
                 data = re.search(r'\(drill(\s+oval\s+|\s+)(.*?)(\s+[-0-9\.]*?|)(\s+\(offset\s+(.*?)\s+(.*?)\)|)\)', j)
                 data_off = re.search(r'\(offset\s+([0-9\.-]+?)\s+([0-9\.-]+?)\)', j)
                 pnts = re.search(r'\(gr_poly\s\(pts(.*?)\)\s\(width', j, re.MULTILINE|re.DOTALL)
+                anchor = re.search(r'\(anchor\s(.*?)\)\)', j)
+                if anchor is not None:
+                    anchor=anchor.groups()[0]
+                #print anchor
                 #if pnts is not None:
                 #    print pnts.groups(0)[0].split('(xy')
                 #
@@ -8617,7 +8621,7 @@ def getPadsList(content):
                 ##
                 #say(data)
                 pads.append({'x': x, 'y': y, 'rot': rot, 'padType': pType, 'padShape': pShape, 'rx': drill_x, 'ry': drill_y, 'dx': dx, 'dy': dy, \
-                             'holeType': hType, 'xOF': xOF, 'yOF': yOF, 'layers': layers, 'points': pnts})
+                             'holeType': hType, 'xOF': xOF, 'yOF': yOF, 'layers': layers, 'points': pnts, 'anchor': anchor})
 
     #say(pads)
     #
@@ -10003,6 +10007,7 @@ def routineDrawFootPrint(content,name):
         ry=drill_y
         numberOfLayers = pad['layers'].split(' ')
         pnts = pad['points']
+        anchor = pad['anchor']
         #if pnts is not None:
         #    sayw(pnts.groups(0)[0].split('(xy'))
             #sayw(pnts)
@@ -10036,10 +10041,19 @@ def routineDrawFootPrint(content,name):
                 bot=True
             if top==True:
                 #mypad=addPadLong(x1, y1, dx, dy, perc, 0, 0)
+                mypad2=None
                 if pShape=='custom':
                     #sayw(pnts.groups(0)[0].split('(xy'))
                     poly_points=pnts.groups(0)[0].split('(xy')[1:]
                     mypad=createPoly(x1, y1, dx, dy, xs,ys,rx,ry,pShape,'top', poly_points)
+                    if anchor is not None:
+                        if anchor[0]=="circle":
+                            perc=100
+                        #print 'anchor ',anchor[0]
+                        mypad2=createPad3(x1, y1, dx, dy, xs,ys,rx,ry,anchor,'top')
+                        #Part.show(mypad2)
+                        #print anchor
+                        #stop
                 #print TopPadList
                 #stop
                 else:
@@ -10048,20 +10062,34 @@ def routineDrawFootPrint(content,name):
                 obj=mypad
                 if rot!=0:
                     rotateObj(obj, [xs, ys, rot])
+                    if mypad2 is not None:
+                        rotateObj(mypad2, [xs, ys, rot])
                 TopPadList.append(obj)
+                if mypad2 is not None:
+                    TopPadList.append(mypad2)
+                
             if bot==True:
                 #mypad=addPadLong(x1, y1, dx, dy, perc, 0, -1.6)
+                mypad2=None
                 if pShape=='custom':
                     #sayw(pnts.groups(0)[0].split('(xy'))
                     poly_points=pnts.groups(0)[0].split('(xy')[1:]
                     mypad=createPoly(x1, y1, dx, dy, xs,ys,rx,ry,pShape,'bot', poly_points)
+                    if anchor is not None:
+                        if anchor=="circle":
+                            perc=100
+                        mypad2=createPad3(x1, y1, dx, dy, xs,ys,rx,ry,anchor,'bot')
                 else:
                     mypad=createPad3(x1, y1, dx, dy, xs,ys,rx,ry,pShape,'bot')
                 ##pad pos x,y; pad size x,y; drillcenter x,y; drill size x,y, layerobj=mypad
                 obj=mypad
                 if rot!=0:
                     rotateObj(obj, [xs, ys, -rot+180])
+                    if mypad2 is not None:
+                        rotateObj(mypad2, [xs, ys, -rot+180])
                 BotPadList.append(obj)
+                if mypad2 is not None:
+                    BotPadList.append(mypad2)
         if rx!=0:
             #obj=createHole2(xs,ys,rx,ry,"oval") #need to be separated instructions
             #print pShape
