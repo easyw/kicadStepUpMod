@@ -318,6 +318,7 @@
 # added Check for Solid property
 # skipped Points in geometry of sketch
 # added loading pad poly in fp
+# fixed simplify sketch
 # most clean code and comments done
 
 ##todo
@@ -428,7 +429,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.1.8.4"  
+___ver___ = "7.1.8.5"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -13778,6 +13779,10 @@ def simplify_sketch():
             elist, to_dis=check_geom(t_name)
             #Draft.clone(FreeCAD.ActiveDocument.getObject(sk_name),copy=True)
             #clone_name=App.ActiveDocument.ActiveObject.Name
+            geoBasic=[]
+            geoBasic=split_basic_geom(t_name, to_dis)
+            #print geoBasic
+            #remove_basic_geom(t_name, to_dis)
             ## remove_basic_geom(t_name, to_dis)
             ##remove_basic_geom(t_sk.Name, to_discretize)
             ##elist, to_dis=check_geom(t_sk.Name)
@@ -13815,6 +13820,8 @@ def simplify_sketch():
             for s in sk_to_conv:
                 #sayerr(s) ## 
                 ns=Discretize(s)
+                for g in geoBasic:
+                    FreeCAD.ActiveDocument.getObject(ns).addGeometry(g)
                 offset1=[-FreeCAD.ActiveDocument.getObject(sk_name).Placement.Base[0],-FreeCAD.ActiveDocument.getObject(sk_name).Placement.Base[1]]
                 elist, to_dis=check_geom(ns,offset1)
                 for e in elist:
@@ -16054,6 +16061,40 @@ def remove_basic_geom(c_name, to_disc):
     #stop
     #if i not in 
     #App.ActiveDocument.getObject("PCB_Sketch").delGeometry(0, 3, 4, 10, 11, 12)
+##
+def split_basic_geom(c_name, to_disc):
+    
+    s=FreeCAD.ActiveDocument.getObject(c_name)
+    geoL=len(FreeCAD.ActiveDocument.getObject(c_name).Geometry)
+    geoB = []
+    #print 'to discretize'
+    #print to_disc
+    to_disc_str=[]
+    for j in range (len(to_disc)):
+        to_disc_str.append(str(to_disc[j]))
+    #print to_disc_str
+    #print 'geo',' ', App.ActiveDocument.getObject(c_name).Geometry
+    #print 'oldgeo',' ', App.ActiveDocument.getObject("PCB_Sketch").Geometry
+    #stop
+    #print 'removing'
+    #for i in range (geoL-1,0,-1):
+    for i in range (geoL-1,-1,-1):
+        #print 's.geom'
+        #if str(s.Geometry[i-1]) in to_disc_str:
+        #    print 'found geo to disc'
+        #else:
+        #print str(s.Geometry[i]), ';;' 
+        if str(s.Geometry[i]) not in to_disc_str:
+            if hasattr(s.Geometry[i],'Construction'):
+                if not s.Geometry[i].Construction:
+                    #print FreeCAD.ActiveDocument.getObject(c_name).Geometry[i]
+                    geoB.append(FreeCAD.ActiveDocument.getObject(c_name).Geometry[i])
+                    FreeCAD.ActiveDocument.getObject(c_name).delGeometry(i)
+    FreeCAD.ActiveDocument.recompute()
+    #stop
+    #if i not in 
+    #App.ActiveDocument.getObject("PCB_Sketch").delGeometry(0, 3, 4, 10, 11, 12)
+    return geoB
 ##
 def check_geom(sk_name, ofs=None):
     
