@@ -319,6 +319,7 @@
 # skipped Points in geometry of sketch
 # added loading pad poly in fp
 # fixed simplify sketch
+# improved Qt5 compatibility
 # most clean code and comments done
 
 ##todo
@@ -429,7 +430,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.1.8.5"  
+___ver___ = "7.1.8.6"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -1993,12 +1994,12 @@ def close_ksu():
         <i>Have you saved your STEP artwork?</i><br>
         """
     #confirm on exit
-    QtGui.qApp.restoreOverrideCursor()
+    QtGui.QApplication.restoreOverrideCursor()
     #self.setGeometry(25, 250, 500, 500)
     #self.setWindowState(QtCore.Qt.WindowMinimized)
     res=''
     if test_flag_exit==False:
-        QtGui.qApp.restoreOverrideCursor()
+        QtGui.QApplication.restoreOverrideCursor()
         res = QtGui.QMessageBox.question(None,"Close",msg,QtGui.QMessageBox.Yes|QtGui.QMessageBox.No)
     if res is not QtGui.QMessageBox.No:
         #e.ignore()
@@ -2752,7 +2753,7 @@ def export(componentObjs, fullfilePathName, scale=None):
     mesh_dev=mesh_deviation_default #the smaller the best quality, 1 coarse
     if os.path.exists(filename):
         say('file exists')
-        QtGui.qApp.restoreOverrideCursor()
+        QtGui.QApplication.restoreOverrideCursor()
         reply = QtGui.QMessageBox.question(None, "Info", filename+"\nwrl file exists, overwrite?",
         QtGui.QMessageBox.Yes | QtGui.QMessageBox.No, QtGui.QMessageBox.No)
         if reply == QtGui.QMessageBox.Yes:
@@ -3194,7 +3195,7 @@ def exportStep(objs, ffPathName):
     exportS=True
     if os.path.exists(fullFilePathNameStep):
         say('file exists')
-        QtGui.qApp.restoreOverrideCursor()
+        QtGui.QApplication.restoreOverrideCursor()
         reply = QtGui.QMessageBox.question(None, "Info", fullFilePathNameStep+"\nstep file exists, overwrite?",
         QtGui.QMessageBox.Yes | QtGui.QMessageBox.No, QtGui.QMessageBox.No)
         if reply == QtGui.QMessageBox.Yes:
@@ -3795,7 +3796,7 @@ def cfg_read_all():
         msg+="<b>"+ksu_config_fname+"</b>"
         msg+="<br>adapt your <b>3D model DIR path</b> in config file<br>"
         msg+="see <b><font color=GoldenRod>[prefix3D]</font></b> section"
-        QtGui.qApp.restoreOverrideCursor()
+        QtGui.QApplication.restoreOverrideCursor()
         reply = QtGui.QMessageBox.information(None,"Info ...",msg)
     ###
     models3D_prefix = ''
@@ -4280,7 +4281,7 @@ def Display_info(blacklisted_models):
     if blacklisted_model_elements != '':
         sayw("black-listed module \n"+ ''.join(map(str, blacklisted_models)))
         if (show_messages==True):
-            QtGui.qApp.restoreOverrideCursor()
+            QtGui.QApplication.restoreOverrideCursor()
             reply = QtGui.QMessageBox.information(None,"Info ...","... black-listed module(s)\r\n"+ ''.join(map(str, blacklisted_models)).replace(',','\n'))
         #FreeCAD.Console.PrintMessage("black-listed module "+ '\r\n'.join(map(str, blacklisted_models)))    
     
@@ -4312,7 +4313,7 @@ def Display_info(blacklisted_models):
     say("Board Placed @ "+str(new_pos_x)+";"+str(new_pos_y)+";0.0")
     say("kicad pcb pos: ("+"{0:.3f}".format(real_board_pos_x)+";"+"{0:.3f}".format(real_board_pos_y)+";"+"{0:.2f}".format(0)+")")      
     if (show_messages==True):
-        QtGui.qApp.restoreOverrideCursor()
+        QtGui.QApplication.restoreOverrideCursor()
         #RotateXYZGuiClass().setGeometry(25, 250, 500, 500)
         reply = QtGui.QMessageBox.information(None,"Info ...",msg)
     if apply_light==True:
@@ -4547,7 +4548,7 @@ def Export2MCAD(blacklisted_model_elements):
     if blacklisted_model_elements != '':
         sayw("black-listed module \n"+ ''.join(map(str, blacklisted_models)))
         if (show_messages==True):
-            QtGui.qApp.restoreOverrideCursor()
+            QtGui.QApplication.restoreOverrideCursor()
             reply = QtGui.QMessageBox.information(None,"Info ...","... black-listed module(s)\r\n"+ ''.join(map(str, blacklisted_models)).replace(',','\n'))
         #FreeCAD.Console.PrintMessage("black-listed module "+ '\r\n'.join(map(str, blacklisted_models)))    
     del __objs__
@@ -4618,7 +4619,7 @@ def Export2MCAD(blacklisted_model_elements):
     say("kicad pcb pos: ("+"{0:.3f}".format(real_board_pos_x)+";"+"{0:.3f}".format(real_board_pos_y)+";"+"{0:.2f}".format(0)+")")    
     say_time()
     if (show_messages==True):
-        QtGui.qApp.restoreOverrideCursor()
+        QtGui.QApplication.restoreOverrideCursor()
         #RotateXYZGuiClass().setGeometry(25, 250, 500, 500)
         reply = QtGui.QMessageBox.information(None,"Info ...",msg)
     if (animate_result==True):
@@ -5118,7 +5119,7 @@ def Load_models(pcbThickness,modules):
                             msg="""3D STEP model <b><font color=red>"""
                             msg+=model_name+"</font> is WRONG</b> ...<br>"
                             msg+="@ "+module_path+" <br>...stopping execution! <br>Please <b>fix</b> the model."
-                            QtGui.qApp.restoreOverrideCursor()
+                            QtGui.QApplication.restoreOverrideCursor()
                             reply = QtGui.QMessageBox.information(None,"Info ...",msg)
                             stop   
                         if allow_compound != 'False' :
@@ -5153,7 +5154,7 @@ def Load_models(pcbThickness,modules):
                             msg="""3D STEP model <b><font color=red>"""
                             msg+=model_name+"</font> is NOT fused ('union') in a single part</b> ...<br>"
                             msg+="@ "+module_path+" <br>...stopping execution! <br>Please <b>fix</b> the model."
-                            QtGui.qApp.restoreOverrideCursor()
+                            QtGui.QApplication.restoreOverrideCursor()
                             reply = QtGui.QMessageBox.information(None,"Info ...",msg)
                             stop
                         if skip_status!="skip":
@@ -5484,10 +5485,10 @@ def Load_models(pcbThickness,modules):
         wmsg="""... missing module(s)<br>"""
         for i in range(min(len (missings),n_rpt_max)):
             wmsg=wmsg+missings[i]+'<br>'
-        QtGui.qApp.restoreOverrideCursor()
+        QtGui.QApplication.restoreOverrideCursor()
         reply = QtGui.QMessageBox.information(None,"Error ...",wmsg+'<br><b>. . . missing '+str(len(missings))+' model(s)</b>' )
         if len (missings) > warning_nbr and warning_nbr != -1: #warning_nbr =-1 for skipping the test
-            QtGui.qApp.restoreOverrideCursor()
+            QtGui.QApplication.restoreOverrideCursor()
             wmsg="""<font color=red>"""
             wmsg+="too many missing modules <b>["
             wmsg+=str(len (missings))+"]<br></b></font><font color=blue><b>Have configured your KISYS3DMOD path<br>or 3d model prefix path?</font></b>"
@@ -5521,7 +5522,7 @@ def LoadKicadBoard (board_fname):
     msg1+="to generate your STEP and VRML models\r\n"
     if int(FC_majorV) <= 0:
         if int(FC_minorV) < 15:
-            QtGui.qApp.restoreOverrideCursor()
+            QtGui.QApplication.restoreOverrideCursor()
             reply = QtGui.QMessageBox.information(None,"Warning! ...",msg1)    
     msg=''
     if FC_majorV == 0 and FC_minorV == 17:
@@ -5748,7 +5749,7 @@ def Elaborate_Kicad_Board(filename):
     pcbThickness=getPCBThickness(Kicad_Board_elaborated)
     say('kicad_pcb version ' +str(version))
     if version < 3:
-        QtGui.qApp.restoreOverrideCursor()
+        QtGui.QApplication.restoreOverrideCursor()
         reply = QtGui.QMessageBox.information(None,"Error ...","... KICAD pcb version "+ str(version)+" not supported \r\n"+"\r\nplease open and save your board with the latest kicad version")
         sys.exit("pcb version not supported")
     if version==3:
@@ -6338,7 +6339,7 @@ def Per_point(prev_vertex,vertex):
 def infoDialog(msg):
     #QtGui.qFreeCAD.setOverrideCursor(QtCore.Qt.WaitCursor)
     QtGui.qFreeCAD.restoreOverrideCursor()
-    QtGui.qApp.restoreOverrideCursor()
+    QtGui.QApplication.restoreOverrideCursor()
     diag = QtGui.QMessageBox(QtGui.QMessageBox.Information,u"Info Message",msg )
     diag.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
     diag.exec_()
@@ -6492,7 +6493,7 @@ def check_requirements():
     msg1+="to generate your STEP and VRML models\r\n"
     if int(FC_majorV) <= 0:
         if int(FC_minorV) < 15:
-            QtGui.qApp.restoreOverrideCursor()
+            QtGui.QApplication.restoreOverrideCursor()
             reply = QtGui.QMessageBox.information(None,"Warning! ...",msg1)    
     msg=''
     if FC_majorV == 0 and FC_minorV == 17:
@@ -7066,7 +7067,7 @@ def onLoadBoard(file_name=None):
         n_rpt_max=10
         if (show_messages==True) and msg!="":
             msg="""<b>error in model(s)</b><br>"""+msg
-            QtGui.qApp.restoreOverrideCursor()
+            QtGui.QApplication.restoreOverrideCursor()
             #print n_rpt,'-',p_rpt
             if n_rpt >  n_rpt_max:
                 p_rpt=find_nth(msg, '<br>', n_rpt_max)
@@ -7289,7 +7290,7 @@ def routineScaleVRML():
             msg=msg+"<br><br><i>3D settings in kicad Module Editor:</i><br>"
             msg=msg+"<b>- scale 1 1 1\r\n- offset 0 0 0<br>- rotation 0 0 "+str(rot_wrl)+"</b>"
             ##self.setWindowState(QtCore.Qt.WindowMinimized)
-            QtGui.qApp.restoreOverrideCursor()
+            QtGui.QApplication.restoreOverrideCursor()
             QtGui.QMessageBox.information(None,"Info ...",msg)
             ##self.setWindowState(QtCore.Qt.WindowActive)
             say('done')
@@ -7357,7 +7358,7 @@ def routineScaleVRML_1():
         #msg=msg+"\r\n3D settings in kicad Module Editor:\r\n"
         #msg=msg+"- scale 1 1 1\r\n- offset 0 0 0\r\n- rotation 0 0 "+str(rot_wrl)
         self.setWindowState(QtCore.Qt.WindowMinimized)
-        QtGui.qApp.restoreOverrideCursor()
+        QtGui.QApplication.restoreOverrideCursor()
         QtGui.QMessageBox.information(None,"Info ...",msg)
         self.setWindowState(QtCore.Qt.WindowActive)
     else:
@@ -7506,13 +7507,13 @@ def routineP_XYZ(axe):
 ###  end routineP_XYZ
 
 def say_single_obj():
-        QtGui.qApp.restoreOverrideCursor()
+        QtGui.QApplication.restoreOverrideCursor()
         msg="""Select <b>ONE single part</b> object !<br>
         suggestion for multi-part:<br>&nbsp;&nbsp;<b>Part Boolean Union (recommended)</b><br><i>or<br>&nbsp;&nbsp;Part Make compound (alternative choice)</i>"""
         spc="""<font color='white'>*******************************************************************************</font><br>
         """
         msg1="Error in selection"
-        QtGui.qApp.restoreOverrideCursor()
+        QtGui.QApplication.restoreOverrideCursor()
         #RotateXYZGuiClass().setGeometry(25, 250, 500, 500)
         diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
                                 msg1,
@@ -7521,12 +7522,12 @@ def say_single_obj():
         diag.exec_()
 
 def say_select_obj():
-        QtGui.qApp.restoreOverrideCursor()
+        QtGui.QApplication.restoreOverrideCursor()
         msg="""Select <b>a Compound</b> or <br><b>a Part Design group</b><br>or <b>more than one Part</b> object !<br>"""
         spc="""<font color='white'>*******************************************************************************</font><br>
         """
         msg1="Error in selection"
-        QtGui.qApp.restoreOverrideCursor()
+        QtGui.QApplication.restoreOverrideCursor()
         #RotateXYZGuiClass().setGeometry(25, 250, 500, 500)
         diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
                                 msg1,
@@ -7535,12 +7536,12 @@ def say_select_obj():
         diag.exec_()
 
 def say_warning(msg):
-        QtGui.qApp.restoreOverrideCursor()
+        QtGui.QApplication.restoreOverrideCursor()
         # msg="""Select <b>a Compound</b> or <br><b>a Part Design group</b><br>or <b>more than one Part</b> object !<br>"""
         spc="""<font color='white'>*******************************************************************************</font><br>
         """
         msg1="Warning ..."
-        QtGui.qApp.restoreOverrideCursor()
+        QtGui.QApplication.restoreOverrideCursor()
         #RotateXYZGuiClass().setGeometry(25, 250, 500, 500)
         diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Warning,
                                 msg1,
@@ -7549,12 +7550,12 @@ def say_warning(msg):
         diag.exec_()
 
 def say_info(msg):
-        QtGui.qApp.restoreOverrideCursor()
+        QtGui.QApplication.restoreOverrideCursor()
         # msg="""Select <b>a Compound</b> or <br><b>a Part Design group</b><br>or <b>more than one Part</b> object !<br>"""
         spc="""<font color='white'>*******************************************************************************</font><br>
         """
         msg1="Info ..."
-        QtGui.qApp.restoreOverrideCursor()
+        QtGui.QApplication.restoreOverrideCursor()
         #RotateXYZGuiClass().setGeometry(25, 250, 500, 500)
         diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Information,
                                 msg1,
@@ -7610,13 +7611,13 @@ def get_position():
         if exportS:
             say("Select ONE single part object !")
             ##QtGui.QMessageBox.information(None,"Info ...","Select ONE single part object !\r\n"+"\r\n")
-            #QtGui.qApp.restoreOverrideCursor()
+            #QtGui.QApplication.restoreOverrideCursor()
             #msg="""Select <b>ONE single part</b> object !<br>
             #suggestion for multi-part:<br>&nbsp;&nbsp;<b>Part Boolean Union (recommended)</b><br><i>or<br>&nbsp;&nbsp;Part Make compound (alternative choice)</i>"""
             #spc="""<font color='white'>*******************************************************************************</font><br>
             #"""
             #msg1="Error in selection"
-            #QtGui.qApp.restoreOverrideCursor()
+            #QtGui.QApplication.restoreOverrideCursor()
             ##RotateXYZGuiClass().setGeometry(25, 250, 500, 500)
             #diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
             #                        msg1,
@@ -7701,7 +7702,7 @@ def routineCollisions():
     def error_dialog(msg):
         """Create a simple dialog QMessageBox with an error message"""
         FreeCAD.Console.PrintError(msg + '\n')
-        QtGui.qApp.restoreOverrideCursor()
+        QtGui.QApplication.restoreOverrideCursor()
         diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
                                 'Error in checking Collisions                                                       ."+"\r\n"',
                                 msg)
@@ -11336,7 +11337,7 @@ def DrawPCB(mypcb):
     version=mypcb.version
     say('kicad_pcb version ' +str(version))
     if version < 3:
-        QtGui.qApp.restoreOverrideCursor()
+        QtGui.QApplication.restoreOverrideCursor()
         reply = QtGui.QMessageBox.information(None,"Error ...","... KICAD pcb version "+ str(version)+" not supported \r\n"+"\r\nplease open and save your board with the latest kicad version")
         sys.exit("pcb version not supported")
     if version==3:
@@ -11865,7 +11866,7 @@ def DrawPCB(mypcb):
             say("*** omitting PCBs because there was a not closed loop in your edge lines ***")
             say("*** have a look at position x=" + str(nextCoordinate.x) + "mm, y=" + str(nextCoordinate.y) + "mm ***")
             say('pcb edge not closed')
-            QtGui.qApp.restoreOverrideCursor()
+            QtGui.QApplication.restoreOverrideCursor()
             diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
                                     'Error in creating Board Edge                                                                ."+"\r\n"',
                                     """<b>pcb edge not closed<br>review your Board Edges in Kicad!<br>position x=""" + str(nextCoordinate.x) + 'mm, y=' + str(-nextCoordinate.y) + 'mm')
@@ -11927,7 +11928,7 @@ def DrawPCB(mypcb):
         except:
             say("*** omitting PCBs because there was a not closed loop in your edge lines ***")
             say('pcb edge not closed')
-            QtGui.qApp.restoreOverrideCursor()
+            QtGui.QApplication.restoreOverrideCursor()
             diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
                                     'Error in creating Board Edge                                                                ."+"\r\n"',
                                     """<b>pcb edge not closed<br>review your Board Edges in Kicad!<br>""")
@@ -11959,7 +11960,7 @@ def DrawPCB(mypcb):
     
     if len(PCBs)==0:
         say('pcb edge not found')
-        QtGui.qApp.restoreOverrideCursor()
+        QtGui.QApplication.restoreOverrideCursor()
         diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
                                 'Error in creating Board Edge                                                                ."+"\r\n"',
                                 'review your Board Edges in Kicad!\n')
@@ -12217,7 +12218,7 @@ if len(args) >= 3:
         #    sayw("missing "+ fullfilePath)
         #    sayw("missing "+ fullFileName)
         #    #say("error missing "+ fullfilePath)
-        #    QtGui.qApp.restoreOverrideCursor()
+        #    QtGui.QApplication.restoreOverrideCursor()
         #    reply = QtGui.QMessageBox.information(None,"Error ...","... missing \r\n"+ fullfilePath+"\r\n... missing \r\n"+ fullFileName)
     if filefound ==False:
         if os.path.exists(fullFileNamefp):
@@ -12237,7 +12238,7 @@ if len(args) >= 3:
                 sayw("missing "+ fullfilePath)
                 sayw("missing "+ fullFileName)
                 #say("error missing "+ fullfilePath)
-                QtGui.qApp.restoreOverrideCursor()
+                QtGui.QApplication.restoreOverrideCursor()
                 reply = QtGui.QMessageBox.information(None,"Error ...","... missing \r\n"+ fullfilePath+"\r\n... missing \r\n"+ fullFileName)
         #
 

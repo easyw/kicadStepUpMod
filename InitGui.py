@@ -10,11 +10,11 @@
 #*  Kicad STEPUP (TM) is a TradeMark and cannot be freely useable           *
 #*                                                                          *
 
-ksu_wb_version='v 7.6.1'
+ksu_wb_version='v 7.6.2'
 global myurlKWB
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=73 #v7.6.1
+mycommitsKWB=74 #v7.6.2
 
 import FreeCAD, FreeCADGui, Part, os, sys
 import re, time
@@ -99,7 +99,7 @@ class ksuWB ( Workbench ):
             <br>set \'checkUpdates\' to \'False\' to avoid this checking
             <br>in \"Tools\", \"Edit Parameters\",<br>\"Preferences\"->\"Mod\"->\"kicadStepUp\"
             """
-            QtGui.qApp.restoreOverrideCursor()
+            QtGui.QApplication.restoreOverrideCursor()
             reply = QtGui.QMessageBox.information(None,"Warning", msg)
         else:
             upd=pg.GetBool("checkUpdates")
@@ -186,7 +186,7 @@ class ksuWB ( Workbench ):
                     <br>set \'checkUpdates\' to \'False\' to avoid this checking
                     <br>in \"Tools\", \"Edit Parameters\",<br>\"Preferences\"->\"Mod\"->\"kicadStepUp\"
                     """
-                    QtGui.qApp.restoreOverrideCursor()
+                    QtGui.QApplication.restoreOverrideCursor()
                     reply = QtGui.QMessageBox.information(None,"Warning", msg)
                 else:
                     FreeCAD.Console.PrintMessage('the WB is Up to Date\n')
