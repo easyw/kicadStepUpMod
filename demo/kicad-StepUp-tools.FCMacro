@@ -16592,7 +16592,7 @@ def centerOnScreen (widg):
 ##
 
 def singleInstance():
-    app = QtGui.qApp
+    app = QtGui.QApplication #QtGui.qApp
 
     for i in app.topLevelWidgets():
         if i.objectName() == "kicadStepUp":
@@ -16611,7 +16611,7 @@ def singleInstance():
 ##
 
 def checkInstance():
-    app = QtGui.qApp
+    app = QtGui.QApplication #QtGui.qApp
 
     foundKSU=False
     for i in app.topLevelWidgets():
