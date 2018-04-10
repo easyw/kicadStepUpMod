@@ -430,7 +430,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.1.8.6"  
+___ver___ = "7.1.8.7"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -14108,7 +14108,7 @@ def export_footprint(fname=None):
             for p in pth_ordered:
                 for e in p:
                     pads_TH_SMD.append (e)
-            print len(pads_TH_SMD)
+            # print len(pads_TH_SMD)
             pth=[]
             pth=pads_TH_SMD
             ## impiling pads 
@@ -14116,7 +14116,7 @@ def export_footprint(fname=None):
             for p in drl_found:
                 for e in p:
                     drills.append (e)
-            print len(drills)
+            # print len(drills)
             #print psmd
             #stop
         
@@ -14133,7 +14133,7 @@ def export_footprint(fname=None):
             for p in pth_ordered:
                 for e in p:
                     pads_NPTH.append (e)
-            print len(pads_NPTH)
+            # print len(pads_NPTH)
             npth=[]
             npth=pads_NPTH
             ## impiling pads 
@@ -14141,7 +14141,7 @@ def export_footprint(fname=None):
             for p in drl_found:
                 for e in p:
                     drills.append (e)
-            print len(drills)
+            # print len(drills)
             #print psmd
             #stop
         
@@ -14941,7 +14941,7 @@ def createFpPad(pad,offset,tp, _drills=None):
             r1=pad[0][1]; cx1=pad[0][2]; cy1=pad[0][3]
             #print 'r1 ', r1, ' c1 ', cx1,',',cy1
             r2=pad[2][1]; cx2=pad[2][2]; cy2=pad[2][3]
-            print 'r2 ', r2, ' c2 ', cx2,',',cy2
+            # print 'r2 ', r2, ' c2 ', cx2,',',cy2
             #stop
             ## different method for horizontal and vertical
             if abs(cx1-cx2)>edge_tolerance: # horizontal
@@ -14970,7 +14970,7 @@ def createFpPad(pad,offset,tp, _drills=None):
             if len(_drills)>0:
                 #print _drills
                 for d in _drills:
-                    print d
+                    # print d
                     if d[0] > cx-sx/2 and d[0] < cx+sx/2 and d[1] > cy-sy/2 and d[1] < cy+sy/2:
                         sayw('drill in pad found!')
                         found_drill=True
