@@ -16714,9 +16714,11 @@ def getComboView(self,window):
 # print KSUWidget.style().metaObject().className()    # 
 # print QtGui.QApplication.instance().styleSheet()    # list all applied styles    
 
-if KSUWidget.style().metaObject().className()== "QStyleSheetStyle":
-    KSUWidget.setStyleSheet('QPushButton {border-radius: 0px; padding: 1px 2px;}')
-
+try:
+    if KSUWidget.style().metaObject().className()== "QStyleSheetStyle":
+        KSUWidget.setStyleSheet('QPushButton {border-radius: 0px; padding: 1px 2px;}')
+except:
+    pass
 ## QtGui.QFont().setPointSize(font_size) ???? to evaluate if still is necessary
    
 #Ui_DockWidget().destroyed.connect(onDestroy())
