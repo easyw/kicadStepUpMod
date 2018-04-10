@@ -2003,7 +2003,8 @@ def close_ksu():
         res = QtGui.QMessageBox.question(None,"Close",msg,QtGui.QMessageBox.Yes|QtGui.QMessageBox.No)
     if res is not QtGui.QMessageBox.No:
         #e.ignore()
-        KSUWidget.close()
+        # KSUWidget.close()
+        KSUWidget.deleteLater()
         #self.setWindowState(QtCore.Qt.WindowActive)
     doc=FreeCAD.ActiveDocument
     if doc is not None:
@@ -2013,20 +2014,18 @@ def close_ksu():
         if close_doc==True:
             FreeCAD.closeDocument(doc.Name)
         say(doc.Label)
-    
+##
 def tabify():
+    #global KSUWidget
+
+    KSUWidget.setFloating(False)  #dock
+    KSUWidget.resize(sizeX,sizeY)
+    KSUWidget.activateWindow()
+    KSUWidget.raise_()
+    t=FreeCADGui.getMainWindow()
     cv = t.findChild(QtGui.QDockWidget, "Combo View")
     if KSUWidget and cv:
         dw=t.findChildren(QtGui.QDockWidget)
-        #### if (1):
-        #### #print str(dw)
-        #### ## for i in dw:
-        #### ##     print str(i.objectName())
-        #### ##     if str(i.objectName()) == "kicadStepUp": #"kicad StepUp 3D tools":
-        #### ##         ksu_in_tab=True
-        #### ##         print ("ksu tab!")
-        #### ## if not (ksu_in_tab):
-        #### #else:
         try:
             t.tabifyDockWidget(cv,KSUWidget)                
         except:
@@ -2037,15 +2036,7 @@ def tabify():
         KSUWidget.showMaximized()
         KSUWidget.activateWindow()
         KSUWidget.raise_()
-        #say( "Tabified done !")               
-        #else:
-        #    ksu_tab = t.findChild(QtGui.QDockWidget, "DockWidget") #"kicad StepUp 3D tools")
-        #    if ksu_tab:
-        #        print ("ksu tab ->"+ksu_tab.objectName())
-        #        ksu_tab.activateWindow()
-        #        ksu_tab.raise_()
-        #else:
-        #    print ("already in tab")
+        say( "Tabified done !")               
         ksu_tab = t.findChild(QtGui.QDockWidget, "kicadStepUp") #"kicad StepUp 3D tools")
         if ksu_tab:
             #say ("ksu tab ->"+ksu_tab.objectName())
@@ -2053,7 +2044,7 @@ def tabify():
             ksu_tab.activateWindow()
             ksu_tab.raise_()
         #say ("focus on me!")
-
+    
 def dock():
     global expanded_view, mingui
     expanded_view=0; mingui=0
@@ -2074,6 +2065,7 @@ def dock():
     tabify()
     #KSUWidget.setFloating(False)  #dock
     #say ("now!")
+##
 def dock_right():
     global expanded_view, mingui
     expanded_view=0;mingui=0
@@ -2092,7 +2084,7 @@ def dock_right():
     cfg_update_all()
     #KSUWidget.setFloating(False)  #dock
     #say ("now!")
-
+##
 def undock():
     global expanded_view, mingui
     expanded_view=0; mingui=0
@@ -2110,6 +2102,7 @@ def undock():
     #KSUWidget.resize(QtCore.QSize(300,100).expandedTo(KSUWidget.maximumSize())) # sets size of the widget
     #KSUWidget.setFloating(False)  #dock
     #say ("now!")
+##
 def temporary_undock():
     global expanded_view, mingui
     mingui=0
@@ -2124,7 +2117,7 @@ def temporary_undock():
     #KSUWidget.resize(QtCore.QSize(300,100).expandedTo(KSUWidget.maximumSize())) # sets size of the widget
     #KSUWidget.setFloating(False)  #dock
     #say ("now!")
-
+##
 def minimz():
     #clear_console()
     global mingui
@@ -2155,18 +2148,17 @@ def minimz():
         #sayw(mingui)
     
         #sayw("kicad StepUp version "+str(___ver___))
-
-
+##
 def minimz_alt():
     KSUWidget.setFloating(True)  #undock
     KSUWidget.setWindowState(QtCore.Qt.WindowMinimized)
     KSUWidget.resize(sizeX,sizeY)
     KSUWidget.activateWindow()
     #KSUWidget.raise_()
-
+##
 def onDestroy():
     say ("Do stuff here")
-    
+##    
 #font_size=12
 
 ####################################
@@ -16593,106 +16585,82 @@ def centerOnScreen (widg):
 
 def singleInstance():
     app = QtGui.QApplication #QtGui.qApp
-
     for i in app.topLevelWidgets():
+        #say (str(i.objectName()))
         if i.objectName() == "kicadStepUp":
-            i.deleteLater()
-        else:
-            pass
+            say (str(i.objectName()))
+            #i.close()
+            #i.deleteLater()
+            say ('closed')
+            return False
     t=FreeCADGui.getMainWindow()
     dw=t.findChildren(QtGui.QDockWidget)
-    #print str(dw)
+    #say( str(dw) )
     for i in dw:
-        #say str(i.objectName())
+        #say (str(i.objectName()))
         if str(i.objectName()) == "kicadStepUp": #"kicad StepUp 3D tools":
-            i.deleteLater()
-        else:
-            pass
+            say (str(i.objectName())+' docked')
+            #i.deleteLater()
+            return False
+    return True
 ##
 
-def checkInstance():
-    app = QtGui.QApplication #QtGui.qApp
 
-    foundKSU=False
-    for i in app.topLevelWidgets():
-        if i.objectName() == "kicadStepUp":
-            foundKSU=True
-        else:
-            pass
+if singleInstance():
+
+    KSUWidget = QtGui.QDockWidget()          # create a new dckwidget
+    KSUWidget.ui = Ui_DockWidget()           # myWidget_Ui()             # load the Ui script
+    KSUWidget.ui.setupUi(KSUWidget) # setup the ui
+    KSUWidget.setObjectName("kicadStepUp")
+            
+    paramGet = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/MainWindow")
+    if len(paramGet.GetString("StyleSheet"))>0: #we are using a StyleSheet
+        KSUWidget.setStyleSheet('QPushButton {border-radius: 0px; padding: 1px 2px;}')
+
     t=FreeCADGui.getMainWindow()
-    dw=t.findChildren(QtGui.QDockWidget)
-    #print str(dw)
-    for i in dw:
-        #say str(i.objectName())
-        if str(i.objectName()) == "kicadStepUp": #"kicad StepUp 3D tools":
-            foundKSU=True
-        else:
-            pass
-    return foundKSU
-##
-
-singleInstance()
-
-KSUWidget = QtGui.QDockWidget()          # create a new dckwidget
-KSUWidget.ui = Ui_DockWidget()           # myWidget_Ui()             # load the Ui script
-KSUWidget.ui.setupUi(KSUWidget) # setup the ui
-KSUWidget.setObjectName("kicadStepUp")
+    ## wf = t.findChild(QtGui.QDockWidget, "KSUWidget")
+    cv = t.findChild(QtGui.QDockWidget, "Combo View")
+    #say( "Combo View" + str(cv))
+    ## print( "KSUWidget" + str(wf))        
+    cv.setFeatures( QtGui.QDockWidget.DockWidgetMovable | QtGui.QDockWidget.DockWidgetFloatable|QtGui.QDockWidget.DockWidgetClosable )
+    #KSUWidget.setFeatures( QtGui.QDockWidget.DockWidgetMovable | QtGui.QDockWidget.DockWidgetFloatable|QtGui.QDockWidget.DockWidgetClosable )
+    KSUWidget.setFeatures( QtGui.QDockWidget.DockWidgetMovable | QtGui.QDockWidget.DockWidgetFloatable) #|QtGui.QDockWidget.DockWidgetClosable )
+    
+    
+    ksu_in_tab=False
+    
+    #tabify_widg=True
+    #tabify_widg=False
+    #dock_to_right=True
+    
+    
+    if docking_mode == 'float':
+        tabify()
+        undock()
+        textEdit_dim=textEdit_dim_base
+        KSUWidget.ui.textEdit.setGeometry(textEdit_dim[0],textEdit_dim[1],textEdit_dim[2],textEdit_dim[3])
         
-#KSUWidget.setFloating(False)  #dock
-
-##KSUmw = FreeCADGui.getMainWindow()                 # PySide # the active qt window, = the freecad window since we are inside it 
-##KSUmw.addDockWidget(QtCore.Qt.RightDockWidgetArea ,KSUWidget)  # add the widget to the main window
-
-#KSUmw.addDockWidget(QtCore.Qt.RightDockWidgetArea,KSUWidget)  # add the widget to the main window   
-# for Windows
-# OS: Ubuntu 14.04.2 LTS new for Version: 0.16.6062 (Git) Freecad
-
-#KSUmw.addDockWidget(QtCore.Qt.TopDockWidgetArea ,KSUWidget)  # add the widget to the main window
-## look at WorkFeature
-## KSUmw=FreeCADGui.getMainWindow().findChild(QtGui.QDockWidget, "KSUWidget")
-t=FreeCADGui.getMainWindow()
-## wf = t.findChild(QtGui.QDockWidget, "KSUWidget")
-cv = t.findChild(QtGui.QDockWidget, "Combo View")
-#say( "Combo View" + str(cv))
-## print( "KSUWidget" + str(wf))        
-cv.setFeatures( QtGui.QDockWidget.DockWidgetMovable | QtGui.QDockWidget.DockWidgetFloatable|QtGui.QDockWidget.DockWidgetClosable )
-#KSUWidget.setFeatures( QtGui.QDockWidget.DockWidgetMovable | QtGui.QDockWidget.DockWidgetFloatable|QtGui.QDockWidget.DockWidgetClosable )
-KSUWidget.setFeatures( QtGui.QDockWidget.DockWidgetMovable | QtGui.QDockWidget.DockWidgetFloatable) #|QtGui.QDockWidget.DockWidgetClosable )
+    elif docking_mode == 'left':
+        textEdit_dim=textEdit_dim_hide
+        KSUWidget.ui.textEdit.setGeometry(textEdit_dim[0],textEdit_dim[1],textEdit_dim[2],textEdit_dim[3])
+        dock()
+        ##tabify()
+        #.Visible=False
+    else:
+        textEdit_dim=textEdit_dim_hide
+        KSUWidget.ui.textEdit.setGeometry(textEdit_dim[0],textEdit_dim[1],textEdit_dim[2],textEdit_dim[3])
+        dock_right()
 
 
-ksu_in_tab=False
-
-#tabify_widg=True
-#tabify_widg=False
-#dock_to_right=True
-
-
-if docking_mode == 'float':
-    tabify()
-    undock()
-    textEdit_dim=textEdit_dim_base
-    KSUWidget.ui.textEdit.setGeometry(textEdit_dim[0],textEdit_dim[1],textEdit_dim[2],textEdit_dim[3])
-    
-elif docking_mode == 'left':
-    textEdit_dim=textEdit_dim_hide
-    KSUWidget.ui.textEdit.setGeometry(textEdit_dim[0],textEdit_dim[1],textEdit_dim[2],textEdit_dim[3])
-    dock()
-    ##tabify()
-    #.Visible=False
-else:
-    textEdit_dim=textEdit_dim_hide
-    KSUWidget.ui.textEdit.setGeometry(textEdit_dim[0],textEdit_dim[1],textEdit_dim[2],textEdit_dim[3])
-    dock_right()
-    
-#if (tabify_widg):
-#    tabify()
-#elif not dock_to_right:
-#    #KSUmw = FreeCADGui.getMainWindow()                 # PySide # the active qt window, = the freecad window since we are inside it 
-#    tabify()
-#    undock()
-#    #KSUmw.addDockWidget(QtCore.Qt.RightDockWidgetArea,KSUWidget)  # add the widget to the main window  
-#else:
-#    dock_right()
+    #if (tabify_widg):
+    #    tabify()
+    #elif not dock_to_right:
+    #    #KSUmw = FreeCADGui.getMainWindow()                 # PySide # the active qt window, = the freecad window since we are inside it 
+    #    tabify()
+    #    undock()
+    #    #KSUmw.addDockWidget(QtCore.Qt.RightDockWidgetArea,KSUWidget)  # add the widget to the main window  
+    #else:
+    #    dock_right()
 
 def getComboView(self,window):
     """ Returns the main Tab.
@@ -16714,11 +16682,11 @@ def getComboView(self,window):
 # print KSUWidget.style().metaObject().className()    # 
 # print QtGui.QApplication.instance().styleSheet()    # list all applied styles    
 
-try:
-    if KSUWidget.style().metaObject().className()== "QStyleSheetStyle":
-        KSUWidget.setStyleSheet('QPushButton {border-radius: 0px; padding: 1px 2px;}')
-except:
-    pass
+# try:
+#     if KSUWidget.style().metaObject().className()== "QStyleSheetStyle":
+#         KSUWidget.setStyleSheet('QPushButton {border-radius: 0px; padding: 1px 2px;}')
+# except:
+#     pass
 ## QtGui.QFont().setPointSize(font_size) ???? to evaluate if still is necessary
    
 #Ui_DockWidget().destroyed.connect(onDestroy())
