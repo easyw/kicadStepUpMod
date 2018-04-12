@@ -320,6 +320,7 @@
 # added loading pad poly in fp
 # fixed simplify sketch
 # improved Qt5 compatibility
+# added workaround for STEP exporting OCC 7.2.0
 # most clean code and comments done
 
 ##todo
@@ -430,7 +431,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.1.8.7"  
+___ver___ = "7.2.0.0"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -2040,7 +2041,7 @@ def tabify():
         ksu_tab = t.findChild(QtGui.QDockWidget, "kicadStepUp") #"kicad StepUp 3D tools")
         if ksu_tab:
             #say ("ksu tab ->"+ksu_tab.objectName())
-            KSUWidget.resize(300,300)
+            KSUWidget.resize(sizeX,sizeY)
             ksu_tab.activateWindow()
             ksu_tab.raise_()
         #say ("focus on me!")
@@ -4439,13 +4440,49 @@ def Export2MCAD(blacklisted_model_elements):
             FreeCAD.ActiveDocument.getObject(sk[1]).removeObject(FreeCAD.ActiveDocument.getObject(sk[0]))
                 #FreeCAD.ActiveDocument.getObject(selN).removeObject(FreeCAD.ActiveDocument.getObject(sk_name))
     #stop
-        __ob__.append(doc.getObject("Board"))
-        #import ImportGui
-        try:
-            ImportGui.export(__ob__,fpath)
-        except:
-            say_warning("error writing STEP file. You do not have write permissions to save file!")
-        #sayerr(__ob__[0].Name)
+        # workaround for OCC7.2 & FC bug
+        fcv = getFCversion()
+        #sayw(fcv)
+        #say(fcv[0])
+        #stop
+        #doc = FreeCAD.ActiveDocument
+        if fcv[0] == 0 and fcv[1] == 17:
+            if fcv[2] >= 13509: # or fcv[2] == 13516:
+                import Part
+                if hasattr(Part, "OCC_VERSION"):
+                    if Part.OCC_VERSION=='7.2.0':
+                        FreeCADGui.Selection.removeSelection(obj)
+                        FreeCADGui.Selection.addSelection(doc.getObject("Board"))
+                        import kicadStepUpCMD
+                        kicadStepUpCMD.deep_copy(doc,compound=True)
+                        to_export_name=FreeCAD.ActiveDocument.ActiveObject.Name
+                        #sayw(FreeCAD.ActiveDocument.getObject(to_export_name).Label)
+                        #say(sel[0])
+                        __objx__=[]
+                        __objx__.append(FreeCAD.ActiveDocument.getObject(to_export_name))
+                        #import ImportGui
+                        ImportGui.export(__objx__,fpath)
+                        #FreeCAD.ActiveDocument.removeObject(to_export_nam)
+                        #stop
+                        removesubtree(__objx__)
+                        del __objx__
+                        sayerr('exported a simplified STEP hierarchy because of '+str(fcv)+' FC bug')
+                        msg="""<font color='red'><b>exported a simplified STEP hierarchy<br>because of """+str(fcv)+""" FC bug</b></font>"""
+                        say_warning(msg)
+                        #FreeCADGui.Selection.removeSelection(sel[0])
+                        #FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.getObject(to_export_name))
+                        #sel1 = FreeCADGui.Selection.getSelection()
+                        #say(sel1[0])
+                        #ImportGui.export(sel1[0],name)
+                        #stop
+        else:
+            __ob__.append(doc.getObject("Board"))
+            #import ImportGui
+            try:
+                ImportGui.export(__ob__,fpath)
+            except:
+                say_warning("error writing STEP file. You do not have write permissions to save file!")
+            #sayerr(__ob__[0].Name)
         del __ob__
         for sk in skl:
             say('including sketch in grp')
@@ -13548,7 +13585,41 @@ def Export3DStepF():
                         FreeCAD.ActiveDocument.getObject(sk[1]).removeObject(FreeCAD.ActiveDocument.getObject(sk[0]))
                             #FreeCAD.ActiveDocument.getObject(selN).removeObject(FreeCAD.ActiveDocument.getObject(sk_name))
                 #stop
-                ImportGui.export(sel,name)
+                fcv = getFCversion()
+                #sayw(fcv)
+                #say(fcv[0])
+                #stop
+                doc = FreeCAD.ActiveDocument
+                if fcv[0] == 0 and fcv[1] == 17:
+                    if fcv[2] >= 13509: # or fcv[2] == 13516:
+                        import Part
+                        if hasattr(Part, "OCC_VERSION"):
+                            if Part.OCC_VERSION=='7.2.0':
+                                import kicadStepUpCMD
+                                kicadStepUpCMD.deep_copy(doc,compound=True)
+                                to_export_name=FreeCAD.ActiveDocument.ActiveObject.Name
+                                #sayw(FreeCAD.ActiveDocument.getObject(to_export_name).Label)
+                                #say(sel[0])
+                                __objs__=[]
+                                __objs__.append(FreeCAD.ActiveDocument.getObject(to_export_name))
+                                #import ImportGui
+                                ImportGui.export(__objs__,name)
+                                #FreeCAD.ActiveDocument.removeObject(to_export_nam)
+                                removesubtree(__objs__)
+                                del __objs__
+                                sayerr('exported a simplified STEP hierarchy because of '+str(fcv)+' FC bug')
+                                msg="""<font color='red'><b>exported a simplified STEP hierarchy<br>because of """+str(fcv)+""" FC bug</b></font>"""
+                                say_warning(msg)
+                                #FreeCADGui.Selection.removeSelection(sel[0])
+                                #FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.getObject(to_export_name))
+                                #sel1 = FreeCADGui.Selection.getSelection()
+                                #say(sel1[0])
+                                #ImportGui.export(sel1[0],name)
+                                #stop
+                    else:
+                        ImportGui.export(sel,name)
+                else:
+                    ImportGui.export(sel,name)
                 #print selN,'-',sk_name
                 #FreeCAD.ActiveDocument.getObject(selN).removeObject(App.ActiveDocument.getObject(sk_name))
                 if use_AppPart:

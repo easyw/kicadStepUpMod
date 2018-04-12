@@ -19,7 +19,7 @@ import ksu_locator
 # from kicadStepUptools import onLoadBoard, onLoadFootprint
 import math
 
-__ksuCMD_version__='1.4.2'
+__ksuCMD_version__='1.4.3'
 
 precision = 0.1 # precision in spline or bezier conversion
 
@@ -794,7 +794,7 @@ class ksuToolsDeepCopy:
             else:
                 doc = FreeCAD.activeDocument()
                 FreeCADGui.ActiveDocument.getObject(sel[0].Name).Visibility=False
-                deep_copy(doc)
+                deep_copy(doc,comp=False)
         else:
             #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
             reply = QtGui.QMessageBox.information(None,"Warning", "Select ONE Part Design Next object to be copied!")
@@ -824,16 +824,19 @@ make_compound = False
 # from FreeCAD import gui
 
 
-def deep_copy(doc):
+def deep_copy(doc,compound=False):
+    #FreeCAD.Console.PrintMessage(compound)
     for sel_object in FreeCADGui.Selection.getSelectionEx():
-        deep_copy_part(doc, sel_object.Object)
+        deep_copy_part(doc, sel_object.Object, compound)
 
 
-def deep_copy_part(doc, part):
+def deep_copy_part(doc, part, compound=False):
     if part.TypeId != 'App::Part':
         # Part is not a part, return.
         return
-
+    
+    #FreeCAD.Console.PrintWarning(compound)
+    make_compound=compound
     copied_subobjects = []
     copied_subobjects_Names = []
     for o in get_all_subobjects(part):
@@ -843,7 +846,7 @@ def deep_copy_part(doc, part):
             copied_subobjects_Names.append(o.Name)
 
     if make_compound:
-        compound = doc.addObject('Part::Compound', mk_str_u(part.Label)+'_(copy)')
+        compound = doc.addObject('Part::Compound', mk_str_u(part.Label)+'(copy)')
         compound.Links = copied_subobjects
     doc.recompute()
 
@@ -876,7 +879,8 @@ def copy_subobject(doc, o):
         copy.Shape = o.Shape
         #copy.Label = 'Copy of ' + o.Label
         copy.Label = o.Label+'.(copy)'
-        copy.Placement = get_recursive_inverse_placement(o).inverse()
+        #copy.Placement = get_recursive_inverse_placement(o).inverse()
+        copy.Placement = o.getGlobalPlacement()
 
         vo_copy = copy.ViewObject
         vo_copy.ShapeColor = vo_o.ShapeColor
