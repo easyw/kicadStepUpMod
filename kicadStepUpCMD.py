@@ -19,7 +19,7 @@ import ksu_locator
 # from kicadStepUptools import onLoadBoard, onLoadFootprint
 import math
 
-__ksuCMD_version__='1.4.3'
+__ksuCMD_version__='1.4.4'
 
 precision = 0.1 # precision in spline or bezier conversion
 
@@ -794,7 +794,7 @@ class ksuToolsDeepCopy:
             else:
                 doc = FreeCAD.activeDocument()
                 FreeCADGui.ActiveDocument.getObject(sel[0].Name).Visibility=False
-                deep_copy(doc,comp=False)
+                deep_copy(doc,False)
         else:
             #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
             reply = QtGui.QMessageBox.information(None,"Warning", "Select ONE Part Design Next object to be copied!")

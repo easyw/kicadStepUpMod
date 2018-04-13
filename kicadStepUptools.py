@@ -431,7 +431,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.2.0.0"  
+___ver___ = "7.2.0.1"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -4453,7 +4453,17 @@ def Export2MCAD(blacklisted_model_elements):
                     if Part.OCC_VERSION=='7.2.0':
                         FreeCADGui.Selection.removeSelection(obj)
                         FreeCADGui.Selection.addSelection(doc.getObject("Board"))
-                        import kicadStepUpCMD
+                        try:
+                            import kicadStepUpCMD
+                        except:
+                            sayerr('to export STEP it is necessary to use StepUp Workbench<br>instead of the single Macro<br>(because of '+str(fcv)+' FC bug)')
+                            msg="""<font color='red'><b>to export STEP it is necessary to use StepUp Workbench<br>instead of the single Macro<br>(because of """+str(fcv)+""" FC bug</b></font>"""
+                            say_warning(msg)
+                            del __ob__
+                            for sk in skl:
+                                say('including sketch in grp')
+                                FreeCAD.ActiveDocument.getObject(sk[1]).addObject(FreeCAD.ActiveDocument.getObject(sk[0]))
+                                stop
                         kicadStepUpCMD.deep_copy(doc,compound=True)
                         to_export_name=FreeCAD.ActiveDocument.ActiveObject.Name
                         #sayw(FreeCAD.ActiveDocument.getObject(to_export_name).Label)
@@ -13595,7 +13605,16 @@ def Export3DStepF():
                         import Part
                         if hasattr(Part, "OCC_VERSION"):
                             if Part.OCC_VERSION=='7.2.0':
-                                import kicadStepUpCMD
+                                try:
+                                    import kicadStepUpCMD
+                                except:
+                                    sayerr('to export STEP it is necessary to use StepUp Workbench<br>instead of the single Macro<br>(because of '+str(fcv)+' FC bug)')
+                                    msg="""<font color='red'><b>to export STEP it is necessary to use StepUp Workbench<br>instead of the single Macro<br>(because of """+str(fcv)+""" FC bug</b></font>"""
+                                    say_warning(msg)
+                                    for sk in skl:
+                                        say('including sketch in grp')
+                                        FreeCAD.ActiveDocument.getObject(sk[1]).addObject(FreeCAD.ActiveDocument.getObject(sk[0]))
+                                    stop
                                 kicadStepUpCMD.deep_copy(doc,compound=True)
                                 to_export_name=FreeCAD.ActiveDocument.ActiveObject.Name
                                 #sayw(FreeCAD.ActiveDocument.getObject(to_export_name).Label)
