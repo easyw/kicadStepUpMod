@@ -19,7 +19,7 @@ import ksu_locator
 # from kicadStepUptools import onLoadBoard, onLoadFootprint
 import math
 
-__ksuCMD_version__='1.4.4'
+__ksuCMD_version__='1.4.5'
 
 precision = 0.1 # precision in spline or bezier conversion
 
@@ -710,6 +710,115 @@ class ksuToolsFootprintGen:
 FreeCADGui.addCommand('ksuToolsFootprintGen',ksuToolsFootprintGen())
 
 #####
+
+class ksuToolsStepImportModeSTD:
+    "ksu tools full STEP Import Mode"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'ImportModeSTD.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksu tools disable Full STEP Import Mode" ,
+                     'ToolTip' : "ksu tools disable Full STEP Import Mode"}
+ 
+    def IsActive(self):
+        paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
+        ReadShapeCompoundMode_status=paramGetVS.GetBool("ReadShapeCompoundMode")
+        if not ReadShapeCompoundMode_status:
+            return True
+        else:
+            return False
+
+    def Activated(self):
+        # do something here...
+        ##ReadShapeCompoundMode
+        paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
+        ReadShapeCompoundMode_status=paramGetVS.GetBool("ReadShapeCompoundMode")
+        #sayerr("checking ReadShapeCompoundMode")
+        FreeCAD.Console.PrintWarning("ReadShapeCompoundMode status "+str(ReadShapeCompoundMode_status)+'\n')
+        #if ReadShapeCompoundMode_status:
+        #    paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
+        #    paramGetVS.SetBool("ReadShapeCompoundMode",False)
+        #    FreeCAD.Console.PrintWarning("disabling ReadShapeCompoundMode"+'\n')
+        if not ReadShapeCompoundMode_status:
+            paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
+            paramGetVS.SetBool("ReadShapeCompoundMode",True)
+            FreeCAD.Console.PrintError("enabling ReadShapeCompoundMode -> Simplified Mode"+'\n')
+
+FreeCADGui.addCommand('ksuToolsStepImportModeSTD',ksuToolsStepImportModeSTD())
+####
+
+class ksuToolsStepImportModeComp:
+    "ksu tools disable Simplified STEP Import Mode"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'ImportModeSimplified.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksu tools disable Simplified STEP Import Mode" ,
+                     'ToolTip' : "ksu tools disable Simplified STEP Import Mode"}
+ 
+    def IsActive(self):
+        paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
+        ReadShapeCompoundMode_status=paramGetVS.GetBool("ReadShapeCompoundMode")
+        if ReadShapeCompoundMode_status:
+            return True
+        else:
+            return False
+
+    def Activated(self):
+        # do something here...
+        ##ReadShapeCompoundMode
+        paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
+        ReadShapeCompoundMode_status=paramGetVS.GetBool("ReadShapeCompoundMode")
+        #sayerr("checking ReadShapeCompoundMode")
+        FreeCAD.Console.PrintWarning("ReadShapeCompoundMode status "+str(ReadShapeCompoundMode_status)+'\n')
+        if ReadShapeCompoundMode_status:
+            paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
+            paramGetVS.SetBool("ReadShapeCompoundMode",False)
+            FreeCAD.Console.PrintWarning("disabling ReadShapeCompoundMode"+'\n')
+        #if not ReadShapeCompoundMode_status:
+        #    paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
+        #    paramGetVS.SetBool("ReadShapeCompoundMode",True)
+        #    FreeCAD.Console.PrintError("enabling ReadShapeCompoundMode -> Simplified Mode"+'\n')
+
+FreeCADGui.addCommand('ksuToolsStepImportModeComp',ksuToolsStepImportModeComp())
+
+####
+class ksuToolsCopyPlacement:
+    "ksu tools Copy Placement"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Placement_Copy.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksu tools Copy Placement 1st to 2nd" ,
+                     'ToolTip' : "ksu tools Copy Placement 1st to 2nd"}
+ 
+    def IsActive(self):
+        return True
+
+    def Activated(self):
+        # do something here...
+        def copy_placement(sel):
+            if hasattr(sel[0],'Placement'):
+                main_p=sel[0].Placement
+            else:
+                FreeCAD.Console.PrintWarning("select TWO objects to copy \'1st placement\' to \'2nd placement\'\n")
+                return
+            for o in sel:
+                if hasattr(o,'Placement'):
+                    o.Placement=main_p
+        
+        doc = FreeCADGui.ActiveDocument
+        sel = FreeCADGui.Selection.getSelection()
+        if not sel:
+            FreeCAD.Console.PrintError("Select at least two objects!\n")
+            FreeCAD.Console.PrintMessage("all selected objects will receive first object placement\n")
+        elif len(sel)<2:
+            FreeCAD.Console.PrintWarning("Select at least two objects!\n")
+            FreeCAD.Console.PrintMessage("all selected objects will receive first object placement\n")
+        else:
+            copy_placement(FreeCADGui.Selection.getSelection())
+            FreeCAD.Console.PrintMessage("Placement copied\n")
+
+FreeCADGui.addCommand('ksuToolsCopyPlacement',ksuToolsCopyPlacement())
+
+####
 class ksuToolsSimpleCopy:
     "ksu tools Simple Copy object"
  
@@ -781,10 +890,14 @@ class ksuToolsDeepCopy:
                      'ToolTip' : "PartDN Copy object\nwith relative placement\n[flattened model]"}
  
     def IsActive(self):
-        return True
+        if int(FreeCAD.Version()[0])==0 and int(FreeCAD.Version()[1])<=16: #active only for FC>0.16
+            return False
+        else:
+            return True
  
     def Activated(self):
         # do something here...
+
         if FreeCADGui.Selection.getSelection():
             sel=FreeCADGui.Selection.getSelection()        
             if len(sel)!=1:
@@ -794,7 +907,7 @@ class ksuToolsDeepCopy:
             else:
                 doc = FreeCAD.activeDocument()
                 FreeCADGui.ActiveDocument.getObject(sel[0].Name).Visibility=False
-                deep_copy(doc,False)
+                deep_copy(doc,'flat','copy')
         else:
             #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
             reply = QtGui.QMessageBox.information(None,"Warning", "Select ONE Part Design Next object to be copied!")
@@ -824,13 +937,13 @@ make_compound = False
 # from FreeCAD import gui
 
 
-def deep_copy(doc,compound=False):
+def deep_copy(doc,compound='flat',suffix='(copy)'):
     #FreeCAD.Console.PrintMessage(compound)
     for sel_object in FreeCADGui.Selection.getSelectionEx():
-        deep_copy_part(doc, sel_object.Object, compound)
+        pName=deep_copy_part(doc, sel_object.Object, compound,suffix)
+    return pName
 
-
-def deep_copy_part(doc, part, compound=False):
+def deep_copy_part(doc, part, compound='flat',suffix='(copy)'):
     if part.TypeId != 'App::Part':
         # Part is not a part, return.
         return
@@ -842,16 +955,57 @@ def deep_copy_part(doc, part, compound=False):
     for o in get_all_subobjects(part):
         if o.Name not in copied_subobjects_Names:
             copied_subobjects_Names.append(o.Name)
-            copied_subobjects += copy_subobject(doc, o)
+            copied_subobjects += copy_subobject(doc, o,suffix)
             copied_subobjects_Names.append(o.Name)
-
-    if make_compound:
-        compound = doc.addObject('Part::Compound', mk_str_u(part.Label)+'(copy)')
+    if doc.ActiveObject is not None:
+        pName = doc.ActiveObject.Name
+    else:
+        pName= 'None'
+    
+    if make_compound=='compound':
+        compound = doc.addObject('Part::Compound', mk_str_u(part.Label)+suffix)
         compound.Links = copied_subobjects
+        pName = doc.ActiveObject.Name
+    elif make_compound=='part':
+        doc.addObject('App::Part',mk_str_u(part.Label)+'_')
+        #FreeCAD.Console.PrintMessage(doc.ActiveObject.Label)
+        actobj=doc.ActiveObject
+        for uplvlobj in actobj.InListRecursive:
+            if uplvlobj.TypeId=='App::Part':
+                pName=uplvlobj.Name
+        #pName=doc.ActiveObject.Name
+        for obj in copied_subobjects:
+            #doc.getObject(pName).addObject(doc.getObject(obj.Name))
+            #FreeCAD.Console.PrintMessage(doc.getObject(pName))
+            #FreeCAD.Console.PrintMessage(doc.getObject(obj.Name))
+            doc.getObject(pName).addObject(doc.getObject(obj.Name))
+        #FreeCAD.Console.PrintMessage(doc.ActiveObject.Label)
     doc.recompute()
-
+    return pName
 
 def get_all_subobjects(o):
+    """Recursively get all subobjects
+    
+    Subobjects of objects having a Shape attribute are not included otherwise each
+    single feature of the object would be copied. The result is that bodies,
+    compounds, and the result of boolean operations will be converted into a
+    simple copy of their shape.
+    """
+    # Depth-first search algorithm.
+    discovered = []
+    # We do not need an extra copy for stack because OutList is already a copy.
+    stack = o.OutList
+    while stack:
+        v = stack.pop(0)
+        if v not in discovered:
+            discovered.append(v)
+            if not hasattr(v, 'Shape'):
+                stack += v.OutList
+    return discovered
+
+
+    
+def get_all_subobjects_old(o):
     """Recursively get all subobjects
     
     Subobjects of objects having a Shape attribute are not included otherwise each
@@ -869,16 +1023,19 @@ def get_all_subobjects(o):
     return l
 
 
-def copy_subobject(doc, o):
+def copy_subobject(doc, o,suffix='(copy)'):
     copied_object = []
-    if not hasattr(o, 'Shape') or o.TypeId == 'Sketcher::SketchObject':
+    if not hasattr(o, 'Shape') or o.TypeId == 'Sketcher::SketchObject' or o.Shape.isNull():
         return copied_object
     vo_o = o.ViewObject
     try:
         copy = doc.addObject('Part::Feature', o.Name + '_Shape')
         copy.Shape = o.Shape
         #copy.Label = 'Copy of ' + o.Label
-        copy.Label = o.Label+'.(copy)'
+        if suffix=='_':
+            copy.Label = mk_str_u(o.Label)+suffix
+        else:
+            copy.Label = mk_str_u(o.Label)+'.'+suffix
         #copy.Placement = get_recursive_inverse_placement(o).inverse()
         copy.Placement = o.getGlobalPlacement()
 

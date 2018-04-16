@@ -431,7 +431,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.2.0.1"  
+___ver___ = "7.2.1.2"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -542,6 +542,14 @@ constraints = all
 ;constraints = coincident
 ;constraints = none
 ;;constraints generated for pcb sketch
+"""
+exporting_mode_section=u"""
+[step_exporting_mode]
+exporting_mode = hierarchy
+;exporting_mode = hierarchy
+;exporting_mode = flat
+;exporting_mode = onelevel
+;;step exporting mode 
 """
 
 font_section=u"""
@@ -2336,6 +2344,7 @@ def find_name(n):
         'compound'      :15,
         'dkmode'        :16,
         'font_size'     :17,
+        'exporting_mode':18,
     }.get(n, 0)    # 0 is default if x not found
 
 #
@@ -3432,6 +3441,12 @@ constraints = all
 ;constraints = coincident
 ;constraints = none
 ;;constraints generated for pcb sketch
+[step_exporting_mode]
+exporting_mode = hierarchy
+;exporting_mode = hierarchy
+;exporting_mode = flat
+;exporting_mode = onelevel
+;;step exporting mode
 [fonts]
 font_size = 8
 ;;font size for ksu widget
@@ -3446,7 +3461,8 @@ def cfg_read_all():
     global fusion, addVirtual, blacklisted_models, exportFusing, min_drill_size
     global last_fp_path, last_pcb_path, plcmnt, xp, yp, exportFusing, export_board_2step
     global enable_materials, docking_mode, mat_section, dock_section, compound_section, turntable_section
-    global font_section, ini_vars, num_min_lines, animate_result, allow_compound, font_size, grid_orig, constraints_section, addConstraints
+    global font_section, ini_vars, num_min_lines, animate_result, allow_compound, font_size, grid_orig
+    global constraints_section, addConstraints, exporting_mode_section, stp_exp_mode
 ##
     regenerate_ini=False
     if os.path.isfile(ksu_config_fname):
@@ -3620,6 +3636,29 @@ def cfg_read_all():
                         ini_content.append(line)
             else:
                 say ("constraints section present")
+            if not any('[step_exporting_mode]' in s for s in cfg_content):
+            #if 'docking' not in cfg_content:
+                sayerr ("missing Exporting Mode section, adding default one")
+                cfg_content.append(exporting_mode_section) 
+                out_file=ksu_config_fname
+                #with io.open(out_file,'a', encoding='utf-8') as cfg_file_out:
+                with codecs.open(out_file,'a', encoding='utf-8') as cfg_file_out:
+                    #cfg_file_out.write(make_unicode(constraints_section))
+                    cfg_file_out.write(exporting_mode_section)
+                ini_content=[];cfg_content=[]
+                #with io.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
+                with codecs.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
+                #text = f.read()
+                    cfg_content = cfg_file.readlines() #
+                #ini_content = cfg_content
+                for line in cfg_content:
+                    if re.match(r'^\s*$', line): #empty lines
+                        say('line empty')
+                    else:
+                        #ini_content.append(make_unicode(line))
+                        ini_content.append(line)
+            else:
+                say ("exporting mode section present")
             if not any('[fonts]' in s for s in cfg_content):
             #if 'docking' not in cfg_content:
                 say ("missing fonts section, adding default one")
@@ -3708,6 +3747,7 @@ def cfg_read_all():
             data_ini_content=data
             #for lines in cfg_out:
             #    cfg_file_out.write(lines)
+            #say(ini_content)
             for line in ini_content:
                 line = line.strip() #removes all whitespace at the start and end, including spaces, tabs, newlines and carriage returns
                 if len(line)>0:
@@ -3724,9 +3764,9 @@ def cfg_read_all():
                             #sayw(str(find_name(name))+' -> '+name+' -> '+key_value)
                             #sayerr(len(ini_vars))
                             ini_vars[find_name(name)]= key_value
-            #sayw(ini_vars)
-            #sayw(len(ini_vars))
-            #stop
+            # sayw(ini_vars)
+            # sayw(len(ini_vars))
+            # stop
             #sayerr(ini_vars[11])
             #filename=ini_vars[11]+u'\CDT7300-3V.kicad_mod'
             #if os.path.exists(filename):
@@ -3771,7 +3811,7 @@ def cfg_read_all():
                         else:
                             name = make_unicode(data[0].strip())
                             key_value = make_unicode(data[1].strip())
-                        sayw(str(find_name(name))+' -> '+name+' -> '+key_value)
+                        #sayw(str(find_name(name))+' -> '+name+' -> '+key_value)
                         ini_vars[find_name(name)]= key_value
         #sayw(ini_vars)
         data=u""
@@ -3854,8 +3894,18 @@ def cfg_read_all():
         allow_compound = 'True'
     docking_mode = ini_vars[16]
     font_size = int(ini_vars[17])
-    add_constraints_val = ini_vars[0] 
+    stp_exp_mode = ini_vars[18]
     
+    add_constraints_val = ini_vars[0]  # find_name default value
+    
+    #print add_constraints_val
+    #stop
+    if 'hierarchy' in stp_exp_mode:
+        stp_exp_mode = 'hierarchy'
+    elif 'flat' in stp_exp_mode:
+        stp_exp_mode = 'flat'
+    elif 'onelevel' in stp_exp_mode:
+        stp_exp_mode = 'onelevel'
     if "yes" in export2S:
         export_board_2step=True
     else:
@@ -3917,30 +3967,31 @@ def cfg_read_all():
     say('pcb color='+col)
     #cfg_parameters.append(models3D_prefix)
     #cfg_parameters.append(col)
-    say('blacklist modules '+blacklisted_model_elements)
+    say('blacklist modules: '+blacklisted_model_elements)
     #cfg_parameters.append(blacklisted_model_elements)
-    say('volume '+str(volume_minimum)+' heigh '+str(height_minimum))
+    say('volume: '+str(volume_minimum)+' heigh: '+str(height_minimum))
     #cfg_parameters.append(volume_minimum)
-    say('bounding box option '+str(bbox_all)+' whitelist '+whitelisted_model_elements)
+    say('bounding box option: '+str(bbox_all)+' whitelist: '+whitelisted_model_elements)
     #cfg_parameters.append(bbox_all);cfg_parameters.append(whitelisted_model_elements)
-    say('placement board @ '+plcmnt); say("idf_to_origin "+ str(idf_to_origin))
-    say('last fp path '+last_fp_path)
-    say('last brd path '+last_pcb_path)
+    say('placement board @ '+plcmnt); say("idf_to_origin: "+ str(idf_to_origin))
+    say('last fp path: '+last_fp_path)
+    say('last brd path: '+last_pcb_path)
     #cfg_parameters.append(plcmnt);cfg_parameters.append(last_fp_path)
     #cfg_parameters.append(last_pcb_path)
-    say('virtual models '+virtual)
-    say('export fusing option '+exportFusing)
+    say('virtual models: '+virtual)
+    say('export fusing option: '+exportFusing)
     #cfg_parameters.append(virtual);cfg_parameters.append(exportFusing)
-    say ('minimum drill size '+str(min_drill_size)+'mm')
-    say ('export to STEP '+str(export_board_2step))
+    say ('minimum drill size: '+str(min_drill_size)+'mm')
+    say ('export to STEP: '+str(export_board_2step))
+    say ('STEP exporting mode: '+str(stp_exp_mode))
     if enable_materials==1:
-        say ("enable materials True")
+        say ("enable materials: True")
     else:
-        say ("enable materials False")
-    say ('turntable '+str(animate_result))
-    say ('compound allowed '+str(allow_compound))
-    say ('docking mode '+docking_mode)
-    say ('constraints mode '+addConstraints)
+        say ("enable materials: False")
+    say ('turntable: '+str(animate_result))
+    say ('compound allowed: '+str(allow_compound))
+    say ('docking mode: '+docking_mode)
+    say ('constraints mode: '+addConstraints)
     #say ('fonts size '+str(font_size))
     #cfg_parameters.append(min_drill_size);
     ## color
@@ -4389,12 +4440,21 @@ def Display_info(blacklisted_models):
     if (animate_result==True):
         FreeCADGui.ActiveDocument.ActiveView.startAnimating(0,1,0,0.2)
 ###
+def checkFCbug(fcv):
+    if fcv[0] == 0 and fcv[1] >= 17:
+        if int(fcv[2]) >= 13509: # or fcv[2] == 13516: 
+            import Part
+            if hasattr(Part, "OCC_VERSION"):
+                if (Part.OCC_VERSION=='7.2.0'):
+                    return True
+    return False
+##
 
 def Export2MCAD(blacklisted_model_elements):
     global bbox_all, bbox_list, fusion, show_messages, last_pcb_path
     global height_minimum, volume_minimum, idf_to_origin, ksu_config_fname
     global board_base_point_x, board_base_point_y, real_board_pos_x, real_board_pos_y
-    global animate_result, pcb_path, addVirtual, use_AppPart, force_oldGroups
+    global animate_result, pcb_path, addVirtual, use_AppPart, force_oldGroups, stp_exp_mode
     say('exporting to MCAD')
     ## exporting
     __objs__=[]
@@ -4425,9 +4485,26 @@ def Export2MCAD(blacklisted_model_elements):
     paramGet.SetString("Company", "ksu MCAD")
     #sayw("use_AppPart "+str(use_AppPart)+" force_oldGroups "+str(force_oldGroups)+" fusion "+str(fusion))
     #stop
-    ##  not to be used paramGet.SetString("Product", "Open CASCADE STEP processor 7.0")
+    sayw(stp_exp_mode)
+    # stop
+    # workaround for OCC7.2 & FC bug
+    fcv = getFCversion()
+    fcb = checkFCbug(fcv)
+    #sayw(fcv)
+    #say(fcv[0])
+    #stop
+    sel = FreeCADGui.Selection.getSelection()
+    selN=sel[0].Name
+    doc = FreeCAD.ActiveDocument
+    paramGet = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Part/STEP")
+    old_Auth = paramGet.GetString("Author")
+    old_Comp = paramGet.GetString("Company")
+    # old_Prod = paramGet.GetString("Product")
+    paramGet.SetString("Author", "kicad StepUp")
+    paramGet.SetString("Company", "ksu MCAD")
+    
     if use_AppPart and not force_oldGroups: # and not fusion:
-        sayw("exporting STEP with Hierarchy")
+        #sayw("exporting STEP with Hierarchy")
         #stop
         __ob__=[]
         skl=[]
@@ -4439,96 +4516,11 @@ def Export2MCAD(blacklisted_model_elements):
             #print sk
             FreeCAD.ActiveDocument.getObject(sk[1]).removeObject(FreeCAD.ActiveDocument.getObject(sk[0]))
                 #FreeCAD.ActiveDocument.getObject(selN).removeObject(FreeCAD.ActiveDocument.getObject(sk_name))
-    #stop
-        # workaround for OCC7.2 & FC bug
-        fcv = getFCversion()
-        #sayw(fcv)
-        #say(fcv[0])
-        #stop
-        #doc = FreeCAD.ActiveDocument
-        if fcv[0] == 0 and fcv[1] == 17:
-            if fcv[2] >= 13509: # or fcv[2] == 13516:
-                import Part
-                if hasattr(Part, "OCC_VERSION"):
-                    if Part.OCC_VERSION=='7.2.0':
-                        FreeCADGui.Selection.removeSelection(obj)
-                        FreeCADGui.Selection.addSelection(doc.getObject("Board"))
-                        try:
-                            import kicadStepUpCMD
-                        except:
-                            sayerr('to export STEP it is necessary to use StepUp Workbench<br>instead of the single Macro<br>(because of '+str(fcv)+' FC bug)')
-                            msg="""<font color='red'><b>to export STEP it is necessary to use StepUp Workbench<br>instead of the single Macro<br>(because of """+str(fcv)+""" FC bug</b></font>"""
-                            say_warning(msg)
-                            del __ob__
-                            for sk in skl:
-                                say('including sketch in grp')
-                                FreeCAD.ActiveDocument.getObject(sk[1]).addObject(FreeCAD.ActiveDocument.getObject(sk[0]))
-                                stop
-                        kicadStepUpCMD.deep_copy(doc,compound=True)
-                        to_export_name=FreeCAD.ActiveDocument.ActiveObject.Name
-                        #sayw(FreeCAD.ActiveDocument.getObject(to_export_name).Label)
-                        #say(sel[0])
-                        __objx__=[]
-                        __objx__.append(FreeCAD.ActiveDocument.getObject(to_export_name))
-                        #import ImportGui
-                        ImportGui.export(__objx__,fpath)
-                        #FreeCAD.ActiveDocument.removeObject(to_export_nam)
-                        #stop
-                        removesubtree(__objx__)
-                        del __objx__
-                        sayerr('exported a simplified STEP hierarchy because of '+str(fcv)+' FC bug')
-                        msg="""<font color='red'><b>exported a simplified STEP hierarchy<br>because of """+str(fcv)+""" FC bug</b></font>"""
-                        say_warning(msg)
-                        #FreeCADGui.Selection.removeSelection(sel[0])
-                        #FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.getObject(to_export_name))
-                        #sel1 = FreeCADGui.Selection.getSelection()
-                        #say(sel1[0])
-                        #ImportGui.export(sel1[0],name)
-                        #stop
-        else:
-            __ob__.append(doc.getObject("Board"))
-            #import ImportGui
-            try:
-                ImportGui.export(__ob__,fpath)
-            except:
-                say_warning("error writing STEP file. You do not have write permissions to save file!")
-            #sayerr(__ob__[0].Name)
-        del __ob__
-        for sk in skl:
-            say('including sketch in grp')
-            FreeCAD.ActiveDocument.getObject(sk[1]).addObject(FreeCAD.ActiveDocument.getObject(sk[0]))
-        #stop
-    else:
-        ImportGui.export(__objs__,fpath)
-    #restoring old Author
-    #paramGet = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Part/STEP")
-    paramGet.SetString("Author", old_Auth)
-    paramGet.SetString("Company", old_Comp)
-    # paramGet.SetString("Product", old_Prod)
-    #say(old_Auth)
-    #say(old_Comp)
-    #fusion=False
-    mcompound=False #True #to create a Compound instead of a fusion ... to evaluate after Export STEP has improved vejmarie
-    ##mcompound=True
-    ##fusion=True
-    if (mcompound==True):
-        doc.addObject("Part::Compound","ksuCompound_")
-        #say(cObjs)
-        doc.ksuCompound_.Links = __objs__ #cObjs
-        doc.recompute()
-        doc.addObject('Part::Feature','ksuCompound').Shape=FreeCAD.ActiveDocument.ksuCompound_.Shape
-        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.ksuCompound_.ShapeColor
-        FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.ksuCompound_.LineColor
-        FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.ksuCompound_.PointColor
-        FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.ksuCompound_.DiffuseColor
-        # Remove the fusion object
-        doc.removeObject("ksuCompound_")
-        doc.recompute()
         
-        stop
-    ## be careful ... fusion can be heavy or generate FC crash with a lot of objects
-    ## please consider to use bbox or blacklist small objs
+    #sayerr(__ob__[0].Name)
     if (fusion==True):
+        ## be careful ... fusion can be heavy or generate FC crash with a lot of objects
+        ## please consider to use bbox or blacklist small objs
         # Fuse objects
         doc.addObject("Part::MultiFuse","ksuFusion_")
         doc.ksuFusion_.Shapes = __objs__
@@ -4563,24 +4555,125 @@ def Export2MCAD(blacklisted_model_elements):
         # paramGet.SetInt("WriteSurfaceCurveMode", 1)
         #paramGet = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Part/General")
         #paramGet.SetInt("WriteSurfaceCurveMode", 0)
-        paramGet = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Part/STEP")
-        old_Auth = paramGet.GetString("Author")
-        old_Comp = paramGet.GetString("Company")
+        #paramGet = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Part/STEP")
+        #old_Auth = paramGet.GetString("Author")
+        #old_Comp = paramGet.GetString("Company")
         # old_Prod = paramGet.GetString("Product")
-        paramGet.SetString("Author", "kicad StepUp")
-        paramGet.SetString("Company", "ksu MCAD")
+        #paramGet.SetString("Author", "kicad StepUp")
+        #paramGet.SetString("Company", "ksu MCAD")
         ##  not to be used paramGet.SetString("Product", "Open CASCADE STEP processor 7.0")
         ImportGui.export(fobjs,fpath)
         #restoring old Author
         #paramGet = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Part/STEP")
-        paramGet.SetString("Author", old_Auth)
-        paramGet.SetString("Company", old_Comp)
+        # paramGet.SetString("Author", old_Auth)
+        # paramGet.SetString("Company", old_Comp)
         # paramGet.SetString("Product", old_Prod)
         #say(old_Auth)
         #say(old_Comp)
         FreeCAD.activeDocument().recompute()
         del fobjs
         #ImportGui.export(doc.ActiveObject,filePath+os.sep+doc.Label+'.step')
+    elif (fcv[0]==0 and fcv[1]<=16):  # FC < 0.17
+        sayw('exporting flat FC 0.16')
+        ImportGui.export(__objs__,fpath)
+    elif (stp_exp_mode == 'hierarchy' and not fcb):  # FC not bugged or < 0.17
+        sayw('exporting hierarchy')
+        __obtoexp__=[]
+        # FreeCADGui.Selection.removeSelection(obj)
+        # FreeCADGui.Selection.addSelection(doc.getObject("Board"))
+        __obtoexp__.append(doc.getObject("Board"))
+        ImportGui.export(__obtoexp__,fpath)
+        del __obtoexp__
+    elif (stp_exp_mode == 'onelevel') or (stp_exp_mode == 'hierarchy' and fcb):
+        sayw('exporting ONE level hierarchy')
+        FreeCADGui.Selection.removeSelection(obj)
+        FreeCADGui.Selection.addSelection(doc.getObject("Board"))
+        try:
+            import kicadStepUpCMD
+        except:
+            sayerr('to export STEP it is necessary to use StepUp Workbench<br>instead of the single Macro<br>(because of '+str(fcv)+' FC bug)')
+            msg="""<font color='red'><b>to export STEP it is necessary to use StepUp Workbench<br>instead of the single Macro<br>(because of """+str(fcv)+""" FC bug</b></font>"""
+            say_warning(msg)
+            for sk in skl:
+                say('including sketch in grp')
+                FreeCAD.ActiveDocument.getObject(sk[1]).addObject(FreeCAD.ActiveDocument.getObject(sk[0]))
+            stop
+        if fcb:
+            cpmode='compound'
+        else:
+            cpmode='part'
+        suffix='_'
+        to_export_name=kicadStepUpCMD.deep_copy(doc,cpmode,suffix)
+        # to_export_name=FreeCAD.ActiveDocument.ActiveObject.Name
+        #sayw(FreeCAD.ActiveDocument.getObject(to_export_name).Label)
+        #say(sel[0])
+        __objs__=[]
+        __objs__.append(FreeCAD.ActiveDocument.getObject(to_export_name))
+        #import ImportGui
+        ImportGui.export(__objs__,fpath)
+        #FreeCAD.ActiveDocument.removeObject(to_export_nam)
+        removesubtree(__objs__)
+        #del __objs__
+        if fcb: # bugged FC version
+            sayerr('exported a simplified STEP hierarchy because of '+str(fcv)+' FC bug')
+            msg="""<font color='red'><b>exported a simplified STEP hierarchy<br>because of """+str(fcv)+""" FC bug</b></font>"""
+            say_warning(msg)
+                            
+            for sk in skl:
+                say('including sketch in grp')
+                FreeCAD.ActiveDocument.getObject(sk[1]).addObject(FreeCAD.ActiveDocument.getObject(sk[0]))
+            #stop
+    elif stp_exp_mode == 'flat':  # FC >=0.17
+        # need to deselect all 'Part' containers and select all simple objs
+        #say('flat')
+        if len(sel)==1 and 'App::Part' in sel[0].TypeId: ## flattening a Part hierarchy container
+            sayw('flattening Part container')
+            # FreeCADGui.Selection.removeSelection(sel[0])
+            __objs__=[]
+            for o in FreeCAD.ActiveDocument.getObject(selN).OutListRecursive:
+                #print o.TypeId
+                if 'Part::Feature' in o.TypeId:
+                    # print o.Label
+                    # say ('adding ') 
+                    # FreeCADGui.Selection.addSelection(o)
+                    __objs__.append(o)
+            ImportGui.export(__objs__,fpath)
+            #del __objs__
+        else:
+            sayw('exporting selection')
+            ImportGui.export(sel,fpath)
+
+    if use_AppPart and not force_oldGroups: # and not fusion:
+        for sk in skl:
+            say('including sketch in grp')
+            FreeCAD.ActiveDocument.getObject(sk[1]).addObject(FreeCAD.ActiveDocument.getObject(sk[0]))
+
+    #paramGet = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Part/STEP")
+    ## restoring old Author
+    paramGet.SetString("Author", old_Auth)
+    paramGet.SetString("Company", old_Comp)
+    # paramGet.SetString("Product", old_Prod)
+    #say(old_Auth)
+    #say(old_Comp)
+    #fusion=False
+    mcompound=False #True #to create a Compound instead of a fusion ... to evaluate after Export STEP has improved vejmarie
+    ##mcompound=True
+    ##fusion=True
+    if (mcompound==True):
+        doc.addObject("Part::Compound","ksuCompound_")
+        #say(cObjs)
+        doc.ksuCompound_.Links = __objs__ #cObjs
+        doc.recompute()
+        doc.addObject('Part::Feature','ksuCompound').Shape=FreeCAD.ActiveDocument.ksuCompound_.Shape
+        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.ksuCompound_.ShapeColor
+        FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.ksuCompound_.LineColor
+        FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.ksuCompound_.PointColor
+        FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.ksuCompound_.DiffuseColor
+        # Remove the fusion object
+        doc.removeObject("ksuCompound_")
+        doc.recompute()
+        
+        stop
     for obj in doc.Objects:
         # do what you want to automate
         FreeCADGui.Selection.removeSelection(obj)
@@ -13548,7 +13641,8 @@ class Ui_DockWidget(object):
 ## sketch testing button
 
 def Export3DStepF():
-    global last_3d_path
+    global last_3d_path, stp_exp_mode
+    
     #say("export3DSTEP")
     sel = FreeCADGui.Selection.getSelection()
     if len (sel) > 0:
@@ -13576,7 +13670,9 @@ def Export3DStepF():
                 #FreeCAD.ActiveDocument.getObject("Board_Geoms").addObject(FreeCAD.ActiveDocument.getObject("PCB_Sketch"))
                 sel = FreeCADGui.Selection.getSelection()
                 selN=sel[0].Name
-
+                doc = FreeCAD.ActiveDocument
+                #sayw(stp_exp_mode)
+                #stop
                 #deselect Sketches
                 if not use_AppPart:
                     for e in sel:
@@ -13596,49 +13692,71 @@ def Export3DStepF():
                             #FreeCAD.ActiveDocument.getObject(selN).removeObject(FreeCAD.ActiveDocument.getObject(sk_name))
                 #stop
                 fcv = getFCversion()
-                #sayw(fcv)
-                #say(fcv[0])
-                #stop
-                doc = FreeCAD.ActiveDocument
-                if fcv[0] == 0 and fcv[1] == 17:
-                    if fcv[2] >= 13509: # or fcv[2] == 13516:
-                        import Part
-                        if hasattr(Part, "OCC_VERSION"):
-                            if Part.OCC_VERSION=='7.2.0':
-                                try:
-                                    import kicadStepUpCMD
-                                except:
-                                    sayerr('to export STEP it is necessary to use StepUp Workbench<br>instead of the single Macro<br>(because of '+str(fcv)+' FC bug)')
-                                    msg="""<font color='red'><b>to export STEP it is necessary to use StepUp Workbench<br>instead of the single Macro<br>(because of """+str(fcv)+""" FC bug</b></font>"""
-                                    say_warning(msg)
-                                    for sk in skl:
-                                        say('including sketch in grp')
-                                        FreeCAD.ActiveDocument.getObject(sk[1]).addObject(FreeCAD.ActiveDocument.getObject(sk[0]))
-                                    stop
-                                kicadStepUpCMD.deep_copy(doc,compound=True)
-                                to_export_name=FreeCAD.ActiveDocument.ActiveObject.Name
-                                #sayw(FreeCAD.ActiveDocument.getObject(to_export_name).Label)
-                                #say(sel[0])
-                                __objs__=[]
-                                __objs__.append(FreeCAD.ActiveDocument.getObject(to_export_name))
-                                #import ImportGui
-                                ImportGui.export(__objs__,name)
-                                #FreeCAD.ActiveDocument.removeObject(to_export_nam)
-                                removesubtree(__objs__)
-                                del __objs__
-                                sayerr('exported a simplified STEP hierarchy because of '+str(fcv)+' FC bug')
-                                msg="""<font color='red'><b>exported a simplified STEP hierarchy<br>because of """+str(fcv)+""" FC bug</b></font>"""
-                                say_warning(msg)
-                                #FreeCADGui.Selection.removeSelection(sel[0])
-                                #FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.getObject(to_export_name))
-                                #sel1 = FreeCADGui.Selection.getSelection()
-                                #say(sel1[0])
-                                #ImportGui.export(sel1[0],name)
-                                #stop
-                    else:
-                        ImportGui.export(sel,name)
-                else:
+                fcb = checkFCbug(fcv)
+                # sayerr('not fcb '+str(not fcb))
+                # sayw(stp_exp_mode)
+                # say(fcv[0])
+                if (stp_exp_mode == 'hierarchy' and not fcb) or (fcv[0]==0 and fcv[1]<=16):  # FC not bugged or < 0.17
+                    sayw('exporting hierarchy')
                     ImportGui.export(sel,name)
+                elif (stp_exp_mode == 'onelevel') or (stp_exp_mode == 'hierarchy' and fcb):
+                    sayw('exporting ONE level hierarchy')
+                    try:
+                        import kicadStepUpCMD
+                    except:
+                        sayerr('to export STEP it is necessary to use StepUp Workbench<br>instead of the single Macro<br>(because of '+str(fcv)+' FC bug)')
+                        msg="""<font color='red'><b>to export STEP it is necessary to use StepUp Workbench<br>instead of the single Macro<br>(because of """+str(fcv)+""" FC bug</b></font>"""
+                        say_warning(msg)
+                        for sk in skl:
+                            say('including sketch in grp')
+                            FreeCAD.ActiveDocument.getObject(sk[1]).addObject(FreeCAD.ActiveDocument.getObject(sk[0]))
+                        stop
+                    if fcb:
+                        cpmode='compound'
+                    else:
+                        cpmode='part'
+                    suffix='_'
+                    to_export_name=kicadStepUpCMD.deep_copy(doc,cpmode,suffix)
+                    # to_export_name=FreeCAD.ActiveDocument.ActiveObject.Name
+                    #sayw(FreeCAD.ActiveDocument.getObject(to_export_name).Label)
+                    #say(sel[0])
+                    __objs__=[]
+                    __objs__.append(FreeCAD.ActiveDocument.getObject(to_export_name))
+                    #import ImportGui
+                    ImportGui.export(__objs__,name)
+                    #FreeCAD.ActiveDocument.removeObject(to_export_nam)
+                    removesubtree(__objs__)
+                    del __objs__
+                    if fcb: # bugged FC version
+                        sayerr('exported a simplified STEP hierarchy because of '+str(fcv)+' FC bug')
+                        msg="""<font color='red'><b>exported a simplified STEP hierarchy<br>because of """+str(fcv)+""" FC bug</b></font>"""
+                        say_warning(msg)
+                    #FreeCADGui.Selection.removeSelection(sel[0])
+                    #FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.getObject(to_export_name))
+                    #sel1 = FreeCADGui.Selection.getSelection()
+                    #say(sel1[0])
+                    #ImportGui.export(sel1[0],name)
+                    #stop
+                elif stp_exp_mode == 'flat':
+                    # need to deselect all 'Part' containers and select all simple objs
+                    #say('flat')
+                    if len(sel)==1 and 'App::Part' in sel[0].TypeId: ## flattening a Part hierarchy container
+                        sayw('flattening Part container')
+                        # FreeCADGui.Selection.removeSelection(sel[0])
+                        __objs__=[]
+                        for o in FreeCAD.ActiveDocument.getObject(selN).OutListRecursive:
+                            #print o.TypeId
+                            if 'Part::Feature' in o.TypeId:
+                                # print o.Label
+                                # say ('adding ') 
+                                # FreeCADGui.Selection.addSelection(o)
+                                __objs__.append(o)
+                        ImportGui.export(__objs__,name)
+                        del __objs__
+                    else:
+                        sayw('exporting selection')
+                        ImportGui.export(sel,name)
+                
                 #print selN,'-',sk_name
                 #FreeCAD.ActiveDocument.getObject(selN).removeObject(App.ActiveDocument.getObject(sk_name))
                 if use_AppPart:
