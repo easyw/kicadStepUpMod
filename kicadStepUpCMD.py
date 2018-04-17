@@ -19,7 +19,7 @@ import ksu_locator
 # from kicadStepUptools import onLoadBoard, onLoadFootprint
 import math
 
-__ksuCMD_version__='1.4.5'
+__ksuCMD_version__='1.4.6'
 
 precision = 0.1 # precision in spline or bezier conversion
 
@@ -953,7 +953,7 @@ def deep_copy_part(doc, part, compound='flat',suffix='(copy)'):
     copied_subobjects = []
     copied_subobjects_Names = []
     for o in get_all_subobjects(part):
-        if o.Name not in copied_subobjects_Names:
+        if o.Name not in copied_subobjects_Names and FreeCADGui.ActiveDocument.getObject(o.Name).Visibility:
             copied_subobjects_Names.append(o.Name)
             copied_subobjects += copy_subobject(doc, o,suffix)
             copied_subobjects_Names.append(o.Name)
