@@ -19,7 +19,7 @@ import ksu_locator
 # from kicadStepUptools import onLoadBoard, onLoadFootprint
 import math
 
-__ksuCMD_version__='1.4.6'
+__ksuCMD_version__='1.4.5'
 
 precision = 0.1 # precision in spline or bezier conversion
 
@@ -906,8 +906,8 @@ class ksuToolsDeepCopy:
                     FreeCAD.Console.PrintWarning(msg)             
             else:
                 doc = FreeCAD.activeDocument()
-                FreeCADGui.ActiveDocument.getObject(sel[0].Name).Visibility=False
                 deep_copy(doc,'flat','copy')
+                FreeCADGui.ActiveDocument.getObject(sel[0].Name).Visibility=False
         else:
             #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
             reply = QtGui.QMessageBox.information(None,"Warning", "Select ONE Part Design Next object to be copied!")
@@ -953,10 +953,16 @@ def deep_copy_part(doc, part, compound='flat',suffix='(copy)'):
     copied_subobjects = []
     copied_subobjects_Names = []
     for o in get_all_subobjects(part):
-        if o.Name not in copied_subobjects_Names and FreeCADGui.ActiveDocument.getObject(o.Name).Visibility:
-            copied_subobjects_Names.append(o.Name)
-            copied_subobjects += copy_subobject(doc, o,suffix)
-            copied_subobjects_Names.append(o.Name)
+        if o.Name not in copied_subobjects_Names:
+            if FreeCADGui.ActiveDocument.getObject(o.Name).Visibility:
+                vis=True
+                for Container in o.InListRecursive:
+                    if not (FreeCADGui.ActiveDocument.getObject(Container.Name).Visibility):
+                        vis=False
+                if vis:
+                    copied_subobjects_Names.append(o.Name)
+                    copied_subobjects += copy_subobject(doc, o,suffix)
+                    copied_subobjects_Names.append(o.Name)
     if doc.ActiveObject is not None:
         pName = doc.ActiveObject.Name
     else:
