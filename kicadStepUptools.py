@@ -431,7 +431,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.2.1.2"  
+___ver___ = "7.2.1.3"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -4442,7 +4442,7 @@ def Display_info(blacklisted_models):
 ###
 def checkFCbug(fcv):
     if fcv[0] == 0 and fcv[1] >= 17:
-        if int(fcv[2]) >= 13509: # or fcv[2] == 13516: 
+        if int(fcv[2]) >= 13509 and int(fcv[2]) < 13548: # or fcv[2] == 13516: 
             import Part
             if hasattr(Part, "OCC_VERSION"):
                 if (Part.OCC_VERSION=='7.2.0'):
@@ -4632,7 +4632,8 @@ def Export2MCAD(blacklisted_model_elements):
             __objs__=[]
             for o in FreeCAD.ActiveDocument.getObject(selN).OutListRecursive:
                 #print o.TypeId
-                if 'Part::Feature' in o.TypeId:
+                # if 'Part::Feature' in o.TypeId:
+                if hasattr(o, 'Shape'):
                     # print o.Label
                     # say ('adding ') 
                     # FreeCADGui.Selection.addSelection(o)
@@ -13744,9 +13745,12 @@ def Export3DStepF():
                         sayw('flattening Part container')
                         # FreeCADGui.Selection.removeSelection(sel[0])
                         __objs__=[]
+                        # sayerr(FreeCAD.ActiveDocument.getObject(selN).Label)
+                        # sayerr(FreeCAD.ActiveDocument.getObject(selN).OutListRecursive)
                         for o in FreeCAD.ActiveDocument.getObject(selN).OutListRecursive:
-                            #print o.TypeId
-                            if 'Part::Feature' in o.TypeId:
+                            #sayw( o.TypeId )
+                            #if 'Part::Feature' in o.TypeId:
+                            if hasattr(o, 'Shape'):
                                 # print o.Label
                                 # say ('adding ') 
                                 # FreeCADGui.Selection.addSelection(o)
