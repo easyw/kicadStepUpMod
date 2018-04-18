@@ -431,7 +431,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.2.1.3"  
+___ver___ = "7.2.1.4"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -4441,8 +4441,10 @@ def Display_info(blacklisted_models):
         FreeCADGui.ActiveDocument.ActiveView.startAnimating(0,1,0,0.2)
 ###
 def checkFCbug(fcv):
-    if fcv[0] == 0 and fcv[1] >= 17:
-        if int(fcv[2]) >= 13509 and int(fcv[2]) < 13548: # or fcv[2] == 13516: 
+    """ step hierarchy export bug """     
+    if ((fcv[0] == 0) and (fcv[1] == 17) and (fcv[2] >= 13509) and (fcv[2] < 13515))\
+       or ((fcv[0] == 0) and (fcv[1] == 18) and (fcv[2] >= 13509) and (fcv[2] < 13548)):
+        #if int(fcv[2]) >= 13509 and int(fcv[2]) < 13548: # or fcv[2] == 13516:     
             import Part
             if hasattr(Part, "OCC_VERSION"):
                 if (Part.OCC_VERSION=='7.2.0'):
