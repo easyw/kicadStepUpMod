@@ -321,6 +321,8 @@
 # fixed simplify sketch
 # improved Qt5 compatibility
 # added workaround for STEP exporting OCC 7.2.0
+# improved STEP exporting with hierarchy, onelevel, flat options
+# added QtGui.QApplication.processEvents() for Qt5
 # most clean code and comments done
 
 ##todo
@@ -431,7 +433,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.2.1.5"  
+___ver___ = "7.2.1.6"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -5585,6 +5587,9 @@ def Load_models(pcbThickness,modules):
                     test = missing_models.find(step_module)
                     if test is -1:
                         missing_models += models3D_prefix+step_module+'\r\n' #matched
+            ###
+            if int(PySide.QtCore.qVersion().split('.')[0]) > 4:
+                QtGui.QApplication.processEvents()
             ###
         ###
     ###
