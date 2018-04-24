@@ -19,7 +19,7 @@ import ksu_locator
 # from kicadStepUptools import onLoadBoard, onLoadFootprint
 import math
 
-__ksuCMD_version__='1.4.5'
+__ksuCMD_version__='1.4.6'
 
 precision = 0.1 # precision in spline or bezier conversion
 
@@ -900,18 +900,23 @@ class ksuToolsDeepCopy:
 
         if FreeCADGui.Selection.getSelection():
             sel=FreeCADGui.Selection.getSelection()        
-            if len(sel)!=1:
-                    msg="Select ONE Part Design Next object to be copied!\n"
-                    reply = QtGui.QMessageBox.information(None,"Warning", msg)
-                    FreeCAD.Console.PrintWarning(msg)             
+            if len(sel)!=1 and (sel[0].TypeId == 'App::Part' or sel[0].TypeId == 'Body'):
+                msg="Select ONE Part Design Next object\nor one or more objects to be copied!\n"
+                reply = QtGui.QMessageBox.information(None,"Warning", msg)
+                FreeCAD.Console.PrintWarning(msg)             
             else:
                 doc = FreeCAD.activeDocument()
-                deep_copy(doc,'flat','copy')
-                FreeCADGui.ActiveDocument.getObject(sel[0].Name).Visibility=False
+                if sel[0].TypeId != 'App::Part' and sel[0].TypeId != 'Body':
+                    for o in sel:
+                        if o.TypeId != 'App::Part' and o.TypeId != 'Body':
+                            copy_subobject(doc,o,'copy')
+                else:
+                    deep_copy(doc,'flat','copy')
+                    FreeCADGui.ActiveDocument.getObject(sel[0].Name).Visibility=False
         else:
             #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
-            reply = QtGui.QMessageBox.information(None,"Warning", "Select ONE Part Design Next object to be copied!")
-            FreeCAD.Console.PrintWarning("Select ONE Part Design Next object to be copied!\n")             
+            reply = QtGui.QMessageBox.information(None,"Warning", "Select ONE Part Design Next object\nor one or more objects to be copied!")
+            FreeCAD.Console.PrintWarning("Select ONE Part Design Next object\nor one or more objects to be copied!\n")             
         
 FreeCADGui.addCommand('ksuToolsDeepCopy',ksuToolsDeepCopy())
 #####
@@ -944,7 +949,7 @@ def deep_copy(doc,compound='flat',suffix='(copy)'):
     return pName
 
 def deep_copy_part(doc, part, compound='flat',suffix='(copy)'):
-    if part.TypeId != 'App::Part':
+    if part.TypeId != 'App::Part' and part.TypeId != 'Body':
         # Part is not a part, return.
         return
     
