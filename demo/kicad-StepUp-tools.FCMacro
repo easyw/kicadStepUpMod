@@ -433,7 +433,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.2.1.6"  
+___ver___ = "7.2.2.0"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -14206,21 +14206,26 @@ def export_footprint(fname=None):
             #else:
             #    fp_name = FreeCAD.ActiveDocument.Name
             if o.TypeId =='App::Annotation':
-                if 'Ref' in o.LabelText[0]:
-                    reference=o.Label
+                if 'Ref' in o.Label:
+                    reference=o.LabelText[0]
                     xr=o.Position.x;yr=-o.Position.y
-                    #sayerr(float(FreeCADGui.ActiveDocument.getObject(o.Name).FontSize))
-                    #print float(FreeCADGui.ActiveDocument.getObject(o.Name).FontSize) < 3.0
-                    #stop
-                    if float(FreeCADGui.ActiveDocument.getObject(o.Name).FontSize) < 3.0:
-                    #if o.FontSize < 3.0:
-                        fsize='0.3 0.3'; fthick='0.08'
-                elif 'Val' in o.LabelText[0]:
-                    value=o.Label
+                    fsize_list = o.Label.split('_')
+                    l = len (fsize_list)
+                    if l > 1:
+                        fs = (fsize_list[l-1].rstrip('mm')); 
+                        ref_fsize=(fs+' '+fs); ref_fthick="{0:.3f}".format((float(fs)/5))
+                    else:
+                        ref_fsize='1.0 1.0'; ref_fthick='0.15'
+                elif 'Val' in o.Label:
+                    value=o.LabelText[0]
                     xv=o.Position.x;yv=-o.Position.y
-                    if float(FreeCADGui.ActiveDocument.getObject(o.Name).FontSize) < 3.0:
-                        fsize='0.3 0.3'; fthick='0.08'
-
+                    fsize_list = o.Label.split('_')
+                    l = len (fsize_list)
+                    if l > 1:
+                        fs = (fsize_list[l-1].rstrip('mm')); 
+                        val_fsize=(fs+' '+fs); val_fthick="{0:.3f}".format((float(fs)/5))
+                    else:
+                        val_fsize='1.0 1.0'; val_fthick='0.15'
         offset=[0,0]
         drills=[];psmd=[];pth=[];npth=[]
         pply=[];prrect=[]
@@ -14233,14 +14238,14 @@ def export_footprint(fname=None):
         #header=header+"  (descr \""+fp_name+" StepUp generated footprint\")"+os.linesep
         header="  (descr \""+fp_name+" StepUp generated footprint\")"+os.linesep
         header=header+"  (fp_text reference \""+reference+u"\" (at "+str(xr)+" "+str(yr)+") (layer F.SilkS)"+os.linesep
-        header=header+"  (effects (font (size "+fsize+") (thickness "+fthick+")))"+os.linesep
+        header=header+"  (effects (font (size "+ref_fsize+") (thickness "+ref_fthick+")))"+os.linesep
         header=header+"  )"+os.linesep
         header=header+"  (fp_text value \""+value+u"\" (at "+str(xv)+" "+str(yv)+") (layer F.SilkS)"+os.linesep
-        header=header+"    (effects (font (size "+fsize+") (thickness "+fthick+")))"+os.linesep
+        header=header+"    (effects (font (size "+val_fsize+") (thickness "+val_fthick+")))"+os.linesep
         #header=header+"    (effects (font (size 1.0 1.0) (thickness 0.15)))"+os.linesep
         header=header+"  )"+os.linesep
         header=header+"  (fp_text user %R (at "+str(xr)+" "+str(yr)+") (layer F.Fab)"+os.linesep
-        header=header+"    (effects (font (size "+fsize+") (thickness "+fthick+")))"+os.linesep
+        header=header+"    (effects (font (size "+ref_fsize+") (thickness "+ref_fthick+")))"+os.linesep
         #header=header+"    (effects (font (size 1 1) (thickness 0.15)))"+os.linesep
         header=header+"  )"
         ## import kicadStepUptools; reload(kicadStepUptools)
