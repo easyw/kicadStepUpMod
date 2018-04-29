@@ -433,7 +433,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.2.2.0"  
+___ver___ = "7.2.2.1"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -14199,6 +14199,8 @@ def export_footprint(fname=None):
         fp_name = FreeCAD.ActiveDocument.Name
         #sel = FreeCADGui.Selection.getSelection()
         fsize='1.0 1.0'; fthick='0.15'
+        ref_fsize='1.0 1.0'; ref_fthick='0.15'
+        val_fsize='1.0 1.0'; val_fthick='0.15'
         for o in FreeCAD.ActiveDocument.Objects:
         #if sel[0].TypeId =='App::DocumentObjectGroup':
             if o.TypeId =='App::DocumentObjectGroup':
@@ -14213,7 +14215,7 @@ def export_footprint(fname=None):
                     l = len (fsize_list)
                     if l > 1:
                         fs = (fsize_list[l-1].rstrip('mm')); 
-                        ref_fsize=(fs+' '+fs); ref_fthick="{0:.3f}".format((float(fs)/5))
+                        ref_fsize=(fs+' '+fs); ref_fthick="{0:.3f}".format((float(fs)*0.15))
                     else:
                         ref_fsize='1.0 1.0'; ref_fthick='0.15'
                 elif 'Val' in o.Label:
@@ -14223,7 +14225,7 @@ def export_footprint(fname=None):
                     l = len (fsize_list)
                     if l > 1:
                         fs = (fsize_list[l-1].rstrip('mm')); 
-                        val_fsize=(fs+' '+fs); val_fthick="{0:.3f}".format((float(fs)/5))
+                        val_fsize=(fs+' '+fs); val_fthick="{0:.3f}".format((float(fs)*0.15))
                     else:
                         val_fsize='1.0 1.0'; val_fthick='0.15'
         offset=[0,0]
