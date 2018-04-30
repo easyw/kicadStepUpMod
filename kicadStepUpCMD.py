@@ -19,7 +19,7 @@ import ksu_locator
 # from kicadStepUptools import onLoadBoard, onLoadFootprint
 import math
 
-__ksuCMD_version__='1.4.7'
+__ksuCMD_version__='1.4.8'
 
 precision = 0.1 # precision in spline or bezier conversion
 
@@ -1140,6 +1140,71 @@ def toggle_visibility_subtree(objs):
         else:
             if hide_compound==True:
                 FreeCADGui.ActiveDocument.getObject(obj.Name).Visibility=False
+
+#####
+class ksuToolsRemoveFromTree:
+    "ksu tools Remove from Tree"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'TreeItemOutMinus.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksu tools Remove from Tree" ,
+                     'ToolTip' : "Remove Object(s) from Container Tree\nFirst Selection is the Container"}
+ 
+    def IsActive(self):
+        return True
+ 
+    def Activated(self):
+        if FreeCADGui.Selection.getSelection():
+            sel=FreeCADGui.Selection.getSelection()
+            doc=FreeCAD.ActiveDocument
+            if "App::Part" in doc.getObject(sel[0].Name).TypeId:
+                base = doc.getObject(sel[0].Name)
+                for obj in sel:
+                    if obj.Name != sel[0].Name:
+                        o=doc.getObject(obj.Name)
+                        #print(obj.Name);
+                        #print(sel[0].Label);print(obj.Label)
+                        if hasattr(base, "OutList"):
+                            if o in base.OutList:
+                                base.removeObject(o)
+                            else:
+                                for item in base.OutListRecursive:
+                                    if hasattr(item, "OutList"):
+                                        if o in item.OutList:
+                                            item.removeObject(o)
+        else:
+            #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
+            reply = QtGui.QMessageBox.information(None,"Warning", "Select one Container and some object(s) to be Removed from the Tree.")
+            FreeCAD.Console.PrintWarning("Select one Container and some object(s) to be Removed from the Tree.\n")             
+
+FreeCADGui.addCommand('ksuToolsRemoveFromTree',ksuToolsRemoveFromTree())
+
+#####
+class ksuToolsAddToTree:
+    "ksu tools Add to Tree"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'TreeItemInPlus.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksu tools Add to Tree" ,
+                     'ToolTip' : "Add Object(s) to Container Tree\nFirst Selection is the Container"}
+ 
+    def IsActive(self):
+        return True
+ 
+    def Activated(self):
+        if FreeCADGui.Selection.getSelection():
+            sel=FreeCADGui.Selection.getSelection()
+            doc=FreeCAD.ActiveDocument
+            if "App::Part" in doc.getObject(sel[0].Name).TypeId:
+                for obj in sel:
+                    if obj.Name != sel[0].Name:
+                        doc.getObject(sel[0].Name).addObject(doc.getObject(obj.Name))
+        else:
+            #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
+            reply = QtGui.QMessageBox.information(None,"Warning", "Select one Container and some object(s) to be Added to the Tree.")
+            FreeCAD.Console.PrintWarning("Select one Container and some object(s) to be Added to the Tree.\n")             
+
+FreeCADGui.addCommand('ksuToolsAddToTree',ksuToolsAddToTree())
 
 #####
 def toggle_transparency_subtree(objs):
