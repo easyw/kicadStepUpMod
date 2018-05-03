@@ -323,6 +323,7 @@
 # added workaround for STEP exporting OCC 7.2.0
 # improved STEP exporting with hierarchy, onelevel, flat options
 # added QtGui.QApplication.processEvents() for Qt5
+# skipping \" characters
 # most clean code and comments done
 
 ##todo
@@ -433,7 +434,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.2.2.1"  
+___ver___ = "7.2.2.2"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -1482,7 +1483,9 @@ class KicadPCB(SexpParser):
         #    return KicadPCB(parseSexp(f.read()))
         #print 'ciao'
         with builtin.open(filename, 'r') as f: #py3 #test parser
-            return KicadPCB(parseSexp(f.read()))
+            #return KicadPCB(parseSexp(f.read())) # maui
+            #return KicadPCB(parseSexp(f.read().replace('\\"','_').replace("\\'",'_'))) # maui replacing  \" and \' with _ to avoid wrong parsing
+            return KicadPCB(parseSexp(f.read().replace('\\"','_'))) # maui replacing  \" with _ to avoid wrong parsing
 
 ##--------------------------------------------------------------------------------------
 ###
@@ -4920,6 +4923,7 @@ def Load_models(pcbThickness,modules):
     virtualBot_nbr=0
     modelTop_nbr=0
     modelBot_nbr=0
+    mod_cnt=0
     for i in range(len(modules)):
         step_module=modules[i][0]
         #say(modules[i]);
@@ -5222,6 +5226,7 @@ def Load_models(pcbThickness,modules):
                 if module_path!='not-found' and module_path!='internal shape':
                     #FreeCADGui.Selection.removeSelection(FreeCAD.activeDocument().ActiveObject)  mauitemp volume diff
                     say("opening "+ module_path)
+                    mod_cnt+=1
                     doc1=FreeCAD.ActiveDocument
                     counterObj=0;counter=0
                     for ObJ in doc1.Objects:
@@ -5335,6 +5340,7 @@ def Load_models(pcbThickness,modules):
                             idxO=i
                     if loaded_models_skipped[idxO]!="skip":
                         if use_cache:
+                            #mod_cnt+=1
                             sayw('copying from cache')
                             ##impPart=copy_objs(loaded_model_objs[idxO],FreeCAD.ActiveDocument, FreeCAD,FreeCADGui)
                             ### FreeCAD.ActiveDocument.addObject('Part::Feature',loaded_model_objs[idxO].Label).Shape=loaded_model_objs[idxO].Shape
@@ -5588,9 +5594,13 @@ def Load_models(pcbThickness,modules):
                     if test is -1:
                         missing_models += models3D_prefix+step_module+'\r\n' #matched
             ###
-            if int(PySide.QtCore.qVersion().split('.')[0]) > 4:
+        gui_refresh=20
+        if int(PySide.QtCore.qVersion().split('.')[0]) > 4: # or use_Links:  # Qt5 or Links refresh
+            if mod_cnt%gui_refresh == 0: # (one on 'gui_refresh' times)
+                #FreeCADGui.updateGui()
                 QtGui.QApplication.processEvents()
-            ###
+        ###
+        sayw('added '+str(mod_cnt)+' model(s)')
         ###
     ###
     #say(loaded_models);
@@ -9179,9 +9189,13 @@ def addPadLong2(x, y, dx, dy, perc, typ, z_off, type=None):
         #Part.show(obj)
         #stop
     else:
-        obj = Part.Shape(points)  #maui evaluate FC0.17
-        #obj=[points.toShape()]
-        obj = Part.Wire(obj.Edges) #maui evaluate FC0.17
+        # obj = Part.Shape(points)  #maui evaluate FC0.17
+        # #obj=[points.toShape()]
+        # obj = Part.Wire(obj.Edges) #maui evaluate FC0.17
+        objs=[]  # asm3 Links compatible way
+        for e in points:
+            objs.append(e.toShape())
+        obj = Part.Wire(objs)
         #obj=Draft.makeWire(obj.Edges,closed=True,face=False,support=None)   # create the wire
 
     #if hole==0:
@@ -9244,9 +9258,12 @@ def addPadLong(x, y, dx, dy, perc, typ, z_off):
         obj=[Part.Circle(FreeCAD.Vector(x, y, z_off), FreeCAD.Vector(0, 0, 1), r).toShape()]
         obj=Part.Wire(obj)
     else:
-        obj = Part.Shape(points)
-        obj = Part.Wire(obj.Edges)
-
+        # obj = Part.Shape(points)
+        # obj = Part.Wire(obj.Edges)
+        objs=[]  # asm3 Links compatible way
+        for e in points:
+            objs.append(e.toShape())
+        obj = Part.Wire(objs)
     obj = makeFace(obj)
     #return makeFace(obj)
     list=[]
@@ -10655,9 +10672,9 @@ def routineDrawFootPrint(content,name):
     Pcb_obj.addProperty("App::PropertyBool","fixedPosition","importPart")
     Pcb_obj.Shape = pcb.Shape.copy()
     Pcb_obj.ViewObject.Proxy=0
-    for p in pcb.ViewObject.PropertiesList: #assuming that the user may change the appearance of parts differently depending on the assembly.
-        if hasattr(Pcb_obj.ViewObject, p) and p not in ['DiffuseColor']:
-            setattr(Pcb_obj.ViewObject, p, getattr(pcb.ViewObject, p))
+    # for p in pcb.ViewObject.PropertiesList: #assuming that the user may change the appearance of parts differently depending on the assembly.
+    #     if hasattr(Pcb_obj.ViewObject, p) and p not in ['DiffuseColor']:
+    #         setattr(Pcb_obj.ViewObject, p, getattr(pcb.ViewObject, p))
     Pcb_obj.ViewObject.DiffuseColor = pcb.ViewObject.DiffuseColor
     Pcb_obj.fixedPosition = True
     fp_group.addObject(Pcb_obj)
