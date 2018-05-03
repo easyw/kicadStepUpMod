@@ -14,7 +14,7 @@
    height="64px"
    id="svg3612"
    version="1.1"
-   inkscape:version="0.92.0 r15299"
+   inkscape:version="0.92.2 (5c3e80d, 2017-08-06)"
    sodipodi:docname="TreeItemOutMinus.svg">
   <defs
      id="defs3614">
@@ -434,16 +434,16 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="9.6875"
-     inkscape:cx="-4.3354842"
+     inkscape:cx="-22.606452"
      inkscape:cy="32"
      inkscape:current-layer="layer1"
      showgrid="true"
      inkscape:document-units="px"
      inkscape:grid-bbox="true"
-     inkscape:window-width="1536"
-     inkscape:window-height="801"
-     inkscape:window-x="-8"
-     inkscape:window-y="-8"
+     inkscape:window-width="2560"
+     inkscape:window-height="1361"
+     inkscape:window-x="-9"
+     inkscape:window-y="-9"
      inkscape:window-maximized="1"
      inkscape:snap-bbox="true">
     <inkscape:grid
@@ -462,7 +462,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
         <dc:creator>
           <cc:Agent>
             <dc:title>[Sebastian Hoogen]</dc:title>
@@ -607,33 +607,40 @@
          x="23"
          y="53" />
     </g>
-    <path
-       inkscape:connector-curvature="0"
-       style="fill:url(#linearGradient4726);fill-opacity:1;fill-rule:evenodd;stroke:#172a04;stroke-width:2.5;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       d="m 18.535577,27.999931 h 8.732211 V 42.553616 H 38.910737 V 27.999931 l 8.732212,-1e-6 -14.553686,-17.464423 z"
-       id="path3343-0-2"
-       sodipodi:nodetypes="cccccccc"
-       inkscape:export-filename="/home/yorik/Documents/Lab/Draft/icons/changeprop.png"
-       inkscape:export-xdpi="4.1683898"
-       inkscape:export-ydpi="4.1683898" />
-    <path
-       inkscape:connector-curvature="0"
-       style="fill:none;stroke:#ef2929;stroke-width:2.91073728;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       d="m 24.648125,25.089193 h 5.5304 V 39.642879 H 36 V 25.089193 h 5.530401 l -8.449176,-10.18048 z"
-       id="path3343-2-2-4"
-       sodipodi:nodetypes="cccccccc"
-       inkscape:export-filename="/home/yorik/Documents/Lab/Draft/icons/changeprop.png"
-       inkscape:export-xdpi="4.1683898"
-       inkscape:export-ydpi="4.1683898" />
-    <path
-       style="fill:none;stroke:#172a04;stroke-width:6;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1"
-       d="M 8.9999995,15 H 21"
-       id="path3403-3"
-       inkscape:connector-curvature="0" />
-    <path
-       style="fill:none;stroke:#ef2929;stroke-width:2;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1"
-       d="M 8.9999995,15 H 21"
-       id="path3403-3-0"
-       inkscape:connector-curvature="0" />
+    <g
+       id="g946"
+       transform="matrix(1.6666666,0,0,1.6666666,-9.9999982,-9.9999983)">
+      <path
+         inkscape:connector-curvature="0"
+         id="path3403-3"
+         d="M 8.9999995,15 H 21"
+         style="fill:none;stroke:#172a04;stroke-width:6;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1" />
+      <path
+         inkscape:connector-curvature="0"
+         id="path3403-3-0"
+         d="M 8.9999995,15 H 21"
+         style="fill:none;stroke:#ef2929;stroke-width:2;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1" />
+    </g>
+    <g
+       id="g950">
+      <path
+         inkscape:export-ydpi="4.1683898"
+         inkscape:export-xdpi="4.1683898"
+         inkscape:export-filename="/home/yorik/Documents/Lab/Draft/icons/changeprop.png"
+         sodipodi:nodetypes="cccccccc"
+         id="path3343-0-2"
+         d="m 18.535577,27.999931 h 8.732211 V 42.553616 H 38.910737 V 27.999931 l 8.732212,-1e-6 -14.553686,-17.464423 z"
+         style="fill:url(#linearGradient4726);fill-opacity:1;fill-rule:evenodd;stroke:#172a04;stroke-width:2.5;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         inkscape:connector-curvature="0" />
+      <path
+         inkscape:export-ydpi="4.1683898"
+         inkscape:export-xdpi="4.1683898"
+         inkscape:export-filename="/home/yorik/Documents/Lab/Draft/icons/changeprop.png"
+         sodipodi:nodetypes="cccccccc"
+         id="path3343-2-2-4"
+         d="m 24.648125,25.089193 h 5.5304 V 39.642879 H 36 V 25.089193 h 5.530401 l -8.449176,-10.18048 z"
+         style="fill:none;stroke:#ef2929;stroke-width:2.91073728;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         inkscape:connector-curvature="0" />
+    </g>
   </g>
 </svg>
