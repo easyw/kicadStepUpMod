@@ -324,6 +324,7 @@
 # improved STEP exporting with hierarchy, onelevel, flat options
 # added QtGui.QApplication.processEvents() for Qt5
 # skipping \" characters
+# added 'links' for import mode settings
 # most clean code and comments done
 
 ##todo
@@ -434,7 +435,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.2.2.2"  
+___ver___ = "7.2.2.3"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -561,9 +562,17 @@ font_size = 8
 ;;font size for ksu widget
 """
 
+links_importing_mode_section=u"""
+[links_importing_mode]
+importing_mode = standard
+;importing_mode = links
+;importing_mode = standard
+;;models importing mode: use Assembly3 Links or Standard mode
+"""
+
 global ini_vars, num_min_lines
 ini_vars=[]
-for i in range (0,19):
+for i in range (0,20):
     ini_vars.append('-')
 num_min_lines=22 #min numbers of ini lines for a ksu-config file
 
@@ -607,8 +616,9 @@ try:
 except:
     FreeCAD.Console.PrintWarning("PoM not present\n")
 
-global use_AppPart
+global use_AppPart, use_Links
 use_AppPart=False # False
+use_Links=False
 
 global FC_export_min_version
 FC_export_min_version="11670"  #11670 latest JM
@@ -1521,6 +1531,12 @@ if int(FC_majorV) <= 0:
 global force_oldGroups
 force_oldGroups=False # False
 
+try:
+    from freecad.asm3 import assembly as asm
+    use_Links=True #False
+    FreeCAD.Console.PrintWarning('Links support\n')
+except:
+    FreeCAD.Console.PrintWarning('no Links support\n')
 
 global export_board_2step
 #export_board_2step=False
@@ -2350,6 +2366,7 @@ def find_name(n):
         'dkmode'        :16,
         'font_size'     :17,
         'exporting_mode':18,
+        'importing_mode':19,
     }.get(n, 0)    # 0 is default if x not found
 
 #
@@ -3452,6 +3469,11 @@ exporting_mode = hierarchy
 ;exporting_mode = flat
 ;exporting_mode = onelevel
 ;;step exporting mode
+[links_importing_mode]
+importing_mode = standard
+;importing_mode = links
+;importing_mode = standard
+;;models importing mode: use Assembly3 Links or Standard mode
 [fonts]
 font_size = 8
 ;;font size for ksu widget
@@ -3467,7 +3489,7 @@ def cfg_read_all():
     global last_fp_path, last_pcb_path, plcmnt, xp, yp, exportFusing, export_board_2step
     global enable_materials, docking_mode, mat_section, dock_section, compound_section, turntable_section
     global font_section, ini_vars, num_min_lines, animate_result, allow_compound, font_size, grid_orig
-    global constraints_section, addConstraints, exporting_mode_section, stp_exp_mode
+    global constraints_section, addConstraints, exporting_mode_section, stp_exp_mode, links_importing_mode_section, links_imp_mode
 ##
     regenerate_ini=False
     if os.path.isfile(ksu_config_fname):
@@ -3664,6 +3686,29 @@ def cfg_read_all():
                         ini_content.append(line)
             else:
                 say ("exporting mode section present")
+            if not any('[links_importing_mode]' in s for s in cfg_content):
+            #if 'docking' not in cfg_content:
+                sayerr ("missing Importing Mode section, adding default one")
+                cfg_content.append(links_importing_mode_section) 
+                out_file=ksu_config_fname
+                #with io.open(out_file,'a', encoding='utf-8') as cfg_file_out:
+                with codecs.open(out_file,'a', encoding='utf-8') as cfg_file_out:
+                    #cfg_file_out.write(make_unicode(constraints_section))
+                    cfg_file_out.write(links_importing_mode_section)
+                ini_content=[];cfg_content=[]
+                #with io.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
+                with codecs.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
+                #text = f.read()
+                    cfg_content = cfg_file.readlines() #
+                #ini_content = cfg_content
+                for line in cfg_content:
+                    if re.match(r'^\s*$', line): #empty lines
+                        say('line empty')
+                    else:
+                        #ini_content.append(make_unicode(line))
+                        ini_content.append(line)
+            else:
+                say ("importing mode section present")
             if not any('[fonts]' in s for s in cfg_content):
             #if 'docking' not in cfg_content:
                 say ("missing fonts section, adding default one")
@@ -3766,8 +3811,8 @@ def cfg_read_all():
                             else:
                                 name = make_unicode(data[0].strip())
                                 key_value = make_unicode(data[1].strip())
-                            #sayw(str(find_name(name))+' -> '+name+' -> '+key_value)
-                            #sayerr(len(ini_vars))
+                            # sayerr(len(ini_vars))
+                            # sayw(str(find_name(name))+' -> '+name+' -> '+key_value)
                             ini_vars[find_name(name)]= key_value
             # sayw(ini_vars)
             # sayw(len(ini_vars))
@@ -3900,11 +3945,17 @@ def cfg_read_all():
     docking_mode = ini_vars[16]
     font_size = int(ini_vars[17])
     stp_exp_mode = ini_vars[18]
+    links_imp_mode = ini_vars[19]
     
     add_constraints_val = ini_vars[0]  # find_name default value
     
+    #sayerr(links_imp_mode)
     #print add_constraints_val
     #stop
+    if 'links' in links_imp_mode:
+        links_imp_mode = 'links_allowed'
+    else:
+        links_imp_mode = 'links_not_allowed'
     if 'hierarchy' in stp_exp_mode:
         stp_exp_mode = 'hierarchy'
     elif 'flat' in stp_exp_mode:
@@ -3989,6 +4040,8 @@ def cfg_read_all():
     say ('minimum drill size: '+str(min_drill_size)+'mm')
     say ('export to STEP: '+str(export_board_2step))
     say ('STEP exporting mode: '+str(stp_exp_mode))
+    say ('Links importing mode: '+str(links_imp_mode))
+
     if enable_materials==1:
         say ("enable materials: True")
     else:
@@ -4461,7 +4514,8 @@ def Export2MCAD(blacklisted_model_elements):
     global bbox_all, bbox_list, fusion, show_messages, last_pcb_path
     global height_minimum, volume_minimum, idf_to_origin, ksu_config_fname
     global board_base_point_x, board_base_point_y, real_board_pos_x, real_board_pos_y
-    global animate_result, pcb_path, addVirtual, use_AppPart, force_oldGroups, stp_exp_mode
+    global animate_result, pcb_path, addVirtual, use_AppPart, force_oldGroups, stp_exp_mode, links_imp_mode
+    global use_Links
     say('exporting to MCAD')
     ## exporting
     __objs__=[]
@@ -4909,7 +4963,7 @@ def Load_models(pcbThickness,modules):
     global off_x, off_y, volume_minimum, height_minimum, bbox_all, bbox_list
     global whitelisted_model_elements, models3D_prefix, models3D_prefix2, last_pcb_path, full_placement
     global allow_compound, compound_found, bklist, force_transparency, warning_nbr, use_AppPart
-    global conv_offs
+    global conv_offs, use_Links, links_imp_mode
     
     #say (modules)
     missing_models = ''
@@ -4926,6 +4980,7 @@ def Load_models(pcbThickness,modules):
     mod_cnt=0
     for i in range(len(modules)):
         step_module=modules[i][0]
+        #sayw('added '+str(i)+' model(s)')
         #say(modules[i]);
         #FreeCAD.Console.PrintMessage('step-module '+step_module)
         encoded=0
@@ -5351,7 +5406,12 @@ def Load_models(pcbThickness,modules):
                             ### FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=Gui.ActiveDocument.getObject(loaded_model_objs[idxO].Name).DiffuseColor
                             ### FreeCAD.ActiveDocument.recompute()
                             try:
-                                FreeCAD.ActiveDocument.copyObject(loaded_model_objs[idxO], True)
+                                if use_Links and links_imp_mode == 'links_allowed':
+                                    o = loaded_model_objs[idxO] 
+                                    # FreeCAD.ActiveDocument.addObject('App::Link',o.Label+'_ln_').setLink(o)
+                                    FreeCAD.ActiveDocument.addObject('App::Link',o.Label).setLink(o)
+                                else:
+                                    FreeCAD.ActiveDocument.copyObject(loaded_model_objs[idxO], True)
                                 impPart=FreeCAD.ActiveDocument.ActiveObject
                                 #say("FC 0.15 copy method for preserving color in fusion")
                             except:
@@ -5364,7 +5424,10 @@ def Load_models(pcbThickness,modules):
                             ##resetting placement properties
                             impPart.Placement = FreeCAD.Placement(FreeCAD.Vector(pos_x,pos_y,-pcbThickness),FreeCAD.Rotation(FreeCAD.Vector(0,1,0),180))
                             #obj.Placement = impPart.Placement
-                            shape=impPart.Shape.copy()
+                            if use_Links and links_imp_mode == 'links_allowed':
+                                shape=Part.getShape(o)
+                            else:
+                                shape=impPart.Shape.copy()
                             shape.Placement=impPart.Placement;
                             shape.rotate((pos_x,pos_y,0),(0,0,1),rot)
                             impPart.Placement=shape.Placement
@@ -5398,7 +5461,10 @@ def Load_models(pcbThickness,modules):
                                 ##impPart.Placement = FreeCAD.Placement(FreeCAD.Vector(pos_x+float(wrl_pos[0])*25.4,pos_y+float(wrl_pos[1])*25.4,0+float(wrl_pos[2])*25.4),FreeCAD.Rotation(rot,-float(wrl_rot[1]),-float(wrl_rot[0]))) #rot is already rot fp -rot wrl
                                 #say("rot z top ");sayw(wrl_rot);sayw(rot)
                                 impPart.Placement = FreeCAD.Placement(FreeCAD.Vector(pos_x+float(wrl_pos[0])*25.4,pos_y+float(wrl_pos[1])*25.4,0+float(wrl_pos[2])*25.4),FreeCAD.Rotation(-float(wrl_rot[2]),-float(wrl_rot[1]),-float(wrl_rot[0]))) #rot is already rot fp -rot wrl
-                                shape=impPart.Shape.copy()
+                                if impPart.TypeId=='App::Link':
+                                    shape=Part.getShape(o)
+                                else:
+                                    shape=impPart.Shape.copy()
                                 shape.Placement=impPart.Placement;
                                 shape.rotate((pos_x,pos_y,0),(0,0,1),rot+float(wrl_rot[2]))
                                 impPart.Placement=shape.Placement;
@@ -5438,11 +5504,17 @@ def Load_models(pcbThickness,modules):
                                 #impPart.Placement = FreeCAD.Placement(FreeCAD.Vector(pos_x+float(wrl_pos[1])*25.4,pos_y+float(wrl_pos[0])*25.4,-pcbThickness-float(wrl_pos[2])*25.4),FreeCAD.Rotation(-float(wrl_rot[2])-rot+180,-float(wrl_rot[1])+180,-float(wrl_rot[0])))
                                 ##impPart.Placement = FreeCAD.Placement(FreeCAD.Vector(pos_x+float(wrl_pos[1])*25.4,pos_y+float(wrl_pos[0])*25.4,-pcbThickness-float(wrl_pos[2])*25.4),FreeCAD.Rotation(-rot+180,-float(wrl_rot[1])+180,-float(wrl_rot[0])))  #rot is already rot fp -rot wrl
                                 impPart.Placement = FreeCAD.Placement(FreeCAD.Vector(pos_x+float(wrl_pos[0])*25.4,pos_y+float(wrl_pos[1])*25.4,+pcbThickness+float(wrl_pos[2])*25.4),FreeCAD.Rotation(-float(wrl_rot[2]),-float(wrl_rot[1]),-float(wrl_rot[0]))) #rot is already rot fp -rot wrl
-                                shape=impPart.Shape.copy()
+                                if impPart.TypeId=='App::Link':
+                                    shape=Part.getShape(o)
+                                else:
+                                    shape=impPart.Shape.copy()
                                 shape.Placement=impPart.Placement;
                                 shape.rotate((pos_x,pos_y,0),(0,0,1),180+rot+float(wrl_rot[2]))
                                 impPart.Placement=shape.Placement;
-                                shape=impPart.Shape.copy()
+                                if impPart.TypeId=='App::Link':
+                                    shape=Part.getShape(o)
+                                else:
+                                    shape=impPart.Shape.copy()
                                 shape.Placement=impPart.Placement;
                                 shape.rotate((pos_x,pos_y,0),(0,1,0),180)
                                 impPart.Placement=shape.Placement;
@@ -5453,7 +5525,10 @@ def Load_models(pcbThickness,modules):
                             else:
                                 impPart.Placement = FreeCAD.Placement(FreeCAD.Vector(pos_x,pos_y,-pcbThickness),FreeCAD.Rotation(FreeCAD.Vector(0,1,0),180))
                             #obj.Placement = impPart.Placement
-                                shape=impPart.Shape.copy()
+                                if impPart.TypeId=='App::Link':
+                                    shape=Part.getShape(o)
+                                else:
+                                    shape=impPart.Shape.copy()
                                 shape.Placement=impPart.Placement;
                             #if not full_placement:
                                 #shape.rotate((pos_x+float(wrl_pos[0])*25.4,pos_y+float(wrl_pos[1])*25.4,-pcbThickness+float(wrl_pos[2])*25.4),FreeCAD.Rotation(-float(wrl_rot[2]),-float(wrl_rot[1])+180,-float(wrl_rot[0])))
@@ -5592,10 +5667,10 @@ def Load_models(pcbThickness,modules):
                     say("error missing "+ models3D_prefix+step_module)
                     test = missing_models.find(step_module)
                     if test is -1:
-                        missing_models += models3D_prefix+step_module+'\r\n' #matched
+                        missing_models += models3D_prefix+step_module+'\r\n' #matched        
             ###
         gui_refresh=20
-        if int(PySide.QtCore.qVersion().split('.')[0]) > 4: # or use_Links:  # Qt5 or Links refresh
+        if int(PySide.QtCore.qVersion().split('.')[0]) > 4 or use_Links:  # Qt5 or Links refresh
             if mod_cnt%gui_refresh == 0: # (one on 'gui_refresh' times)
                 #FreeCADGui.updateGui()
                 QtGui.QApplication.processEvents()
@@ -5655,7 +5730,7 @@ def LoadKicadBoard (board_fname):
     ######################################################################
     #say("FC Version ")
     #say(FreeCAD.Version())
-    global start_time, fusion, FC_export_min_version, use_AppPart, force_oldGroups
+    global start_time, fusion, FC_export_min_version, use_AppPart, force_oldGroups, use_Links
     FC_majorV,FC_minorV,FC_git_Nbr=getFCversion()
     #FC_majorV=FreeCAD.Version()[0]
     #FC_minorV=FreeCAD.Version()[1]
@@ -6626,7 +6701,7 @@ def check_requirements():
     ######################################################################
     #say("FC Version ")
     #say(FreeCAD.Version())
-    global start_time, fusion, FC_export_min_version, use_AppPart, force_oldGroups
+    global start_time, fusion, FC_export_min_version, use_AppPart, force_oldGroups, use_Links
     FC_majorV,FC_minorV,FC_git_Nbr=getFCversion()
     #FC_majorV=FreeCAD.Version()[0]
     #FC_minorV=FreeCAD.Version()[1]
@@ -6873,7 +6948,7 @@ def onLoadBoard(file_name=None):
     global base_orig, base_point, bbox_all, bbox_list, whitelisted_model_elements
     global fusion, addVirtual, blacklisted_models, exportFusing, min_drill_size
     global last_fp_path, last_pcb_path, plcmnt, xp, yp, exportFusing
-    global ignore_utf8, ignore_utf8_incfg, pcb_path, disable_VBO, use_AppPart, force_oldGroups
+    global ignore_utf8, ignore_utf8_incfg, pcb_path, disable_VBO, use_AppPart, force_oldGroups, use_Links
     global original_filename, edge_width, load_sketch, grid_orig, warning_nbr, running_time, addConstraints
     global conv_offs
     
@@ -7859,7 +7934,8 @@ def routineCollisions():
         diag.setWindowModality(QtCore.Qt.ApplicationModal)
         diag.exec_()
 
-    if len(FreeCADGui.Selection.getSelectionEx()) < 2:
+    #if len(FreeCADGui.Selection.getSelectionEx()) < 2:
+    if len(FreeCADGui.Selection.getSelection()) < 2:
         error_dialog('Select at least two objects')
         collisions=2
         return collisions
@@ -7873,7 +7949,7 @@ def routineCollisions():
     apl=[]
     for obj in FreeCADGui.Selection.getSelection():
         #print obj.TypeId
-        if 'Part' in obj.TypeId and 'App::Part' not in obj.TypeId and 'Compound' not in obj.TypeId and 'Body' not in obj.TypeId:
+        if ('Part' in obj.TypeId or 'App::Link' in obj.TypeId) and 'App::Part' not in obj.TypeId and 'Compound' not in obj.TypeId and 'Body' not in obj.TypeId:
             #print obj.TypeId
             #object_list.append(obj)
             if obj.Name not in object_names_list:
@@ -7907,8 +7983,16 @@ def routineCollisions():
     for i, object_a in enumerate(object_list):
         for object_b in object_list[(i + 1):]:
             say(make_string(object_a.Label)+" "+make_string(object_b.Label))
-            shape_a = object_a.Shape
-            shape_b = object_b.Shape
+            if not hasattr(object_a,'Shape'): # use_Links
+                shape_a = Part.getShape(object_a)
+            else:
+                shape_a = object_a.Shape
+            #shape_a = object_a.Shape
+            if not hasattr(object_b,'Shape'): # use_Links
+                shape_b = Part.getShape(object_b)
+            else:
+                shape_b = object_b.Shape
+            #shape_b = object_b.Shape
             label_a = make_string(object_a.Label)
             label_b = make_string(object_b.Label)
             try:
@@ -10792,7 +10876,7 @@ def routineDrawIDF(doc,filename):
 def Process_board_outline(doc,board_outline,drills,board_thickness):
     """Process_board_outline(doc,board_outline,drills,board_thickness)-> number proccesed loops
         adds emn geometry from emn file"""
-    global start_time, use_AppPart, force_oldGroups
+    global start_time, use_AppPart, force_oldGroups, use_Links
     
     vertex_index=-1; #presume no vertex
     lines=-1 #presume no lines
@@ -11471,7 +11555,7 @@ def OSCD2Dg_edgestofaces(edges,algo=3,eps=0.001):
 def DrawPCB(mypcb):
     global start_time, use_AppPart, force_oldGroups, min_drill_size
     global addVirtual, load_sketch, off_x, off_y, aux_orig, grid_orig
-    global running_time, conv_offs
+    global running_time, conv_offs, use_Links
 
     say("PCB Loader ")
     ## NB use always float() to guarantee number not string!!!
@@ -11785,6 +11869,7 @@ def DrawPCB(mypcb):
                             ry=rx
                         #print(p.at[0],p.at[1], p.drill[0])
                         [x1, y1] = rotPoint2([xs, ys], [m.at[0], -m.at[1]], m_angle)
+                        # sayw('holes solid '+str(holes_solid))
                         if holes_solid:
                             obj=createHole3(x1,y1,rx,ry,"oval",totalHeight) #need to be separated instructions   
                         else:
@@ -13666,7 +13751,7 @@ class Ui_DockWidget(object):
 ## sketch testing button
 
 def Export3DStepF():
-    global last_3d_path, stp_exp_mode
+    global last_3d_path, stp_exp_mode, use_AppPart, use_Links, links_imp_mode
     
     #say("export3DSTEP")
     sel = FreeCADGui.Selection.getSelection()
@@ -14077,7 +14162,7 @@ def export_footprint(fname=None):
     global configParser, configFilePath, start_time
     global ignore_utf8, ignore_utf8_incfg, disable_PoM_Observer
     global board_base_point_x, board_base_point_y, real_board_pos_x, real_board_pos_y
-    global pcb_path, use_AppPart, force_oldGroups
+    global pcb_path, use_AppPart, force_oldGroups, use_Links
     global original_filename
     global off_x, off_y, maxRadius, pad_nbr
     
@@ -16529,7 +16614,7 @@ def export_pcb(fname=None):
     global configParser, configFilePath, start_time
     global ignore_utf8, ignore_utf8_incfg, disable_PoM_Observer
     global board_base_point_x, board_base_point_y, real_board_pos_x, real_board_pos_y
-    global pcb_path, use_AppPart, force_oldGroups
+    global pcb_path, use_AppPart, force_oldGroups, use_Links
     global original_filename
     global off_x, off_y, maxRadius
     

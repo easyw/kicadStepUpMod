@@ -285,4 +285,6 @@ Changelog
 - added workaround for STEP exporting OCC 7.2.0
 - improved STEP exporting with hierarchy, onelevel, flat options
 - added QtGui.QApplication.processEvents() for Qt5
+- skipping \" characters
+- added 'links' for import mode settings
 - most clean code and comments done
