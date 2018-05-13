@@ -14,7 +14,7 @@ ksu_wb_version='v 7.7.1'
 global myurlKWB
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=98 #v7.7.1
+mycommitsKWB=99 #v7.7.1
 
 import FreeCAD, FreeCADGui, Part, os, sys
 import re, time
@@ -60,7 +60,7 @@ class ksuWB ( Workbench ):
         submenu = ['demo.kicad_pcb','d-pak.kicad_mod', 'demo-sketch.FCStd', 'demo.step',\
                    'footprint-template.FCStd', 'footprint-Edge-template.FCStd', 'footprint-template-roundrect-polylines.FCStd',\
                    'footprint-RF-antenna.FCStd', 'footprint-RF-antenna-w-solder-Mask.FCStd', 'RF-antenna-dxf.dxf', \
-                   'kicadStepUp-cheat-sheet.pdf', 'kicad-3D-to-MCAD.pdf', 'Generating a KiCAD footprint and Model from 3D Step Data.pdf' ]
+                   'kicadStepUp-cheat-sheet.pdf', 'kicad-3D-to-MCAD.pdf', 'Generating-a-KiCAD-footprint-and-Model-from-3D-Step-Data.pdf' ]
         dirs = self.ListDemos()
 
         #self.appendToolbar("ksu Tools", ["ksuTools"])
