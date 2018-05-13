@@ -1214,10 +1214,10 @@ class ksuToolsAddToTree:
                         #s1=o.Shape.copy()
                         #Part.show(s1)
                         doc.getObject(sel[0].Name).addObject(doc.getObject(o.Name))
-                else:
-                    #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
-                    reply = QtGui.QMessageBox.information(None,"Warning", "Select one Container and some object(s) to be Added to the Tree.")
-                    FreeCAD.Console.PrintWarning("Select one Container and some object(s) to be Added to the Tree.\n")             
+            else:
+                #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
+                reply = QtGui.QMessageBox.information(None,"Warning", "Select one Container and some object(s) to be Added to the Tree.")
+                FreeCAD.Console.PrintWarning("Select one Container and some object(s) to be Added to the Tree.\n")             
         
 FreeCADGui.addCommand('ksuToolsAddToTree',ksuToolsAddToTree())
 
