@@ -1180,8 +1180,12 @@ class ksuToolsRemoveFromTree:
             else:
                 #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
                 reply = QtGui.QMessageBox.information(None,"Warning", "Select one Container and some object(s) to be Removed from the Tree.")
-                FreeCAD.Console.PrintWarning("Select one Container and some object(s) to be Removed from the Tree.\n")             
-
+                FreeCAD.Console.PrintWarning("Select one Container and some object(s) to be Removed from the Tree.\n")
+        else:
+            #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
+            reply = QtGui.QMessageBox.information(None,"Warning", "Select one Container and some object(s) to be Removed from the Tree.")
+            FreeCAD.Console.PrintWarning("Select one Container and some object(s) to be Removed from the Tree.\n")
+                
 FreeCADGui.addCommand('ksuToolsRemoveFromTree',ksuToolsRemoveFromTree())
 
 #####
@@ -1217,7 +1221,11 @@ class ksuToolsAddToTree:
             else:
                 #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
                 reply = QtGui.QMessageBox.information(None,"Warning", "Select one Container and some object(s) to be Added to the Tree.")
-                FreeCAD.Console.PrintWarning("Select one Container and some object(s) to be Added to the Tree.\n")             
+                FreeCAD.Console.PrintWarning("Select one Container and some object(s) to be Added to the Tree.\n")
+        else:
+            #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
+            reply = QtGui.QMessageBox.information(None,"Warning", "Select one Container and some object(s) to be Added to the Tree.")
+            FreeCAD.Console.PrintWarning("Select one Container and some object(s) to be Added to the Tree.\n")
         
 FreeCADGui.addCommand('ksuToolsAddToTree',ksuToolsAddToTree())
 
