@@ -1172,15 +1172,15 @@ class ksuToolsRemoveFromTree:
                                             item.removeObject(o)
                                             o.Placement = item.Placement.multiply(o.Placement)
                         #o.Placement = o_glob_plac
-                o.Placement = base.Placement.multiply(o.Placement)
-                for item in base.InListRecursive:
-                    #fcc_prn(item.Label)
-                    if item.TypeId == 'App::Part' or item.TypeId == 'PartDesign::Body':
-                        doc.getObject(item.Name).addObject(doc.getObject(o.Name))                
-        else:
-            #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
-            reply = QtGui.QMessageBox.information(None,"Warning", "Select one Container and some object(s) to be Removed from the Tree.")
-            FreeCAD.Console.PrintWarning("Select one Container and some object(s) to be Removed from the Tree.\n")             
+                        o.Placement = base.Placement.multiply(o.Placement)
+                        for item in base.InListRecursive:
+                            #fcc_prn(item.Label)
+                            if item.TypeId == 'App::Part' or item.TypeId == 'PartDesign::Body':
+                                doc.getObject(item.Name).addObject(doc.getObject(o.Name))                
+            else:
+                #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
+                reply = QtGui.QMessageBox.information(None,"Warning", "Select one Container and some object(s) to be Removed from the Tree.")
+                FreeCAD.Console.PrintWarning("Select one Container and some object(s) to be Removed from the Tree.\n")             
 
 FreeCADGui.addCommand('ksuToolsRemoveFromTree',ksuToolsRemoveFromTree())
 
