@@ -19,7 +19,7 @@ import ksu_locator
 # from kicadStepUptools import onLoadBoard, onLoadFootprint
 import math
 
-__ksuCMD_version__='1.4.8'
+__ksuCMD_version__='1.4.9'
 
 precision = 0.1 # precision in spline or bezier conversion
 
@@ -1148,7 +1148,7 @@ class ksuToolsRemoveFromTree:
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'TreeItemOutMinus.svg') , # the name of a svg file available in the resources
                      'MenuText': "ksu tools Remove from Tree" ,
-                     'ToolTip' : "Remove Object(s) from Container Tree\nFirst Selection is the Container"}
+                     'ToolTip' : "Remove Object(s) from Container Tree\nkeeping Placement\nFirst Selection is the Container"}
  
     def IsActive(self):
         return True
@@ -1158,12 +1158,10 @@ class ksuToolsRemoveFromTree:
             sel=FreeCADGui.Selection.getSelection()
             doc=FreeCAD.ActiveDocument
             if "App::Part" in doc.getObject(sel[0].Name).TypeId:
-                base = doc.getObject(sel[0].Name)
-                for obj in sel:
-                    if obj.Name != sel[0].Name:
-                        o=doc.getObject(obj.Name)
-                        #print(obj.Name);
-                        #print(sel[0].Label);print(obj.Label)
+                base=doc.getObject(sel[0].Name)
+                for o in sel:
+                    if o.Name != sel[0].Name:
+                        #o_glob_plac = o.getGlobalPlacement()
                         if hasattr(base, "OutList"):
                             if o in base.OutList:
                                 base.removeObject(o)
@@ -1172,7 +1170,14 @@ class ksuToolsRemoveFromTree:
                                     if hasattr(item, "OutList"):
                                         if o in item.OutList:
                                             item.removeObject(o)
-        else:
+                                            o.Placement = item.Placement.multiply(o.Placement)
+                        #o.Placement = o_glob_plac
+                o.Placement = base.Placement.multiply(o.Placement)
+                for item in base.InListRecursive:
+                    #fcc_prn(item.Label)
+                    if item.TypeId == 'App::Part' or item.TypeId == 'PartDesign::Body':
+                        doc.getObject(item.Name).addObject(doc.getObject(o.Name))                
+    else:
             #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
             reply = QtGui.QMessageBox.information(None,"Warning", "Select one Container and some object(s) to be Removed from the Tree.")
             FreeCAD.Console.PrintWarning("Select one Container and some object(s) to be Removed from the Tree.\n")             
@@ -1186,7 +1191,7 @@ class ksuToolsAddToTree:
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'TreeItemInPlus.svg') , # the name of a svg file available in the resources
                      'MenuText': "ksu tools Add to Tree" ,
-                     'ToolTip' : "Add Object(s) to Container Tree\nFirst Selection is the Container"}
+                     'ToolTip' : "Add Object(s) to Container Tree\nkeeping Placement\nFirst Selection is the Container"}
  
     def IsActive(self):
         return True
@@ -1196,14 +1201,24 @@ class ksuToolsAddToTree:
             sel=FreeCADGui.Selection.getSelection()
             doc=FreeCAD.ActiveDocument
             if "App::Part" in doc.getObject(sel[0].Name).TypeId:
-                for obj in sel:
-                    if obj.Name != sel[0].Name:
-                        doc.getObject(sel[0].Name).addObject(doc.getObject(obj.Name))
-        else:
-            #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
-            reply = QtGui.QMessageBox.information(None,"Warning", "Select one Container and some object(s) to be Added to the Tree.")
-            FreeCAD.Console.PrintWarning("Select one Container and some object(s) to be Added to the Tree.\n")             
-
+                base=doc.getObject(sel[0].Name)
+                for o in sel:
+                    if o.Name != sel[0].Name:
+                        if hasattr(base, "OutList"):
+                            for item in base.InListRecursive:
+                                if item.TypeId == 'App::Part' or item.TypeId == 'PartDesign::Body':
+                                    o.Placement = item.Placement.inverse().multiply(o.Placement)
+                                    #s=o.Shape.copy()
+                                    #Part.show(s)
+                        o.Placement = base.Placement.inverse().multiply(o.Placement)
+                        #s1=o.Shape.copy()
+                        #Part.show(s1)
+                        doc.getObject(sel[0].Name).addObject(doc.getObject(o.Name))
+                else:
+                    #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
+                    reply = QtGui.QMessageBox.information(None,"Warning", "Select one Container and some object(s) to be Added to the Tree.")
+                    FreeCAD.Console.PrintWarning("Select one Container and some object(s) to be Added to the Tree.\n")             
+        
 FreeCADGui.addCommand('ksuToolsAddToTree',ksuToolsAddToTree())
 
 #####
