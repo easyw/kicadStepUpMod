@@ -325,13 +325,14 @@
 # added QtGui.QApplication.processEvents() for Qt5
 # skipping \" characters
 # added 'links' for import mode settings
+# moved the generation of PCB inside the Sketch to Face process
+#   # to check if a fixing of edges would be made before creating the sketch and adding constraints 
 # most clean code and comments done
 
 ##todo
 
+## multi-board compatibility with asm3 A3
 ## check "{0:.3f}".format for pushpcb & Pushfootprint
-## allow bspline on fp generator
-## completing py3 compatibility
 ## check utf-8 directories and spaces compatibility
 
 ## add edit and help to WB menu (self unresolved)
@@ -340,6 +341,9 @@
 
 ## remove print say etc, remove shape show, remove extra import, remove extra functions FC_016
 ## App -> FreeCAD
+
+# done: allow bspline on fp generator 
+# done: completing py3 compatibility
 
 ## started to implement isInside using bboxes to check if drills are nested, and then
 ##    use dxf2face to extrude pcb instead of actual cutting (it should be much faster again)
@@ -435,7 +439,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.2.2.3"  
+___ver___ = "7.3.1.1"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -501,7 +505,8 @@ show_mouse_pos = True
 #module_3D_dir="C:/Cad/Progetti_K/a_mod"
 min_val=0.001
 conflict_tolerance=1e-6  #volume tolerance
-edge_tolerance=0.005 #edge coincidence tolerance (5000nm = 1/2 centesimo) base is mm
+#edge_tolerance=0.005 #edge coincidence tolerance (5000nm = 1/2 centesimo) base is mm
+edge_tolerance=0.01 #edge coincidence tolerance (500nm = 0.1 decimo) base is mm
 edge_tolerance_warning = 1e-6 #(1nm) base is mm
 font_size=8
 bbox_r_col=(0.411765, 0.411765, 0.411765)  #dimgrey
@@ -6862,6 +6867,7 @@ def cpy_sketch(sname,nname=None):
         nname="Temp_Sketch"
     tsk= FreeCAD.activeDocument().addObject('Sketcher::SketchObject',nname)
     tsk.addGeometry(FreeCAD.ActiveDocument.getObject(sname).Geometry)
+    tsk.addConstraint(FreeCAD.ActiveDocument.getObject(sname).Constraints)
     tsk.Placement=FreeCAD.ActiveDocument.getObject(sname).Placement
     #print tsk.Geometry
     FreeCAD.ActiveDocument.recompute()
@@ -7146,7 +7152,7 @@ def onLoadBoard(file_name=None):
                 #say_time()
             FreeCAD.ActiveDocument.removeObject("PCB_Sketch_draft")
             FreeCADGui.SendMsgToActiveView("ViewFit")
-            if addConstraints!='none':
+            if 0: # test_face # addConstraints!='none': 
                 say('start adding constraints to pcb sketch')
                 add_constraints(s_name)
                 get_time()
@@ -11702,6 +11708,51 @@ def DrawPCB(mypcb):
         PCBs.append(circle1)
         PCB.append(['Circle', xs, ys, r])
 
+    #FreeCAD.ActiveDocument.addObject("Part::Face", "Face").Sources = (FreeCAD.ActiveDocument.getObject(new_skt.Name), )
+    if 0:
+        new_cpy_skt = FreeCAD.ActiveDocument.copyObject(FreeCAD.ActiveDocument.PCB_Sketch_draft, True)
+        FreeCAD.ActiveDocument.addObject("Part::Face", "Face_PCB_Sketch_draft").Sources = (new_cpy_skt, )
+        FreeCAD.ActiveDocument.recompute()
+        s_PCB_Sketch_draft = FreeCAD.ActiveDocument.getObject("Face_PCB_Sketch_draft").Shape
+        Part.show(s_PCB_Sketch_draft)
+        FreeCAD.ActiveDocument.removeObject("Face_PCB_Sketch_draft")
+        FreeCAD.ActiveDocument.recompute()
+    
+    make_face = True #getting PCB from Sketch
+    create_pcb_from_edges = False
+    fcv = getFCversion()
+    if fcv[0]==0 and fcv[1] <17:
+       make_face = False
+    if make_face:
+        if len(FreeCAD.ActiveDocument.PCB_Sketch_draft.Geometry)>0:
+            if addConstraints!='none':
+                say('start adding constraints to pcb sketch')
+                get_time()
+                t1=(running_time)
+                add_constraints("PCB_Sketch_draft")
+                get_time()
+                say('adding constraints time ' +str(running_time-t1))
+            FreeCAD.ActiveDocument.addObject("Part::Face", "Face_PCB_Sketch_draft").Sources = (FreeCAD.ActiveDocument.PCB_Sketch_draft, )
+            FreeCAD.ActiveDocument.recompute()
+            s_PCB_Sketch_draft = FreeCAD.ActiveDocument.getObject("Face_PCB_Sketch_draft").Shape.copy()
+            #s_PCB_Sketch_draft = s.copy()
+            #sayerr ('creating PCB face')
+            if aux_orig ==1 or grid_orig ==1:
+                s_PCB_Sketch_draft.translate((off_x, off_y,0))
+            #else:
+            #    s_PCB_Sketch_draft.translate(xs, ys,0)
+            #if use_Links:
+            #Part.show(s_PCB_Sketch_draft)
+            FreeCAD.ActiveDocument.removeObject("Face_PCB_Sketch_draft")
+            FreeCAD.ActiveDocument.recompute()
+            
+            #FreeCAD.ActiveDocument.addObject("Part::Face", "Face").Sources = (FreeCAD.ActiveDocument.PCB_Sketch_draft001, )
+            FreeCADGui.SendMsgToActiveView("ViewFit")
+            cut_base = s_PCB_Sketch_draft
+        else:
+            sayerr('empty sketch; module edge board: creating PCB from Footprint Edge.Cuts')
+            create_pcb_from_edges = True
+    #stop
     TopPadList=[]
     BotPadList=[]
     HoleList=[]
@@ -12017,159 +12068,198 @@ def DrawPCB(mypcb):
     loopcounter = 0
     #sayw((edges))
     #stop
-    if (len(edges)==0) and (len(PCBs)==0):
-        sayw("no PCBs found")
-    else:
-        newEdges = [];
-        if (len(edges)>0):
-            newEdges.append(edges.pop(0))
-            #say(newEdges[0])
-            #print [newEdges[0].Vertexes[0].Point]
-            #print [newEdges[0].Vertexes[-1].Point]
-            #say(str(len(newEdges[0].Vertexes)))
-            nextCoordinate = newEdges[0].Vertexes[0].Point
-            firstCoordinate = newEdges[0].Vertexes[-1].Point
-        #nextCoordinate = newEdges[0].Curve.EndPoint
-        #firstCoordinate = newEdges[0].Curve.StartPoint
-        for e in edges:
-            for v in e.Vertexes: v.setTolerance(edge_tolerance)  #adding tolerance to vertex
-        if show_data:
-            # print findWires(edges)
-            sayw(len(edges))
+    # for f in PCBs:
+    #     Part.show(f)
+    # stop
+    if create_pcb_from_edges: 
+    #if not test_face:
+        #sayerr('doing')
+        if (len(edges)==0) and (len(PCBs)==0):
+            sayw("no PCBs found")
+        else:
+            sayw('creating pcb from edges instead of sketch')
+            newEdges = [];
+            if (len(edges)>0):
+                newEdges.append(edges.pop(0))
+                #say(newEdges[0])
+                #print [newEdges[0].Vertexes[0].Point]
+                #print [newEdges[0].Vertexes[-1].Point]
+                #say(str(len(newEdges[0].Vertexes)))
+                nextCoordinate = newEdges[0].Vertexes[0].Point
+                firstCoordinate = newEdges[0].Vertexes[-1].Point
+            #nextCoordinate = newEdges[0].Curve.EndPoint
+            #firstCoordinate = newEdges[0].Curve.StartPoint
             for e in edges:
-                sayw(e.Vertexes[0].Point);sayw(e.Vertexes[-1].Point)
-            for e in edges:
-                sayw("geomType")
-                say(DraftGeomUtils.geomType(e)) 
-        #if show_data:
-        #    sayw(enumerate(edges));
-        while(len(edges)>0 and loopcounter < 2):
-            loopcounter = loopcounter + 1
-            #print "nextCoordinate: ", nextCoordinate
-            #if len(newEdges[0].Vertexes) > 1: # not circle
-            for j, edge in enumerate(edges):
-            #for j in range (len(edges)):
-                #print "compare to: ", edges[j].Curve.StartPoint, "/" , edges[j].Curve.EndPoint
-                #if edges[j].Curve.StartPoint == nextCoordinate:
-                if show_data:
-                    say(distance(edges[j].Vertexes[-1].Point, nextCoordinate))
-                    say(distance(edges[j].Vertexes[0].Point, nextCoordinate))
-                #if edges[j].Vertexes[-1].Point == nextCoordinate:
-                # sayw(distance(edges[j].Vertexes[-1].Point, nextCoordinate))
-                # sayw(distance(edges[j].Vertexes[0].Point, nextCoordinate))             
-                if distance(edges[j].Vertexes[-1].Point, nextCoordinate)<=edge_tolerance:
-                    #if edges[j].Vertexes[-1].Point != nextCoordinate:
-                    if distance(edges[j].Vertexes[-1].Point, nextCoordinate)>edge_tolerance_warning:
-                        sayerr('non coincident edges:\n'+str(nextCoordinate)+';'+str(edges[j].Vertexes[-1].Point))
-                    nextCoordinate = edges[j].Vertexes[0].Point
-                    newEdges.append(edges.pop(j))
-                    loopcounter = 0
-                    break
-                #elif edges[j].Vertexes[0].Point == nextCoordinate:
-                elif distance(edges[j].Vertexes[0].Point, nextCoordinate)<=edge_tolerance:
-                    #if edges[j].Vertexes[0].Point != nextCoordinate:
-                    if distance(edges[j].Vertexes[0].Point, nextCoordinate)>edge_tolerance_warning:
-                        sayerr('non coincident edges:\n'+str(nextCoordinate)+';'+str(edges[j].Vertexes[0].Point))
-                    nextCoordinate = edges[j].Vertexes[-1].Point
-                    newEdges.append(edges.pop(j))
-                    loopcounter = 0
-                    break
+                for v in e.Vertexes: v.setTolerance(edge_tolerance)  #adding tolerance to vertex
             if show_data:
-                say ("first c" + str(firstCoordinate)); say(' '); say ("last c" + str(nextCoordinate))
-            #if nextCoordinate == firstCoordinate:
-            if distance(firstCoordinate, nextCoordinate)<=edge_tolerance:
-                say('2d closed path')
-                try: # maui
-                    #say('\ntrying wire & face')
-                    #newEdges_old=newEdges
-                    ## newEdges = Part.Wire(newEdges)
-                    #say('trying face')
-                    ## newEdges = Part.Face(newEdges)
-                    #newEdges = OpenSCAD2DgeomMau.edgestofaces(newEdges)
-                    newEdges = OSCD2Dg_edgestofaces(newEdges,3 , edge_tolerance)
-                    newEdges.check() # reports errors
-                    newEdges.fix(0,0,0)
-                    #say('done')
-                    #newEdges.translate(Base.Vector(0,0,-totalHeight))
-                    if show_shapes:
-                        Part.show(newEdges)
-                    #newEdges = newEdges.extrude(Base.Vector(0,0,totalHeight))
-                    PCBs.append(newEdges)
-                    if (len(edges)>0):
-                        newEdges = [];
-                        newEdges.append(edges.pop(0))
-                        nextCoordinate = newEdges[0].Vertexes[0].Point
-                        firstCoordinate = newEdges[0].Vertexes[-1].Point
-                except Part.OCCError: # Exception: #
-                    say("error in creating PCB")
-                    stop
-                    
-        if loopcounter == 2:
-            say("*** omitting PCBs because there was a not closed loop in your edge lines ***")
-            say("*** have a look at position x=" + str(nextCoordinate.x) + "mm, y=" + str(nextCoordinate.y) + "mm ***")
-            say('pcb edge not closed')
-            QtGui.QApplication.restoreOverrideCursor()
-            diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
-                                    'Error in creating Board Edge                                                                ."+"\r\n"',
-                                    """<b>pcb edge not closed<br>review your Board Edges in Kicad!<br>position x=""" + str(nextCoordinate.x) + 'mm, y=' + str(-nextCoordinate.y) + 'mm')
-            diag.setWindowModality(QtCore.Qt.ApplicationModal)
-            diag.exec_()
-            FreeCADGui.activeDocument().activeView().viewTop()
-            FreeCADGui.SendMsgToActiveView("ViewFit")
-            stop #maui
-        if disable_cutting:
-            FreeCADGui.activeDocument().activeView().viewTop()
-            FreeCADGui.SendMsgToActiveView("ViewFit")
-            stop #maui
-        #say (PCBs)
-        ## doc = FreeCAD.activeDocument()
-        ## #outline = []
-        ## for f in PCBs:
-        ##     Part.show(f)
-        ## PCB_Sketch= FreeCAD.activeDocument().addObject('Sketcher::SketchObject','Sketch')
-        ## FreeCAD.activeDocument().Sketch.Placement = App.Placement(App.Vector(0.000000,0.000000,0.000000),App.Rotation(0.000000,0.000000,0.000000,1.000000))            
-        ## for s in doc.Objects:
-        ## #for f in PCBs:
-        ##     if 'Part' in s.TypeId: #Part.show(s)
-        ##         wires,_faces = Draft.downgrade(s,delete=False)
-        ##         #Draft.downgrade(FreeCADGui.Selection.getSelection(),delete=True)
-        ##         #sketch = Draft.makeSketch(wires[0:1])
-        ##         #sketch.Label = "Sketch_pcb"
-        ##         for wire in wires[0:1]:
-        ##             Draft.makeSketch([wire],addTo=PCB_Sketch)
-        ##         for wire in wires:
-        ##             FreeCAD.ActiveDocument.removeObject(wire.Name)             
-        ## FreeCAD.ActiveDocument.recompute()
-        #for f in PCBs:
-        #    Part.hide(f)
-        ##FreeCADGui.SendMsgToActiveView("ViewFit")        
-        ##stop
-        
-        maxLenght=0
-        idx=0
-        external_idx=idx
-        for extruded in PCBs:
-            #search for orientation of each pcb in 3d space, save it (no transformation yet!)
-            angle = 0;
-            axis = Base.Vector(0,0,1)
-            position = Base.Vector(0,0,0)
+                # print findWires(edges)
+                sayw(len(edges))
+                for e in edges:
+                    sayw(e.Vertexes[0].Point);sayw(e.Vertexes[-1].Point)
+                for e in edges:
+                    sayw("geomType")
+                    say(DraftGeomUtils.geomType(e)) 
+            #if show_data:
+            #    sayw(enumerate(edges));
+            while(len(edges)>0 and loopcounter < 2):
+                loopcounter = loopcounter + 1
+                #print "nextCoordinate: ", nextCoordinate
+                #if len(newEdges[0].Vertexes) > 1: # not circle
+                for j, edge in enumerate(edges):
+                #for j in range (len(edges)):
+                    #print "compare to: ", edges[j].Curve.StartPoint, "/" , edges[j].Curve.EndPoint
+                    #if edges[j].Curve.StartPoint == nextCoordinate:
+                    if show_data:
+                        say(distance(edges[j].Vertexes[-1].Point, nextCoordinate))
+                        say(distance(edges[j].Vertexes[0].Point, nextCoordinate))
+                    #if edges[j].Vertexes[-1].Point == nextCoordinate:
+                    # sayw(distance(edges[j].Vertexes[-1].Point, nextCoordinate))
+                    # sayw(distance(edges[j].Vertexes[0].Point, nextCoordinate))             
+                    if distance(edges[j].Vertexes[-1].Point, nextCoordinate)<=edge_tolerance:
+                        #if edges[j].Vertexes[-1].Point != nextCoordinate:
+                        if distance(edges[j].Vertexes[-1].Point, nextCoordinate)>edge_tolerance_warning:
+                            sayerr('non coincident edges:\n'+str(nextCoordinate)+';'+str(edges[j].Vertexes[-1].Point))
+                        nextCoordinate = edges[j].Vertexes[0].Point
+                        newEdges.append(edges.pop(j))
+                        loopcounter = 0
+                        break
+                    #elif edges[j].Vertexes[0].Point == nextCoordinate:
+                    elif distance(edges[j].Vertexes[0].Point, nextCoordinate)<=edge_tolerance:
+                        #if edges[j].Vertexes[0].Point != nextCoordinate:
+                        if distance(edges[j].Vertexes[0].Point, nextCoordinate)>edge_tolerance_warning:
+                            sayerr('non coincident edges:\n'+str(nextCoordinate)+';'+str(edges[j].Vertexes[0].Point))
+                        nextCoordinate = edges[j].Vertexes[-1].Point
+                        newEdges.append(edges.pop(j))
+                        loopcounter = 0
+                        break
+                if show_data:
+                    say ("first c" + str(firstCoordinate)); say(' '); say ("last c" + str(nextCoordinate))
+                #if nextCoordinate == firstCoordinate:
+                if distance(firstCoordinate, nextCoordinate)<=edge_tolerance:
+                    say('2d closed path')
+                    try: # maui
+                        #say('\ntrying wire & face')
+                        #newEdges_old=newEdges
+                        ## newEdges = Part.Wire(newEdges)
+                        #say('trying face')
+                        ## newEdges = Part.Face(newEdges)
+                        #newEdges = OpenSCAD2DgeomMau.edgestofaces(newEdges)
+                        newEdges = OSCD2Dg_edgestofaces(newEdges,3 , edge_tolerance)
+                        newEdges.check() # reports errors
+                        newEdges.fix(0,0,0)
+                        #say('done')
+                        #newEdges.translate(Base.Vector(0,0,-totalHeight))
+                        if show_shapes:
+                            Part.show(newEdges)
+                        #newEdges = newEdges.extrude(Base.Vector(0,0,totalHeight))
+                        PCBs.append(newEdges)
+                        if (len(edges)>0):
+                            newEdges = [];
+                            newEdges.append(edges.pop(0))
+                            nextCoordinate = newEdges[0].Vertexes[0].Point
+                            firstCoordinate = newEdges[0].Vertexes[-1].Point
+                    except Part.OCCError: # Exception: #
+                        say("error in creating PCB")
+                        stop
+                        
+            if loopcounter == 2:
+                say("*** omitting PCBs because there was a not closed loop in your edge lines ***")
+                say("*** have a look at position x=" + str(nextCoordinate.x) + "mm, y=" + str(nextCoordinate.y) + "mm ***")
+                say('pcb edge not closed')
+                QtGui.QApplication.restoreOverrideCursor()
+                diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
+                                        'Error in creating Board Edge                                                                ."+"\r\n"',
+                                        """<b>pcb edge not closed<br>review your Board Edges in Kicad!<br>position x=""" + str(nextCoordinate.x) + 'mm, y=' + str(-nextCoordinate.y) + 'mm')
+                diag.setWindowModality(QtCore.Qt.ApplicationModal)
+                diag.exec_()
+                FreeCADGui.activeDocument().activeView().viewTop()
+                FreeCADGui.SendMsgToActiveView("ViewFit")
+                stop #maui
+            if disable_cutting:
+                FreeCADGui.activeDocument().activeView().viewTop()
+                FreeCADGui.SendMsgToActiveView("ViewFit")
+                stop #maui
+            #say (PCBs)
+            ## doc = FreeCAD.activeDocument()
+            ## #outline = []
+            ## for f in PCBs:
+            ##     Part.show(f)
+            ## PCB_Sketch= FreeCAD.activeDocument().addObject('Sketcher::SketchObject','Sketch')
+            ## FreeCAD.activeDocument().Sketch.Placement = App.Placement(App.Vector(0.000000,0.000000,0.000000),App.Rotation(0.000000,0.000000,0.000000,1.000000))            
+            ## for s in doc.Objects:
+            ## #for f in PCBs:
+            ##     if 'Part' in s.TypeId: #Part.show(s)
+            ##         wires,_faces = Draft.downgrade(s,delete=False)
+            ##         #Draft.downgrade(FreeCADGui.Selection.getSelection(),delete=True)
+            ##         #sketch = Draft.makeSketch(wires[0:1])
+            ##         #sketch.Label = "Sketch_pcb"
+            ##         for wire in wires[0:1]:
+            ##             Draft.makeSketch([wire],addTo=PCB_Sketch)
+            ##         for wire in wires:
+            ##             FreeCAD.ActiveDocument.removeObject(wire.Name)             
+            ## FreeCAD.ActiveDocument.recompute()
+            #for f in PCBs:
+            #    Part.hide(f)
+            ##FreeCADGui.SendMsgToActiveView("ViewFit")        
+            ##stop
+            
+            maxLenght=0
+            idx=0
+            external_idx=idx
+            for extruded in PCBs:
+                #search for orientation of each pcb in 3d space, save it (no transformation yet!)
+                angle = 0;
+                axis = Base.Vector(0,0,1)
+                position = Base.Vector(0,0,0)
+                if show_shapes:
+                    Part.show(extruded)
+                #extrude_XLenght=FreeCAD.ActiveDocument.ActiveObject.Shape.BoundBox.XLength
+                # extrude_XLenght=extruded.Length #perimeter
+                extrude_XLenght=extruded.BoundBox.XLength
+                #extrude_XLenght=FreeCAD.ActiveDocument.ActiveObject.Shape.Edges.Length
+                if maxLenght < extrude_XLenght:
+                    maxLenght = extrude_XLenght
+                    external_idx=idx
+                #say('XLenght='+str(extrude_XLenght))
+                idx=idx+1
+            say('max Length='+str(maxLenght)+' index='+str(external_idx))
+            try:
+                cut_base=PCBs[external_idx]
+            except:
+                say("*** omitting PCBs because there was a not closed loop in your edge lines ***")
+                say('pcb edge not closed')
+                QtGui.QApplication.restoreOverrideCursor()
+                diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
+                                        'Error in creating Board Edge                                                                ."+"\r\n"',
+                                        """<b>pcb edge not closed<br>review your Board Edges in Kicad!<br>""")
+                diag.setWindowModality(QtCore.Qt.ApplicationModal)
+                diag.exec_()
+                FreeCADGui.activeDocument().activeView().viewTop()
+                FreeCADGui.SendMsgToActiveView("ViewFit")
+                stop #maui
+            i=0
+            for i in range (len(PCBs)):
+                if i!=external_idx:
+                    cutter=PCBs[i]
+                    cut_base=cut_base.cut(cutter)
+            if test_extrude:
+                cut_base = cut_base.extrude(Base.Vector(0,0,totalHeight))
             if show_shapes:
-                Part.show(extruded)
-            #extrude_XLenght=FreeCAD.ActiveDocument.ActiveObject.Shape.BoundBox.XLength
-            # extrude_XLenght=extruded.Length #perimeter
-            extrude_XLenght=extruded.BoundBox.XLength
-            #extrude_XLenght=FreeCAD.ActiveDocument.ActiveObject.Shape.Edges.Length
-            if maxLenght < extrude_XLenght:
-                maxLenght = extrude_XLenght
-                external_idx=idx
-            #say('XLenght='+str(extrude_XLenght))
-            idx=idx+1
-        say('max Length='+str(maxLenght)+' index='+str(external_idx))
-        try:
-            cut_base=PCBs[external_idx]
-        except:
-            say("*** omitting PCBs because there was a not closed loop in your edge lines ***")
-            say('pcb edge not closed')
+                Part.show(cut_base)
+            #cut_base_name=FreeCAD.ActiveDocument.ActiveObject.Name
+            #say('Alive1')
+        if len(PCBs)==1:
+            cut_base = PCBs[0]
+            if test_extrude:
+                cut_base = cut_base.extrude(Base.Vector(0,0,totalHeight))
+            if show_shapes:
+                Part.show(cut_base)
+            if show_shapes:
+                FreeCAD.activeDocument().removeObject("Shape")
+            ###FreeCAD.ActiveDocument.recompute()
+        
+        if len(PCBs)==0:
+            say('pcb edge not found')
             QtGui.QApplication.restoreOverrideCursor()
             diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
                                     'Error in creating Board Edge                                                                ."+"\r\n"',
@@ -12179,43 +12269,14 @@ def DrawPCB(mypcb):
             FreeCADGui.activeDocument().activeView().viewTop()
             FreeCADGui.SendMsgToActiveView("ViewFit")
             stop #maui
-        i=0
-        for i in range (len(PCBs)):
-            if i!=external_idx:
-                cutter=PCBs[i]
-                cut_base=cut_base.cut(cutter)
-        if test_extrude:
-            cut_base = cut_base.extrude(Base.Vector(0,0,totalHeight))
-        if show_shapes:
-            Part.show(cut_base)
-        #cut_base_name=FreeCAD.ActiveDocument.ActiveObject.Name
-        #say('Alive1')
-    if len(PCBs)==1:
-        cut_base = PCBs[0]
-        if test_extrude:
-            cut_base = cut_base.extrude(Base.Vector(0,0,totalHeight))
-        if show_shapes:
-            Part.show(cut_base)
-        if show_shapes:
-            FreeCAD.activeDocument().removeObject("Shape")
-        ###FreeCAD.ActiveDocument.recompute()
-    
-    if len(PCBs)==0:
-        say('pcb edge not found')
-        QtGui.QApplication.restoreOverrideCursor()
-        diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
-                                'Error in creating Board Edge                                                                ."+"\r\n"',
-                                'review your Board Edges in Kicad!\n')
-        diag.setWindowModality(QtCore.Qt.ApplicationModal)
-        diag.exec_()
+        FreeCAD.ActiveDocument.recompute()
         FreeCADGui.activeDocument().activeView().viewTop()
-        FreeCADGui.SendMsgToActiveView("ViewFit")
-        stop #maui
-    FreeCADGui.activeDocument().activeView().viewTop()
     ##FreeCADGui.SendMsgToActiveView("ViewFit")
     say_time()
     
-    ##Part.show(cut_base) #test Sketch
+    #cut_base = cut_base.extrude(Base.Vector(0,0,totalHeight)) # test_face
+    #Part.show(cut_base) #test Sketch
+    #stop
     #PCB_Sketch= FreeCAD.activeDocument().addObject('Sketcher::SketchObject','PCB_Sketch')
     #FreeCAD.activeDocument().PCB_Sketch.Placement = App.Placement(App.Vector(0.000000,0.000000,0.000000),App.Rotation(0.000000,0.000000,0.000000,1.000000))            
     doc = FreeCAD.activeDocument()
@@ -12282,7 +12343,8 @@ def DrawPCB(mypcb):
     #        stop
     #        for wire in wires:
     #            FreeCAD.ActiveDocument.removeObject(wire.Name)             
-    FreeCAD.ActiveDocument.recompute()
+    # FreeCAD.ActiveDocument.recompute()
+    #Part.show(cut_base)
     #stop #maui      
     ## to check to load models inside loop modules
     #if m.layer == 'F.Cu':  # top
@@ -12321,7 +12383,13 @@ def DrawPCB(mypcb):
             #face = cut_base
             cut_base = cut_base
     else:    
+        sayw('using hierarchy container')
         if len(HoleList)>0:
+            if holes_solid:
+                #HoleList = getPads(board_elab,pcbThickness)
+                say('generating solid holes')
+            else:
+                say('generating flat holes')
             dlo=[]
             shapes=[];s_names=[]
             #for drill in HoleList:
@@ -12346,13 +12414,28 @@ def DrawPCB(mypcb):
                 shape = shape_base.fuse(shapes)
             else:   #one drill ONLY
                 shape = shape_base
-            #Part.show(shape)
-            #stop
-            cut_base = cut_base.cut(shape)
+            #Part.show(shape) #test_face
+            try:
+                cut_base = cut_base.cut(shape)
+            except:
+                say("*** omitting PCBs because there was a not closed loop in your edge lines ***")
+                say('pcb edge not closed')
+                QtGui.QApplication.restoreOverrideCursor()
+                diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
+                                        'Error in creating Board Edge                                                                ."+"\r\n"',
+                                        """<b>pcb edge not closed<br>review your Board Edges in Kicad!<br>""")
+                diag.setWindowModality(QtCore.Qt.ApplicationModal)
+                diag.exec_()
+                FreeCADGui.activeDocument().activeView().viewTop()
+                FreeCADGui.SendMsgToActiveView("ViewFit")
+                stop #maui                
             #Part.show(cut_base)
+            #stop
             for s in s_names:
-                FreeCAD.ActiveDocument.removeObject(s)
+                #Part.show(s)
+                FreeCAD.ActiveDocument.removeObject(s) #test_face
             FreeCAD.ActiveDocument.recompute()
+            #stop
             #say_time()
         else:
             #face = cut_base
@@ -12362,9 +12445,11 @@ def DrawPCB(mypcb):
     #    ##    cut_base = cut_base.cut(Part.makeCompound(HoleList))   ###VERY fast but failing when overlapping of pads
     get_time()
     say('cutting time ' +str(running_time-t1))
+    
     doc_outline=doc.addObject("Part::Feature","Pcb")
     doc_outline.Shape=cut_base 
     doc_outline.Shape=cut_base.extrude(Base.Vector(0,0,-totalHeight))
+    #stop
     try:
         FreeCAD.activeDocument().removeObject('Shape') #removing base shape
     except:
