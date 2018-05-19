@@ -11723,6 +11723,7 @@ def DrawPCB(mypcb):
     fcv = getFCversion()
     if fcv[0]==0 and fcv[1] <17:
        make_face = False
+       create_pcb_from_edges =True
     if make_face:
         if len(FreeCAD.ActiveDocument.PCB_Sketch_draft.Geometry)>0:
             if addConstraints!='none':
