@@ -326,7 +326,7 @@
 # skipping \" characters
 # added 'links' for import mode settings
 # moved the generation of PCB inside the Sketch to Face process
-#   # to check if a fixing of edges would be made before creating the sketch and adding constraints 
+# adding Geometry and Constraints as a single instruction to avoid long delay with sketches
 # most clean code and comments done
 
 ##todo
@@ -439,7 +439,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.3.1.1"  
+___ver___ = "7.3.2.1"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -6787,6 +6787,7 @@ def add_constraints(s_name):
         return max (abs(p0[0] - p1[0]), abs(p0[1] - p1[1]))
     #
     #print geom
+    sk_constraints = []
     cnt=1
     # print addConstraints, ' constraints'
     # stop
@@ -6808,16 +6809,20 @@ def add_constraints(s_name):
                 #rint p_g1_0, p_g1_1
                 if distance(p_g0_0,p_g1_0)< edge_tolerance:
                 ##App.ActiveDocument.PCB_Sketch.addConstraint(Sketcher.Constraint('Coincident',0,2,3,1)) 
-                    s.addConstraint(Sketcher.Constraint('Coincident',i,1,j,1))
+                    #s.addConstraint(Sketcher.Constraint('Coincident',i,1,j,1))
+                    sk_constraints.append(Sketcher.Constraint('Coincident',i,1,j,1))
                     #print i,1,i+1,1
                 elif distance(p_g0_0,p_g1_1)< edge_tolerance:
-                    s.addConstraint(Sketcher.Constraint('Coincident',i,1,j,2))
+                    #s.addConstraint(Sketcher.Constraint('Coincident',i,1,j,2))
+                    sk_constraints.append(Sketcher.Constraint('Coincident',i,1,j,2))
                     #print i,1,i+1,2
                 elif distance(p_g0_1,p_g1_0)< edge_tolerance:
-                    s.addConstraint(Sketcher.Constraint('Coincident',i,2,j,1)) 
+                    #s.addConstraint(Sketcher.Constraint('Coincident',i,2,j,1))
+                    sk_constraints.append(Sketcher.Constraint('Coincident',i,2,j,1))
                     #print i,2,i+1,1
                 elif distance(p_g0_1,p_g1_1)< edge_tolerance:
-                    s.addConstraint(Sketcher.Constraint('Coincident',i,2,j,2)) 
+                    #s.addConstraint(Sketcher.Constraint('Coincident',i,2,j,2))
+                    sk_constraints.append(Sketcher.Constraint('Coincident',i,2,j,2))                   
                     #print i,2,i+1,2
                 j=j+1
                 cnt=cnt+1
@@ -6840,19 +6845,25 @@ def add_constraints(s_name):
                 #rint p_g1_0, p_g1_1
                 if distance(p_g0_0,p_g1_0)< edge_tolerance:
                 ##App.ActiveDocument.PCB_Sketch.addConstraint(Sketcher.Constraint('Coincident',0,2,3,1)) 
-                    s.addConstraint(Sketcher.Constraint('Coincident',i,1,j,1))
+                    #s.addConstraint(Sketcher.Constraint('Coincident',i,1,j,1))
+                    sk_constraints.append(Sketcher.Constraint('Coincident',i,1,j,1))
                     #print i,1,i+1,1
                 elif distance(p_g0_0,p_g1_1)< edge_tolerance:
-                    s.addConstraint(Sketcher.Constraint('Coincident',i,1,j,2))
+                    #s.addConstraint(Sketcher.Constraint('Coincident',i,1,j,2))
+                    sk_constraints.append(Sketcher.Constraint('Coincident',i,1,j,2))
                     #print i,1,i+1,2
                 elif distance(p_g0_1,p_g1_0)< edge_tolerance:
-                    s.addConstraint(Sketcher.Constraint('Coincident',i,2,j,1)) 
+                    #s.addConstraint(Sketcher.Constraint('Coincident',i,2,j,1))
+                    sk_constraints.append(Sketcher.Constraint('Coincident',i,2,j,1))                    
                     #print i,2,i+1,1
                 elif distance(p_g0_1,p_g1_1)< edge_tolerance:
-                    s.addConstraint(Sketcher.Constraint('Coincident',i,2,j,2)) 
+                    #s.addConstraint(Sketcher.Constraint('Coincident',i,2,j,2))
+                    sk_constraints.append(Sketcher.Constraint('Coincident',i,2,j,2))
                     #print i,2,i+1,2
                 j=j+1
                 cnt=cnt+1
+    if len(sk_constraints) > 0:
+        s.addConstraint(sk_constraints)
         #print 'counter ',cnt
             #print geo2
             
@@ -11563,8 +11574,18 @@ def DrawPCB(mypcb):
     global addVirtual, load_sketch, off_x, off_y, aux_orig, grid_orig
     global running_time, conv_offs, use_Links
 
+    def simu_distance(p0, p1):
+        return max (abs(p0[0] - p1[0]), abs(p0[1] - p1[1]))
+    
     say("PCB Loader ")
     ## NB use always float() to guarantee number not string!!!
+    max_edges_admitted = 15000 # after this number, no sketcher would be created
+    
+    #load_sketch=True
+    get_time()
+    t0=(running_time)
+    #say(start_time)
+    
     doc=FreeCAD.activeDocument()
     for obj in FreeCAD.ActiveDocument.Objects:
         FreeCADGui.Selection.removeSelection(obj)
@@ -11574,9 +11595,7 @@ def DrawPCB(mypcb):
     EdgeCuts_shape = []
     PCB = []
     PCB_Models = []
-    if load_sketch:
-        PCB_Sketch_draft= FreeCAD.activeDocument().addObject('Sketcher::SketchObject','PCB_Sketch_draft')
-        FreeCAD.activeDocument().PCB_Sketch_draft.Placement = FreeCAD.Placement(FreeCAD.Vector(0.000000,0.000000,0.000000),FreeCAD.Rotation(0.000000,0.000000,0.000000,1.000000))            
+    PCB_Geo = []
     edges=[]
     PCBs = []
     totalHeight=float(mypcb.general.thickness)
@@ -11597,6 +11616,20 @@ def DrawPCB(mypcb):
     if version >= 20171114:
         conv_offs=25.4
     
+    #load_sketch=False
+    # sayerr(len(mypcb.gr_line))
+    # say(len(mypcb.gr_arc))
+    edg_segms = len(mypcb.gr_line)+len(mypcb.gr_arc)
+    sayw(str(edg_segms)+' edge segments')
+    if edg_segms > max_edges_admitted:
+        sayerr('too many segments ('+str(edg_segms)+'), skipping sketches & constraints')
+        # load_sketch = False
+    
+    if load_sketch:
+        PCB_Sketch_draft= FreeCAD.activeDocument().addObject('Sketcher::SketchObject','PCB_Sketch_draft')
+        FreeCAD.activeDocument().PCB_Sketch_draft.Placement = FreeCAD.Placement(FreeCAD.Vector(0.000000,0.000000,0.000000),FreeCAD.Rotation(0.000000,0.000000,0.000000,1.000000))            
+        
+    #stop
     #sayerr(mypcb.layers['0'])
     for lynbr in mypcb.layers: #getting layers name
         if float(lynbr) == Top_lvl:
@@ -11621,18 +11654,23 @@ def DrawPCB(mypcb):
     #else:
     #    say('aux origin not used')
     ## NB use always float() to guarantee number not string!!!
+       
     for l in mypcb.gr_line: #pcb lines
         if l.layer != 'Edge.Cuts':
             continue
         #edges.append(Part.makeLine(makeVect(l.start),makeVect(l.end)))
         #say(l.start);say(l.end)
-        if (Base.Vector(l.start[0],-l.start[1],0)) != (Base.Vector(l.end[0],-l.end[1],0)): #non coincident points
+        #edge_tolerance_warning
+        if simu_distance((l.start[0],-l.start[1],0), ((l.end[0],-l.end[1],0))) > edge_tolerance: #non coincident points
+        #if (Base.Vector(l.start[0],-l.start[1],0)) != (Base.Vector(l.end[0],-l.end[1],0)): #non coincident points
             line1=Part.Edge(PLine(Base.Vector(l.start[0],-l.start[1],0), Base.Vector(l.end[0],-l.end[1],0)))
             if load_sketch:
                 if aux_orig ==1 or grid_orig ==1:
-                    FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0]-off_x,-l.start[1]-off_y,0), Base.Vector(l.end[0]-off_x,-l.end[1]-off_y,0)))
+                    #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0]-off_x,-l.start[1]-off_y,0), Base.Vector(l.end[0]-off_x,-l.end[1]-off_y,0)))
+                    PCB_Geo.append(PLine(Base.Vector(l.start[0]-off_x,-l.start[1]-off_y,0), Base.Vector(l.end[0]-off_x,-l.end[1]-off_y,0)))
                 else:
-                    FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0],-l.start[1],0), Base.Vector(l.end[0],-l.end[1],0)))
+                    #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0],-l.start[1],0), Base.Vector(l.end[0],-l.end[1],0)))
+                    PCB_Geo.append(PLine(Base.Vector(l.start[0],-l.start[1],0), Base.Vector(l.end[0],-l.end[1],0)))
             edges.append(line1);
             PCB.append(['Line', l.start[0], -l.start[1], l.end[0], -l.end[1]])
             if show_border:
@@ -11670,9 +11708,11 @@ def DrawPCB(mypcb):
         #App.ActiveDocument.PCB_SketchN.addGeometry(Part.Arc(Base.Vector(x2,-y2,0),mid_point(Base.Vector(x2,-y2,0),Base.Vector(x1,-y1,0),curve),Base.Vector(x1,-y1,0)))
         if load_sketch:
             if aux_orig ==1 or grid_orig ==1:
-                FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx-off_x,cy-off_y,0),FreeCAD.Vector(0,0,1),r),sa,ea),False)
+                #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx-off_x,cy-off_y,0),FreeCAD.Vector(0,0,1),r),sa,ea),False)
+                PCB_Geo.append(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx-off_x,cy-off_y,0),FreeCAD.Vector(0,0,1),r),sa,ea))
             else:
-                FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx,cy,0),FreeCAD.Vector(0,0,1),r),sa,ea),False)
+                #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx,cy,0),FreeCAD.Vector(0,0,1),r),sa,ea),False)
+                PCB_Geo.append(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx,cy,0),FreeCAD.Vector(0,0,1),r),sa,ea))
 
         #mp=mid_point(Base.Vector(x2,-y2,0),Base.Vector(x1,-y1,0),curve)
         #msg1= "App.ActiveDocument.PCB_SketchN.addGeometry(Part.Arc(Base.Vector({0},-{1},0),{4},Base.Vector({2},-{3},0)))".format(x2,y2,x1,y1,mp)
@@ -11695,9 +11735,11 @@ def DrawPCB(mypcb):
         circle1=Part.Edge(Part.Circle(Base.Vector(xs, ys,0), Base.Vector(0, 0, 1), r))
         if load_sketch:
             if aux_orig ==1 or grid_orig ==1:
-                FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(Part.Circle(Base.Vector(xs-off_x, ys-off_y,0), Base.Vector(0, 0, 1), r))
+                #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(Part.Circle(Base.Vector(xs-off_x, ys-off_y,0), Base.Vector(0, 0, 1), r))
+                PCB_Geo.append(Part.Circle(Base.Vector(xs-off_x, ys-off_y,0), Base.Vector(0, 0, 1), r))
             else:
-                FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(Part.Circle(Base.Vector(xs, ys,0), Base.Vector(0, 0, 1), r))
+                #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(Part.Circle(Base.Vector(xs, ys,0), Base.Vector(0, 0, 1), r))
+                PCB_Geo.append(Part.Circle(Base.Vector(xs, ys,0), Base.Vector(0, 0, 1), r))
         if show_border:
             Part.show(circle1)
         circle1=Part.Wire(circle1)
@@ -11708,7 +11750,9 @@ def DrawPCB(mypcb):
         PCBs.append(circle1)
         PCB.append(['Circle', xs, ys, r])
 
-    #FreeCAD.ActiveDocument.addObject("Part::Face", "Face").Sources = (FreeCAD.ActiveDocument.getObject(new_skt.Name), )
+    #say(PCBs)
+    get_time()
+    say('parsing&building time ' +str(running_time-t0))
     if 0:
         new_cpy_skt = FreeCAD.ActiveDocument.copyObject(FreeCAD.ActiveDocument.PCB_Sketch_draft, True)
         FreeCAD.ActiveDocument.addObject("Part::Face", "Face_PCB_Sketch_draft").Sources = (new_cpy_skt, )
@@ -11719,20 +11763,52 @@ def DrawPCB(mypcb):
         FreeCAD.ActiveDocument.recompute()
     
     make_face = True #getting PCB from Sketch
+    dont_use_constraints = False
     create_pcb_from_edges = False
+    create_pcb_basic = False
     fcv = getFCversion()
     if fcv[0]==0 and fcv[1] <17:
        make_face = False
        create_pcb_from_edges =True
+    if edg_segms > max_edges_admitted:
+        #sayerr('too many segments, skipping sketches & constraints')
+        sayerr('too many segments, skipping ALL constraints')
+        if FreeCAD.GuiUp:
+            from PySide import QtGui
+            QtGui.QApplication.restoreOverrideCursor()
+            d = QtGui.QMessageBox()
+            d.setText("""<b>Warning:</b> High number of entities to join (> """+str(max_edges_admitted)+""")<br><b>Constraints will not be applied to PCB Sketch</b>""")
+            d.setInformativeText("This might take a long time or even freeze your computer. Are you sure?")
+            d.setStandardButtons(QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel)
+            d.setDefaultButton(QtGui.QMessageBox.Cancel)
+            res = d.exec_()
+            if res == QtGui.QMessageBox.Cancel:
+                FreeCAD.Console.PrintMessage("Aborted\n")
+                stop
+        if 1:
+            dont_use_constraints = True
+            FreeCAD.ActiveDocument.PCB_Sketch_draft.Geometry=PCB_Geo
+        else:
+            make_face = False
+            create_pcb_basic = True
+    else:
+        #say (PCB_Geo)
+        #for g in PCB_Geo:
+        #    FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(g)
+        FreeCAD.ActiveDocument.PCB_Sketch_draft.Geometry=PCB_Geo
+        #get_time()
+        #say('adding Geo time ' +str(running_time-t0))
+        #FreeCAD.ActiveDocument.addObject("Part::Face", "Face").Sources = (FreeCAD.ActiveDocument.getObject(new_skt.Name), )
+    
     if make_face:
         if len(FreeCAD.ActiveDocument.PCB_Sketch_draft.Geometry)>0:
-            if addConstraints!='none':
+            if addConstraints!='none' and not dont_use_constraints:
                 say('start adding constraints to pcb sketch')
                 get_time()
-                t1=(running_time)
+                t0=(running_time)
                 add_constraints("PCB_Sketch_draft")
                 get_time()
-                say('adding constraints time ' +str(running_time-t1))
+                say('adding constraints time ' +str(running_time-t0))
             FreeCAD.ActiveDocument.addObject("Part::Face", "Face_PCB_Sketch_draft").Sources = (FreeCAD.ActiveDocument.PCB_Sketch_draft, )
             FreeCAD.ActiveDocument.recompute()
             s_PCB_Sketch_draft = FreeCAD.ActiveDocument.getObject("Face_PCB_Sketch_draft").Shape.copy()
@@ -11753,6 +11829,8 @@ def DrawPCB(mypcb):
         else:
             sayerr('empty sketch; module edge board: creating PCB from Footprint Edge.Cuts')
             create_pcb_from_edges = True
+    
+    #FreeCADGui.SendMsgToActiveView("ViewFit")
     #stop
     TopPadList=[]
     BotPadList=[]
@@ -12273,7 +12351,82 @@ def DrawPCB(mypcb):
         FreeCAD.ActiveDocument.recompute()
         FreeCADGui.activeDocument().activeView().viewTop()
     ##FreeCADGui.SendMsgToActiveView("ViewFit")
+    if create_pcb_basic:
+        ## experimental technique for getting the pcb edge in case of large quantity of segments
+        ## To be completed
+        if (len(edges)==0) and (len(PCBs)==0):
+            sayw("no PCBs found")
+            stop
+        else:
+            sayw('creating pcb from edges without constraints') 
+            #N_edges = []
+            #for s in edges:
+            #    N_edges.extend(s.Edges)
+            #if len(edges) > (100):
+            #    FreeCAD.Console.PrintMessage(str(len(edges))+" edges to join\n")
+            #    if FreeCAD.GuiUp:
+            #        from PySide import QtGui
+            #        d = QtGui.QMessageBox()
+            #        d.setText("Warning: High number of entities to join (>100)")
+            #        d.setInformativeText("This might take a long time or even freeze your computer. Are you sure? You can also disable the \"join geometry\" setting in DXF import preferences")
+            #        d.setStandardButtons(QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel)
+            #        d.setDefaultButton(QtGui.QMessageBox.Cancel)
+            #        res = d.exec_()
+            #        if res == QtGui.QMessageBox.Cancel:
+            #            FreeCAD.Console.PrintMessage("Aborted\n")
+            #            return
+            
+            if 0:
+                newEdges = OSCD2Dg_edgestofaces(edges,3 , edge_tolerance)
+                Part.show(newEdges)
+                stop
+            if 0:
+                ## from importDXF
+                shapes = DraftGeomUtils.findWires(edges) #N_edges)
+                def addObject(shape,name="Shape",layer=None):
+                    "adds a new object to the document with passed arguments"
+                    if isinstance(shape,Part.Shape):
+                        #say(doc.Name)
+                        #stop
+                        newob=doc.addObject("Part::Feature",name)
+                        newob.Shape = shape
+                    else:
+                        newob = shape
+                    #if layer:
+                    #    lay=locateLayer(layer)
+                    #    lay.addObject(newob)
+                    #formatObject(newob)
+                    return newob
+                shapes_list=[]
+                for s in shapes:
+                    newob = addObject(s)
+                    shapes_list.append(newob)
+                
+                WireSketch = FreeCAD.activeDocument().addObject('Sketcher::SketchObject','WireSketch')
+                shapes = Draft.makeSketch(shapes,autoconstraints=True,addTo=WireSketch)
+                FreeCAD.ActiveDocument.addObject("Part::Face", "Face_WireSketch").Sources = (FreeCAD.ActiveDocument.WireSketch, )
+                if 0:
+                    FreeCAD.activeDocument().addObject("Part::Compound","ShapesCompound")
+                    FreeCAD.activeDocument().ShapesCompound.Links = shapes_list
+                    FreeCAD.ActiveDocument.addObject("Part::Face", "Face_Compound").Sources = (FreeCAD.ActiveDocument.ShapesCompound, )
+                FreeCAD.ActiveDocument.recompute()
+                FreeCADGui.SendMsgToActiveView("ViewFit")
+                stop
+            #fusion_wire = edges[0]
+            #for no, e in enumerate(edges):
+            #    no += 1
+            #    if no > 1:
+            #        fusion_wire = fusion_wire.fuse(e)
+            # Part.show(fusion_wire)
+            
+            for e in edges:
+                Part.show(e)
+            stop
+            #w_pcb = Part.Wire(edges)
+            #Part.show(w_pcb)
+            
     say_time()
+    #stop
     
     #cut_base = cut_base.extrude(Base.Vector(0,0,totalHeight)) # test_face
     #Part.show(cut_base) #test Sketch
@@ -12415,7 +12568,11 @@ def DrawPCB(mypcb):
                 shape = shape_base.fuse(shapes)
             else:   #one drill ONLY
                 shape = shape_base
-            #Part.show(shape) #test_face
+            test_face_gen = False
+            if test_face_gen:
+                Part.show(cut_base) #test_face
+                Part.show(shape) #test_face
+                stop
             try:
                 cut_base = cut_base.cut(shape)
             except:
