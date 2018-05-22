@@ -12,14 +12,20 @@
 
 import FreeCAD,FreeCADGui
 import FreeCAD, FreeCADGui, Part, os, sys
+from FreeCAD import Base
 import imp, os, sys, tempfile
 import FreeCAD, FreeCADGui, Draft, DraftGeomUtils, OpenSCAD2Dgeom
-from PySide import QtGui
+from PySide import QtGui, QtCore
+
 import ksu_locator
 # from kicadStepUptools import onLoadBoard, onLoadFootprint
 import math
+from math import sqrt
 
-__ksuCMD_version__='1.4.9'
+import constrinator
+from constrinator import add_constraints
+
+__ksuCMD_version__='1.5.0'
 
 precision = 0.1 # precision in spline or bezier conversion
 
@@ -47,6 +53,136 @@ ksuWB_icons_path =  os.path.join( ksuWBpath, 'Resources', 'icons')
 #     return {'Pixmap'  : os.path.join( iconPath , 'SMExtrude.svg') , # the name of a svg file available in the resources
 #             'MenuText': "Extend Face" ,
 #             'ToolTip' : "Extend a face along normal"}
+class Ui_CDialog(object):
+    def setupUi(self, CDialog):
+        CDialog.setObjectName("CDialog")
+        CDialog.resize(317, 285)
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap("Sketcher_LockAll.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        CDialog.setWindowIcon(icon)
+        CDialog.setToolTip("")
+        CDialog.setStatusTip("")
+        CDialog.setWhatsThis("")
+        self.buttonBox = QtGui.QDialogButtonBox(CDialog)
+        self.buttonBox.setGeometry(QtCore.QRect(8, 240, 207, 32))
+        self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
+        self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
+        self.buttonBox.setObjectName("buttonBox")
+        self.Label_howto = QtGui.QLabel(CDialog)
+        self.Label_howto.setGeometry(QtCore.QRect(66, 8, 231, 41))
+        self.Label_howto.setToolTip("Select a Sketch and Parameters\n"
+"to constraint the sketch")
+        self.Label_howto.setStatusTip("")
+        self.Label_howto.setWhatsThis("")
+        self.Label_howto.setObjectName("Label_howto")
+        self.Constraints = QtGui.QGroupBox(CDialog)
+        self.Constraints.setGeometry(QtCore.QRect(10, 54, 145, 161))
+        self.Constraints.setToolTip("")
+        self.Constraints.setStatusTip("")
+        self.Constraints.setWhatsThis("")
+        self.Constraints.setTitle("Constraints")
+        self.Constraints.setObjectName("Constraints")
+        self.verticalLayoutWidget = QtGui.QWidget(self.Constraints)
+        self.verticalLayoutWidget.setGeometry(QtCore.QRect(12, 16, 125, 137))
+        self.verticalLayoutWidget.setObjectName("verticalLayoutWidget")
+        self.verticalLayout = QtGui.QVBoxLayout(self.verticalLayoutWidget)
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout.setObjectName("verticalLayout")
+        self.all_constraints = QtGui.QRadioButton(self.verticalLayoutWidget)
+        self.all_constraints.setMinimumSize(QtCore.QSize(92, 64))
+        self.all_constraints.setToolTip("Lock Coincident, Horizontal\n"
+"and Vertical")
+        self.all_constraints.setText("")
+        self.all_constraints.setIcon(icon)
+        self.all_constraints.setIconSize(QtCore.QSize(48, 48))
+        self.all_constraints.setChecked(True)
+        self.all_constraints.setObjectName("all_constraints")
+        self.verticalLayout.addWidget(self.all_constraints)
+        self.coincident = QtGui.QRadioButton(self.verticalLayoutWidget)
+        self.coincident.setMinimumSize(QtCore.QSize(92, 64))
+        self.coincident.setToolTip("Lock Coincident")
+        self.coincident.setText("")
+        icon1 = QtGui.QIcon()
+        icon1.addPixmap(QtGui.QPixmap("Sketcher_LockCoincident.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.coincident.setIcon(icon1)
+        self.coincident.setIconSize(QtCore.QSize(48, 48))
+        self.coincident.setChecked(False)
+        self.coincident.setObjectName("coincident")
+        self.verticalLayout.addWidget(self.coincident)
+        self.Tolerance = QtGui.QGroupBox(CDialog)
+        self.Tolerance.setGeometry(QtCore.QRect(166, 54, 141, 129))
+        self.Tolerance.setToolTip("")
+        self.Tolerance.setStatusTip("")
+        self.Tolerance.setWhatsThis("")
+        self.Tolerance.setTitle("Tolerance")
+        self.Tolerance.setObjectName("Tolerance")
+        self.verticalLayoutWidget_2 = QtGui.QWidget(self.Tolerance)
+        self.verticalLayoutWidget_2.setGeometry(QtCore.QRect(8, 28, 125, 57))
+        self.verticalLayoutWidget_2.setObjectName("verticalLayoutWidget_2")
+        self.verticalLayout_2 = QtGui.QVBoxLayout(self.verticalLayoutWidget_2)
+        self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
+        self.label = QtGui.QLabel(self.verticalLayoutWidget_2)
+        self.label.setToolTip("mm")
+        self.label.setStatusTip("")
+        self.label.setWhatsThis("")
+        self.label.setText("tolerance in mm")
+        self.label.setObjectName("label")
+        self.verticalLayout_2.addWidget(self.label)
+        self.tolerance = QtGui.QLineEdit(self.verticalLayoutWidget_2)
+        self.tolerance.setMinimumSize(QtCore.QSize(64, 22))
+        self.tolerance.setMaximumSize(QtCore.QSize(64, 22))
+        self.tolerance.setToolTip("Tolerance on Constraints")
+        self.tolerance.setStatusTip("")
+        self.tolerance.setWhatsThis("")
+        self.tolerance.setInputMethodHints(QtCore.Qt.ImhPreferNumbers)
+        self.tolerance.setInputMask("")
+        self.tolerance.setText("0.1")
+        self.tolerance.setPlaceholderText("")
+        self.tolerance.setObjectName("tolerance")
+        self.verticalLayout_2.addWidget(self.tolerance)
+
+        #self.retranslateUi(CDialog)
+        QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("accepted()"), CDialog.accept)
+        QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("rejected()"), CDialog.reject)
+        QtCore.QMetaObject.connectSlotsByName(CDialog)
+        
+        
+        ###  --------------------------------------------------------
+        myiconsize=48
+        icon = QtGui.QIcon()
+        myicon=os.path.join( ksuWB_icons_path , 'Sketcher_LockCoincident.svg')
+        icon.addPixmap(QtGui.QPixmap(myicon), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.coincident.setIcon(icon)
+        self.coincident.setIconSize(QtCore.QSize(myiconsize, myiconsize))
+        icon1 = QtGui.QIcon()
+        myicon=os.path.join( ksuWB_icons_path , 'Sketcher_LockAll.svg')
+        icon1.addPixmap(QtGui.QPixmap(myicon), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.all_constraints.setIcon(icon1)
+        self.all_constraints.setIconSize(QtCore.QSize(myiconsize, myiconsize))
+        icond = QtGui.QIcon()
+        myicon=os.path.join( ksuWB_icons_path , 'Sketcher_LockAll.svg')
+        icond.addPixmap(QtGui.QPixmap(myicon), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        CDialog.setWindowIcon(icon)
+    
+
+        # remove question mark from the title bar
+        CDialog.setWindowFlags(CDialog.windowFlags() ^ QtCore.Qt.WindowContextHelpButtonHint)
+
+
+    def return_strings(self):
+    #   Return list of values. It need map with str (self.lineedit.text() will return QString)
+        return map(str, [self.tolerance.text(), self.all_constraints.isChecked()])
+        
+    # @staticmethod
+    # def get_data(parent=None):
+    #     #dialog = Ui_CDialog()
+    #     dialog = Ui_CDialog(parent)
+    #     #dialog = QtGui.QDialog()
+    #     dialog.exec_()
+    #     return dialog.return_strings()
+        
+################ ------------------- end CD-ui #############################
 
 class ksuTools:
     "ksu tools object"
@@ -424,6 +560,44 @@ class ksuTools3D2D:
 #
 
 FreeCADGui.addCommand('ksuTools3D2D',ksuTools3D2D())
+##
+
+
+class ksuToolsConstrinator:
+    "ksu tools Constraint Sketch"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Sketcher_LockAll.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksu Constrain a Sketch" ,
+                     'ToolTip' : "Fix & auto Constrain a Sketch"}
+ 
+    def IsActive(self):
+        return True
+ 
+    def Activated(self):
+        # do something here...
+        sel = FreeCADGui.Selection.getSelection()
+        if len(sel)==1:    
+            if sel[0].TypeId == 'Sketcher::SketchObject' and len(sel)==1:
+                CDialog = QtGui.QDialog()
+                ui = Ui_CDialog()
+                ui.setupUi(CDialog)
+                reply=CDialog.exec_()
+                if reply==1:
+                    dialog_values = (ui.return_strings()) # window is value from edit field
+                    #print (dialog_values)
+                    tol = float(dialog_values[0])
+                    if tol <= 0:
+                        tol = 0.01
+                    if 'True' in dialog_values[1]:
+                        constr = 'all'
+                    else:
+                        constr = 'coincident'
+                    add_constraints(sel[0].Name, tol, constr)
+                
+
+FreeCADGui.addCommand('ksuToolsConstrinator',ksuToolsConstrinator())
+##
 
 #####
 class ksuTools2D2Sketch:

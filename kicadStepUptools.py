@@ -327,6 +327,7 @@
 # added 'links' for import mode settings
 # moved the generation of PCB inside the Sketch to Face process
 # adding Geometry and Constraints as a single instruction to avoid long delay with sketches
+# added Constrinator
 # most clean code and comments done
 
 ##todo
@@ -439,7 +440,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.3.2.3"  
+___ver___ = "7.3.2.4"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -12667,7 +12668,7 @@ def DrawPCB(mypcb):
                 QtGui.QApplication.restoreOverrideCursor()
                 diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
                                         'Error in creating Board Edge                                                                ."+"\r\n"',
-                                        """<b>pcb edge not closed<br>review your Board Edges in Kicad!<br>""")
+                                        """<b>pcb edge not closed<br>review your Board Edges in Kicad!<br>or try to fix it with Constrinator""")
                 diag.setWindowModality(QtCore.Qt.ApplicationModal)
                 diag.exec_()
                 FreeCADGui.activeDocument().activeView().viewTop()
@@ -12692,7 +12693,21 @@ def DrawPCB(mypcb):
     
     doc_outline=doc.addObject("Part::Feature","Pcb")
     doc_outline.Shape=cut_base 
-    doc_outline.Shape=cut_base.extrude(Base.Vector(0,0,-totalHeight))
+    try:
+        doc_outline.Shape=cut_base.extrude(Base.Vector(0,0,-totalHeight))
+    except:
+        doc.removeObject("Pcb")
+        say("*** omitting PCBs because there was a not closed loop in your edge lines ***")
+        say('pcb edge not closed')
+        QtGui.QApplication.restoreOverrideCursor()
+        diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
+                                'Error in creating Board Edge                                                                ."+"\r\n"',
+                                """<b>pcb edge not closed<br>review your Board Edges in Kicad!<br>or try to fix it with Constrinator""")
+        diag.setWindowModality(QtCore.Qt.ApplicationModal)
+        diag.exec_()
+        FreeCADGui.activeDocument().activeView().viewTop()
+        FreeCADGui.SendMsgToActiveView("ViewFit")
+        stop #maui                        
     #stop
     try:
         FreeCAD.activeDocument().removeObject('Shape') #removing base shape
