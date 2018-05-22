@@ -56,7 +56,7 @@ ksuWB_icons_path =  os.path.join( ksuWBpath, 'Resources', 'icons')
 class Ui_CDialog(object):
     def setupUi(self, CDialog):
         CDialog.setObjectName("CDialog")
-        CDialog.resize(317, 285)
+        CDialog.resize(317, 302)
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap("Sketcher_LockAll.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         CDialog.setWindowIcon(icon)
@@ -64,26 +64,28 @@ class Ui_CDialog(object):
         CDialog.setStatusTip("")
         CDialog.setWhatsThis("")
         self.buttonBox = QtGui.QDialogButtonBox(CDialog)
-        self.buttonBox.setGeometry(QtCore.QRect(8, 240, 207, 32))
+        self.buttonBox.setGeometry(QtCore.QRect(8, 255, 207, 32))
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
         self.buttonBox.setObjectName("buttonBox")
         self.Label_howto = QtGui.QLabel(CDialog)
-        self.Label_howto.setGeometry(QtCore.QRect(66, 8, 231, 41))
+        self.Label_howto.setGeometry(QtCore.QRect(20, 5, 265, 61))
         self.Label_howto.setToolTip("Select a Sketch and Parameters\n"
-"to constraint the sketch")
+"to constraint the sketch\n"
+"NB the Sketch will be modified!")
         self.Label_howto.setStatusTip("")
         self.Label_howto.setWhatsThis("")
+        self.Label_howto.setText("<b>Select a Sketch and Parameters to<br>constrain the sketch.<br>NB the Sketch will be modified!</b>")
         self.Label_howto.setObjectName("Label_howto")
         self.Constraints = QtGui.QGroupBox(CDialog)
-        self.Constraints.setGeometry(QtCore.QRect(10, 54, 145, 161))
+        self.Constraints.setGeometry(QtCore.QRect(10, 70, 145, 166))
         self.Constraints.setToolTip("")
         self.Constraints.setStatusTip("")
         self.Constraints.setWhatsThis("")
         self.Constraints.setTitle("Constraints")
         self.Constraints.setObjectName("Constraints")
         self.verticalLayoutWidget = QtGui.QWidget(self.Constraints)
-        self.verticalLayoutWidget.setGeometry(QtCore.QRect(12, 16, 125, 137))
+        self.verticalLayoutWidget.setGeometry(QtCore.QRect(12, 20, 125, 137))
         self.verticalLayoutWidget.setObjectName("verticalLayoutWidget")
         self.verticalLayout = QtGui.QVBoxLayout(self.verticalLayoutWidget)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
@@ -110,14 +112,14 @@ class Ui_CDialog(object):
         self.coincident.setObjectName("coincident")
         self.verticalLayout.addWidget(self.coincident)
         self.Tolerance = QtGui.QGroupBox(CDialog)
-        self.Tolerance.setGeometry(QtCore.QRect(166, 54, 141, 129))
+        self.Tolerance.setGeometry(QtCore.QRect(166, 70, 141, 129))
         self.Tolerance.setToolTip("")
         self.Tolerance.setStatusTip("")
         self.Tolerance.setWhatsThis("")
         self.Tolerance.setTitle("Tolerance")
         self.Tolerance.setObjectName("Tolerance")
         self.verticalLayoutWidget_2 = QtGui.QWidget(self.Tolerance)
-        self.verticalLayoutWidget_2.setGeometry(QtCore.QRect(8, 28, 125, 57))
+        self.verticalLayoutWidget_2.setGeometry(QtCore.QRect(8, 44, 125, 57))
         self.verticalLayoutWidget_2.setObjectName("verticalLayoutWidget_2")
         self.verticalLayout_2 = QtGui.QVBoxLayout(self.verticalLayoutWidget_2)
         self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
@@ -143,12 +145,13 @@ class Ui_CDialog(object):
         self.verticalLayout_2.addWidget(self.tolerance)
 
         #self.retranslateUi(CDialog)
+        ###  --------------------------------------------------------
+
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("accepted()"), CDialog.accept)
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("rejected()"), CDialog.reject)
         QtCore.QMetaObject.connectSlotsByName(CDialog)
         
         
-        ###  --------------------------------------------------------
         myiconsize=48
         icon = QtGui.QIcon()
         myicon=os.path.join( ksuWB_icons_path , 'Sketcher_LockCoincident.svg')
@@ -168,7 +171,7 @@ class Ui_CDialog(object):
 
         # remove question mark from the title bar
         CDialog.setWindowFlags(CDialog.windowFlags() ^ QtCore.Qt.WindowContextHelpButtonHint)
-
+        #self.Label_howto.setText("<b>Select a Sketch and Parameters<br>to constraint the sketch<br>NB the Sketch will be modified!</b>")
 
     def return_strings(self):
     #   Return list of values. It need map with str (self.lineedit.text() will return QString)
