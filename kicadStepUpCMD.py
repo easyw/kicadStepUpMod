@@ -582,6 +582,7 @@ class ksuToolsConstrinator:
                 CDialog = QtGui.QDialog()
                 ui = Ui_CDialog()
                 ui.setupUi(CDialog)
+                CDialog.setWindowTitle("Sketch Constrinator")
                 reply=CDialog.exec_()
                 if reply==1:
                     dialog_values = (ui.return_strings()) # window is value from edit field
