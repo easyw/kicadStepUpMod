@@ -439,7 +439,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.3.2.1"  
+___ver___ = "7.3.2.2"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -6868,6 +6868,82 @@ def add_constraints(s_name):
             #print geo2
             
 ###        
+def add_missing_geo(s_name):
+    """ adding missing geo on near but non coincident points"""
+    
+    s=FreeCAD.ActiveDocument.getObject(s_name)
+    
+    if hasattr(Part,"LineSegment"):
+        g_geom_points = {
+            Base.Vector: [1],
+            Part.LineSegment: [1, 2],  # first point, last point
+            Part.Circle: [0, 3],  # curve, center
+            Part.ArcOfCircle: [1, 2, 3],  # first point, last point, center
+        }
+    else:
+        g_geom_points = {
+            Base.Vector: [1],
+            Part.Line: [1, 2],  # first point, last point
+            Part.Circle: [0, 3],  # curve, center
+            Part.ArcOfCircle: [1, 2, 3],  # first point, last point, center
+        }
+    geo_points=[]
+    geoms=[]
+    #print len((s.Geometry))
+    #stop
+    for geom_index in range(len((s.Geometry))):
+        point_indexes = g_geom_points[type(s.Geometry[geom_index])]
+        #sayerr(point_indexes), say (geom_index)
+        #if 'Line' in type(PCB_Sketch.Geometry[geom_index]).__name__:
+        
+        if 'ArcOfCircle' in type(s.Geometry[geom_index]).__name__\
+         or 'Line' in type(s.Geometry[geom_index]).__name__:
+            point1 = s.getPoint(geom_index, point_indexes[0])
+            #sayerr(str(point1[0])+';'+str(point1[1]))
+            point2 = s.getPoint(geom_index, point_indexes[1])
+            #sayw(str(point2[0])+';'+str(point1[1]))
+            #points.append([[point1[0],point1[1]],[geom_index],[1]])
+            #points.append([[point2[0],point2[1]],[geom_index],[2]])
+            #points.append([[point1[0],point1[1]],[geom_index]]) #,[1]])
+            #points.append([[point2[0],point2[1]],[geom_index]]) #,[2]])
+            #points.append([[point1[0],point1[1]],[geom_index]]) #,[1]])
+            #geo_points.append([[point1[0],point1[1]],[point2[0],point2[1]],[geom_index]]) #,[2]])
+            geoms.append([point1[0],point1[1],point2[0],point2[1]])
+    sk_add_geo = []
+    #say(geoms)
+    for i, geo in enumerate(geoms):
+        p_g0_0=[geo[0],geo[1]]
+        p_g0_1=[geo[2],geo[3]]
+        j=i+1
+        for geo2 in geoms[(i + 1):]:
+            p_g2_0_0=[geo2[0],geo2[1]]
+            p_g2_0_1=[geo2[2],geo2[3]]
+            d = distance(p_g0_0,p_g2_0_0)
+            if d < edge_tolerance and d > 0:
+                sk_add_geo.append(PLine(Base.Vector(p_g0_0[0],p_g0_0[1],0), Base.Vector(p_g2_0_0[0],p_g2_0_0[1],0)))
+                #print i,1,i+1,1
+            d = distance(p_g0_1,p_g2_0_0)
+            if d < edge_tolerance and d>0:
+                #s.addConstraint(Sketcher.Constraint('Coincident',i,1,j,2))
+                sk_add_geo.append(PLine(Base.Vector(p_g0_1[0],p_g0_1[1],0), Base.Vector(p_g2_0_0[0],p_g2_0_0[1],0)))
+                #print i,1,i+1,2
+            d = distance(p_g0_0,p_g2_0_1)
+            if d < edge_tolerance and d>0:
+                #s.addConstraint(Sketcher.Constraint('Coincident',i,2,j,1))
+                sk_add_geo.append(PLine(Base.Vector(p_g0_0[0],p_g0_0[1],0), Base.Vector(p_g2_0_1[0],p_g2_0_1[1],0)))
+                #print i,2,i+1,1
+            d = distance(p_g0_1,p_g2_0_1)
+            if d < edge_tolerance and d >0:
+                #s.addConstraint(Sketcher.Constraint('Coincident',i,2,j,2))
+                sk_add_geo.append(PLine(Base.Vector(p_g0_1[0],p_g0_1[1],0), Base.Vector(p_g2_0_1[0],p_g2_0_1[1],0)))
+                #print i,2,i+1,2
+            j=j+1    
+    sayerr('added Geometry')
+    sayerr(sk_add_geo)
+    if len(sk_add_geo) > 0:
+        s.addGeometry(sk_add_geo)
+            
+###        
 
 def cpy_sketch(sname,nname=None):
     """ copy Sketch NB Geometry sequence is not conserved!!! """
@@ -11577,9 +11653,12 @@ def DrawPCB(mypcb):
     def simu_distance(p0, p1):
         return max (abs(p0[0] - p1[0]), abs(p0[1] - p1[1]))
     
+    import PySide
+    from PySide import QtGui, QtCore
+    
     say("PCB Loader ")
     ## NB use always float() to guarantee number not string!!!
-    max_edges_admitted = 15000 # after this number, no sketcher would be created
+    max_edges_admitted = 1500 # after this number, no sketcher would be created
     
     #load_sketch=True
     get_time()
@@ -11809,6 +11888,11 @@ def DrawPCB(mypcb):
                 add_constraints("PCB_Sketch_draft")
                 get_time()
                 say('adding constraints time ' +str(running_time-t0))
+            if 0: #dont_use_constraints:
+                sayw('adding missing geometry')
+                add_missing_geo("PCB_Sketch_draft")
+                #stop
+                
             FreeCAD.ActiveDocument.addObject("Part::Face", "Face_PCB_Sketch_draft").Sources = (FreeCAD.ActiveDocument.PCB_Sketch_draft, )
             FreeCAD.ActiveDocument.recompute()
             s_PCB_Sketch_draft = FreeCAD.ActiveDocument.getObject("Face_PCB_Sketch_draft").Shape.copy()
