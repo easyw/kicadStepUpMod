@@ -439,7 +439,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.3.2.2"  
+___ver___ = "7.3.2.3"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -6798,9 +6798,11 @@ def add_constraints(s_name):
             p_g0_1=[geo[2],geo[3]]
             #print p_g0_0,pg_g0_1
             if abs(p_g0_0[0]-p_g0_1[0])< edge_tolerance:
-                s.addConstraint(Sketcher.Constraint('Vertical',i))
+                #s.addConstraint(Sketcher.Constraint('Vertical',i))
+                sk_constraints.append(Sketcher.Constraint('Vertical',i))
             elif abs(p_g0_0[1]-p_g0_1[1])< edge_tolerance:
-                s.addConstraint(Sketcher.Constraint('Horizontal',i))
+                #s.addConstraint(Sketcher.Constraint('Horizontal',i))
+                sk_constraints.append(Sketcher.Constraint('Horizontal',i))
             j=i+1
             for geo2 in geoms[(i + 1):]:
                 p_g1_0=[geo2[0],geo2[1]]
