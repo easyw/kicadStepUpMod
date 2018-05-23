@@ -25,7 +25,7 @@ from math import sqrt
 import constrinator
 from constrinator import add_constraints
 
-__ksuCMD_version__='1.5.0'
+__ksuCMD_version__='1.5.1'
 
 precision = 0.1 # precision in spline or bezier conversion
 
@@ -598,7 +598,13 @@ class ksuToolsConstrinator:
                     else:
                         constr = 'coincident'
                     add_constraints(sel[0].Name, tol, constr)
-                
+            else:
+                reply = QtGui.QMessageBox.information(None,"Warning", "select a Sketch to be Fix & Constrained")
+                FreeCAD.Console.PrintError('select a Sketch to be Fix & Constrained\n')
+        else:
+            reply = QtGui.QMessageBox.information(None,"Warning", "select ONE Sketch to be Fix & Constrained")
+            FreeCAD.Console.PrintError('select ONE Sketch to be Fix & Constrained\n')
+    
 
 FreeCADGui.addCommand('ksuToolsConstrinator',ksuToolsConstrinator())
 ##

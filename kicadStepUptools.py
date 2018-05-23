@@ -440,7 +440,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.3.2.4"  
+___ver___ = "7.3.2.5"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -7122,7 +7122,7 @@ def onLoadBoard(file_name=None):
                 #xp=getAuxAxisOrigin()[0]; yp=-getAuxAxisOrigin()[1]  #offset of the board & modules
                 if hasattr(mypcb.setup, 'aux_axis_origin'):
                     #say('aux_axis_origin' + str(mypcb.setup.aux_axis_origin))
-                    sayw('aux origin used') 
+                    sayw('aux origin used: '+str(mypcb.setup.aux_axis_origin)) 
                     xp=-mypcb.setup.aux_axis_origin[0]; yp=mypcb.setup.aux_axis_origin[1]
                 else:
                     say('aux origin not used') 
@@ -16953,13 +16953,21 @@ def getGridOrigin(dt):
     else:
         return None
 ##
+##  getAuxOrigin
+def getAuxOrigin(dt):
+    match = re.search(r'\(aux_axis_origin (.+?) (.+?)\)', dt, re.MULTILINE|re.DOTALL)
+    if match is not None:
+        return [float(match.group(1)), float(match.group(2))];
+    else:
+        return None
+##
 def export_pcb(fname=None):
     global last_fp_path, test_flag, start_time
     global configParser, configFilePath, start_time
     global ignore_utf8, ignore_utf8_incfg, disable_PoM_Observer
     global board_base_point_x, board_base_point_y, real_board_pos_x, real_board_pos_y
     global pcb_path, use_AppPart, force_oldGroups, use_Links
-    global original_filename
+    global original_filename, aux_orig, grid_orig
     global off_x, off_y, maxRadius
     
     sayw('exporting new pcb edges')
@@ -17036,7 +17044,10 @@ def export_pcb(fname=None):
             if not edge_pcb_exists and len(re.findall('\s\(fp_circle(.+?)Edge(.+?)\)\)\r\n|\(fp_circle(.+?)Edge(.+?)\)\)\r|\(fp_circle(.+?)Edge(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
                 edge_pcb_exists=True
  
-            oft=getGridOrigin(data)
+            if aux_orig == 1:
+                oft=getAuxOrigin(data)
+            if grid_orig == 1:
+                oft=getGridOrigin(data)
             #print oft
             gof=False
             if oft is not None:
