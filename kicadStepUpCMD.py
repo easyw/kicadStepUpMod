@@ -16,6 +16,7 @@ from FreeCAD import Base
 import imp, os, sys, tempfile
 import FreeCAD, FreeCADGui, Draft, DraftGeomUtils, OpenSCAD2Dgeom
 from PySide import QtGui, QtCore
+from pivy import coin
 
 import ksu_locator
 # from kicadStepUptools import onLoadBoard, onLoadFootprint
@@ -564,7 +565,56 @@ class ksuTools3D2D:
 
 FreeCADGui.addCommand('ksuTools3D2D',ksuTools3D2D())
 ##
+class ksuToolsTurnTable:
+    "ksu tools TurnTable"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'texture_turntable.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksu TurnTable" ,
+                     'ToolTip' : "TurnTable"}
+ 
+    def IsActive(self):
+        if FreeCAD.ActiveDocument is None:
+            return False
+        else:
+            return True
+ 
+    def Activated(self):
+        # do something here...
+        # https://forum.freecadweb.org/viewtopic.php?f=3&t=28795
+        
+        ## references
+        # My 2 favorite docs about coin are :
+        # http://www-evasion.imag.fr/~Francois.Fa ... index.html
+        # https://grey.colorado.edu/coin3d/annotated.html
+        
+        imgfilename = os.path.join( ksuWB_icons_path , '../textures/infinite_reflection_blur.png')
+        sg = FreeCADGui.ActiveDocument.ActiveView.getSceneGraph()
+        tex = sg.getByName("myTexture")
+        tc = sg.getByName("myTextCoord")
+        if tex: # remove existing
+            sg.removeChild(tex)
+        else: # or insert a new one
+            tex =  coin.SoTexture2()
+            tex.setName("myTexture")
+            #jpgfilename = QtGui.QFileDialog.getOpenFileName(QtGui.qApp.activeWindow(),'Open image file','*.jpg')
+            #tex.filename = str(jpgfilename[0])
+            #print(str(jpgfilename[0]))
+            tex.filename = str(imgfilename)
+            #print (str(imgfilename))
+            sg.insertChild(tex,1)
+            FreeCADGui.ActiveDocument.ActiveView.startAnimating(0,1,0,0.2)
+        if tc:
+            sg.removeChild(tc)
+            FreeCADGui.ActiveDocument.ActiveView.stopAnimating()
+        else:
+            tc = coin.SoTextureCoordinateEnvironment()
+            tc.setName("myTextCoord")
+            sg.insertChild(tc,2)
+        
 
+FreeCADGui.addCommand('ksuToolsTurnTable',ksuToolsTurnTable())
+##
 
 class ksuToolsConstrinator:
     "ksu tools Constraint Sketch"
