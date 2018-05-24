@@ -440,7 +440,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.3.2.5"  
+___ver___ = "7.3.2.6"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -11701,7 +11701,16 @@ def DrawPCB(mypcb):
     #load_sketch=False
     # sayerr(len(mypcb.gr_line))
     # say(len(mypcb.gr_arc))
-    edg_segms = len(mypcb.gr_line)+len(mypcb.gr_arc)
+    #edg_segms = len(mypcb.gr_line)+len(mypcb.gr_arc)
+    edg_segms = 0
+    for ln in mypcb.gr_line:
+        if 'Edge.Cuts' in ln.layer:
+            #say(ln.layer)
+            edg_segms+=1
+    for ar in mypcb.gr_arc:
+        if 'Edge.Cuts' in ar.layer:
+            #say(ln.layer)
+            edg_segms+=1
     sayw(str(edg_segms)+' edge segments')
     if edg_segms > max_edges_admitted:
         sayerr('too many segments ('+str(edg_segms)+'), skipping sketches & constraints')
