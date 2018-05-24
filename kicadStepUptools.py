@@ -440,7 +440,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.3.2.6"  
+___ver___ = "7.3.2.7"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -1511,7 +1511,7 @@ def getFCversion():
     FC_majorV=int(FreeCAD.Version()[0])
     FC_minorV=int(FreeCAD.Version()[1])
     try:
-        FC_git_Nbr=int(FreeCAD.Version()[2].strip(" (Git)"))
+        FC_git_Nbr=int (FreeCAD.Version()[2].strip(" (Git)").split(' ')[0]) #+int(FreeCAD.Version()[2].strip(" (Git)").split(' ')[1])
     except:
         FC_git_Nbr=0
     return FC_majorV,FC_minorV,FC_git_Nbr
