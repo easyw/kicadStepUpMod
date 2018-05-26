@@ -328,6 +328,7 @@
 # moved the generation of PCB inside the Sketch to Face process
 # adding Geometry and Constraints as a single instruction to avoid long delay with sketches
 # added Constrinator
+# allowed ArcOfCircle for Polyline Pads
 # most clean code and comments done
 
 ##todo
@@ -440,7 +441,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.3.2.7"  
+___ver___ = "7.3.2.8"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -14370,6 +14371,7 @@ def PushFootprint():
         sel = FreeCADGui.Selection.getSelection()
         if len (sel) >= 1:
             #sayw(doc.Name)
+            to_discretize=False;sk_to_discr=[];sk_temp=[]
             if "Sketch" in sel[0].TypeId or "Group" in sel[0].TypeId:
                 if "Group" in sel[0].TypeId:
                     for o in FreeCAD.ActiveDocument.Objects:
@@ -14381,6 +14383,41 @@ def PushFootprint():
                             sayerr(o.LabelText)
                             if "Ref" in o.LabelText or "Value " in o.LabelText:
                                 FreeCADGui.Selection.addSelection(o)
+                        ## checking Pads_Poly for ArcOfCircle to be discretized
+                        if 'Pads_Poly' in o.Label: 
+                            for g in o.Geometry:
+                                if 'ArcOfCircle' in str(g):
+                                    FreeCAD.Console.PrintWarning('need to discretize Arcs\n')
+                                    to_discretize=True
+                            if to_discretize:
+                                sk_to_discr.append(o)
+                                FreeCADGui.Selection.removeSelection(o)
+                else:
+                    if 'Pads_Poly' in sel[0].Label: 
+                        for g in sel[0].Geometry:
+                            if 'ArcOfCircle' in str(g):
+                                FreeCAD.Console.PrintWarning('need to discretize Arcs\n')
+                                to_discretize=True
+                        if to_discretize:
+                            sk_to_discr.append(sel[0])
+                            FreeCADGui.Selection.removeSelection(sel[0])
+                for sk in sk_to_discr:
+                    ws=sk.Shape.copy()
+                    #Part.show(ws)    
+                    wn=[]
+                    q_deflection = 0.005
+                    for e in ws.Edges:
+                        if hasattr(e.Curve,'Radius'):
+                            if not e.Closed:  # Arc and not Circle
+                                wn.append(Part.makePolygon(e.discretize(QuasiDeflection=q_deflection)))
+                            else:
+                                wn.append(Part.Wire(e))
+                        else:
+                            wn.append(Part.Wire(e))
+                    sk_d=Draft.makeSketch(wn)
+                    sk_d.Label=sk.Label+'_'
+                    FreeCADGui.Selection.addSelection(sk_d)
+                    sk_temp.append(sk_d)
                 #stop
                 #if "Group" in sel[0].TypeId:
                 #    for o in FreeCAD.ActiveDocument.Objects:
@@ -14406,6 +14443,8 @@ def PushFootprint():
                     last_fp_path=os.path.dirname(name)
                     start_time=current_milli_time()
                     export_footprint(name)
+                    for s in sk_temp:
+                        FreeCAD.ActiveDocument.removeObject(s.Name)
                     #else:
                     #    msg="""Save to <b>an EXISTING KiCad pcb file</b> to update your Edge!"""
                     #    say_warning(msg)
@@ -14687,7 +14726,7 @@ def export_footprint(fname=None):
         drills=[];psmd=[];pth=[];npth=[]
         pply=[];prrect=[]
         pads_TH_SMD=[];pads_NPTH=[]
-        fzply=[]
+        fzply=[];edge_thick=0.
         #edge_thick=0.15 #; lyr='F.SilkS'
         # lyr=border[len(border-1):]
         ## header=u"(module "+fp_name+" (layer F.Cu) (tedit 5A74E519)"+os.linesep

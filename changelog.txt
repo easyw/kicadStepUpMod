@@ -7,7 +7,7 @@ maintained in the same accuracy and aspect in STEP AP214 format. +
 The *kicad StepUp* maintains the usual way to work with kicad, but improves the process
 to work in a collaborative way with mechanical designers bringing near ECAD and MCAD environments. +
 With kicad StepUp you’ll get an exact representation of your physical board in Native 3D PCB
-v7.3.2.5 May 2018
+v7.3.2.8 May 2018
 
 please refer to
 kicadStepUp-starter-Guide.pdf
@@ -290,4 +290,5 @@ Changelog
 - moved the generation of PCB inside the Sketch to Face process
 - adding Geometry and Constraints as a single instruction to avoid long delay with sketches
 - added Constrinator
+- allowed ArcOfCircle for Polyline Pads
 - most clean code and comments done
