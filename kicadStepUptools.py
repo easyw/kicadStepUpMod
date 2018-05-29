@@ -441,7 +441,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.3.2.9"  
+___ver___ = "7.3.3.0"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -17094,6 +17094,7 @@ def export_pcb(fname=None):
             if not edge_pcb_exists and len(re.findall('\s\(fp_circle(.+?)Edge(.+?)\)\)\r\n|\(fp_circle(.+?)Edge(.+?)\)\)\r|\(fp_circle(.+?)Edge(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
                 edge_pcb_exists=True
  
+            oft=None
             if aux_orig == 1:
                 oft=getAuxOrigin(data)
             if grid_orig == 1:
