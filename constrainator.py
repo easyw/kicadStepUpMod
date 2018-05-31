@@ -12,7 +12,7 @@ import FreeCAD, Part, Sketcher
 from FreeCAD import Base
 from math import sqrt
 
-__ksuConstrinator_version__='1.1.0'
+__ksuConstrainator_version__='1.1.0'
 
 def sk_distance(p0, p1):
     return sqrt((p0[0] - p1[0])**2 + (p0[1] - p1[1])**2)
@@ -23,7 +23,7 @@ def add_constraints(s_name, edge_tolerance, add_Constraints):
     
     s=FreeCAD.ActiveDocument.getObject(s_name)
     
-    FreeCAD.Console.PrintMessage('Constrinator version '+__ksuConstrinator_version__+'\n')
+    FreeCAD.Console.PrintMessage('Constrainator version '+__ksuConstrainator_version__+'\n')
     FreeCAD.Console.PrintMessage('adding '+add_Constraints+' constraints with '+str(edge_tolerance)+'mm tolerance\n' )
     if hasattr(Part,"LineSegment"):
         g_geom_points = {

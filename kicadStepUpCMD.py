@@ -23,8 +23,8 @@ import ksu_locator
 import math
 from math import sqrt
 
-import constrinator
-from constrinator import add_constraints
+import constrainator
+from constrainator import add_constraints
 
 __ksuCMD_version__='1.5.1'
 
@@ -616,7 +616,7 @@ class ksuToolsTurnTable:
 FreeCADGui.addCommand('ksuToolsTurnTable',ksuToolsTurnTable())
 ##
 
-class ksuToolsConstrinator:
+class ksuToolsConstrainator:
     "ksu tools Constraint Sketch"
  
     def GetResources(self):
@@ -635,7 +635,7 @@ class ksuToolsConstrinator:
                 CDialog = QtGui.QDialog()
                 ui = Ui_CDialog()
                 ui.setupUi(CDialog)
-                CDialog.setWindowTitle("Sketch Constrinator")
+                CDialog.setWindowTitle("Sketch Constrainator")
                 reply=CDialog.exec_()
                 if reply==1:
                     dialog_values = (ui.return_strings()) # window is value from edit field
@@ -656,7 +656,7 @@ class ksuToolsConstrinator:
             FreeCAD.Console.PrintError('select ONE Sketch to be Fix & Constrained\n')
     
 
-FreeCADGui.addCommand('ksuToolsConstrinator',ksuToolsConstrinator())
+FreeCADGui.addCommand('ksuToolsConstrainator',ksuToolsConstrainator())
 ##
 
 #####

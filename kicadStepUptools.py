@@ -327,7 +327,7 @@
 # added 'links' for import mode settings
 # moved the generation of PCB inside the Sketch to Face process
 # adding Geometry and Constraints as a single instruction to avoid long delay with sketches
-# added Constrinator
+# added Constrainator
 # allowed ArcOfCircle for Polyline Pads
 # most clean code and comments done
 
@@ -12678,7 +12678,7 @@ def DrawPCB(mypcb):
                 QtGui.QApplication.restoreOverrideCursor()
                 diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
                                         'Error in creating Board Edge                                                                ."+"\r\n"',
-                                        """<b>pcb edge not closed<br>review your Board Edges in Kicad!<br>or try to fix it with Constrinator""")
+                                        """<b>pcb edge not closed<br>review your Board Edges in Kicad!<br>or try to fix it with Constrainator""")
                 diag.setWindowModality(QtCore.Qt.ApplicationModal)
                 diag.exec_()
                 FreeCADGui.activeDocument().activeView().viewTop()
@@ -12712,7 +12712,7 @@ def DrawPCB(mypcb):
         QtGui.QApplication.restoreOverrideCursor()
         diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
                                 'Error in creating Board Edge                                                                ."+"\r\n"',
-                                """<b>pcb edge not closed<br>review your Board Edges in Kicad!<br>or try to fix it with Constrinator""")
+                                """<b>pcb edge not closed<br>review your Board Edges in Kicad!<br>or try to fix it with Constrainator""")
         diag.setWindowModality(QtCore.Qt.ApplicationModal)
         diag.exec_()
         FreeCADGui.activeDocument().activeView().viewTop()
