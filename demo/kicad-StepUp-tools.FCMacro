@@ -441,7 +441,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.3.3.0"  
+___ver___ = "7.3.3.1"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -1527,8 +1527,8 @@ if FC_majorV == 0 and FC_minorV == 17:
 if FC_majorV > 0:
     use_AppPart=True
 if FC_majorV == 0 and FC_minorV > 17:
-    if FC_git_Nbr >= int(FC_export_min_version):
-        use_AppPart=True
+    #if FC_git_Nbr >= int(FC_export_min_version):
+    use_AppPart=True
 #if use_AppPart:
 #    FreeCAD.Console.PrintWarning("creating hierarchy\n")
 if int(FC_majorV) <= 0:
