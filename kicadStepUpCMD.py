@@ -26,9 +26,10 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints
 
-__ksuCMD_version__='1.5.1'
+__ksuCMD_version__='1.5.2'
 
 precision = 0.1 # precision in spline or bezier conversion
+q_deflection = 0.02 # quasi deflection parameter for discretization
 
 reload_Gui=False#True
 
@@ -657,6 +658,37 @@ class ksuToolsConstrainator:
     
 
 FreeCADGui.addCommand('ksuToolsConstrainator',ksuToolsConstrainator())
+##
+class ksuToolsDiscretize:
+    "ksu tools Discretize"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Discretize.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksu Discretize" ,
+                     'ToolTip' : "Discretize a shape/outline to a Sketch"}
+ 
+    def IsActive(self):
+        return True
+ 
+    def Activated(self):
+        # do something here...
+        sel = FreeCADGui.Selection.getSelection()
+        if len(sel) != 1:
+            reply = QtGui.QMessageBox.information(None,"Warning", "select one single object to be discretized")
+            FreeCAD.Console.PrintError('select one single object to be discretized\n')
+        else:
+            shapes = []
+            for selobj in sel:
+                for e in selobj.Shape.Edges:
+                    if not hasattr(e.Curve,'Radius'):
+                    #if not e.Closed:  # Arc and not Circle
+                        shapes.append(Part.makePolygon(e.discretize(QuasiDeflection=q_deflection)))
+                    else:
+                        shapes.append(Part.Wire(e))
+                    #sd=e.copy().discretize(QuasiDeflection=dqd)    
+            sk_d=Draft.makeSketch(shapes)
+
+FreeCADGui.addCommand('ksuToolsDiscretize',ksuToolsDiscretize())
 ##
 
 #####
