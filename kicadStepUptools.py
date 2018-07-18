@@ -441,7 +441,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.3.3.1"  
+___ver___ = "7.3.3.2"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -4516,6 +4516,25 @@ def checkFCbug(fcv):
                     return True
     return False
 ##
+def find_skt_in_Doc():
+    """ is returning a list of Sketches and relative Group"""
+    #print sel_name
+    sk_list=[]
+    for MObject1 in FreeCAD.ActiveDocument.Objects:
+        if MObject1.TypeId=="App::Part":
+            #if hasattr(MObject1 ,"Group"):
+            if MObject1.Group is not None:
+                for MObject2 in MObject1.Group:
+                        #print MObject1.Name,MObject2.TypeId
+                        if 'Sketch' in MObject2.TypeId:
+                            #print MObject2.TypeId
+                            if MObject2.Name not in sk_list:
+                                sk_list.append([MObject2.Name,MObject1.Name])
+                            #return MObject2.Name, MObject1.Name
+    #print 'loop closed'
+    return sk_list
+    
+###
 
 def Export2MCAD(blacklisted_model_elements):
     global bbox_all, bbox_list, fusion, show_messages, last_pcb_path
@@ -16976,25 +16995,6 @@ def check_geom(sk_name, ofs=None):
 
 ##
 
-def find_skt_in_Doc():
-    """ is returning a list of Sketches and relative Group"""
-    #print sel_name
-    sk_list=[]
-    for MObject1 in FreeCAD.ActiveDocument.Objects:
-        if MObject1.TypeId=="App::Part":
-            #if hasattr(MObject1 ,"Group"):
-            if MObject1.Group is not None:
-                for MObject2 in MObject1.Group:
-                        #print MObject1.Name,MObject2.TypeId
-                        if 'Sketch' in MObject2.TypeId:
-                            #print MObject2.TypeId
-                            if MObject2.Name not in sk_list:
-                                sk_list.append([MObject2.Name,MObject1.Name])
-                            #return MObject2.Name, MObject1.Name
-    #print 'loop closed'
-    return sk_list
-    
-###
 ##  getGridOrigin
 def getGridOrigin(dt):
     match = re.search(r'\(grid_origin (.+?) (.+?)\)', dt, re.MULTILINE|re.DOTALL)
