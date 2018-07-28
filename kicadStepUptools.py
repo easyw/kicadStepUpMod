@@ -329,6 +329,7 @@
 # adding Geometry and Constraints as a single instruction to avoid long delay with sketches
 # added Constrainator
 # allowed ArcOfCircle for Polyline Pads
+# roundrect pads for import footprint supported
 # most clean code and comments done
 
 ##todo
@@ -441,7 +442,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.3.3.2"  
+___ver___ = "7.3.3.3"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -4025,6 +4026,8 @@ def cfg_read_all():
         addConstraints='coincident'
     elif add_constraints_val.lower().find('none') !=-1:
         addConstraints='none'
+    else:
+        addConstraints='all'
     say('3D models prefix='+models3D_prefix)
     say('3D models prefix2='+models3D_prefix2)
     say('pcb color='+col)
@@ -8903,7 +8906,14 @@ def getPadsList(content):
             if j != '':
                 [x, y, rot] = re.search(r'\(at\s+([0-9\.-]*?)\s+([0-9\.-]*?)(\s+[0-9\.-]*?|)\)', j).groups()
                 pType= re.search(r'^.*?\s+([a-zA-Z_]+?)\s+', j).groups(0)[0]  # pad type - SMD/thru_hole/connect
-                pShape = re.search(r'^.+?\s+.+?\s+([a-zA-Z_]+?)\s+', j).groups(0)[0]  # pad shape - circle/rec/oval/trapezoid
+                pShape = re.search(r'^.+?\s+.+?\s+([a-zA-Z_]+?)\s+', j).groups(0)[0]  # pad shape - circle/rec/oval/trapezoid/roundrect
+                pRoundG = re.search(r'\(roundrect_rratio\s+([0-9\.-]+?)\)', j)
+                if pRoundG is not None:
+                    pRound = pRoundG.groups(0)[0]
+                else:
+                    pRound=None
+                #sayw(pShape)
+                #sayw(pRound)
                 [dx, dy] = re.search(r'\(size\s+([0-9\.-]+?)\s+([0-9\.-]+?)\)', j).groups(0)  #
                 try:
                     layers = re.search(r'\(layers\s+(.+?)\)', j).groups(0)[0]  #
@@ -8973,7 +8983,7 @@ def getPadsList(content):
                 ##
                 #say(data)
                 pads.append({'x': x, 'y': y, 'rot': rot, 'padType': pType, 'padShape': pShape, 'rx': drill_x, 'ry': drill_y, 'dx': dx, 'dy': dy, \
-                             'holeType': hType, 'xOF': xOF, 'yOF': yOF, 'layers': layers, 'points': pnts, 'anchor': anchor})
+                             'holeType': hType, 'xOF': xOF, 'yOF': yOF, 'layers': layers, 'points': pnts, 'anchor': anchor, 'rratio': pRound})
 
     #say(pads)
     #
@@ -9336,8 +9346,10 @@ def createLine(x1, y1, x2, y2, width=0.01):
     
     return mainObj
 ###
-def addPadLong2(x, y, dx, dy, perc, typ, z_off, type=None):
+def addPadLong2(x, y, dx, dy, perc, typ, z_off, type=None, ratio=None):
               #pad center x,y pad dimension dx,dy, type, z offset
+    #if ratio is not None:
+    #    sayw(type);sayerr(ratio)
     dx=dx/2.
     dy=dy/2.
     curve = 90.
@@ -9350,6 +9362,10 @@ def addPadLong2(x, y, dx, dy, perc, typ, z_off, type=None):
             e = dx * perc / 100.
     else:  # mm
         e = perc
+    if ratio is not None:
+        #rratio=r1/min(sx,sy)
+        e = float(ratio) * 2.0 * min(dx,dy)
+        #sayerr(e)
     p1 = [x - dx + e, y - dy, z_off]
     p2 = [x + dx - e, y - dy, z_off]
     p3 = [x + dx, y - dy + e, z_off]
@@ -9381,7 +9397,7 @@ def addPadLong2(x, y, dx, dy, perc, typ, z_off, type=None):
         p12 = arcMidPoint(p8, p1, curve)
         points.append(Part.Arc(FreeCAD.Base.Vector(p8[0], p8[1], z_off), FreeCAD.Base.Vector(p12[0], p12[1], z_off), FreeCAD.Base.Vector(p1[0], p1[1], z_off)))
 
-    if dx==dy and type!= "rect": # "circle"
+    if dx==dy and type != "rect" and type != "roundrect": # "circle"
         r=dx
         obj=[Part.Circle(FreeCAD.Vector(x, y, z_off), FreeCAD.Vector(0, 0, 1), r).toShape()]
         obj=Part.Wire(obj) #maui evaluate FC0.17
@@ -9551,8 +9567,95 @@ def createPad2(x,y,sx,sy,dcx,dcy,dx,dy,type,layer):
         FreeCAD.ActiveDocument.recompute()
     return extr
 ###
-def createPad3(x,y,sx,sy,dcx,dcy,dx,dy,type,layer):
-    ##pad pos x,y; pad size x,y; drillcenter x,y; drill size x,y, type, layer
+def createPad(x,y,sx,sy,dcx,dcy,dx,dy,type,layer):
+    ##pad pos x,y; pad size x,y; drillcenter x,y; drill size x,y
+    z_offset=0
+    remove=1
+    if type=="oval":
+        perc=100
+        tp=0
+    else:
+        perc=0
+        tp=0
+    if layer=="top":
+        thick=-0.01
+        z_offset=0
+    else:
+        thick=0.01
+        z_offset=-1.6
+    #say(str(x)+"x "+str(y)+"y "+str(sx)+"sx "+str(sy)+"sy ")
+    #say(str(dcx)+"dcx "+str(dcy)+"dcy "+str(dx)+"dx "+str(dy)+"dy ")
+    mypad=addPadLong(x, y, sx, sy, perc, tp, z_offset)
+    Part.show(mypad)
+    FreeCAD.ActiveDocument.ActiveObject.Label="mypad"
+    pad_name=FreeCAD.ActiveDocument.ActiveObject.Name
+    FreeCAD.ActiveDocument.addObject("Part::Extrusion","Extrude_pad")
+    extrude_name=FreeCAD.ActiveDocument.ActiveObject.Name
+    FreeCAD.ActiveDocument.Extrude_pad.Base = FreeCAD.ActiveDocument.getObject(pad_name)
+    FreeCAD.ActiveDocument.Extrude_pad.Dir = (0,0,thick)
+    FreeCAD.ActiveDocument.Extrude_pad.Solid = (True)
+    FreeCAD.ActiveDocument.Extrude_pad.TaperAngle = (0)
+    FreeCADGui.ActiveDocument.getObject(pad_name).Visibility = False
+    FreeCAD.ActiveDocument.Extrude_pad.Label = 'mypad_solid'
+    extrude_pad_name=FreeCAD.ActiveDocument.ActiveObject.Name
+    #FreeCAD.ActiveDocument.recompute()
+    if dx!=0:
+        perc=100 #drill always oval
+        mydrill=addPadLong(dcx, dcy, dx, dy, perc, tp, z_offset)
+        # workaround FC 0.17 OCC 7
+        try:
+            if float(Part.OCC_VERSION.split('.')[0]) >= 7:
+                mydrill.reverse()
+        except:
+            pass
+        Part.show(mydrill)
+        FreeCAD.ActiveDocument.ActiveObject.Label="mydrill"
+        drill_name=FreeCAD.ActiveDocument.ActiveObject.Name
+        FreeCAD.ActiveDocument.addObject("Part::Extrusion","Extrude_d")
+        extrude_d_name=FreeCAD.ActiveDocument.ActiveObject.Name
+        FreeCAD.ActiveDocument.Extrude_d.Base = FreeCAD.ActiveDocument.getObject(drill_name)
+        FreeCAD.ActiveDocument.Extrude_d.Dir = (0,0,thick)
+        FreeCAD.ActiveDocument.Extrude_d.Solid = (True)
+        FreeCAD.ActiveDocument.Extrude_d.TaperAngle = (0)
+        FreeCADGui.ActiveDocument.getObject(drill_name).Visibility = False
+        FreeCAD.ActiveDocument.Extrude_d.Label = 'mydrill_solid'
+        extrude_drill_name=FreeCAD.ActiveDocument.ActiveObject.Name
+        #FreeCAD.ActiveDocument.recompute()
+
+        FreeCAD.activeDocument().addObject("Part::Cut","myCut")
+        cut_name=FreeCAD.ActiveDocument.ActiveObject.Name
+        FreeCAD.activeDocument().getObject(cut_name).Base = FreeCAD.activeDocument().Extrude_pad
+        FreeCAD.activeDocument().getObject(cut_name).Tool = FreeCAD.activeDocument().Extrude_d
+        FreeCADGui.activeDocument().Extrude_pad.Visibility=False
+        FreeCADGui.activeDocument().Extrude_d.Visibility=False
+        #FreeCADGui.ActiveDocument.getObject(cut_name).ShapeColor=FreeCADGui.ActiveDocument.Extrude.ShapeColor
+        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor =  (0.81,0.71,0.23) #(0.85,0.53,0.10)
+        FreeCADGui.ActiveDocument.ActiveObject.DisplayMode=FreeCADGui.ActiveDocument.Extrude_pad.DisplayMode
+        FreeCAD.ActiveDocument.recompute()
+        pad_d_name="TH_Pad"
+        FreeCAD.ActiveDocument.addObject('Part::Feature',pad_d_name).Shape=FreeCAD.ActiveDocument.ActiveObject.Shape
+        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor =  (0.81,0.71,0.23) #(0.85,0.53,0.10)
+        myObj=FreeCAD.ActiveDocument.getObject(pad_d_name)
+        if remove==1:
+            FreeCAD.ActiveDocument.removeObject(cut_name)
+            FreeCAD.ActiveDocument.removeObject(extrude_pad_name)
+            FreeCAD.ActiveDocument.removeObject(pad_name)
+            FreeCAD.ActiveDocument.removeObject(drill_name)
+            FreeCAD.ActiveDocument.removeObject(extrude_drill_name)
+        FreeCAD.ActiveDocument.recompute()
+    else:
+        FreeCAD.ActiveDocument.recompute()
+        pad_d_name="smdPad"
+        FreeCAD.ActiveDocument.addObject('Part::Feature',pad_d_name).Shape=FreeCAD.ActiveDocument.ActiveObject.Shape
+        myObj=FreeCAD.ActiveDocument.getObject(pad_d_name)
+        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor =  (0.81,0.71,0.23) #(0.85,0.53,0.10)
+        FreeCAD.ActiveDocument.removeObject(extrude_pad_name)
+        FreeCAD.ActiveDocument.removeObject(pad_name)
+        FreeCAD.ActiveDocument.recompute()
+    return myObj
+###
+def createPad3(x,y,sx,sy,dcx,dcy,dx,dy,type,layer, ratio=None):
+    ##pad pos x,y; pad size x,y; drillcenter x,y; drill size x,y, type, layer, rratio
     z_offset=0
     remove=1
     if type=="oval" or type=="circle":
@@ -9569,7 +9672,7 @@ def createPad3(x,y,sx,sy,dcx,dcy,dx,dy,type,layer):
         z_offset=-1.6
     #say(str(x)+"x "+str(y)+"y "+str(sx)+"sx "+str(sy)+"sy ")
     #say(str(dcx)+"dcx "+str(dcy)+"dcy "+str(dx)+"dx "+str(dy)+"dy ")
-    mypad=addPadLong2(x, y, sx, sy, perc, tp, z_offset, type)
+    mypad=addPadLong2(x, y, sx, sy, perc, tp, z_offset, type, ratio)
     Part.show(mypad)
     FreeCAD.ActiveDocument.ActiveObject.Label="mypad"
     pad_name=FreeCAD.ActiveDocument.ActiveObject.Name
@@ -10352,6 +10455,7 @@ def routineDrawFootPrint(content,name):
         #   pads.append({'x': x, 'y': y, 'rot': rot, 'padType': pType, 'padShape': pShape, 'rx': drill_x, 'ry': drill_y, 'dx': dx, 'dy': dy, 'holeType': hType, 'xOF': xOF, 'yOF': yOF, 'layers': layers})
         pType = pad['padType']
         pShape = pad['padShape']
+        pRratio = pad['rratio']
         xs = pad['x'] #+ X1
         ys = pad['y'] #+ Y1
         dx = pad['dx']
@@ -10416,7 +10520,8 @@ def routineDrawFootPrint(content,name):
                 #print TopPadList
                 #stop
                 else:
-                    mypad=createPad3(x1, y1, dx, dy, xs,ys,rx,ry,pShape,'top')
+                    #mypad=createPad3(x1, y1, dx, dy, xs,ys,rx,ry,pShape,'top')
+                    mypad=createPad3(x1, y1, dx, dy, xs,ys,rx,ry,pShape,'top',pRratio)
                 ##pad pos x,y; pad size x,y; drillcenter x,y; drill size x,y, layer
                 obj=mypad
                 if rot!=0:
@@ -10439,7 +10544,7 @@ def routineDrawFootPrint(content,name):
                             perc=100
                         mypad2=createPad3(x1, y1, dx, dy, xs,ys,rx,ry,anchor,'bot')
                 else:
-                    mypad=createPad3(x1, y1, dx, dy, xs,ys,rx,ry,pShape,'bot')
+                    mypad=createPad3(x1, y1, dx, dy, xs,ys,rx,ry,pShape,'bot',pRratio)
                 ##pad pos x,y; pad size x,y; drillcenter x,y; drill size x,y, layerobj=mypad
                 obj=mypad
                 if rot!=0:
@@ -10454,7 +10559,7 @@ def routineDrawFootPrint(content,name):
             #print pShape
             #stop
             hole_tp=hType.strip()
-            sayw(hole_tp)
+            #sayw(hole_tp)
             obj=createHole2(xs,ys,rx,ry,hole_tp) #need to be separated instructions
             ##obj=createHole2(xs,ys,rx,ry,pShape) #need to be separated instructions
             #say(HoleList)
