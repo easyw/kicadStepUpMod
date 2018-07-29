@@ -330,6 +330,7 @@
 # added Constrainator
 # allowed ArcOfCircle for Polyline Pads
 # roundrect pads for import footprint supported
+# assigned combobox to defined colors
 # most clean code and comments done
 
 ##todo
@@ -442,7 +443,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.3.3.3"  
+___ver___ = "7.3.3.4"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -2672,18 +2673,32 @@ def exportVRMLmaterials(objects, filepath):
             shape_col=obj.color[:-1] #remove last item
             #say(shape_col)
             if shape_col not in color_list:
+                #sayw(shape_col);say('not found')
+                idc=0;material_index=0
+                for mat_diff_col in material_properties_diffuse:
+                    #say(mat_diff_col)
+                    delta_col=0.01
+                    if ((abs(shape_col[0]-mat_diff_col[0])<delta_col) and (abs(shape_col[1]-mat_diff_col[1])<delta_col)\
+                        and (abs(shape_col[2]-mat_diff_col[2])<delta_col)):
+                        #sayw('found a match')
+                        material_index=idc
+                        #stop
+                    idc+=1
                 ## pal = QtGui.QPalette()
                 ## bgc = QtGui.QColor(shape_col[0]*255,shape_col[1]*255, shape_col[2]*255)
                 ## pal.setColor(QtGui.QPalette.Base, bgc)
                 ## ui.plainTextEdit.viewport().setPalette(pal)
                 ui.plainTextEdit.setStyleSheet("#plainTextEdit {background-color:rgb("+str(shape_col[0]*255)+","+str(shape_col[1]*255)+","+str(shape_col[2]*255)+");}") 
                 ui.plainTextEdit_2.setStyleSheet("#plainTextEdit_2 {background-color:rgb("+str(shape_col[0]*255)+","+str(shape_col[1]*255)+","+str(shape_col[2]*255)+");}") 
+                ui.comboBox.setCurrentIndex(material_index)
                 #ui.comboBox.clear()
                 color_list.append(shape_col)
                 index_color=index_color+1
                 #say(color_list)
                 #ui.comboBox.addItems(color_list)
                 if Materials:
+                    ## material_index=material_properties_names.index(color_list_mat[col_index])
+                    ## ui.comboBox.setCurrentIndex(index_color)
                     reply=Dialog.exec_()
                     #Dialog.exec_()
                     #say(reply)
@@ -2694,6 +2709,10 @@ def exportVRMLmaterials(objects, filepath):
                 color_list_mat.append(material)
                 #say(material)
             #else:
+            #    sayw(shape_col);say('Found!')
+            #    col_index=color_list.index(shape_col)
+            #    ui.plainTextEdit.setStyleSheet("#plainTextEdit {background-color:rgb("+str(shape_col[0]*255)+","+str(shape_col[1]*255)+","+str(shape_col[2]*255)+");}") 
+            #    ui.comboBox.setCurrentIndex(col_index)
             #say("searching")
             col_index=color_list.index(shape_col)
             #say(color_list_mat[col_index])
