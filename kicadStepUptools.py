@@ -443,7 +443,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.3.3.4"  
+___ver___ = "7.3.3.5"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -2675,13 +2675,15 @@ def exportVRMLmaterials(objects, filepath):
             if shape_col not in color_list:
                 #sayw(shape_col);say('not found')
                 idc=0;material_index=0
+                found_mat=False
                 for mat_diff_col in material_properties_diffuse:
                     #say(mat_diff_col)
                     delta_col=0.01
                     if ((abs(shape_col[0]-mat_diff_col[0])<delta_col) and (abs(shape_col[1]-mat_diff_col[1])<delta_col)\
-                        and (abs(shape_col[2]-mat_diff_col[2])<delta_col)):
+                        and (abs(shape_col[2]-mat_diff_col[2])<delta_col)) and not found_mat:
                         #sayw('found a match')
                         material_index=idc
+                        found_mat=True
                         #stop
                     idc+=1
                 ## pal = QtGui.QPalette()
