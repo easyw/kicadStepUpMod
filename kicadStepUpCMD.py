@@ -26,7 +26,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints
 
-__ksuCMD_version__='1.5.2'
+__ksuCMD_version__='1.5.3'
 
 precision = 0.1 # precision in spline or bezier conversion
 q_deflection = 0.02 # quasi deflection parameter for discretization
@@ -689,6 +689,30 @@ class ksuToolsDiscretize:
             sk_d=Draft.makeSketch(shapes)
 
 FreeCADGui.addCommand('ksuToolsDiscretize',ksuToolsDiscretize())
+##
+##
+class ksuToolsResetPlacement:
+    "ksu tools Reset Placement"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'resetPlacement.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksu Reset Placement" ,
+                     'ToolTip' : "Reset Placement for a Shape"}
+ 
+    def IsActive(self):
+        return True
+ 
+    def Activated(self):
+        # do something here...
+        sel = FreeCADGui.Selection.getSelection()
+        if len(sel) != 1:
+            reply = QtGui.QMessageBox.information(None,"Warning", "select one single object to Reset its Placement")
+            FreeCAD.Console.PrintError('select one single object to Reset its Placement\n')
+        else:
+            import kicadStepUptools
+            kicadStepUptools.routineResetPlacement(keepWB=True)
+
+FreeCADGui.addCommand('ksuToolsResetPlacement',ksuToolsResetPlacement())
 ##
 
 #####

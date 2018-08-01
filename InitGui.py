@@ -10,11 +10,11 @@
 #*  Kicad STEPUP (TM) is a TradeMark and cannot be freely useable           *
 #*                                                                          *
 
-ksu_wb_version='v 7.7.3'
+ksu_wb_version='v 7.7.4'
 global myurlKWB
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=128 #v7.7.3
+mycommitsKWB=129 #v7.7.4
 
 import FreeCAD, FreeCADGui, Part, os, sys
 import re, time
@@ -72,7 +72,7 @@ class ksuWB ( Workbench ):
                            "ksuToolsSimplifySketck", "ksuToolsConstrainator", "ksuToolsDiscretize","ksuToolsFootprintGen"])
         self.appendToolbar("ksu Helpers", ["ksuToolsTransparencyToggle", "ksuToolsHighlightToggle",\
                             "ksuToolsVisibilityToggle", "ksuToolsStepImportModeSTD", "ksuToolsStepImportModeComp",\
-                            "ksuToolsCopyPlacement", "ksuToolsAddToTree", "ksuToolsRemoveFromTree", "ksuToolsTurnTable"])
+                            "ksuToolsCopyPlacement", "ksuToolsResetPlacement", "ksuToolsAddToTree", "ksuToolsRemoveFromTree", "ksuToolsTurnTable"])
         #self.appendMenu("ksu Tools", ["ksuTools","ksuToolsEdit"])
         self.appendMenu("ksu Tools", ["ksuTools"])
         self.appendMenu(["ksu Tools", "Demo"], submenu)

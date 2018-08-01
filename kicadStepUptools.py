@@ -443,7 +443,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.3.3.5"  
+___ver___ = "7.3.3.6"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -7548,11 +7548,12 @@ def routineT_XYZ(axe,v):
         #QtGui.QMessageBox.information(None,"Info ...","Select ONE single part object !\r\n"+"\r\n")
 ###  end TranslateXYZ
 
-def routineResetPlacement():
+def routineResetPlacement(keepWB=None):
     objs=[]
     if "Assembly2Workbench" not in FreeCADGui.activeWorkbench().name():
         if "PartWorkbench" not in FreeCADGui.activeWorkbench().name():
-            FreeCADGui.activateWorkbench("PartWorkbench")
+            if keepWB is None:
+                FreeCADGui.activateWorkbench("PartWorkbench")
     #FreeCADGui.SendMsgToActiveView("ViewFit")
     ##FreeCADGui.activeDocument().activeView().viewTop()
     doc = FreeCAD.ActiveDocument
