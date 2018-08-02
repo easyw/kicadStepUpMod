@@ -444,7 +444,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.3.3.7"  
+___ver___ = "7.3.3.8"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -14531,6 +14531,7 @@ def PushFootprint():
                             if 'Ref' in o.Label or 'Val' in o.Label:
                                 FreeCADGui.Selection.addSelection(o)
                         ## checking Pads_Poly for ArcOfCircle to be discretized
+                        to_discretize=False
                         if 'Pads_Poly' in o.Label: 
                             for g in o.Geometry:
                                 if 'ArcOfCircle' in str(g):
@@ -14540,6 +14541,7 @@ def PushFootprint():
                                 sk_to_discr.append(o)
                                 FreeCADGui.Selection.removeSelection(o)
                 else:
+                    to_discretize=False
                     if 'Pads_Poly' in sel[0].Label: 
                         for g in sel[0].Geometry:
                             if 'ArcOfCircle' in str(g):
