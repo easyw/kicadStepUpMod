@@ -331,6 +331,7 @@
 # allowed ArcOfCircle for Polyline Pads
 # roundrect pads for import footprint supported
 # assigned combobox to defined colors
+# improved generation of complex footprint with arcs
 # most clean code and comments done
 
 ##todo
@@ -443,7 +444,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.3.3.6"  
+___ver___ = "7.3.3.7"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -14551,16 +14552,27 @@ def PushFootprint():
                     ws=sk.Shape.copy()
                     #Part.show(ws)    
                     wn=[]
-                    q_deflection = 0.005
+                    q_deflection = 0.005 #0.02 ##0.005
+                    wnc=[]
                     for e in ws.Edges:
                         if hasattr(e.Curve,'Radius'):
                             if not e.Closed:  # Arc and not Circle
                                 wn.append(Part.makePolygon(e.discretize(QuasiDeflection=q_deflection)))
                             else:
-                                wn.append(Part.Wire(e))
+                                #wn.append(Part.Wire(e))
+                                wnc.append(Part.Wire(e))
+                                sayw('added circle pad')
                         else:
                             wn.append(Part.Wire(e))
-                    sk_d=Draft.makeSketch(wn)
+                    #sk_d=Draft.makeSketch(wn)
+                    edgs=[]
+                    for s in wn:
+                        for e in s.Edges:
+                            edgs.append(e)
+                    wns = Part.Wire(Part.__sortEdges__(edgs))
+                    #Part.show(wnc[0])
+                    #print (wns);print(wnc[0])
+                    sk_d=Draft.makeSketch([wns,wnc[0]])
                     sk_d.Label=sk.Label+'_'
                     FreeCADGui.Selection.addSelection(sk_d)
                     sk_temp.append(sk_d)
@@ -14589,10 +14601,11 @@ def PushFootprint():
                     last_fp_path=os.path.dirname(name)
                     start_time=current_milli_time()
                     export_footprint(name)
-                    for s in sk_temp:
-                        FreeCAD.ActiveDocument.removeObject(s.Name)
                     for s in sk_to_discr:
                         FreeCADGui.Selection.addSelection(s)
+                if not testing:
+                    for s in sk_temp:
+                        FreeCAD.ActiveDocument.removeObject(s.Name)
                     #else:
                     #    msg="""Save to <b>an EXISTING KiCad pcb file</b> to update your Edge!"""
                     #    say_warning(msg)
