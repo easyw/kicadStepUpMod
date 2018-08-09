@@ -444,7 +444,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.3.3.8"  
+___ver___ = "7.3.3.9"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -3195,6 +3195,8 @@ def go_export(fPathName):
         objs = []
         check_AP()
         sel = FreeCADGui.Selection.getSelection()
+        for obj in sel:
+            FreeCADGui.Selection.removeSelection(obj)
         wrl_selected=False
         for obj in sel:
             if not 'App::VRMLObject' in obj.TypeId:
