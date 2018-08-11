@@ -332,6 +332,7 @@
 # roundrect pads for import footprint supported
 # assigned combobox to defined colors
 # improved generation of complex footprint with arcs
+# partially implemented Circle Geometry primitive
 # most clean code and comments done
 
 ##todo
@@ -444,7 +445,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.3.3.9"  
+___ver___ = "7.3.4.0"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -8937,6 +8938,16 @@ def getPadsList(content):
                     pRound = pRoundG.groups(0)[0]
                 else:
                     pRound=None
+                #pCircleG = re.search(r'\(gr_circle+.+?\)\)', j, re.MULTILINE|re.DOTALL)   #re.search(r'\(gr_circle\s.+(?=\)\)$)', j)  #(?<=^startstr).+(?=stopstr$)
+                pCircleG = re.search(r'(\(gr_circle)\s+(.+?)\)\)', j) #, re.MULTILINE|re.DOTALL)   #re.search(r'\(gr_circle\s.+(?=\)\)$)', j)  #(?<=^startstr).+(?=stopstr$)
+                #print(pCircleG);print(j);stop
+                if pCircleG is not None:
+                    pCircleG = pCircleG.groups(0)[1].split(')')
+                    pCircleG[1]=pCircleG[1].lstrip(' ')
+                    pCircleG[2]=pCircleG[2].lstrip(' ')
+                    #say(pCircleG);stop
+                else:
+                    pCircleG=None                
                 #sayw(pShape)
                 #sayw(pRound)
                 [dx, dy] = re.search(r'\(size\s+([0-9\.-]+?)\s+([0-9\.-]+?)\)', j).groups(0)  #
@@ -9008,7 +9019,7 @@ def getPadsList(content):
                 ##
                 #say(data)
                 pads.append({'x': x, 'y': y, 'rot': rot, 'padType': pType, 'padShape': pShape, 'rx': drill_x, 'ry': drill_y, 'dx': dx, 'dy': dy, \
-                             'holeType': hType, 'xOF': xOF, 'yOF': yOF, 'layers': layers, 'points': pnts, 'anchor': anchor, 'rratio': pRound})
+                             'holeType': hType, 'xOF': xOF, 'yOF': yOF, 'layers': layers, 'points': pnts, 'anchor': anchor, 'rratio': pRound, 'geomC':pCircleG})
 
     #say(pads)
     #
@@ -10349,6 +10360,41 @@ def routineDrawFootPrint_old(content,name):  #for FC = 0.15
     #pads_found=getPadsList(content)
 
 ###
+def createGeomC(cx, cy, radius, layer, width):
+    #createGeomC(Gcx, Gcy, GRad,'top', Gw)
+    if layer == 'top':
+    #if top==True:
+        thick=-0.01
+        z_offset=0
+    else:
+        thick=0.01
+        z_offset=-1.6
+    bv = Base.Vector
+    circ = Part.makeCircle(radius+width/2, bv(cx,cy,0))    
+    mw = Part.Wire(circ.Edges)
+    myp= Part.Face(mw)
+    #Part.show(mypad)
+    circ = Part.makeCircle(radius-width/2, bv(cx,cy,0))    
+    mw2 = Part.Wire(circ.Edges)
+    myp2 = Part.Face(mw2)
+    mypad=myp.cut(myp2)
+    Part.show(mypad)
+    FreeCAD.ActiveDocument.ActiveObject.Label="mypad"
+    pad_name=FreeCAD.ActiveDocument.ActiveObject.Name
+    #face = Part.Face(mypad)
+    extr = mypad.extrude(FreeCAD.Vector(0,0,thick))
+    #Part.show(extr)
+    #FreeCAD.ActiveDocument.ActiveObject.Label="smd_pad"
+    FreeCAD.ActiveDocument.removeObject(pad_name)
+    FreeCAD.ActiveDocument.recompute()
+
+    #extr = sface.extrude(FreeCAD.Vector(0,0,-.01))
+    #Part.show(extr)
+    #stop
+    
+    return extr
+    
+
 def createPoly(x, y, sx, sy, dcx,dcy,dx,dy,pShape, layer, poly_points):
     #createPad3(x1, y1, dx, dy, xs,  ys,rx,ry,pShape,'top')
     #createPad3(x,  y,  sx,sy,  dcx,dcy,dx,dy,type,layer):
@@ -10481,6 +10527,7 @@ def routineDrawFootPrint(content,name):
         pType = pad['padType']
         pShape = pad['padShape']
         pRratio = pad['rratio']
+        pGeomC = pad['geomC']
         xs = pad['x'] #+ X1
         ys = pad['y'] #+ Y1
         dx = pad['dx']
@@ -10530,7 +10577,7 @@ def routineDrawFootPrint(content,name):
             if top==True:
                 #mypad=addPadLong(x1, y1, dx, dy, perc, 0, 0)
                 mypad2=None
-                if pShape=='custom':
+                if pShape=='custom' and pGeomC is None:
                     #sayw(pnts.groups(0)[0].split('(xy'))
                     poly_points=pnts.groups(0)[0].split('(xy')[1:]
                     mypad=createPoly(x1, y1, dx, dy, xs,ys,rx,ry,pShape,'top', poly_points)
@@ -10542,7 +10589,24 @@ def routineDrawFootPrint(content,name):
                         #Part.show(mypad2)
                         #print anchor
                         #stop
-                #print TopPadList
+                elif pShape=='custom' and pGeomC is not None:
+                    #say(pGeomC)
+                    Gc=pGeomC[0].split(' ')
+                    Gcx=float(Gc[1])-x1;Gcy=float(Gc[2])-y1
+                    Gr=pGeomC[1].split(' ')
+                    GRad=float(Gr[1])-float(Gc[1])
+                    Gw=pGeomC[2].split(' ')
+                    Gw=float(Gw[1])
+                    #print Gcx,Gcy,GRad,Gw
+                    mypad=createGeomC(Gcx, Gcy, GRad,'top', Gw)
+                    if anchor is not None:
+                        if anchor[0]=="circle":
+                            perc=100
+                        #print 'anchor ',anchor[0]
+                        mypad2=createPad3(x1, y1, dx, dy, xs,ys,rx,ry,anchor,'top')
+                        #Part.show(mypad2)
+                        
+                    #print TopPadList
                 #stop
                 else:
                     #mypad=createPad3(x1, y1, dx, dy, xs,ys,rx,ry,pShape,'top')
@@ -14526,7 +14590,8 @@ def PushFootprint():
                     for o in FreeCAD.ActiveDocument.Objects:
                         if 'F_Silks' in o.Label or 'F_Fab' in o.Label or 'F_CrtYd' in o.Label \
                                or 'Pads_TH' in o.Label or 'Pads_NPTH' in o.Label or 'Edge_Cuts' in o.Label\
-                               or 'Pads_Round_Rect' in o.Label or 'Pads_Poly' in o.Label or 'FZ_' in o.Label:
+                               or 'Pads_Round_Rect' in o.Label or 'Pads_Poly' in o.Label or 'FZ_' in o.Label\
+                               or 'Pads_Geom' in o.Label:
                             FreeCADGui.Selection.addSelection(o)
                         if hasattr(o,"LabelText"):
                             sayerr(o.LabelText)
@@ -14889,7 +14954,7 @@ def export_footprint(fname=None):
                         val_fsize='1.0 1.0'; val_fthick='0.15'
         offset=[0,0]
         drills=[];psmd=[];pth=[];npth=[]
-        pply=[];prrect=[]
+        pply=[];prrect=[];pgeom=[];pgeomG=[]
         pads_TH_SMD=[];pads_NPTH=[]
         fzply=[];edge_thick=0.
         #edge_thick=0.15 #; lyr='F.SilkS'
@@ -14912,7 +14977,7 @@ def export_footprint(fname=None):
         ## import kicadStepUptools; reload(kicadStepUptools)
         
         for border in sanitized_edge_list:
-            #print border
+            #print (border)
             lyr=border[(len(border)-1):][0]
             if 'CrtYd' in lyr:
                 edge_thick=float(lyr.split('_')[2])
@@ -14958,14 +15023,31 @@ def export_footprint(fname=None):
                 edge_thick=0.
                 lyr=u'PadsAll'
                 pads_TH_SMD.append(border)
-            
+            elif 'Pads_Geom' in lyr:
+                edge_thick=float(lyr.split('_')[2])
+                #print (lyr)
+                sk = FreeCAD.ActiveDocument.getObjectsByLabel(lyr)[0]
+                for g in sk.Geometry:
+                    if g.Construction:
+                        if 'Circle' in type(g).__name__ and not 'ArcOfCircle' in type(g).__name__:
+                            sk_ge=g.toShape()  #needed to fix some issue on sketch geometry building
+                            pgeomG.append([
+                                'circle',
+                                sk_ge.Edges[0].Curve.Radius,
+                                sk_ge.Edges[0].Curve.Center.x,
+                                sk_ge.Edges[0].Curve.Center.y,
+                                sk.Label
+                            ])
+                #lyr=u'Pads_Geom'
+                pgeom.append(border)
+                print (pgeom);print(pgeomG)
             #sayw(prrect); sayw(pply)
             #sayw(pth)
             
             #if (lyr != 'Pads_SMD' and lyr != 'Pads_TH' and lyr != 'Drills' and lyr != 'NPTH'\
             if ('Pads_SMD' not in lyr and 'Pads_TH' not in lyr and 'Drills' not in lyr and 'NPTH' not in lyr \
                                  and 'Pads_Poly' not in lyr and 'Pads_Round_Rect' not in lyr and 'PadsAll' not in lyr)\
-                                 and 'FZ_' not in lyr:
+                                 and 'FZ_' not in lyr and 'Pads_Geom' not in lyr:
                 #print border, ' BORDER'                                                  #
                 #if len (border)>0:
                 new_border=new_border+os.linesep+createFp(border,offset, lyr, edge_thick)
@@ -15064,6 +15146,31 @@ def export_footprint(fname=None):
             #print len(prrect)
             if len (pply)>0:
                 sayw('normalized Poly')
+            # ## impiling pads 
+            # for p in drl_found:
+            #     for e in p:
+            #         drills.append (e)
+            #print prrect
+            #npth=[]
+            #npth=pads_NPTH
+            #print len(drills)
+            #print psmd
+            #stop
+        ## normalizing Geom pads
+        if len(pgeomG) >0:
+            pth_ordered=collect_pads(pgeomG) #pads_all)  ## pads normalized with sequence of segments
+            #sayerr(pth_ordered)
+            ## impiling pads 
+            drl_found=collect_drl(pth_ordered)
+            print(drl_found)
+            pGm=[]
+            for p in pth_ordered:
+                for e in p:
+                    pGm.append (e)
+            #print len(prrect)
+            if len (pGm)>0:
+                sayw('normalized Geom')
+                print(pGm)
             # ## impiling pads 
             # for p in drl_found:
             #     for e in p:
@@ -15394,6 +15501,66 @@ def export_footprint(fname=None):
         if len (npad)>0:
             newcontent=newcontent+npad+os.linesep
             say('created FZ Poly pads')
+        ### ----------Geom reference Pad-------------------------------
+        #print psmd
+        pgeompad=[]
+        pgeompad=pGm
+        pad_nbr=1
+        nline=1
+        pgeompad_pos=[]
+        found_arc=False
+        #sayerr(polypad)
+        for circ_pad in pgeompad:
+            #sayerr(drill)
+            if circ_pad[0]=='circle':
+                #ret=createFpPad(drill,offset,u'Drills')
+                #sayw(circ_pad)
+                pgeompad_pos.append(createFpPad(circ_pad,offset,u'Drills'))
+            # elif drill[0]=='line' and not found_arc:
+            #     mdrills.append(drill)
+            #     if nline>=4:
+            #         #ndrill=ndrill+os.linesep+createFpPad(mdrills,offset,u'Drills')
+            #         drill_pos.append(createFpPad(mdrill,offset,u'Drills'))
+            #         nline=0
+            #         mdrills=[]
+            #     nline=nline+1
+            
+        #sayw(drill_pos)
+        ## drill_pos (cntX,cntY,sizeX,sizeY)
+        if len (pgeompad_pos)>0:
+            #newcontent=newcontent+os.linesep+')'+os.linesep+u' '       
+            sayw ('collected geometry pads centers and positions')
+            sayw(pgeompad_pos)
+        ### ----------Primitive Geometry-------------------------------
+        ## only Circle supported ATM
+        #polypad_pos=[]  ### TBC polypad inside poly sketch
+        #sayerr(pply)
+        #sayerr(polypad_pos)
+        npad=u''
+        mpad=[]
+        nline=1
+        pad_nbr=1
+        for pad in pgeom:
+            #sayerr(pad)
+            #if pad[0]=='circle':
+            #    npad=npad+os.linesep+createFpPad(pad,offset,u'NPTH', drill_pos)
+            if pad[0]=='line':
+                sayw('line not suported')
+            if pad[0]=='circle':
+                #print npad
+                #print 'mpad';print mpad
+                mpad.append(pad)
+                npad=npad+os.linesep+createFpPad(mpad,offset,u'Pads_Geom', pgeompad_pos)
+                nline=1
+                mpad=[]
+            #nline=nline+1
+        #print npad        
+        
+        #print 'len pad '+str(len(npad))
+        #print newcontent
+        if len (npad)>0:
+            newcontent=newcontent+npad+os.linesep
+            say('created Geom pads')
         ### ---------- wrtiting file --------------------
         newcontent=newcontent+')'+os.linesep+u' '       
         with codecs.open(fpath,'w', encoding='utf-8') as ofile:
@@ -16416,6 +16583,38 @@ def createFpPad(pad,offset,tp, _drills=None):
             # pad_nbr=pad_nbr+1
             # say(pad);sayw(pdl)
             # return pdl
+            return pad_ref
+    elif tp=='Pads_Geom':
+        found_drill=False
+        wr=[]
+        if len(_drills)>0:
+            for d in _drills:
+                #print d
+                sayw('drill found! '+str(d[0])+','+str(-1*d[1]))
+                found_drill=True
+                break
+        if pad[0][0]=='line':
+            sayw('line is not supported')
+        elif pad[0][0]=='circle':
+            print pad
+            wd_=float(pad[0][4].split('_')[2])
+            pts="      (gr_circle (center "+str(pad[0][2]-d[0])+" "+str(-1*pad[0][3]-d[1])+") (end "+str(pad[0][2]-d[0]+pad[0][1])+" "+str(-1*pad[0][3]-d[1])+") (width "+str(wd_)+"))"+os.linesep
+            say(pts)
+            if found_drill:
+                #pad_ref="  (pad "+str(pad_nbr)+" smd custom (at "+str(d[0])+" "+str(d[1])+" ) (size "+str(d[2])+" "+str(d[2])+") (layers F.Cu F.Paste F.Mask)"+os.linesep
+                pad_ref="  (pad # smd custom (at "+str(d[0])+" "+str(d[1])+" ) (size "+str(d[2])+" "+str(d[2])+") (layers F.Cu F.Paste F.Mask)"+os.linesep
+                pad_ref=pad_ref+"    (zone_connect 0)"+os.linesep
+                pad_ref=pad_ref+"    (options (clearance outline) (anchor circle))"+os.linesep
+                pad_ref=pad_ref+"    (primitives"+os.linesep
+                #pad_ref=pad_ref+"    (gr_poly (pts"+os.linesep
+                pad_ref=pad_ref+pts
+                pad_ref=pad_ref+"    ))"+os.linesep
+                #sayerr(pad_ref)
+                pad_nbr=pad_nbr+1
+                found_drill=False
+            else:
+                sayerr("missing reference pad for polyline pad")
+                stop
             return pad_ref
     else:
         return u''
