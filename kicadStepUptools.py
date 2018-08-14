@@ -333,6 +333,7 @@
 # assigned combobox to defined colors
 # improved generation of complex footprint with arcs
 # partially implemented Circle Geometry primitive
+# improved writing fp data 
 # most clean code and comments done
 
 ##todo
@@ -445,7 +446,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.3.4.0"  
+___ver___ = "7.3.4.1"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -15157,6 +15158,7 @@ def export_footprint(fname=None):
             #print psmd
             #stop
         ## normalizing Geom pads
+        pGm=[]
         if len(pgeomG) >0:
             pth_ordered=collect_pads(pgeomG) #pads_all)  ## pads normalized with sequence of segments
             #sayerr(pth_ordered)
@@ -16518,7 +16520,7 @@ def createFpPad(pad,offset,tp, _drills=None):
                         pts=pts+"         (xy "+str(lines[1]-d[0])+" "+str(-1*lines[2]-d[1])+")) (width 0))"+os.linesep
                     i=i+1
                 #pad_ref="  (pad "+str(pad_nbr)+" smd custom (at "+str(d[0])+" "+str(d[1])+" ) (size "+str(d[2])+" "+str(d[2])+") (layers F.Cu F.Paste F.Mask)"+os.linesep
-                pad_ref="  (pad # smd custom (at "+str(d[0])+" "+str(d[1])+" ) (size "+str(d[2])+" "+str(d[2])+") (layers F.Cu F.Paste F.Mask)"+os.linesep
+                pad_ref="  (pad # smd custom (at "+str("{0:.3f}".format(d[0]))+" "+str("{0:.3f}".format(d[1]))+" ) (size "+str("{0:.3f}".format(d[2]))+" "+str("{0:.3f}".format(d[2]))+") (layers F.Cu F.Paste F.Mask)"+os.linesep
                 pad_ref=pad_ref+"    (zone_connect 0)"+os.linesep
                 pad_ref=pad_ref+"    (options (clearance outline) (anchor circle))"+os.linesep
                 pad_ref=pad_ref+"    (primitives"+os.linesep
@@ -16597,12 +16599,12 @@ def createFpPad(pad,offset,tp, _drills=None):
             sayw('line is not supported')
         elif pad[0][0]=='circle':
             print pad
-            wd_=float(pad[0][4].split('_')[2])
-            pts="      (gr_circle (center "+str(pad[0][2]-d[0])+" "+str(-1*pad[0][3]-d[1])+") (end "+str(pad[0][2]-d[0]+pad[0][1])+" "+str(-1*pad[0][3]-d[1])+") (width "+str(wd_)+"))"+os.linesep
+            wd_="{0:.3f}".format(float(pad[0][4].split('_')[2]))
+            pts="      (gr_circle (center "+str("{0:.3f}".format(pad[0][2]-d[0]))+" "+str("{0:.3f}".format(-1*pad[0][3]-d[1]))+") (end "+str("{0:.3f}".format(pad[0][2]-d[0]+pad[0][1]))+" "+str("{0:.3f}".format(-1*pad[0][3]-d[1]))+") (width "+str(wd_)+"))"+os.linesep
             say(pts)
             if found_drill:
                 #pad_ref="  (pad "+str(pad_nbr)+" smd custom (at "+str(d[0])+" "+str(d[1])+" ) (size "+str(d[2])+" "+str(d[2])+") (layers F.Cu F.Paste F.Mask)"+os.linesep
-                pad_ref="  (pad # smd custom (at "+str(d[0])+" "+str(d[1])+" ) (size "+str(d[2])+" "+str(d[2])+") (layers F.Cu F.Paste F.Mask)"+os.linesep
+                pad_ref="  (pad # smd custom (at "+str("{0:.3f}".format(d[0]))+" "+str("{0:.3f}".format(d[1]))+" ) (size "+str(d[2])+" "+str(d[2])+") (layers F.Cu F.Paste F.Mask)"+os.linesep
                 pad_ref=pad_ref+"    (zone_connect 0)"+os.linesep
                 pad_ref=pad_ref+"    (options (clearance outline) (anchor circle))"+os.linesep
                 pad_ref=pad_ref+"    (primitives"+os.linesep

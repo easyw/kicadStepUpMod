@@ -10,11 +10,11 @@
 #*  Kicad STEPUP (TM) is a TradeMark and cannot be freely useable           *
 #*                                                                          *
 
-ksu_wb_version='v 7.7.5'
+ksu_wb_version='v 7.7.6'
 global myurlKWB
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=133 #v7.7.5
+mycommitsKWB=134 #v7.7.6
 
 import FreeCAD, FreeCADGui, Part, os, sys
 import re, time
@@ -61,6 +61,7 @@ class ksuWB ( Workbench ):
                    'footprint-template.FCStd', 'footprint-Edge-template.FCStd', 'footprint-template-roundrect-polylines.FCStd',\
                    'footprint-RF-antenna.FCStd', 'footprint-RF-antenna-w-solder-Mask.FCStd', 'RF-antenna-dxf.dxf', \
                    'complex-Polyline-footprint.FCStd', 'footprint-complex-arc-pads.FCStd', \
+                   'footprint-SPU0410LR5H.FCStd',\
                    'kicadStepUp-cheat-sheet.pdf', 'kicad-3D-to-MCAD.pdf', 'Generating-a-KiCAD-footprint-and-Model-from-3D-Step-Data.pdf' ]
         dirs = self.ListDemos()
 
