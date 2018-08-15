@@ -446,7 +446,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "7.3.4.1"  
+___ver___ = "7.3.4.2"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -4433,7 +4433,10 @@ def Display_info(blacklisted_models):
     else:
         new_pos_x=board_base_point_x
         new_pos_y=board_base_point_y
-    msg+="<br>Board Placed @ "+"{0:.3f}".format(new_pos_x)+";"+"{0:.3f}".format(new_pos_y)+";0.0"
+    if (grid_orig==1):
+        msg+="<br>Board Placed @ "+"{0:.3f}".format(board_base_point_x)+";"+"{0:.3f}".format(board_base_point_y)+";0.0"
+    else:
+        msg+="<br>Board Placed @ "+"{0:.3f}".format(new_pos_x)+";"+"{0:.3f}".format(new_pos_y)+";0.0"
     msg+="<br>kicad pcb pos: ("+"{0:.3f}".format(real_board_pos_x)+";"+"{0:.3f}".format(real_board_pos_y)+";"+"{0:.2f}".format(0)+")"
     if (bbox_all==1) or (bbox_list==1):
         msg+="<br>bounding box modules applied"
@@ -4448,7 +4451,10 @@ def Display_info(blacklisted_models):
     if addVirtual==0:
         msg+="<br><b>Virtual models skipped</b>"
     msg+="<br>kicad StepUp config file in:<br><b>"+ksu_config_fname+"</b><br>location."
-    say("Board Placed @ "+"{0:.3f}".format(new_pos_x)+";"+"{0:.3f}".format(new_pos_y)+";0.0")
+    if (grid_orig==1):
+        say("Board Placed @ "+"{0:.3f}".format(board_base_point_x)+";"+"{0:.3f}".format(board_base_point_y)+";0.0")
+    else:
+        say("Board Placed @ "+"{0:.3f}".format(new_pos_x)+";"+"{0:.3f}".format(new_pos_y)+";0.0")
     say("kicad pcb pos: ("+"{0:.3f}".format(real_board_pos_x)+";"+"{0:.3f}".format(real_board_pos_y)+";"+"{0:.2f}".format(0)+")")      
     if (show_messages==True):
         QtGui.QApplication.restoreOverrideCursor()
@@ -4849,7 +4855,10 @@ def Export2MCAD(blacklisted_model_elements):
     else:
         new_pos_x=board_base_point_x
         new_pos_y=board_base_point_y
-    msg+="<br>Board Placed @ "+"{0:.3f}".format(new_pos_x)+";"+"{0:.3f}".format(new_pos_y)+";0.0"
+    if (grid_orig==1):
+        msg+="<br>Board Placed @ "+"{0:.3f}".format(board_base_point_x)+";"+"{0:.3f}".format(board_base_point_y)+";0.0"
+    else:
+        msg+="<br>Board Placed @ "+"{0:.3f}".format(new_pos_x)+";"+"{0:.3f}".format(new_pos_y)+";0.0"
     msg+="<br>kicad pcb pos: ("+"{0:.3f}".format(real_board_pos_x)+";"+"{0:.3f}".format(real_board_pos_y)+";"+"{0:.2f}".format(0)+")"
     if (bbox_all==1) or (bbox_list==1):
         msg+="<br>bounding box modules applied"
@@ -4864,7 +4873,10 @@ def Export2MCAD(blacklisted_model_elements):
     if addVirtual==0:
         msg+="<br><b>Virtual models skipped</b>"
     msg+="<br>kicad StepUp config file in:<br><b>"+ksu_config_fname+"</b><br>location."
-    say("Board Placed @ "+"{0:.3f}".format(new_pos_x)+";"+"{0:.3f}".format(new_pos_y)+";0.0")
+    if (grid_orig==1):
+        say("Board Placed @ "+"{0:.3f}".format(board_base_point_x)+";"+"{0:.3f}".format(board_base_point_y)+";0.0")
+    else:
+        say("Board Placed @ "+"{0:.3f}".format(new_pos_x)+";"+"{0:.3f}".format(new_pos_y)+";0.0")
     say("kicad pcb pos: ("+"{0:.3f}".format(real_board_pos_x)+";"+"{0:.3f}".format(real_board_pos_y)+";"+"{0:.2f}".format(0)+")")    
     say_time()
     if (show_messages==True):
@@ -16598,7 +16610,7 @@ def createFpPad(pad,offset,tp, _drills=None):
         if pad[0][0]=='line':
             sayw('line is not supported')
         elif pad[0][0]=='circle':
-            print pad
+            print (pad)
             wd_="{0:.3f}".format(float(pad[0][4].split('_')[2]))
             pts="      (gr_circle (center "+str("{0:.3f}".format(pad[0][2]-d[0]))+" "+str("{0:.3f}".format(-1*pad[0][3]-d[1]))+") (end "+str("{0:.3f}".format(pad[0][2]-d[0]+pad[0][1]))+" "+str("{0:.3f}".format(-1*pad[0][3]-d[1]))+") (width "+str(wd_)+"))"+os.linesep
             say(pts)
