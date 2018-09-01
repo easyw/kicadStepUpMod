@@ -10,11 +10,11 @@
 #*  Kicad STEPUP (TM) is a TradeMark and cannot be freely useable           *
 #*                                                                          *
 
-ksu_wb_version='v 7.7.6'
+ksu_wb_version='v 7.8.0'
 global myurlKWB
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=135 #v7.7.6
+mycommitsKWB=136 #v7.8.0
 
 import FreeCAD, FreeCADGui, Part, os, sys
 import re, time
@@ -56,7 +56,7 @@ class ksuWB ( Workbench ):
         return "Gui::PythonWorkbench"
     
     def Initialize(self):
-        import kicadStepUpCMD
+        import kicadStepUpCMD, sys
         submenu = ['demo.kicad_pcb','d-pak.kicad_mod', 'demo-sketch.FCStd', 'demo.step',\
                    'footprint-template.FCStd', 'footprint-Edge-template.FCStd', 'footprint-template-roundrect-polylines.FCStd',\
                    'footprint-RF-antenna.FCStd', 'footprint-RF-antenna-w-solder-Mask.FCStd', 'RF-antenna-dxf.dxf', \
@@ -71,11 +71,21 @@ class ksuWB ( Workbench ):
                            "ksuToolsImport3DStep","ksuToolsExport3DStep","ksuToolsMakeUnion",\
                            "ksuToolsMakeCompound", "ksuToolsSimpleCopy", "ksuToolsDeepCopy", "ksuToolsCheckSolid", "ksuTools3D2D", "ksuTools2D2Sketch", "ksuTools2DtoFace",\
                            "ksuToolsSimplifySketck", "ksuToolsConstrainator", "ksuToolsDiscretize","ksuToolsFootprintGen"])
-        self.appendToolbar("ksu Helpers", ["ksuToolsTransparencyToggle", "ksuToolsHighlightToggle",\
+                           #, "ksuToolsPushMoved","ksuToolsSync3DModels"])
+        ksuTB = ["ksuToolsOpenBoard","ksuToolsPushPCB","ksuToolsPushMoved","ksuToolsSync3DModels","ksuAsm2Part",\
+                 "Separator","ksuToolsToggleTreeView","ksuRemoveTimeStamp","Separator","ksuToolsLoadFootprint","ksuToolsFootprintGen"]
+        #ksuTB.extend(["Separator","ksuToolsAligner","ksuToolsMover","ksuToolsCaliper"])
+        self.appendToolbar("ksu PushPull", ksuTB)
+        combined_path = '\t'.join(sys.path)
+        if 'Manipulator' in combined_path:
+            ksuDTB=["ksuToolsAligner","ksuToolsMover","ksuToolsCaliper","Separator","ksuToolsDefeaturingTools"]
+            self.appendToolbar("ksu Design Tools", ksuDTB)
+        self.appendToolbar("ksu Helpers", ["ksuToolsToggleTreeView", "ksuToolsTransparencyToggle", "ksuToolsHighlightToggle",\
                             "ksuToolsVisibilityToggle", "ksuToolsStepImportModeSTD", "ksuToolsStepImportModeComp",\
                             "ksuToolsCopyPlacement", "ksuToolsResetPlacement", "ksuToolsAddToTree", "ksuToolsRemoveFromTree", "ksuToolsTurnTable"])
         #self.appendMenu("ksu Tools", ["ksuTools","ksuToolsEdit"])
         self.appendMenu("ksu Tools", ["ksuTools"])
+        self.appendMenu("ksu PushPull", ["ksuToolsOpenBoard","ksuToolsPushPCB","ksuToolsPushMoved","ksuToolsSync3DModels","Separator","ksuToolsLoadFootprint","ksuToolsFootprintGen"])
         self.appendMenu(["ksu Tools", "Demo"], submenu)
         
         Log ("Loading ksuModule... done\n")
@@ -226,5 +236,3 @@ for curFile in dirs:
     FreeCADGui.addCommand(curFile, ksuExcDemo(curFile))
 
 FreeCADGui.addWorkbench(ksuWB)
-
-

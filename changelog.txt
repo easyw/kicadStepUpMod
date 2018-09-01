@@ -7,7 +7,7 @@ maintained in the same accuracy and aspect in STEP AP214 format. +
 The *kicad StepUp* maintains the usual way to work with kicad, but improves the process
 to work in a collaborative way with mechanical designers bringing near ECAD and MCAD environments. +
 With kicad StepUp you’ll get an exact representation of your physical board in Native 3D PCB
-v7.3.3.7 July 2018
+v8.1.0.3 August 2018
 
 please refer to
 kicadStepUp-starter-Guide.pdf
@@ -294,4 +294,8 @@ Changelog
 - roundrect pads for import footprint supported
 - assigned combobox to defined colors
 - improved generation of complex footprint with arcs
+- partially implemented Circle Geometry primitive
+- improved writing fp data 
+- push Moved 3D model(s) to kicad PCB
+- sync Reference in case of lost correct Label (import export STEP file with Links)
 - most clean code and comments done

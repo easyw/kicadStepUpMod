@@ -26,12 +26,22 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints
 
-__ksuCMD_version__='1.5.3'
+__ksuCMD_version__='1.5.4'
 
 precision = 0.1 # precision in spline or bezier conversion
 q_deflection = 0.02 # quasi deflection parameter for discretization
 
 reload_Gui=False#True
+
+a3 = False
+try:
+    from freecad.asm3 import assembly as asm
+    FreeCAD.Console.PrintWarning('A3 available\n')
+    a3 = True
+except:
+    FreeCAD.Console.PrintWarning('A3 not available\n')
+    a3 = False
+
 
 def reload_lib(lib):
     if (sys.version_info > (3, 0)):
@@ -474,6 +484,206 @@ class ksuToolsPushPCB:
 
 
 FreeCADGui.addCommand('ksuToolsPushPCB',ksuToolsPushPCB())
+##
+
+class ksuToolsPushMoved:
+    "ksu tools Push/Pull 3D moved model"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'PushMoved.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksu Push/Pull 3D moved model(s) to PCB" ,
+                     'ToolTip' : "Push/Pull 3D moved model(s) to PCB"}
+ 
+    def IsActive(self):
+        #if FreeCAD.ActiveDocument == None:
+        #    return False
+        #else:
+        #    return True
+        #import kicadStepUptools
+        return True
+ 
+    def Activated(self):
+        # do something here...
+        import kicadStepUptools
+        #if not kicadStepUptools.checkInstance():
+        #    reload( kicadStepUptools )
+        if reload_Gui:
+            reload_lib( kicadStepUptools )
+        #from kicadStepUptools import onPushPCB
+        #FreeCAD.Console.PrintWarning( 'active :)\n' )
+        kicadStepUptools.PushMoved()
+        # ppcb=kicadStepUptools.KSUWidget
+        # ppcb.onPushPCB()
+ 
+        #onPushPCB()
+        #import kicadStepUptools
+
+FreeCADGui.addCommand('ksuToolsPushMoved',ksuToolsPushMoved())
+##
+class ksuAsm2Part:
+    "ksu tools Push/Pull 3D moved model"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Assembly_To_Part.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksu Convert an Assembly (A3) to Part hierarchy" ,
+                     'ToolTip' : "Convert an Assembly (A3) to Part hierarchy"}
+ 
+    def IsActive(self):
+        if a3:
+            return True
+        else:
+            return False
+ 
+    def Activated(self):
+        # do something here...
+        # import kicadStepUptools
+        # if reload_Gui:
+        #     reload_lib( kicadStepUptools )
+        #from kicadStepUptools import onPushPCB
+        #FreeCAD.Console.PrintWarning( 'active :)\n' )
+        #kicadStepUptools.Asm2Part()
+        #Asm2Part()
+        import FreeCAD, FreeCADGui, Part
+        def Asm2Part(parentObj=None,doc=None,subname=''):
+            if doc is None:
+                # 'doc' allows you to copy object into another document.
+                # If not give, then use the current document.
+                doc = FreeCAD.ActiveDocument
+            if not parentObj:
+                # If no object is given, then obtain selection from all opened document
+                parentObj = []
+                for sel in FreeCADGui.Selection.getSelectionEx('*'):
+                    parentObj.append(sel.Object)
+                if not parentObj:
+                    return
+            if isinstance(parentObj,(tuple,list)):
+                if len(parentObj) == 1:
+                    copy = Asm2Part(parentObj[0],doc)
+                else:
+                    part = doc.addObject('App::Part','Part')
+                    for o in parentObj:
+                        copy = Asm2Part(o,doc)
+                        if copy:
+                            part.addObject(copy)
+                    copy = part
+                if copy:
+                    FreeCADGui.SendMsgToActiveView("ViewFit")
+                    copy.recompute(True)
+                return copy
+        
+            obj,matrix = parentObj.getSubObject(subname,1,FreeCAD.Matrix(),not subname)
+            if not obj:
+                return
+            # getSubObjects() is the API for getting child of a group. It returns a list
+            # of subnames, and the subname inside may contain more than one levels of
+            # hierarchy. Assembly uses this API to skip hierarchy to PartGroup.
+            subs = obj.getSubObjects()
+            if not subs:
+                # Non group object will return empty subs
+                shape = Part.getShape(obj,transform=False)
+                if shape.isNull():
+                    return
+                shape.transformShape(matrix,False,True)
+                copy = doc.addObject('Part::Feature',obj.Name)
+                copy.Label = obj.Label
+                copy.Shape = shape
+                copy.ViewObject.mapShapeColors(obj.Document)
+                return copy
+        
+            part = doc.addObject('App::Part',obj.Name)
+            part.Label = obj.Label
+            part.Placement = FreeCAD.Placement(matrix)
+            for sub in subs:
+                sobj,parent,childName,_ = obj.resolve(sub)
+                if not sobj:
+                    continue
+                copy = Asm2Part(obj,doc,sub)
+                if not copy:
+                    continue
+                vis = parent.isElementVisible(childName)
+                if vis < 0:
+                    copy.Visibility = sobj.Visibility
+                else:
+                    copy.Visibility = vis>0
+                part.addObject(copy)
+            return part
+        CopyOnNewDoc=True
+        sel = FreeCADGui.Selection.getSelectionEx()
+        if len(sel) == 1:
+            if 'App::LinkGroup' in sel[0].Object.TypeId:
+                if CopyOnNewDoc:
+                    doc_base=FreeCAD.ActiveDocument
+                    doc1 = FreeCAD.newDocument(doc_base.Name)
+                    doc1_Name = FreeCAD.ActiveDocument.Name
+                    FreeCAD.setActiveDocument(doc_base.Name)
+                    #sel = FreeCADGui.Selection.getSelectionEx()
+                    parentObj=[]
+                    parentObj.append(sel[0].Object)
+                    Asm2Part(parentObj,doc1)
+                    FreeCAD.setActiveDocument(doc1_Name)
+                else:
+                    Asm2Part()
+            else:
+                FreeCAD.Console.PrintWarning("select one Assembly to convert it to Part hierarchy")
+                FreeCAD.Console.PrintWarning('\n')
+                msg="""<b>select one Assembly to convert it to Part hierarchy</b>"""
+                msg1="Warning ..."
+                QtGui.QApplication.restoreOverrideCursor()
+                #RotateXYZGuiClass().setGeometry(25, 250, 500, 500)
+                diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Warning,
+                                        msg1,
+                                        msg)
+                diag.setWindowModality(QtCore.Qt.ApplicationModal)
+                diag.exec_()
+        else:
+            FreeCAD.Console.PrintWarning("select one Assembly to convert it to Part hierarchy")
+            FreeCAD.Console.PrintWarning('\n')
+            msg="""<b>select one Assembly to convert it to Part hierarchy</b>"""
+            msg1="Warning ..."
+            QtGui.QApplication.restoreOverrideCursor()
+            #RotateXYZGuiClass().setGeometry(25, 250, 500, 500)
+            diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Warning,
+                                    msg1,
+                                    msg)
+            diag.setWindowModality(QtCore.Qt.ApplicationModal)
+            diag.exec_()
+
+FreeCADGui.addCommand('ksuAsm2Part',ksuAsm2Part())
+
+##
+class ksuToolsSync3DModels:
+    "ksu tools Push/Pull 3D moved model"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Sync3Dmodels.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksu Sync 3D model(s) Ref & TimeStamps with PCB" ,
+                     'ToolTip' : "Sync 3D model(s) Ref & TimeStamps\nof the Selected 3D model with kicad PCB"}
+ 
+    def IsActive(self):
+        #if FreeCAD.ActiveDocument == None:
+        #    return False
+        #else:
+        #    return True
+        #import kicadStepUptools
+        return True
+ 
+    def Activated(self):
+        # do something here...
+        import kicadStepUptools
+        #if not kicadStepUptools.checkInstance():
+        #    reload( kicadStepUptools )
+        if reload_Gui:
+            reload_lib( kicadStepUptools )
+        #from kicadStepUptools import onPushPCB
+        #FreeCAD.Console.PrintWarning( 'active :)\n' )
+        kicadStepUptools.Sync3DModel()
+        # ppcb=kicadStepUptools.KSUWidget
+        # ppcb.onPushPCB()
+ 
+        #onPushPCB()
+        #import kicadStepUptools
+
+FreeCADGui.addCommand('ksuToolsSync3DModels',ksuToolsSync3DModels())
 ##
 
 # class ksuToolsEdit:
@@ -1716,6 +1926,236 @@ class ksuToolsCheckSolid:
 
 FreeCADGui.addCommand('ksuToolsCheckSolid',ksuToolsCheckSolid())
 
+#####
+def toggleAlly(tree, item, collapse):
+    if collapse == False:
+        tree.expandItem(item)
+    elif collapse == True:  
+        tree.collapseItem(item)
+    for i in range(item.childCount()):
+        print(item.child(i).text(0))
+        if 'Origin' not in item.child(i).text(0):
+            toggleAlly(tree, item.child(i), collapse)
+##
+
+
+class ksuToolsToggleTreeView:
+    "ksu tools Toggle Tree View"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'expand_all.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksu tools Expand/Collapse Tree View" ,
+                     'ToolTip' : "ksu tools Expand/Collapse Tree View"}
+ 
+    def IsActive(self):
+        return True
+ 
+    def Activated(self):
+        # do something here...
+        if FreeCADGui.Selection.getSelection():
+            ##
+            sel=FreeCADGui.Selection.getSelection()
+            ##
+            if len(sel)!=1:
+                    msg="Select one expandable tree object to be expanded/compressed!\n"
+                    reply = QtGui.QMessageBox.information(None,"Warning", msg)
+                    FreeCAD.Console.PrintWarning(msg)             
+            else:
+                import expTree;reload_lib(expTree)
+                expTree.toggle_Tree()
+        else:
+            #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
+            reply = QtGui.QMessageBox.information(None,"Warning", "Select one expandable tree object to be expanded/compressed!")
+            FreeCAD.Console.PrintWarning("Select one expandable tree object to be expanded/compressed!\n")             
+
+FreeCADGui.addCommand('ksuToolsToggleTreeView',ksuToolsToggleTreeView())
+
+#####
+class ksuToolsAligner:
+    "ksu tools Aligner"
+    
+    def GetResources(self):
+        mybtn_tooltip ="Manipulator tools \'Aligner\'"
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Align.svg') , # the name of a svg file available in the resources
+                     'MenuText': mybtn_tooltip ,
+                     'ToolTip' : mybtn_tooltip}
+ 
+    def IsActive(self):
+        combined_path = '\t'.join(sys.path)
+        if 'Manipulator' in combined_path:
+            return True
+        #else:
+        #    self.setToolTip("Grayed Tooltip!")
+        #    print(self.ObjectName)
+        #    grayed_tooltip="Grayed Tooltip!"
+        #    mybtn_tooltip=grayed_tooltip
+ 
+    def Activated(self):
+        # do something here...
+        combined_path = '\t'.join(sys.path)
+        if 'Manipulator' in combined_path:
+            import Aligner;reload_lib(Aligner)
+
+FreeCADGui.addCommand('ksuToolsAligner',ksuToolsAligner())
+
+#####
+class ksuToolsMover:
+    "ksu tools Mover"
+    
+    def GetResources(self):
+        mybtn_tooltip ="Manipulator tools \'Mover\'"
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Mover.svg') , # the name of a svg file available in the resources
+                     'MenuText': mybtn_tooltip ,
+                     'ToolTip' : mybtn_tooltip}
+ 
+    def IsActive(self):
+        combined_path = '\t'.join(sys.path)
+        if 'Manipulator' in combined_path:
+            return True
+        #else:
+        #    self.setToolTip("Grayed Tooltip!")
+        #    print(self.ObjectName)
+        #    grayed_tooltip="Grayed Tooltip!"
+        #    mybtn_tooltip=grayed_tooltip
+ 
+    def Activated(self):
+        # do something here...
+        combined_path = '\t'.join(sys.path)
+        if 'Manipulator' in combined_path:
+            import Mover;reload_lib(Mover)
+
+FreeCADGui.addCommand('ksuToolsMover',ksuToolsMover())
+#####
+class ksuToolsCaliper:
+    "ksu tools Caliper"
+    
+    def GetResources(self):
+        mybtn_tooltip ="Manipulator tools \'Caliper\'"
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Caliper.svg') , # the name of a svg file available in the resources
+                     'MenuText': mybtn_tooltip ,
+                     'ToolTip' : mybtn_tooltip}
+ 
+    def IsActive(self):
+        combined_path = '\t'.join(sys.path)
+        if 'Manipulator' in combined_path:
+            return True
+        #else:
+        #    self.setToolTip("Grayed Tooltip!")
+        #    print(self.ObjectName)
+        #    grayed_tooltip="Grayed Tooltip!"
+        #    mybtn_tooltip=grayed_tooltip
+ 
+    def Activated(self):
+        # do something here...
+        combined_path = '\t'.join(sys.path)
+        if 'Manipulator' in combined_path:
+            import Caliper;reload_lib(Caliper)
+
+FreeCADGui.addCommand('ksuToolsCaliper',ksuToolsCaliper())
+#####
+class ksuRemoveTimeStamp:
+    "ksu  Remove TimeStamp"
+    
+    def GetResources(self):
+        mybtn_tooltip ="Remove TimeStamp from Labels"
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'remove_TimeStamp.svg') , # the name of a svg file available in the resources
+                     'MenuText': mybtn_tooltip ,
+                     'ToolTip' : mybtn_tooltip}
+ 
+    def IsActive(self):
+        doc = FreeCAD.ActiveDocument
+        if doc is not None:
+            if FreeCADGui.Selection.getSelection():
+                sel=FreeCADGui.Selection.getSelection()
+                if len(sel)==1:        
+                    return True
+        #else:
+        #    self.setToolTip("Grayed Tooltip!")
+        #    print(self.ObjectName)
+        #    grayed_tooltip="Grayed Tooltip!"
+        #    mybtn_tooltip=grayed_tooltip
+ 
+    def Activated(self):
+        # removing TimeStamp ...
+        doc = FreeCAD.ActiveDocument
+        if FreeCADGui.Selection.getSelection():
+            sel=FreeCADGui.Selection.getSelection()
+            if len(sel)!=1:
+                msg="Select one tree object to remove its Label TimeStamps!\n"
+                reply = QtGui.QMessageBox.information(None,"Warning", msg)
+                FreeCAD.Console.PrintWarning(msg)             
+            else:
+                #msgBox = QtGui.QMessageBox()
+                #msgBox.setText("This will remove ALL TimeStamps from selection objects.\nIt cannot be ondone.")
+                #msgBox.setInformativeText("Do you want to continue?")
+                #msgBox.setStandardButtons(QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel)
+                #msgBox.setDefaultButton(QtGui.QMessageBox.Cancel)
+                ret = QtGui.QMessageBox.warning(None, ("Warning"),
+                               ("This will remove ALL TimeStamps from selection objects.\nDo you want to continue?"),
+                               QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel,
+                               QtGui.QMessageBox.Cancel)
+                #ret = msgBox.exec_()
+                if ret == QtGui.QMessageBox.Ok:
+                    for ob in sel:
+                    #for o in doc.Objects:
+                        #print (ob.Name,ob.Label,ob.TypeId)    
+                        if ob.TypeId == 'App::Part' or ob.TypeId == 'App::LinkGroup':
+                            o_list = ob.OutListRecursive
+                            for o in o_list:
+                                #print (o.Label)
+                                if (hasattr(o, 'Shape')) \
+                                        and ('Axis' not in o.Label and 'Plane' not in o.Label and 'Sketch' not in o.Label):
+                                    if o.Label.rfind('_') < o.Label.rfind('['):
+                                        ts = o.Label[o.Label.rfind('_')+1:o.Label.rfind('[')]
+                                        #print (len(ts))
+                                        if len(ts) == 8:
+                                            o.Label=o.Label[:o.Label.rfind('_')]
+                                    else:
+                                        ts = o.Label[o.Label.rfind('_')+1:]
+                                        #print (len(ts))
+                                        if len(ts) == 8:
+                                            o.Label=o.Label[:o.Label.rfind('_')]
+                                    #print (o.Label)
+                            for o in o_list:
+                                if ('App::Link' in o.TypeId):
+                                    o.Label = o.LinkedObject.Label
+                    FreeCAD.Console.PrintWarning('removed Time Stamps\n')
+                elif ret == QtGui.QMessageBox.Cancel:
+                    FreeCAD.Console.PrintMessage('Operation Aborted\n')                
+        else:
+            msg="Select one tree object to remove its Label TimeStamps!\n"
+            reply = QtGui.QMessageBox.information(None,"Warning", msg)
+            FreeCAD.Console.PrintWarning(msg)             
+
+FreeCADGui.addCommand('ksuRemoveTimeStamp',ksuRemoveTimeStamp())
+
+#####
+class ksuToolsDefeaturingTools:
+    "ksu tools DefeaturingTools"
+    
+    def GetResources(self):
+        mybtn_tooltip ="Defeaturing Tools from Defeaturing WorkBench"
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'DefeaturingTools.svg') , # the name of a svg file available in the resources
+                     'MenuText': mybtn_tooltip ,
+                     'ToolTip' : mybtn_tooltip}
+ 
+    def IsActive(self):
+        combined_path = '\t'.join(sys.path)
+        if 'Defeaturing' in combined_path:
+            return True
+        #else:
+        #    self.setToolTip("Grayed Tooltip!")
+        #    print(self.ObjectName)
+        #    grayed_tooltip="Grayed Tooltip!"
+        #    mybtn_tooltip=grayed_tooltip
+ 
+    def Activated(self):
+        # do something here...
+        combined_path = '\t'.join(sys.path)
+        if 'Defeaturing' in combined_path:
+            import DefeaturingTools;reload_lib(DefeaturingTools)
+
+FreeCADGui.addCommand('ksuToolsDefeaturingTools',ksuToolsDefeaturingTools())
 #####
 class ksuExcDemo:
     exFile = None
