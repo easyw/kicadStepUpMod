@@ -14,8 +14,8 @@
    viewBox="0 0 127.99999 128"
    id="svg4216"
    version="1.1"
-   inkscape:version="0.92.0 r15299"
-   sodipodi:docname="Center-Align.svg">
+   inkscape:version="0.92.3 (2405546, 2018-03-11)"
+   sodipodi:docname="Align.svg">
   <defs
      id="defs4218" />
   <sodipodi:namedview
@@ -26,15 +26,15 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="4.5410154"
-     inkscape:cx="68.26667"
+     inkscape:cx="-9.6894624"
      inkscape:cy="68.26667"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
-     inkscape:window-width="1536"
-     inkscape:window-height="801"
-     inkscape:window-x="-8"
-     inkscape:window-y="-8"
+     inkscape:window-width="2560"
+     inkscape:window-height="1361"
+     inkscape:window-x="-9"
+     inkscape:window-y="-9"
      inkscape:window-maximized="1"
      units="px"
      width="25.4px" />
@@ -56,21 +56,21 @@
      id="layer1"
      transform="translate(0,-924.3622)">
     <ellipse
-       style="display:inline;fill:#ffcc00;fill-rule:evenodd;stroke:#000000;stroke-width:0;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       style="display:inline;fill:#ffcc00;fill-rule:evenodd;stroke:#717171;stroke-width:2.27076674;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        id="path3341"
-       cx="58.974648"
-       cy="996.28784"
-       rx="58.08234"
-       ry="32.450863"
+       cx="56.927246"
+       cy="995.15234"
+       rx="55.641411"
+       ry="37.751869"
        inkscape:export-xdpi="45.450085"
        inkscape:export-ydpi="45.450085" />
     <ellipse
-       style="display:inline;fill:#b3b3b3;fill-rule:evenodd;stroke:#000000;stroke-width:0;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       style="display:inline;fill:#b3b3b3;fill-rule:evenodd;stroke:#696969;stroke-width:2.24999979;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        id="path3343"
-       cx="58.26918"
-       cy="996.28784"
-       rx="51.909184"
-       ry="26.983152"
+       cx="57.133698"
+       cy="995.56525"
+       rx="44.993061"
+       ry="27.705732"
        inkscape:export-xdpi="45.450085"
        inkscape:export-ydpi="45.450085" />
     <rect

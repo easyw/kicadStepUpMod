@@ -15,6 +15,12 @@ from PySide import QtGui
 from os.path import expanduser
 import difflib, re, time, datetime
 
+def decimals(f,n):
+    v = str(round(f,n))
+    if '.' in v:
+        if (len(v[v.find('.'):]) > n+1):
+            v = v[:len(v)-1]
+    return float(v)
 
 def truncate(f, n):
     '''Truncates/pads a float f to n decimal places without rounding'''
@@ -148,6 +154,18 @@ def expPos(doc=None):
                 line='-----------------------------------'
                 sketch_content.append(line+'\n')
                 print(line)
+            if o.Label == 'Pcb':
+                line='Pcb Volume -------------------'
+                sketch_content.append(line+'\n')
+                print(line)
+                vol = o.Shape.Volume
+                vol = decimals(vol,3)
+                line = 'Pcb Volume = ' + str(vol)
+                sketch_content.append(line+'\n')
+                print (line) 
+                line='-----------------------------------'
+                sketch_content.append(line+'\n')
+                print(line)
     positions_content.sort()
     full_content.extend(positions_content)
     full_content.extend(sketch_content)
@@ -228,17 +246,29 @@ def cmpPos(doc=None):
                 positions_content.append(line+'\n')
                 #print (line)    
         if o.Label == 'PCB_Sketch':
-                line='Sketch geometry -------------------'
-                sketch_content.append(line+'\n')
-                #print('Sketch geometry -------------------')
-                if hasattr(o,'Geometry'):
-                    for e in o.Geometry:
-                        line=str(e)
-                        sketch_content.append(line+'\n')
-                        #print (e) 
-                line='-----------------------------------'
-                sketch_content.append(line+'\n')
-                #print(line)
+            line='Sketch geometry -------------------'
+            sketch_content.append(line+'\n')
+            #print('Sketch geometry -------------------')
+            if hasattr(o,'Geometry'):
+                for e in o.Geometry:
+                    line=str(e)
+                    sketch_content.append(line+'\n')
+                    #print (e) 
+            line='-----------------------------------'
+            sketch_content.append(line+'\n')
+            #print(line)
+        if o.Label == 'Pcb':
+            line='Pcb Volume -------------------'
+            sketch_content.append(line+'\n')
+            #print(line)
+            vol = o.Shape.Volume
+            vol = decimals(vol,3)
+            line = 'Pcb Volume = ' + str(vol)
+            sketch_content.append(line+'\n')
+            #print (line) 
+            line='-----------------------------------'
+            sketch_content.append(line+'\n')
+            #print(line)
     positions_content.sort()
     full_content.extend(positions_content)
     full_content.extend(sketch_content)
@@ -277,76 +307,77 @@ def cmpPos(doc=None):
         with open(name) as a:
             a_content = a.readlines()
         b_content = full_content
-    #print (a_content);print ('-----------b_c----------');print (b_content);stop
-    diff = difflib.unified_diff(a_content,b_content)
-    diff_content=[]
-    diff_list=[]
-    header="***** Unified diff ************"
-    diff_content.append(header+os.linesep)
-    #print(header)
-    header1="Line no"+5*' '+'previous'+5*' '+'updated'
-    #print("Line no"+'\t'+'file1'+'\t'+'file2')
-    #print(header1)
-    diff_content.append(header1+os.linesep)
-    for i,line in enumerate(diff):
-        if line.startswith("-"):
-            if not line.startswith("---") and not line.startswith("-title") \
-                    and not line.startswith("-FileN") and not line.startswith("-date "):
-                #print(i,'\t\t'+line)
-                #print('Ln '+str(i)+(8-(len(str(i))))*' '),(line),
-                diff_content.append('Ln '+str(i)+(8-len(str(i)))*' '+line)
-        elif line.startswith("+"):
-            if not line.startswith("+++") and not line.startswith("+title") \
-                    and not line.startswith("+FileN") and not line.startswith("+date "):
-                #print(i,'\t\t'+line)
-                #print('Ln '+str(i)+(8-(len(str(i))))*' '),(line),
-                diff_content.append('Ln '+str(i)+(8-len(str(i)))*' '+line)
-                diff_list.append(line[1:])
-    #for d in (diff_content):
-    #    print (d)
-    #for d in (diff_list):
-    #    print(d)
-    #diff_content = a_content + b_content
-    try:
-        f = open(home+"\list_diff.lst", "w")
-        f.write(''.join(diff_content))
-        f.close
-    except:
-        FreeCAD.Console.PrintError('Error in write permission for \'list_diff.lst\' report file.\n')
-    FreeCADGui.Selection.clearSelection()
-    nObj=0;old_pcb_tval=100;pcbN=''
-    diff_objs=[]
-    for o in doc.Objects:
-        if hasattr(o, 'Shape') or o.TypeId == 'App::Link':
-            if 'Sketch' not in o.Label and 'Pcb' not in o.Label:
-                for changed in diff_list:
-                    if not changed[0].startswith('date'):
-                        ref = changed.split(',')[0]
-                        if o.Label.startswith(ref+'_'):
-                            FreeCADGui.Selection.addSelection(o)
-                            diff_objs.append(o)
-                            #FreeCAD.Console.PrintWarning(o.Label+'\n') #;print('selected')
-                            nObj+=1
-            if 'Sketch' not in o.Label and 'Pcb' in o.Label:
-                old_pcb_tval = FreeCADGui.ActiveDocument.getObject(o.Name).Transparency
-                FreeCADGui.ActiveDocument.getObject(o.Name).Transparency = 70
-                pcbN=o.Name
-    if nObj > 0:
-        print(''.join(diff_content))
-        for o in diff_objs:
-            FreeCAD.Console.PrintWarning(o.Label+'\n')
-        FreeCAD.Console.PrintError('N.'+str(nObj)+' Object(s) with changed placement \'Selected\'\n')
-    elif len(diff_content) > 5:
-        FreeCAD.Console.PrintError('\'Sketch\' modified!\n')
+        #print (a_content);print ('-----------b_c----------');print (b_content);stop
+        diff = difflib.unified_diff(a_content,b_content)
+        diff_content=[]
+        diff_list=[]
+        header="***** Unified diff ************"
+        diff_content.append(header+os.linesep)
+        #print(header)
+        header1="Line no"+5*' '+'previous'+5*' '+'updated'
+        #print("Line no"+'\t'+'file1'+'\t'+'file2')
+        #print(header1)
+        diff_content.append(header1+os.linesep)
+        for i,line in enumerate(diff):
+            if line.startswith("-"):
+                if not line.startswith("---") and not line.startswith("-title") \
+                        and not line.startswith("-FileN") and not line.startswith("-date "):
+                    #print(i,'\t\t'+line)
+                    #print('Ln '+str(i)+(8-(len(str(i))))*' '),(line),
+                    diff_content.append('Ln '+str(i)+(8-len(str(i)))*' '+line)
+            elif line.startswith("+"):
+                if not line.startswith("+++") and not line.startswith("+title") \
+                        and not line.startswith("+FileN") and not line.startswith("+date "):
+                    #print(i,'\t\t'+line)
+                    #print('Ln '+str(i)+(8-(len(str(i))))*' '),(line),
+                    diff_content.append('Ln '+str(i)+(8-len(str(i)))*' '+line)
+                    diff_list.append(line[1:])
         #for d in (diff_content):
         #    print (d)
-        print(''.join(diff_content))
-        if len(pcbN)>0:
-            FreeCADGui.ActiveDocument.getObject(pcbN).Transparency = old_pcb_tval
-    else:
-        FreeCAD.Console.PrintWarning('no changes\n')
-        if len(pcbN)>0:
-            FreeCADGui.ActiveDocument.getObject(pcbN).Transparency = old_pcb_tval
+        #for d in (diff_list):
+        #    print(d)
+        #diff_content = a_content + b_content
+        try:
+            f = open(home+"\list_diff.lst", "w")
+            f.write(''.join(diff_content))
+            f.close
+        except:
+            FreeCAD.Console.PrintError('Error in write permission for \'list_diff.lst\' report file.\n')
+        FreeCADGui.Selection.clearSelection()
+        nObj=0;old_pcb_tval=100;pcbN=''
+        diff_objs=[]
+        for o in doc.Objects:
+            if hasattr(o, 'Shape') or o.TypeId == 'App::Link':
+                if 'Sketch' not in o.Label and 'Pcb' not in o.Label:
+                    for changed in diff_list:
+                        if not changed[0].startswith('date'):
+                            ref = changed.split(',')[0]
+                            if o.Label.startswith(ref+'_'):
+                                FreeCADGui.Selection.addSelection(o)
+                                diff_objs.append(o)
+                                #FreeCAD.Console.PrintWarning(o.Label+'\n') #;print('selected')
+                                nObj+=1
+                if 'Sketch' not in o.Label and 'Pcb' in o.Label:
+                    old_pcb_tval = FreeCADGui.ActiveDocument.getObject(o.Name).Transparency
+                    FreeCADGui.ActiveDocument.getObject(o.Name).Transparency = 70
+                    pcbN=o.Name
+        #print(''.join(diff_content)); stop
+        if nObj > 0:
+            print(''.join(diff_content))
+            for o in diff_objs:
+                FreeCAD.Console.PrintWarning(o.Label+'\n')
+            FreeCAD.Console.PrintError('N.'+str(nObj)+' Object(s) with changed placement \'Selected\'\n')
+        elif len(diff_content) > 3:
+            FreeCAD.Console.PrintError('\'Pcb Sketch\' modified!\n')
+            #for d in (diff_content):
+            #    print (d)
+            print(''.join(diff_content))
+            if len(pcbN)>0:
+                FreeCADGui.ActiveDocument.getObject(pcbN).Transparency = old_pcb_tval
+        else:
+            FreeCAD.Console.PrintWarning('no changes\n')
+            if len(pcbN)>0:
+                FreeCADGui.ActiveDocument.getObject(pcbN).Transparency = old_pcb_tval
 ## https://stackoverflow.com/questions/3605680/creating-a-simple-xml-file-using-python
 
 
