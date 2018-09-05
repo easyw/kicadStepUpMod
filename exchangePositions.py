@@ -35,10 +35,11 @@ def trunc (f,n):
 def roundMatrix(mtx):
     mtxR = [] #mtx
     for i, v in enumerate (mtx.A):
-        rv = str(round(v,4))
+        n_dec = 4
+        rv = str(round(v,n_dec))
         l=len(rv)
         if '.' in rv:
-            if (len(rv[rv.find('.'):]) > 2):
+            if (len(rv[rv.find('.'):]) > n_dec):
                 #print (rv);print (rv.find('.'))
                 rv = rv[:l-1]
                 #print (rv)
