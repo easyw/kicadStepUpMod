@@ -448,7 +448,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.1.0.3"  
+___ver___ = "8.1.0.4"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -18272,7 +18272,7 @@ def push3D2pcb(s,cnt,tsp):
                         #looping=False
                         ##if model_3d_name in ln.replace('.',''): #removing '.' not imported by STEP
                             #print(ln);print(cnt[idxF+ik+3]);stop
-                        print(ln);print(cnt[idxF+ik+3]);print(nMdCnt)#;stop
+                        #print(ln);print(cnt[idxF+ik+3]);print(nMdCnt)#;stop
                         ln_r=cnt[idxF+ik+1]
                         #      (offset (xyz -1.27 0 0)) mm
                         #      (at (xyz -1.27/25.4 0 0)) decimils

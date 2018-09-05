@@ -10,11 +10,11 @@
 #*  Kicad STEPUP (TM) is a TradeMark and cannot be freely useable           *
 #*                                                                          *
 
-ksu_wb_version='v 7.8.0'
+ksu_wb_version='v 7.8.1'
 global myurlKWB
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=136 #v7.8.0
+mycommitsKWB=137 #v7.8.1
 
 import FreeCAD, FreeCADGui, Part, os, sys
 import re, time
@@ -73,7 +73,8 @@ class ksuWB ( Workbench ):
                            "ksuToolsSimplifySketck", "ksuToolsConstrainator", "ksuToolsDiscretize","ksuToolsFootprintGen"])
                            #, "ksuToolsPushMoved","ksuToolsSync3DModels"])
         ksuTB = ["ksuToolsOpenBoard","ksuToolsPushPCB","ksuToolsPushMoved","ksuToolsSync3DModels","ksuAsm2Part",\
-                 "Separator","ksuToolsToggleTreeView","ksuRemoveTimeStamp","Separator","ksuToolsLoadFootprint","ksuToolsFootprintGen"]
+                 "Separator","ksuToolsGeneratePositions","ksuToolsComparePositions",\
+                 "Separator","ksuToolsToggleTreeView","Separator","ksuRemoveTimeStamp","ksuRemoveSuffix","Separator","ksuToolsLoadFootprint","ksuToolsFootprintGen"]
         #ksuTB.extend(["Separator","ksuToolsAligner","ksuToolsMover","ksuToolsCaliper"])
         self.appendToolbar("ksu PushPull", ksuTB)
         combined_path = '\t'.join(sys.path)

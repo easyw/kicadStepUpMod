@@ -11,9 +11,9 @@
 #*                                                                          *
 
 import FreeCAD,FreeCADGui
-import FreeCAD, FreeCADGui, Part, os, sys
+import FreeCAD, FreeCADGui, Part
 from FreeCAD import Base
-import imp, os, sys, tempfile
+import imp, os, sys, tempfile, re
 import FreeCAD, FreeCADGui, Draft, DraftGeomUtils, OpenSCAD2Dgeom
 from PySide import QtGui, QtCore
 from pivy import coin
@@ -26,7 +26,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints
 
-__ksuCMD_version__='1.5.4'
+__ksuCMD_version__='1.5.5'
 
 precision = 0.1 # precision in spline or bezier conversion
 q_deflection = 0.02 # quasi deflection parameter for discretization
@@ -685,7 +685,58 @@ class ksuToolsSync3DModels:
 
 FreeCADGui.addCommand('ksuToolsSync3DModels',ksuToolsSync3DModels())
 ##
+##
+class ksuToolsGeneratePositions:
+    "ksu tools Generate 3D models Positions"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'File_Positions.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksu tools Generate 3D models Positions" ,
+                     'ToolTip' : "Generate 3D models Positions\nData for Active Document\n[MCAD Syncronize]"}
+ 
+    def IsActive(self):
+        if FreeCAD.ActiveDocument is None:
+            return False
+        #else:
+        #    return True
+        #import kicadStepUptools
+        return True
+ 
+    def Activated(self):
+        # do something here...
+        #import kicadStepUptools
+        #if reload_Gui:
+        #    reload_lib( kicadStepUptools )
+        import exchangePositions;reload_lib(exchangePositions)
+        exchangePositions.expPos()
+        
 
+FreeCADGui.addCommand('ksuToolsGeneratePositions',ksuToolsGeneratePositions())
+##
+class ksuToolsComparePositions:
+    "ksu tools Compare 3D models Positions"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Compare_Positions.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksu tools Compare 3D models Positions" ,
+                     'ToolTip' : "Compare 3D models Positions\nData with the Active Document\n[MCAD Syncronize]"}
+ 
+    def IsActive(self):
+        if FreeCAD.ActiveDocument is None:
+            return False
+        #else:
+        #    return True
+        #import kicadStepUptools
+        return True
+ 
+    def Activated(self):
+        # do something here...
+        import exchangePositions;reload_lib(exchangePositions)
+        exchangePositions.cmpPos()
+        
+
+FreeCADGui.addCommand('ksuToolsComparePositions',ksuToolsComparePositions())
+##
 # class ksuToolsEdit:
 #     "ksu tools Editor object"
 #  
@@ -2109,7 +2160,7 @@ class ksuRemoveTimeStamp:
                                         ts = o.Label[o.Label.rfind('_')+1:o.Label.rfind('[')]
                                         #print (len(ts))
                                         if len(ts) == 8:
-                                            o.Label=o.Label[:o.Label.rfind('_')]
+                                            o.Label=o.Label[:o.Label.rfind('_')]+o.Label[o.Label.rfind('['):]
                                     else:
                                         ts = o.Label[o.Label.rfind('_')+1:]
                                         #print (len(ts))
@@ -2128,6 +2179,79 @@ class ksuRemoveTimeStamp:
             FreeCAD.Console.PrintWarning(msg)             
 
 FreeCADGui.addCommand('ksuRemoveTimeStamp',ksuRemoveTimeStamp())
+###
+class ksuRemoveSuffix:
+    "ksu  Remove Suffix"
+    
+    def GetResources(self):
+        mybtn_tooltip ="Remove Suffix \'.stp\', '\.step\' from Labels"
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'RemoveSuffix.svg') , # the name of a svg file available in the resources
+                     'MenuText': mybtn_tooltip ,
+                     'ToolTip' : mybtn_tooltip}
+ 
+    def IsActive(self):
+        doc = FreeCAD.ActiveDocument
+        if doc is not None:
+            if FreeCADGui.Selection.getSelection():
+                sel=FreeCADGui.Selection.getSelection()
+                if len(sel)==1:        
+                    return True
+
+    def Activated(self):
+        # removing TimeStamp ...
+        doc = FreeCAD.ActiveDocument
+        if FreeCADGui.Selection.getSelection():
+            sel=FreeCADGui.Selection.getSelection()
+            if len(sel)!=1:
+                msg="Select one tree object to remove its Label Suffix  \'.stp\', \'.step\'!\n"
+                reply = QtGui.QMessageBox.information(None,"Warning", msg)
+                FreeCAD.Console.PrintWarning(msg)             
+            else:
+                #msgBox = QtGui.QMessageBox()
+                #msgBox.setText("This will remove ALL TimeStamps from selection objects.\nIt cannot be ondone.")
+                #msgBox.setInformativeText("Do you want to continue?")
+                #msgBox.setStandardButtons(QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel)
+                #msgBox.setDefaultButton(QtGui.QMessageBox.Cancel)
+                ret = QtGui.QMessageBox.warning(None, ("Warning"),
+                               ("This will remove ALL Suffix \'.stp\', \'.step\' from selection objects.\nDo you want to continue?"),
+                               QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel,
+                               QtGui.QMessageBox.Cancel)
+                #ret = msgBox.exec_()
+                if ret == QtGui.QMessageBox.Ok:
+                    for ob in sel:
+                    #for o in doc.Objects:
+                        #print (ob.Name,ob.Label,ob.TypeId)    
+                        if ob.TypeId == 'App::Part' or ob.TypeId == 'App::LinkGroup':
+                            #suffix1 = '.stp';suffix2 = '.step';suffix3 = '_stp';suffix2 = '_step'
+                            #if ob.Label.lower().endswith(suffix1) or ob.Label.lower().endswith(suffix2)\
+                            #   or ob.Label.lower().endswith(suffix1) or ob.Label.lower().endswith(suffix2):
+                            o_list = ob.OutListRecursive
+                            for o in o_list:
+                                #print (o.Label)
+                                if (hasattr(o, 'Shape')) \
+                                        and ('Axis' not in o.Label and 'Plane' not in o.Label and 'Sketch' not in o.Label):
+                                    #suffix1 = '.stp';suffix2 = '.step'
+                                    #if o.Label.lower().endswith(suffix1) or o.Label.lower().endswith(suffix2):
+                                    o.Label = re.sub('.stp', '', o.Label, flags=re.IGNORECASE)
+                                    o.Label = re.sub('.step', '', o.Label, flags=re.IGNORECASE)
+                                    #print (o.Label)
+                                if o.TypeId == 'App::Part' or o.TypeId == 'App::LinkGroup':
+                                    o.Label = re.sub('_stp', '', o.Label, flags=re.IGNORECASE)
+                                    o.Label = re.sub('_step', '', o.Label, flags=re.IGNORECASE)
+                                    o.Label = re.sub('.stp', '', o.Label, flags=re.IGNORECASE)
+                                    o.Label = re.sub('.step', '', o.Label, flags=re.IGNORECASE)                              
+                            for o in o_list:
+                                if (o.TypeId == 'App::Link'):
+                                    o.Label = o.LinkedObject.Label
+                    FreeCAD.Console.PrintWarning('removed Suffix \'.stp\', \'.step\' \n')
+                elif ret == QtGui.QMessageBox.Cancel:
+                    FreeCAD.Console.PrintMessage('Operation Aborted\n')                
+        else:
+            msg="Select one tree object to remove its Label Suffix \'.stp\', \'.step\' !\n"
+            reply = QtGui.QMessageBox.information(None,"Warning", msg)
+            FreeCAD.Console.PrintWarning(msg)             
+
+FreeCADGui.addCommand('ksuRemoveSuffix',ksuRemoveSuffix())
 
 #####
 class ksuToolsDefeaturingTools:
