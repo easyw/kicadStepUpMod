@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Gui::Dialog::DlgSettingskStepUp</class>
+ <widget class="QWidget" name="Gui::Dialog::DlgSettingskStepUp">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>705</width>
+    <height>952</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>kStepUp Settings</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout_2">
+   <item row="1" column="0">
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="QGroupBox" name="groupBox">
+       <property name="title">
+        <string>default solving method</string>
+       </property>
+       <widget class="QWidget" name="verticalLayoutWidget_2">
+        <property name="geometry">
+         <rect>
+          <x>9</x>
+          <y>29</y>
+          <width>481</width>
+          <height>141</height>
+         </rect>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <item>
+          <widget class="Gui::PrefRadioButton" name="radioButton">
+           <property name="text">
+            <string>use solving of partial systems (recommended for static assemblies)</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+           <property name="prefEntry" stdset="0">
+            <cstring>usePartialSolver</cstring>
+           </property>
+           <property name="prefPath" stdset="0">
+            <cstring>Mod/kStepUp</cstring>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="Gui::PrefRadioButton" name="radioButton_2">
+           <property name="text">
+            <string>use &quot;magnetic&quot; solver, solving all parts at once (for dynamical assemblies)</string>
+           </property>
+           <property name="prefEntry" stdset="0">
+            <cstring>useMagneticSolver</cstring>
+           </property>
+           <property name="prefPath" stdset="0">
+            <cstring>Mod/kStepUp</cstring>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="3" column="0">
+    <widget class="QGroupBox" name="groupBox_2">
+     <property name="title">
+      <string>Storage of files</string>
+     </property>
+     <widget class="QWidget" name="verticalLayoutWidget_3">
+      <property name="geometry">
+       <rect>
+        <x>49</x>
+        <y>40</y>
+        <width>537</width>
+        <height>171</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_3">
+       <item>
+        <widget class="Gui::PrefCheckBox" name="checkBox">
+         <property name="text">
+          <string>Use project-folder, all parts and assemblies have to be unique inside (experimetal)</string>
+         </property>
+         <property name="prefEntry" stdset="0">
+          <cstring>useProjectFolder</cstring>
+         </property>
+         <property name="prefPath" stdset="0">
+          <cstring>Mod/kStepUp</cstring>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="Gui::PrefFileChooser" name="fileChooser">
+         <property name="mode">
+          <enum>Gui::FileChooser::Directory</enum>
+         </property>
+         <property name="prefEntry" stdset="0">
+          <cstring>projectFolder</cstring>
+         </property>
+         <property name="prefPath" stdset="0">
+          <cstring>Mod/kStepUp</cstring>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>400</width>
+           <height>28</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QGroupBox" name="groupBox_3">
+     <property name="title">
+      <string>default Solver Behaviour</string>
+     </property>
+     <widget class="QWidget" name="verticalLayoutWidget">
+      <property name="geometry">
+       <rect>
+        <x>9</x>
+        <y>30</y>
+        <width>521</width>
+        <height>71</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_4">
+       <item>
+        <widget class="Gui::PrefCheckBox" name="checkBox_2">
+         <property name="text">
+          <string>solve automatically if a constraints property is changed</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+         <property name="prefEntry" stdset="0">
+          <cstring>autoSolve</cstring>
+         </property>
+         <property name="prefPath" stdset="0">
+          <cstring>Mod/kStepUp</cstring>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="Gui::PrefFileChooser" name="pref1FolderChooser" native="true">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="prefEntry" stdset="0">
+          <cstring>ExternalEditorPath</cstring>
+         </property>
+         <property name="prefPath" stdset="0">
+          <cstring>Mod/Fem/Ccx</cstring>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
+ <customwidgets>
+  <customwidget>
+   <class>Gui::PrefCheckBox</class>
+   <extends>QCheckBox</extends>
+   <header>Gui/PrefWidgets.h</header>
+  </customwidget>
+  <customwidget>
+   <class>Gui::FileChooser</class>
+   <extends>QWidget</extends>
+   <header>Gui/FileDialog.h</header>
+  </customwidget>
+  <customwidget>
+   <class>Gui::PrefFileChooser</class>
+   <extends>Gui::FileChooser</extends>
+   <header>Gui/PrefWidgets.h</header>
+  </customwidget>
+  <customwidget>
+   <class>Gui::PrefRadioButton</class>
+   <extends>QRadioButton</extends>
+   <header>Gui/PrefWidgets.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

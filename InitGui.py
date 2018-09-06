@@ -14,7 +14,7 @@ ksu_wb_version='v 7.8.1'
 global myurlKWB
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=142 #v7.8.1
+mycommitsKWB=143 #v7.8.1
 
 import FreeCAD, FreeCADGui, Part, os, sys
 import re, time
@@ -44,7 +44,7 @@ main_ksu_Icon = os.path.join( ksuWB_icons_path , 'kicad-StepUp-tools-WB.svg')
 
 
 class ksuWB ( Workbench ):
-    global main_ksu_Icon, ksu_wb_version, myurlKWB, mycommitsKWB
+    global main_ksu_Icon, ksu_wb_version, myurlKWB, mycommitsKWB, ksuWB_icons_path
     
     "kicad StepUp WB object"
     Icon = main_ksu_Icon
@@ -57,6 +57,8 @@ class ksuWB ( Workbench ):
     
     def Initialize(self):
         import kicadStepUpCMD, sys
+        pref_page = False #True #
+
         submenu = ['demo.kicad_pcb','d-pak.kicad_mod', 'demo-sketch.FCStd', 'demo.step',\
                    'footprint-template.FCStd', 'footprint-Edge-template.FCStd', 'footprint-template-roundrect-polylines.FCStd',\
                    'footprint-RF-antenna.FCStd', 'footprint-RF-antenna-w-solder-Mask.FCStd', 'RF-antenna-dxf.dxf', \
@@ -86,9 +88,19 @@ class ksuWB ( Workbench ):
                             "ksuToolsCopyPlacement", "ksuToolsResetPlacement", "ksuToolsAddToTree", "ksuToolsRemoveFromTree", "ksuToolsTurnTable"])
         #self.appendMenu("ksu Tools", ["ksuTools","ksuToolsEdit"])
         self.appendMenu("ksu Tools", ["ksuTools"])
-        self.appendMenu("ksu PushPull", ["ksuToolsOpenBoard","ksuToolsPushPCB","ksuToolsPushMoved","ksuToolsSync3DModels","Separator","ksuToolsLoadFootprint","ksuToolsFootprintGen"])
+        self.appendMenu("ksu PushPull", ["ksuToolsOpenBoard","ksuToolsPushPCB","ksuToolsPushMoved","ksuToolsSync3DModels",\
+                        "Separator","ksuToolsGeneratePositions","ksuToolsComparePositions",\
+                        "Separator","ksuRemoveTimeStamp","ksuRemoveSuffix",\
+                        "Separator","ksuToolsLoadFootprint","ksuToolsFootprintGen"])
         self.appendMenu(["ksu Tools", "Demo"], submenu)
         
+        #FreeCADGui.addPreferencePage( a2plib.pathOfModule() + '/GuiA2p/ui/a2p_prefs.ui','A2plus' )
+        if pref_page:
+            FreeCADGui.addPreferencePage(
+                ksuWB_icons_path +
+                '/ksu_prefs.ui','kStepUp'
+                )
+        FreeCADGui.addIconPath(ksuWB_icons_path)
         Log ("Loading ksuModule... done\n")
  
     def Activated(self):
