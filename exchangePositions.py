@@ -11,9 +11,90 @@ import FreeCAD, FreeCADGui,sys, os
 import PySide 
 from PySide import QtGui
 #from PySide.QtGui import QTreeWidgetItemIterator
-#global last_3d_path
+
 from os.path import expanduser
 import difflib, re, time, datetime
+
+def get_Selected ():
+    InListRec=[]
+    InListRecSelEx=FreeCADGui.Selection.getSelectionEx('',False)[0]
+    InListRecSubEN=InListRecSelEx.SubElementNames
+    print (InListRecSubEN)
+    if len (InListRecSubEN) >=1:
+        InListRec.append(InListRecSelEx.Object.Name)
+        InListRec.extend(InListRecSubEN[0].split('.'))
+        print (InListRec)
+        if len(InListRec)>1:
+            ro = InListRec.pop()
+        for oName in InListRec:
+            print ('hierarchy \"'+FreeCAD.ActiveDocument.getObject(oName).Label+'\"')
+        #print (InListRec[:-1])
+        print (InListRec)
+    print ('top Level Obj \"'+InListRecSelEx.Object.Label+'\"')
+    if len(InListRec) > 0:
+        print ('Selected  Obj \"'+FreeCAD.ActiveDocument.getObject(InListRec[-1]).Label+'\"')
+    else:
+        print ('Selected  Obj \"'+InListRecSelEx.Object.Label+'\"')
+    print (InListRec)
+    #print (len(InListRecSubEN));print (len(InListRec))
+
+def get_sorted_list (obj):
+    lvl=10000
+    completed=0
+    listUs=obj.InListRecursive
+    #sayerr('unsorted')
+    #for p in listUs:
+    #    print p.Label
+    listUsName=[]
+    for o in obj.InListRecursive:
+        listUsName.append(o.Name)
+    listS=[]
+    i=0
+    #print(listUsName)
+    i=0
+    while len (listUsName) > 0:
+        for apName in listUsName:
+            #apName=listUsName[i]
+            ap=FreeCAD.ActiveDocument.getObject(apName)
+            if len(ap.InListRecursive) < lvl:
+                lvl = len(ap.InListRecursive)
+                top = ap
+                topName = ap.Name
+        listS.append(top)
+        #print topName
+        idx=listUsName.index(topName)
+        #sayw(idx)
+        listUsName.pop(idx)
+        lvl=10000
+        #sayerr(listUsName)
+      
+    return listS
+##
+def gui_addSelection(obj):
+    if hasattr(obj,'InListExRecursive'): #asm3 A3 present
+        #ol=obj.InListRecursive
+        ol = get_sorted_list (obj)
+        #print (ol)
+        #print (len(ol))
+        #to_add=ol[len(ol)-1].Name+','
+        to_add=''
+        #for i in range(len(ol),1,-1):
+        for i in range(1, len(ol)):
+            #to_add += ol[i-2].Name+'.'
+            to_add += ol[i].Name+'.'
+        to_add += obj.Name+'.'
+        #to_add +=','
+        #print (to_add);
+        #print (str(ol[len(ol)-1].Name+','+to_add+','))
+        #FreeCADGui.Selection.addSelection(ol[len(ol)-1],to_add,)
+        #FreeCADGui.Selection.addSelection(obj)
+        #get_Selected()
+        #print (str(ol[0].Name+','+to_add+','))
+        FreeCADGui.Selection.addSelection(ol[0],to_add,)
+    else:
+        FreeCADGui.Selection.addSelection(obj)
+    #stop
+##
 
 def decimals(f,n):
     v = str(round(f,n))
@@ -87,7 +168,6 @@ def rmvSuffix(doc=None):
 ##
   
 def expPos(doc=None):
-    global last_3d_path
     if doc is None:
         doc = FreeCAD.ActiveDocument
     rmvSuffix(doc)
@@ -181,7 +261,6 @@ def expPos(doc=None):
         pg.SetString('lastPath', home) 
     else:
         home = lastPath
-    #if 'last_3d_path' not in globals():#if last_3d_path is None:
     if not testing:
         Filter=""
         name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Write 3D models & footprint positions to a Report file ...",
@@ -206,7 +285,6 @@ def expPos(doc=None):
 
 ##
 def cmpPos(doc=None):
-    global last_3d_path
     if doc is None:
         doc = FreeCAD.ActiveDocument
     rmvSuffix(doc)
@@ -286,7 +364,6 @@ def cmpPos(doc=None):
         home = lastPath
     #home = expanduser("~")
     #home = r'C:\Cad\Progetti_K\board-revision\SolidWorks-2018-09-03_fede'
-    #if 'last_3d_path' not in globals():#if last_3d_path is None:
     if not testing:
         Filter=""
         name, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Open 3D models & footprint positions Report file\nto compare positions with the Active Document...",
@@ -353,7 +430,8 @@ def cmpPos(doc=None):
                         if not changed[0].startswith('date'):
                             ref = changed.split(',')[0]
                             if o.Label.startswith(ref+'_'):
-                                FreeCADGui.Selection.addSelection(o)
+                                #FreeCADGui.Selection.addSelection(o)
+                                gui_addSelection(o)
                                 diff_objs.append(o)
                                 #FreeCAD.Console.PrintWarning(o.Label+'\n') #;print('selected')
                                 nObj+=1

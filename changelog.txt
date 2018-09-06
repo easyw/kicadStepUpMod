@@ -298,4 +298,5 @@ Changelog
 - improved writing fp data 
 - push Moved 3D model(s) to kicad PCB
 - sync Reference in case of lost correct Label (import export STEP file with Links)
+- generate & compare 3D position report for MCAD collab
 - most clean code and comments done
