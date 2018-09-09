@@ -11,7 +11,7 @@
 #*                                                                          *
 
 ksu_wb_version='v 7.8.1'
-global myurlKWB
+global myurlKWB, ksuWBpath
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
 mycommitsKWB=143 #v7.8.1
@@ -32,19 +32,71 @@ from kicadStepUpCMD import *
 ksuWBpath = os.path.dirname(ksu_locator.__file__)
 #sys.path.append(ksuWB + '/Gui')
 ksuWB_icons_path =  os.path.join( ksuWBpath, 'Resources', 'icons')
+ksuWB_ui_path = os.path.join( ksuWBpath, 'Resources','ui' )
 
 global main_ksu_Icon
 main_ksu_Icon = os.path.join( ksuWB_icons_path , 'kicad-StepUp-tools-WB.svg')
 
+from PySide import QtGui
+
+import hlp
+help_t = hlp.help_txt
 
 #try:
 #    from FreeCADGui import Workbench
 #except ImportError as e:
 #    FreeCAD.Console.PrintWarning("error")
+class CalendarPage:
+    def __init__(self):
+        from PySide import QtGui
+        self.form = QtGui.QCalendarWidget()
+        self.form.setWindowTitle("Calendar")
+    def saveSettings(self):
+        print ("saveSettings")
+    def loadSettings(self):
+        print ("loadSettings")
 
-
+class kSU_MainPrefPage:
+    def __init__(self, parent=None):
+        from PySide import QtGui, QtCore
+        import os, hlp
+        global ksuWBpath
+        print ("Created kSU Auxiliar Pref page")
+        help_t = hlp.help_txt        
+        
+        self.form = QtGui.QWidget()
+        self.form.setWindowTitle("kSU \'Help Tips\'")
+        self.form.verticalLayoutWidget = QtGui.QWidget(self.form)
+        self.form.verticalLayoutWidget.setGeometry(QtCore.QRect(0, 0, 530, 650)) #top corner, width, height
+        self.form.verticalLayoutWidget.setObjectName("verticalLayoutWidget")
+        self.form.verticalLayout = QtGui.QVBoxLayout(self.form.verticalLayoutWidget)
+        self.form.verticalLayout.setContentsMargins(0, 0, 0, 0)
+        self.form.verticalLayout.setObjectName("verticalLayout")
+        self.form.label = QtGui.QLabel(self.form.verticalLayoutWidget)
+        self.form.label.setObjectName("label")
+        self.form.label.setText("Hello world!")
+        self.form.verticalLayout.addWidget(self.form.label)
+        self.form.textEdit = QtGui.QTextBrowser(self.form.verticalLayoutWidget)
+        self.form.textEdit.setGeometry(QtCore.QRect(00, 10, 530, 640)) #top corner, width, height
+        self.form.textEdit.setOpenExternalLinks(True)
+        self.form.textEdit.setObjectName("textEdit")
+        self.form.textEdit.setText(help_t)        
+        
+        
+    def saveSettings(self):
+        print ("saveSettings Helper")
+    def loadSettings(self):
+        print ("loadSettings Helper")
+        prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kStepUp").GetString('WorkingDir')+'/'
+        print('WorkingDir', prefs)
+        prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kStepUp")
+        for p in prefs.GetContents():
+            print (p)
+        
+##
 class ksuWB ( Workbench ):
-    global main_ksu_Icon, ksu_wb_version, myurlKWB, mycommitsKWB, ksuWB_icons_path
+    global main_ksu_Icon, ksu_wb_version, myurlKWB, mycommitsKWB
+    global ksuWB_ui_path, kSU_MainPrefPage, ksuWB_icons_path
     
     "kicad StepUp WB object"
     Icon = main_ksu_Icon
@@ -57,7 +109,7 @@ class ksuWB ( Workbench ):
     
     def Initialize(self):
         import kicadStepUpCMD, sys
-        pref_page = False #True #
+        pref_page = True # False #True #
 
         submenu = ['demo.kicad_pcb','d-pak.kicad_mod', 'demo-sketch.FCStd', 'demo.step',\
                    'footprint-template.FCStd', 'footprint-Edge-template.FCStd', 'footprint-template-roundrect-polylines.FCStd',\
@@ -97,9 +149,11 @@ class ksuWB ( Workbench ):
         #FreeCADGui.addPreferencePage( a2plib.pathOfModule() + '/GuiA2p/ui/a2p_prefs.ui','A2plus' )
         if pref_page:
             FreeCADGui.addPreferencePage(
-                ksuWB_icons_path +
-                '/ksu_prefs.ui','kStepUp'
+                ksuWB_ui_path + '/ksu_prefs.ui',
+                'kStepUp'
                 )
+            FreeCADGui.addPreferencePage(kSU_MainPrefPage,"kStepUp")
+
         FreeCADGui.addIconPath(ksuWB_icons_path)
         Log ("Loading ksuModule... done\n")
  
@@ -248,4 +302,7 @@ dirs = ksuWB.ListDemos()
 for curFile in dirs:
     FreeCADGui.addCommand(curFile, ksuExcDemo(curFile))
 
+#FreeCADGui.addPreferencePage(kSU_MainPrefPage,"kStepUp")
+#FreeCADGui.addPreferencePage(CalendarPage, "kStepUp")
+        
 FreeCADGui.addWorkbench(ksuWB)

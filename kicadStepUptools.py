@@ -14239,7 +14239,11 @@ class Ui_DockWidget(object):
         #QtGui.QMessageBox.information(None,"info ...","your home path is \r\n"+ home+"\r\n")
         #sayw(expanded_view)
         #stop
-        if expanded_view!=1:
+        if 1:
+            if "ksuWB" not in FreeCADGui.activeWorkbench().name():
+                FreeCADGui.activateWorkbench("ksuWB")
+            FreeCADGui.runCommand("Std_DlgPreferences")
+        elif expanded_view!=1:
             temporary_undock() #to do ....
             #undock()
             clear_console()
