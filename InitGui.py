@@ -109,6 +109,7 @@ class ksuWB ( Workbench ):
     
     def Initialize(self):
         import kicadStepUpCMD, sys
+        global pref_page
         pref_page = True # False #True #
 
         submenu = ['demo.kicad_pcb','d-pak.kicad_mod', 'demo-sketch.FCStd', 'demo.step',\

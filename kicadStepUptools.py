@@ -14240,7 +14240,8 @@ class Ui_DockWidget(object):
         #sayw(expanded_view)
         #stop
         if 1:
-            if "ksuWB" not in FreeCADGui.activeWorkbench().name():
+            #if "ksuWB" not in FreeCADGui.activeWorkbench().name():
+            if 'pref_page' not in globals():
                 FreeCADGui.activateWorkbench("ksuWB")
             FreeCADGui.runCommand("Std_DlgPreferences")
         elif expanded_view!=1:
