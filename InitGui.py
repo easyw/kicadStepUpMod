@@ -57,6 +57,13 @@ class CalendarPage:
         print ("loadSettings")
 
 class kSU_MainPrefPage:
+
+    def selectDirectory(self):
+        from PySide import QtGui, QtCore
+        selected_directory = QtGui.QFileDialog.getExistingDirectory()
+        # Use the selected directory...
+        print ('selected_directory:', selected_directory)
+
     def __init__(self, parent=None):
         from PySide import QtGui, QtCore
         import os, hlp
@@ -81,7 +88,13 @@ class kSU_MainPrefPage:
         self.form.textEdit.setOpenExternalLinks(True)
         self.form.textEdit.setObjectName("textEdit")
         self.form.textEdit.setText(help_t)        
-        
+# Button UI
+        self.form.btn = QtGui.QPushButton('Create Folder', self.form.verticalLayoutWidget)
+        self.form.btn.setToolTip('This creates the folders.')
+        self.form.btn.resize(self.form.btn.sizeHint())
+        self.form.btn.move(5, 60)       
+        self.form.btn.clicked.connect(self.selectDirectory)   
+        self.form.verticalLayout.addWidget(self.form.btn)        
         
     def saveSettings(self):
         print ("saveSettings Helper")
