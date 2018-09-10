@@ -9,7 +9,7 @@
 
 import FreeCAD, FreeCADGui,sys, os 
 import PySide 
-from PySide import QtGui
+from PySide import QtGui, QtCore
 #from PySide.QtGui import QTreeWidgetItemIterator
 
 from os.path import expanduser
@@ -459,4 +459,64 @@ def cmpPos(doc=None):
 ## https://stackoverflow.com/questions/3605680/creating-a-simple-xml-file-using-python
 
 
+    
+class RemoveSuffixDlg(QtGui.QDialog):
+    
+    def __init__(self, parent= None):
+        super(RemoveSuffixDlg, self).__init__(parent, QtCore.Qt.WindowStaysOnTopHint)    
+        #QtGui.QMainWindow.__init__(self, None, QtCore.Qt.WindowStaysOnTopHint)
+        #icon = style.standardIcon(
+        #    QtGui.QStyle.SP_MessageBoxCritical, None, widget)
+        #self.setWindowIcon(self.style().standardIcon(QtGui.QStyle.SP_MessageBoxCritical))
+        #self.setIcon(self.style().standardIcon(QtGui.QStyle.SP_MessageBoxCritical))
+        #self.setIcon(self.style().standardIcon(QStyle.SP_DirIcon))
+        #QtGui.QIcon(QtGui.QMessageBox.Critical))
+        #icon = QtGui.QIcon()
+        #icon.addPixmap(QtGui.QPixmap("icons/157-stats-bars.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        #Widget.setWindowIcon(icon)
+        
+        self.txt =  QtGui.QLabel()
+        self.txt.setText("This will remove ALL Suffix from selection objects.  \nDo you want to continue?\n\n\'suffix\'")
+        self.le = QtGui.QLineEdit()
+        self.le.setObjectName("suffix_filter")
+        self.le.setText(".step")
+    
+        self.pb = QtGui.QPushButton()
+        self.pb.setObjectName("OK")
+        self.pb.setText("OK") 
+        
+        self.pbC = QtGui.QPushButton()
+        self.pbC.setObjectName("Cancel")
+        self.pbC.setText("Cancel") 
+    
+        layout = QtGui.QVBoxLayout()
+        layout.addWidget(self.txt)
+        layout.addWidget(self.le)
+        layout.addWidget(self.pb)
+        layout.addWidget(self.pbC)
+    
+        self.setWindowTitle("Warning ...")
+        #self.setWindowIcon(self.style().standardIcon(QtGui.QStyle.SP_MessageBoxCritical))
+        
+        self.setLayout(layout)
+        #self.setLayout(layout)
+        self.connect(self.pb, QtCore.SIGNAL("clicked()"),self.OK_click)
+        self.connect(self.pbC, QtCore.SIGNAL("clicked()"),self.Cancel_click)
+    
+    def OK_click(self):
+        # shost is a QString object
+        filtered = self.le.text()
+        #print (self.le.text())
+        #return (QtGui.QMessageBox.Ok)
+        #self.close()*
+        self.accept()
+        
+    def Cancel_click(self):
+        # shost is a QString object
+        #filtered = '.stp'
+        self.le.setText('')
+        # print (filtered)
+        #return (QtGui.QMessageBox.Cancel)
+        #self.close()*
+        self.close()
 

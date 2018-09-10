@@ -105,7 +105,7 @@ class kSU_MainPrefPage:
         prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kStepUp")
         for p in prefs.GetContents():
             print (p)
-        
+        print(FreeCAD.getUserAppDataDir())
 ##
 class ksuWB ( Workbench ):
     global main_ksu_Icon, ksu_wb_version, myurlKWB, mycommitsKWB

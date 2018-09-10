@@ -2207,17 +2207,44 @@ class ksuRemoveSuffix:
                 reply = QtGui.QMessageBox.information(None,"Warning", msg)
                 FreeCAD.Console.PrintWarning(msg)             
             else:
+                import exchangePositions;reload_lib(exchangePositions)
                 #msgBox = QtGui.QMessageBox()
                 #msgBox.setText("This will remove ALL TimeStamps from selection objects.\nIt cannot be ondone.")
                 #msgBox.setInformativeText("Do you want to continue?")
                 #msgBox.setStandardButtons(QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel)
                 #msgBox.setDefaultButton(QtGui.QMessageBox.Cancel)
-                ret = QtGui.QMessageBox.warning(None, ("Warning"),
-                               ("This will remove ALL Suffix \'.stp\', \'.step\' from selection objects.\nDo you want to continue?"),
-                               QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel,
-                               QtGui.QMessageBox.Cancel)
+                #ret = QtGui.QMessageBox.warning(None, ("Warning"),
+                # message box
+                rdlg = exchangePositions.RemoveSuffixDlg()
+                #msg_box = QtGui.QMessageBox()
+                #msg_box.setWindowTitle("Warning")
+                #msg_box.setText("This will remove ALL Suffix \'.stp\', \'.step\' from selection objects.\nDo you want to continue?")
+                ##layout = msg_box.layout()
+                #msg_box.txtInp = QtGui.QLineEdit()
+                ##layout.addWidget(msg_box.txtInp)
+                #gl = QtGui.QVBoxLayout()
+                #gl.addWidget(msg_box.txtInp)
+                #msg_box.setLayout(gl) 
+                #msg_box.setInformativeText('Informative text.')
+                #msg_box.setDetailedText("Detailed text.")
+                ##msg_box.DetailedText.setTextInteractionFlags (QtCore.Qt.TextEditorInteraction)  #(QtCore.Qt.NoTextInteraction) # (QtCore.Qt.TextSelectableByMouse)
+                #msg_box.setIcon(QtGui.QMessageBox.Critical)
+                #msg_box.setStandardButtons(QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel)
+                #msg_box.setDefaultButton(QtGui.QMessageBox.Cancel)
+                #
+                #ret = msg_box.exec_()
+                
+                ret = rdlg.exec_()
+                
+                # ret = QtGui.QMessageBox.warning(None, ("Warning"),
+                #                ("This will remove ALL Suffix \'.stp\', \'.step\' from selection objects.\nDo you want to continue?"),
+                #                QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel,
+                #                QtGui.QMessageBox.Cancel)
                 #ret = msgBox.exec_()
-                if ret == QtGui.QMessageBox.Ok:
+                # print(ret)
+                # print (rdlg.le.text())
+                filtering=rdlg.le.text()
+                if ret: # == QtGui.QMessageBox.Ok:
                     for ob in sel:
                     #for o in doc.Objects:
                         #print (ob.Name,ob.Label,ob.TypeId)    
@@ -2232,19 +2259,29 @@ class ksuRemoveSuffix:
                                         and ('Axis' not in o.Label and 'Plane' not in o.Label and 'Sketch' not in o.Label):
                                     #suffix1 = '.stp';suffix2 = '.step'
                                     #if o.Label.lower().endswith(suffix1) or o.Label.lower().endswith(suffix2):
-                                    o.Label = re.sub('.stp', '', o.Label, flags=re.IGNORECASE)
-                                    o.Label = re.sub('.step', '', o.Label, flags=re.IGNORECASE)
+                                    #o.Label = re.sub(rdlg.le.text()+'$', '', o.Label, flags=re.IGNORECASE)
+                                    #print(o.Label[:o.Label.rfind (filtering)])
+                                    if o.Label.rfind (filtering) != -1:
+                                        o.Label = o.Label[:o.Label.rfind (filtering)]
+                                    #o.Label = re.sub('.stp', '', o.Label, flags=re.IGNORECASE)
+                                    #o.Label = re.sub('.step', '', o.Label, flags=re.IGNORECASE)
                                     #print (o.Label)
                                 if o.TypeId == 'App::Part' or o.TypeId == 'App::LinkGroup':
-                                    o.Label = re.sub('_stp', '', o.Label, flags=re.IGNORECASE)
-                                    o.Label = re.sub('_step', '', o.Label, flags=re.IGNORECASE)
-                                    o.Label = re.sub('.stp', '', o.Label, flags=re.IGNORECASE)
-                                    o.Label = re.sub('.step', '', o.Label, flags=re.IGNORECASE)                              
+                                    #o.Label = re.sub(rdlg.le.text()+'$', '', o.Label, flags=re.IGNORECASE)
+                                    fixfiltering = filtering.replace('.','_')
+                                    #print (fixfiltering)
+                                    #print(o.Label[:o.Label.rfind (fixfiltering)])
+                                    if o.Label.rfind (fixfiltering) != -1:
+                                        o.Label = o.Label[:o.Label.rfind (fixfiltering)]
+                                    #o.Label = re.sub('_stp', '', o.Label, flags=re.IGNORECASE)
+                                    #o.Label = re.sub('_step', '', o.Label, flags=re.IGNORECASE)
+                                    #o.Label = re.sub('.stp', '', o.Label, flags=re.IGNORECASE)
+                                    #o.Label = re.sub('.step', '', o.Label, flags=re.IGNORECASE)                              
                             for o in o_list:
                                 if (o.TypeId == 'App::Link'):
                                     o.Label = o.LinkedObject.Label
                     FreeCAD.Console.PrintWarning('removed Suffix \'.stp\', \'.step\' \n')
-                elif ret == QtGui.QMessageBox.Cancel:
+                elif ret == 0: #== QtGui.QMessageBox.Cancel:
                     FreeCAD.Console.PrintMessage('Operation Aborted\n')                
         else:
             msg="Select one tree object to remove its Label Suffix \'.stp\', \'.step\' !\n"

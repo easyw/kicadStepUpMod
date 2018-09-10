@@ -1,0 +1,6 @@
+              <property name="mode">
+              <enum>Gui::FileChooser::Directory</enum>
+              </property>
+              
+              
+D:\FreeCAD-PY36-QT5\bin\Scripts>pip install pyqt5-tools
