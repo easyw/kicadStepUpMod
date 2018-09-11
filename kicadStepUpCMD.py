@@ -2184,7 +2184,7 @@ class ksuRemoveSuffix:
     "ksu  Remove Suffix"
     
     def GetResources(self):
-        mybtn_tooltip ="Remove \'custom\' suffix from Labels"
+        mybtn_tooltip ="Remove \'custom\' Suffix from Labels"
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'RemoveSuffix.svg') , # the name of a svg file available in the resources
                      'MenuText': mybtn_tooltip ,
                      'ToolTip' : mybtn_tooltip}
@@ -2203,7 +2203,7 @@ class ksuRemoveSuffix:
         if FreeCADGui.Selection.getSelection():
             sel=FreeCADGui.Selection.getSelection()
             if len(sel)!=1:
-                msg="Select one tree object to remove its Label Suffix  \'.stp\', \'.step\'!\n"
+                msg="Select one tree object to remove its Label Suffix!\n"
                 reply = QtGui.QMessageBox.information(None,"Warning", msg)
                 FreeCAD.Console.PrintWarning(msg)             
             else:
@@ -2287,7 +2287,7 @@ class ksuRemoveSuffix:
                     reply = QtGui.QMessageBox.information(None,"Warning", msg)
                     FreeCAD.Console.PrintWarning(msg)                    
         else:
-            msg="Select one tree object to remove its Label Suffix \'.stp\', \'.step\' !\n"
+            msg="Select one tree object to remove its Label Suffix!\n"
             reply = QtGui.QMessageBox.information(None,"Warning", msg)
             FreeCAD.Console.PrintWarning(msg)             
 
