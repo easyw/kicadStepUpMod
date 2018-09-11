@@ -11,6 +11,7 @@ import FreeCAD, FreeCADGui,sys, os
 import PySide 
 from PySide import QtGui, QtCore
 #from PySide.QtGui import QTreeWidgetItemIterator
+import ksu_locator
 
 from os.path import expanduser
 import difflib, re, time, datetime
@@ -170,7 +171,7 @@ def rmvSuffix(doc=None):
 def expPos(doc=None):
     if doc is None:
         doc = FreeCAD.ActiveDocument
-    rmvSuffix(doc)
+    # rmvSuffix(doc)
     full_content=[]
     positions_content=[]
     sketch_content=[]
@@ -287,7 +288,7 @@ def expPos(doc=None):
 def cmpPos(doc=None):
     if doc is None:
         doc = FreeCAD.ActiveDocument
-    rmvSuffix(doc)
+    # rmvSuffix(doc)
     full_content=[]
     positions_content=[]
     sketch_content=[]
@@ -474,34 +475,67 @@ class RemoveSuffixDlg(QtGui.QDialog):
         #icon = QtGui.QIcon()
         #icon.addPixmap(QtGui.QPixmap("icons/157-stats-bars.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         #Widget.setWindowIcon(icon)
+        ksuWBpath = os.path.dirname(ksu_locator.__file__)
+        ksuWB_icons_path =  os.path.join( ksuWBpath, 'Resources', 'icons')
         
+        self.pix =  QtGui.QLabel()
+        self.pix.setText('')
+        self.pix.setText('')
+        self.pix.setPixmap(QtGui.QPixmap(ksuWB_icons_path+'/warning.svg'))
+        self.pix.setObjectName("pix")
         self.txt =  QtGui.QLabel()
-        self.txt.setText("This will remove ALL Suffix from selection objects.  \nDo you want to continue?\n\n\'suffix\'")
+        self.txt.setText("This will remove ALL Suffix from selection objects.  \nDo you want to continue?")
+        
+        self.txt2 =  QtGui.QLabel()
+        self.txt2.setText("\'suffix\'")
         self.le = QtGui.QLineEdit()
         self.le.setObjectName("suffix_filter")
         self.le.setText(".step")
+        self.le.setToolTip("change the text to be\nstripped out from the end of Labels")
     
-        self.pb = QtGui.QPushButton()
-        self.pb.setObjectName("OK")
-        self.pb.setText("OK") 
+        #self.pb = QtGui.QPushButton()
+        #self.pb.setObjectName("OK")
+        #self.pb.setText("OK") 
+        #
+        #self.pbC = QtGui.QPushButton()
+        #self.pbC.setObjectName("Cancel")
+        #self.pbC.setText("Cancel") 
+    
+        self.buttonBox = QtGui.QDialogButtonBox()
+        self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
+        self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
+        self.buttonBox.setObjectName("buttonBox")
+            
+        layout2 = QtGui.QHBoxLayout()
+        layout2.addWidget(self.pix)
+        layout2.addWidget(self.txt)
         
-        self.pbC = QtGui.QPushButton()
-        self.pbC.setObjectName("Cancel")
-        self.pbC.setText("Cancel") 
-    
+        layout3 = QtGui.QHBoxLayout()
+        #layout3.addWidget(self.pb)
+        #layout3.addWidget(self.pbC)
+        
+        
         layout = QtGui.QVBoxLayout()
-        layout.addWidget(self.txt)
+        layout.addLayout(layout2)
+        layout.addWidget(self.txt2)
         layout.addWidget(self.le)
-        layout.addWidget(self.pb)
-        layout.addWidget(self.pbC)
+        layout.addLayout(layout3)
+        layout.addWidget(self.buttonBox)
+        
+        #layout.addWidget(self.pb)
+        #layout.addWidget(self.pbC)
     
         self.setWindowTitle("Warning ...")
         #self.setWindowIcon(self.style().standardIcon(QtGui.QStyle.SP_MessageBoxCritical))
         
         self.setLayout(layout)
         #self.setLayout(layout)
-        self.connect(self.pb, QtCore.SIGNAL("clicked()"),self.OK_click)
-        self.connect(self.pbC, QtCore.SIGNAL("clicked()"),self.Cancel_click)
+        #self.connect(self.pb, QtCore.SIGNAL("clicked()"),self.OK_click)
+        #self.connect(self.pbC, QtCore.SIGNAL("clicked()"),self.Cancel_click)
+        
+        self.buttonBox.button(QtGui.QDialogButtonBox.Ok).clicked.connect(self.OK_click)
+        self.buttonBox.button(QtGui.QDialogButtonBox.Cancel).clicked.connect(self.Cancel_click)
+        
     
     def OK_click(self):
         # shost is a QString object

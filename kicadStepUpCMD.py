@@ -2280,9 +2280,12 @@ class ksuRemoveSuffix:
                             for o in o_list:
                                 if (o.TypeId == 'App::Link'):
                                     o.Label = o.LinkedObject.Label
-                    FreeCAD.Console.PrintWarning('removed Suffix \'.stp\', \'.step\' \n')
+                    FreeCAD.Console.PrintWarning('removed Suffix \''+filtering+'\' \n')
                 elif ret == 0: #== QtGui.QMessageBox.Cancel:
-                    FreeCAD.Console.PrintMessage('Operation Aborted\n')                
+                    msg='Operation Aborted\n'
+                    FreeCAD.Console.PrintMessage(msg)
+                    reply = QtGui.QMessageBox.information(None,"Warning", msg)
+                    FreeCAD.Console.PrintWarning(msg)                    
         else:
             msg="Select one tree object to remove its Label Suffix \'.stp\', \'.step\' !\n"
             reply = QtGui.QMessageBox.information(None,"Warning", msg)
