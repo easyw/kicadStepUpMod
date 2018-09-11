@@ -2184,7 +2184,7 @@ class ksuRemoveSuffix:
     "ksu  Remove Suffix"
     
     def GetResources(self):
-        mybtn_tooltip ="Remove Suffix \'.stp\', '\.step\' from Labels"
+        mybtn_tooltip ="Remove \'custom\' suffix from Labels"
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'RemoveSuffix.svg') , # the name of a svg file available in the resources
                      'MenuText': mybtn_tooltip ,
                      'ToolTip' : mybtn_tooltip}
