@@ -902,13 +902,16 @@ class ksuToolsConstrainator:
                 if reply==1:
                     dialog_values = (ui.return_strings()) # window is value from edit field
                     #print (dialog_values)
-                    tol = float(dialog_values[0])
-                    if tol <= 0:
-                        tol = 0.01
-                    if 'True' in dialog_values[1]:
-                        constr = 'all'
-                    else:
-                        constr = 'coincident'
+                    for i,dv in enumerate (dialog_values): #py3 compatibility
+                        if i == 0:
+                            tol = float(dv)
+                            if tol <= 0:
+                                tol = 0.01
+                        if i == 1:
+                            if 'True' in dv:
+                                constr = 'all'
+                            else:
+                                constr = 'coincident'
                     add_constraints(sel[0].Name, tol, constr)
             else:
                 reply = QtGui.QMessageBox.information(None,"Warning", "select a Sketch to be Fix & Constrained")
