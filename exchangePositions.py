@@ -240,9 +240,10 @@ def expPos(doc=None):
                 print('Sketch geometry -------------------')
                 if hasattr(o,'Geometry'):
                     for e in o.Geometry:
-                        line=str(e)
-                        sketch_content.append(line+'\n')
-                        print (e) 
+                        if not e.Construction:
+                            line=str(e)
+                            sketch_content.append(line+'\n')
+                            print (e) 
                 line='-----------------------------------'
                 sketch_content.append(line+'\n')
                 print(line)
@@ -340,10 +341,11 @@ def cmpPos(doc=None):
             sketch_content.append(line+'\n')
             #print('Sketch geometry -------------------')
             if hasattr(o,'Geometry'):
-                for e in o.Geometry:
-                    line=str(e)
-                    sketch_content.append(line+'\n')
-                    #print (e) 
+                    for e in o.Geometry:
+                        if not e.Construction:
+                            line=str(e)
+                            sketch_content.append(line+'\n')
+                            #print (e) 
             line='-----------------------------------'
             sketch_content.append(line+'\n')
             #print(line)
