@@ -103,8 +103,9 @@ class kSU_MainPrefPage:
         prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kStepUp").GetString('WorkingDir')+'/'
         print('WorkingDir', prefs)
         prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kStepUp")
-        for p in prefs.GetContents():
-            print (p)
+        if prefs.GetContents() is not None:
+            for p in prefs.GetContents():
+                print (p)
         print(FreeCAD.getUserAppDataDir())
 ##
 class ksuWB ( Workbench ):
@@ -134,7 +135,7 @@ class ksuWB ( Workbench ):
         dirs = self.ListDemos()
 
         #self.appendToolbar("ksu Tools", ["ksuTools"])
-        self.appendToolbar("ksu Tools", ["ksuTools","ksuToolsOpenBoard","ksuToolsLoadFootprint",\
+        self.appendToolbar("ksu Tools", ["ksuToolsEditPrefs","ksuTools","ksuToolsOpenBoard","ksuToolsLoadFootprint",\
                            "ksuToolsExportModel","ksuToolsPushPCB","ksuToolsCollisions", \
                            "ksuToolsImport3DStep","ksuToolsExport3DStep","ksuToolsMakeUnion",\
                            "ksuToolsMakeCompound", "ksuToolsSimpleCopy", "ksuToolsDeepCopy", "ksuToolsCheckSolid", "ksuTools3D2D", "ksuTools2D2Sketch", "ksuTools2DtoFace",\
@@ -153,7 +154,7 @@ class ksuWB ( Workbench ):
                             "ksuToolsVisibilityToggle", "ksuToolsStepImportModeSTD", "ksuToolsStepImportModeComp",\
                             "ksuToolsCopyPlacement", "ksuToolsResetPlacement", "ksuToolsAddToTree", "ksuToolsRemoveFromTree", "ksuToolsTurnTable"])
         #self.appendMenu("ksu Tools", ["ksuTools","ksuToolsEdit"])
-        self.appendMenu("ksu Tools", ["ksuTools"])
+        self.appendMenu("ksu Tools", ["ksuTools","ksuToolsEditPrefs"])
         self.appendMenu("ksu PushPull", ["ksuToolsOpenBoard","ksuToolsPushPCB","ksuToolsPushMoved","ksuToolsSync3DModels",\
                         "Separator","ksuToolsGeneratePositions","ksuToolsComparePositions",\
                         "Separator","ksuRemoveTimeStamp","ksuRemoveSuffix",\

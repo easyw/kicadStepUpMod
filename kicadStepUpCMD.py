@@ -2133,6 +2133,29 @@ class ksuToolsMergeSketches:
             FreeCADGui.ActiveDocument.getObject(s.Name).Visibility=False
         
 FreeCADGui.addCommand('ksuToolsMergeSketches',ksuToolsMergeSketches())
+###
+class ksuToolsEditPrefs:
+    "ksu tools Edit Preferences"
+    
+    def GetResources(self):
+        mybtn_tooltip ="Edit Preferences"
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Preferences-Edit.svg') , # the name of a svg file available in the resources
+                     'MenuText': mybtn_tooltip ,
+                     'ToolTip' : mybtn_tooltip}
+ 
+    def IsActive(self):
+        return True
+        #else:
+        #    self.setToolTip("Grayed Tooltip!")
+        #    print(self.ObjectName)
+        #    grayed_tooltip="Grayed Tooltip!"
+        #    mybtn_tooltip=grayed_tooltip
+ 
+    def Activated(self):
+        # do something here...
+        FreeCADGui.runCommand("Std_DlgPreferences")
+        
+FreeCADGui.addCommand('ksuToolsEditPrefs',ksuToolsEditPrefs())
 
 #####
 class ksuRemoveTimeStamp:
