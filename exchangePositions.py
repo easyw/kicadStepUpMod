@@ -8,6 +8,9 @@
 
 
 import FreeCAD, FreeCADGui,sys, os 
+from FreeCAD import Base
+import Part
+
 import PySide 
 from PySide import QtGui, QtCore
 #from PySide.QtGui import QTreeWidgetItemIterator
@@ -15,6 +18,14 @@ import ksu_locator
 
 from os.path import expanduser
 import difflib, re, time, datetime
+
+create_sketch=True
+
+def PLine(prm1,prm2):
+    if hasattr(Part,"LineSegment"):
+        return Part.LineSegment(prm1, prm2)
+    else:
+        return Part.Line(prm1, prm2)
 
 def get_Selected ():
     InListRec=[]
@@ -389,6 +400,8 @@ def cmpPos(doc=None):
         diff = difflib.unified_diff(a_content,b_content)
         diff_content=[]
         diff_list=[]
+        sk_add=[]
+        sk_sub=[]
         header="***** Unified diff ************"
         diff_content.append(header+os.linesep)
         #print(header)
@@ -403,6 +416,28 @@ def cmpPos(doc=None):
                     #print(i,'\t\t'+line)
                     #print('Ln '+str(i)+(8-(len(str(i))))*' '),(line),
                     diff_content.append('Ln '+str(i)+(8-len(str(i)))*' '+line)
+                    if line.startswith('-<Line'):
+                        points=line.replace('-<Line segment (','').replace(') >','')
+                        p1 = points[:points.find(')')].split(',')
+                        p2 = points[points.rfind('(')+1:-1].split(',')
+                        sk_sub.append(PLine(Base.Vector(float(p1[0]),float(p1[1]),float(p1[2])), Base.Vector(float(p2[0]),float(p2[1]),float(p2[2]))))
+                    elif line.startswith('-ArcOfCircle'):
+                        data=line.replace('-ArcOfCircle (Radius : ','').replace('))\n','')
+                        data=data.split(':')
+                        radius = data[0].split(',')[0]
+                        pos = data[1][data[1].find('(')+1:data[1].find(')')].split(',')
+                        dir = data[2][data[2].find('(')+1:data[2].rfind(')')].split(',')
+                        par = data[3][data[3].find('(')+1:].split(',')
+                        #print (radius,pos,dir,par);stop
+                        sk_sub.append(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(float(pos[0]),float(pos[1]),float(pos[2])),FreeCAD.Vector(float(dir[0]),float(dir[1]),float(dir[2])),float(radius)),float(par[0]),float(par[1])))
+                    elif line.startswith('-Circle'):
+                        data=line.replace('-Circle (Radius : ','').replace('))\n','')
+                        data=data.split(':')
+                        radius = data[0].split(',')[0]
+                        pos = data[1][data[1].find('(')+1:data[1].find(')')].split(',')
+                        dir = data[2][data[2].find('(')+1:].split(',')
+                        print (radius,pos,dir)
+                        sk_sub.append(Part.Circle(FreeCAD.Vector(float(pos[0]),float(pos[1]),float(pos[2])),FreeCAD.Vector(float(dir[0]),float(dir[1]),float(dir[2])),float(radius)))
             elif line.startswith("+"):
                 if not line.startswith("+++") and not line.startswith("+title") \
                         and not line.startswith("+FileN") and not line.startswith("+date "):
@@ -410,6 +445,29 @@ def cmpPos(doc=None):
                     #print('Ln '+str(i)+(8-(len(str(i))))*' '),(line),
                     diff_content.append('Ln '+str(i)+(8-len(str(i)))*' '+line)
                     diff_list.append(line[1:])
+                    if line.startswith('+<Line'):
+                        points=line.replace('+<Line segment (','').replace(') >','')
+                        p1 = points[:points.find(')')].split(',')
+                        p2 = points[points.rfind('(')+1:-1].split(',')
+                        sk_add.append(PLine(Base.Vector(float(p1[0]),float(p1[1]),float(p1[2])), Base.Vector(float(p2[0]),float(p2[1]),float(p2[2]))))
+                    #    sk_add.append(line.replace('+<Line segment ','').replace(' >',''))
+                    elif line.startswith('+ArcOfCircle'):
+                        data=line.replace('+ArcOfCircle (Radius : ','').replace('))\n','')
+                        data=data.split(':')
+                        radius = data[0].split(',')[0]
+                        pos = data[1][data[1].find('(')+1:data[1].find(')')].split(',')
+                        dir = data[2][data[2].find('(')+1:data[2].rfind(')')].split(',')
+                        par = data[3][data[3].find('(')+1:].split(',')
+                        #print (radius,pos,dir,par);stop
+                        sk_add.append(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(float(pos[0]),float(pos[1]),float(pos[2])),FreeCAD.Vector(float(dir[0]),float(dir[1]),float(dir[2])),float(radius)),float(par[0]),float(par[1])))
+                    elif line.startswith('+Circle'):
+                        data=line.replace('+Circle (Radius : ','').replace('))\n','')
+                        data=data.split(':')
+                        radius = data[0].split(',')[0]
+                        pos = data[1][data[1].find('(')+1:data[1].find(')')].split(',')
+                        dir = data[2][data[2].find('(')+1:].split(',')
+                        print (radius,pos,dir)
+                        sk_add.append(Part.Circle(FreeCAD.Vector(float(pos[0]),float(pos[1]),float(pos[2])),FreeCAD.Vector(float(dir[0]),float(dir[1]),float(dir[2])),float(radius)))
         #for d in (diff_content):
         #    print (d)
         #for d in (diff_list):
@@ -424,6 +482,7 @@ def cmpPos(doc=None):
         FreeCADGui.Selection.clearSelection()
         nObj=0;old_pcb_tval=100;pcbN=''
         diff_objs=[]
+        create_sketch=False
         for o in doc.Objects:
             if hasattr(o, 'Shape') or o.TypeId == 'App::Link':
                 if 'Sketch' not in o.Label and 'Pcb' not in o.Label:
@@ -440,23 +499,49 @@ def cmpPos(doc=None):
                     old_pcb_tval = FreeCADGui.ActiveDocument.getObject(o.Name).Transparency
                     FreeCADGui.ActiveDocument.getObject(o.Name).Transparency = 70
                     pcbN=o.Name
+                if 'PCB_Sketch' in o.Label and 'Sketch' in o.TypeId:
+                    create_sketch=True
         #print(''.join(diff_content)); stop
         if nObj > 0:
-            print(''.join(diff_content))
+            dc = ''.join(diff_content)
+            print(dc)
             for o in diff_objs:
                 FreeCAD.Console.PrintWarning(o.Label+'\n')
             FreeCAD.Console.PrintError('N.'+str(nObj)+' Object(s) with changed placement \'Selected\'\n')
+            #print ('Circle' in diff_content)
+            if dc.find('Circle')!=-1 or dc.find('Line segment')!=-1: # or dc.find('ArcOfCircle')!=-1:
+                FreeCAD.Console.PrintError('*** \'Pcb Sketch\' modified! ***\n')
         elif len(diff_content) > 3:
             FreeCAD.Console.PrintError('\'Pcb Sketch\' modified!\n')
             #for d in (diff_content):
             #    print (d)
-            print(''.join(diff_content))
+            #print(''.join(diff_content))
             if len(pcbN)>0:
                 FreeCADGui.ActiveDocument.getObject(pcbN).Transparency = old_pcb_tval
         else:
             FreeCAD.Console.PrintWarning('no changes\n')
             if len(pcbN)>0:
                 FreeCADGui.ActiveDocument.getObject(pcbN).Transparency = old_pcb_tval
+        if create_sketch:
+            if len(sk_add)>0:
+                #print(sk_add)
+                if FreeCAD.activeDocument().getObject("Sketch_Addition") is not None:
+                    FreeCAD.activeDocument().removeObject("Sketch_Addition")
+                Sketch_Addition = FreeCAD.activeDocument().addObject('Sketcher::SketchObject','Sketch_Addition')
+                FreeCADGui.activeDocument().getObject("Sketch_Addition").LineColor = (0.000,0.000,1.000)
+                FreeCADGui.activeDocument().getObject("Sketch_Addition").PointColor = (0.000,0.000,1.000)
+                Sketch_Addition.Geometry = sk_add
+            if len(sk_sub)>0:
+                #print(sk_sub)
+                if FreeCAD.activeDocument().getObject("Sketch_Subtraction") is not None:
+                    FreeCAD.activeDocument().removeObject("Sketch_Subtraction")
+                Sketch_Subtraction = FreeCAD.activeDocument().addObject('Sketcher::SketchObject','Sketch_Subtraction')
+                FreeCADGui.activeDocument().getObject("Sketch_Subtraction").LineColor = (0.667,0.000,0.498)
+                FreeCADGui.activeDocument().getObject("Sketch_Subtraction").PointColor = (0.667,0.000,0.498)
+                Sketch_Subtraction.Geometry = sk_sub
+            if len(sk_add)>0 or len(sk_sub)>0:
+                FreeCAD.ActiveDocument.recompute()
+
 ## https://stackoverflow.com/questions/3605680/creating-a-simple-xml-file-using-python
 
 

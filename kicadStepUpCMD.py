@@ -2107,6 +2107,34 @@ class ksuToolsCaliper:
 
 FreeCADGui.addCommand('ksuToolsCaliper',ksuToolsCaliper())
 #####
+class ksuToolsMergeSketches:
+    "ksu tools Merge Sketches"
+    
+    def GetResources(self):
+        mybtn_tooltip ="Merge Sketches"
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Sketcher_MergeSketch.svg') , # the name of a svg file available in the resources
+                     'MenuText': mybtn_tooltip ,
+                     'ToolTip' : mybtn_tooltip}
+ 
+    def IsActive(self):
+        combined_path = '\t'.join(sys.path)
+        if FreeCADGui.Selection.getSelection():
+            return True
+        #else:
+        #    self.setToolTip("Grayed Tooltip!")
+        #    print(self.ObjectName)
+        #    grayed_tooltip="Grayed Tooltip!"
+        #    mybtn_tooltip=grayed_tooltip
+ 
+    def Activated(self):
+        # do something here...
+        FreeCADGui.runCommand('Sketcher_MergeSketches')
+        for s in FreeCADGui.Selection.getSelection():
+            FreeCADGui.ActiveDocument.getObject(s.Name).Visibility=False
+        
+FreeCADGui.addCommand('ksuToolsMergeSketches',ksuToolsMergeSketches())
+
+#####
 class ksuRemoveTimeStamp:
     "ksu  Remove TimeStamp"
     
