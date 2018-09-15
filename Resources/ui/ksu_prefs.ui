@@ -823,7 +823,7 @@
           <bool>false</bool>
          </property>
          <property name="prefEntry" stdset="0">
-          <cstring>vrml_materials</cstring>
+          <cstring>turntable</cstring>
          </property>
          <property name="prefPath" stdset="0">
           <cstring>Mod/kStepUp</cstring>
@@ -842,7 +842,7 @@
         <property name="title">
          <string>Mechanical Check</string>
         </property>
-        <widget class="Gui::PrefCheckBox" name="cb_make_union_2">
+        <widget class="Gui::PrefCheckBox" name="cb_gen_sketch">
          <property name="geometry">
           <rect>
            <x>8</x>
@@ -855,38 +855,13 @@
           <string>Generate Sketches for differences on PCB Edge</string>
          </property>
          <property name="text">
-          <string>Generate Sketches for differences</string>
+          <string>Generate Sketches for differences on PCB Edge</string>
          </property>
          <property name="checked">
           <bool>false</bool>
          </property>
          <property name="prefEntry" stdset="0">
-          <cstring>make_union</cstring>
-         </property>
-         <property name="prefPath" stdset="0">
-          <cstring>Mod/kStepUp</cstring>
-         </property>
-        </widget>
-        <widget class="Gui::PrefCheckBox" name="cb_turntable_2">
-         <property name="geometry">
-          <rect>
-           <x>9</x>
-           <y>190</y>
-           <width>463</width>
-           <height>20</height>
-          </rect>
-         </property>
-         <property name="toolTip">
-          <string>Start Turntable after loading</string>
-         </property>
-         <property name="text">
-          <string>Start Turntable after loading</string>
-         </property>
-         <property name="checked">
-          <bool>false</bool>
-         </property>
-         <property name="prefEntry" stdset="0">
-          <cstring>vrml_materials</cstring>
+          <cstring>generate_sketch</cstring>
          </property>
          <property name="prefPath" stdset="0">
           <cstring>Mod/kStepUp</cstring>

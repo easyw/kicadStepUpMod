@@ -13853,7 +13853,8 @@ class Ui_DockWidget(object):
         self.makeCompound.clicked.connect(group_part)
         self.config_ini_Lbl.linkActivated.connect(self.link)
         local_link="<a href='"+ini_file_full_path+"' target='_blank'>"+ini_file_full_path_bold+"</a>"
-        self.config_ini_Lbl.setText(local_link)
+        #self.config_ini_Lbl.setText(local_link)
+        self.config_ini_Lbl.setText('')
         self.config_ini_Lbl.setToolTip("ksu config ini file\nlocation")
         self.textInputRX.setAlignment(QtCore.Qt.AlignRight)
         self.textInputRY.setAlignment(QtCore.Qt.AlignRight)
@@ -17152,6 +17153,7 @@ def createFpPad(pad,offset,tp, _drills=None):
 
 
 ###
+
 def getBoardOutline():
     if not FreeCAD.activeDocument():
         return False
@@ -17317,18 +17319,18 @@ def createEdge(edg,ofs):
 
     layer='Edge.Cuts'
     if edg[0] == 'line':
-        if 0: #abs(edg[1]+ofs[0])>500 or abs(edg[2]+ofs[1])>500:
+        if 0: #abs(edg[1]+ofs[0])>500 or abs(edg[2]+ofs[1])>500: "{0:.3f}".
             #print edg
             stop
-            k_edg = "  (gr_line (start {0} {1}) (end {2} {3}) (angle 90) (layer {5}) (width {4}))"\
+            k_edg = "  (gr_line (start {0:.3f} {1:.3f}) (end {2:.3f} {3:.3f}) (angle 90) (layer {5}) (width {4}))"\
                         .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edge_width, layer)
         else:
-            k_edg = "  (gr_line (start {0} {1}) (end {2} {3}) (angle 90) (layer {5}) (width {4}))"\
+            k_edg = "  (gr_line (start {0:.3f} {1:.3f}) (end {2:.3f} {3:.3f}) (angle 90) (layer {5}) (width {4}))"\
                         .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edge_width, layer)
         #k_edg +=os.linesep
         #.format('{0:.10f}').format(edg[1] + abs(0), '{0:.10f}').format(edg[2] + abs(0), '{0:.10f}').format(edg[3] + abs(0), '{0:.10f}').format(edg[4] + abs(0), 'Edge.Cuts', edge_width)
     elif edg[0] == 'circle':
-        k_edg = "  (gr_circle (center {0} {1}) (end {2} {1}) (layer {4}) (width {3}))".format(edg[2]+ofs[0], -edg[3]+ofs[1], edg[2]+ofs[0]-edg[1], edge_width, layer)
+        k_edg = "  (gr_circle (center {0:.3f} {1:.3f}) (end {2:.3f} {1:.3f}) (layer {4}) (width {3}))".format(edg[2]+ofs[0], -edg[3]+ofs[1], edg[2]+ofs[0]-edg[1], edge_width, layer)
         #k_edg +=os.linesep
                     #.format(
                     #'{0:.10f}'.format(i[1] + abs(self.minX)), '{0:.10f}'.format(i[2] + abs(self.minY)), '{0:.10f}'.format(
@@ -17394,7 +17396,7 @@ def createEdge(edg,ofs):
         # Draft.makePoint(x2, -y2, 0)
         
         if abs(xs) > maxRadius or abs(ys) > maxRadius:
-            k_edg = "  (gr_line (start {0} {1}) (end {2} {3}) (angle 0) (layer {5}) (width {4}))"\
+            k_edg = "  (gr_line (start {0:.3f} {1:.3f}) (end {2:.3f} {3:.3f}) (angle 0) (layer {5}) (width {4}))"\
                         .format(x1+ofs[0], y1+ofs[1], x2+ofs[0], y2+ofs[1], edge_width, layer)
             #k_edg = "  (gr_line (start {0} {1}) (end {2} {3}) (angle 90) (layer {5}) (width {4}))"\
             #            .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edge_width, 'Edge.Cuts')
@@ -17402,7 +17404,7 @@ def createEdge(edg,ofs):
             #stop
         else:
             #self.pcbElem.append(['gr_arc', xs, ys, x1, y1, curve, width, layer])
-            k_edg = "  (gr_arc (start {0} {1}) (end {2} {3}) (angle {4}) (layer {6}) (width {5}))"\
+            k_edg = "  (gr_arc (start {0:.3f} {1:.3f}) (end {2:.3f} {3:.3f}) (angle {4:.3f}) (layer {6}) (width {5}))"\
                     .format(xs+ofs[0], ys+ofs[1], x1+ofs[0], y1+ofs[1], angle, edge_width, layer)
             #.format(
             #            '{0:.10f}'.format(i[1] + abs(self.minX)), '{0:.10f}'.format(i[2] + abs(self.minY)), '{0:.10f}'.format(i[3] + abs(self.minX)), '{0:.10f}'.format(i[4] + abs(self.minY)), i[5], i[6], i[7]))
@@ -18123,9 +18125,11 @@ def export_pcb(fname=None):
                         #print 'too big radius= ',border[3]
                         #print 'border len= ', len(border)
                         #points=border [10].x
-                        p1x = float(border [10].x);p1y=float(border [10].y)
+                        #p1x = float(border [10].x);p1y=float(border [10].y)
+                        p1x = float("{0:.3f}".format(border [10].x));p1y=float("{0:.3f}".format(border [10].y))
                         #print p1x, ' ',p1y
-                        p2x = float(border [11].x);p2y=float(border [11].y)
+                        #p2x = float(border [11].x);p2y=float(border [11].y)
+                        p2x = float("{0:.3f}".format(border [11].x));p2y=float("{0:.3f}".format(border [11].y))
                         #print '1st point ', border [10],' 2nd point ', border [11]
                         sanitized_edge_list.append(['line',p1x,p1y,p2x,p2y])
                     else:

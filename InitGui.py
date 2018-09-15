@@ -79,29 +79,34 @@ class kSU_MainPrefPage:
         self.form.verticalLayout = QtGui.QVBoxLayout(self.form.verticalLayoutWidget)
         self.form.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.form.verticalLayout.setObjectName("verticalLayout")
-        self.form.label = QtGui.QLabel(self.form.verticalLayoutWidget)
-        self.form.label.setObjectName("label")
-        self.form.label.setText("Hello world!")
-        self.form.verticalLayout.addWidget(self.form.label)
+        #self.form.label = QtGui.QLabel(self.form.verticalLayoutWidget)
+        #self.form.label.setObjectName("label")
+        #self.form.label.setText("Hello world!")
+        #self.form.verticalLayout.addWidget(self.form.label)
         self.form.textEdit = QtGui.QTextBrowser(self.form.verticalLayoutWidget)
         self.form.textEdit.setGeometry(QtCore.QRect(00, 10, 530, 640)) #top corner, width, height
         self.form.textEdit.setOpenExternalLinks(True)
         self.form.textEdit.setObjectName("textEdit")
         self.form.textEdit.setText(help_t)        
 # Button UI
-        self.form.btn = QtGui.QPushButton('Create Folder', self.form.verticalLayoutWidget)
-        self.form.btn.setToolTip('This creates the folders.')
-        self.form.btn.resize(self.form.btn.sizeHint())
-        self.form.btn.move(5, 60)       
-        self.form.btn.clicked.connect(self.selectDirectory)   
-        self.form.verticalLayout.addWidget(self.form.btn)        
+        add_button=False
+        if add_button:
+            self.form.btn = QtGui.QPushButton('Create Folder', self.form.verticalLayoutWidget)
+            self.form.btn.setToolTip('This creates the folders.')
+            self.form.btn.resize(self.form.btn.sizeHint())
+            self.form.btn.move(5, 60)       
+            self.form.btn.clicked.connect(self.selectDirectory)   
+            self.form.verticalLayout.addWidget(self.form.btn)        
         
     def saveSettings(self):
         print ("saveSettings Helper")
+        import SaveSettings
+        SaveSettings.update_ksuGui()
+        
     def loadSettings(self):
         print ("loadSettings Helper")
-        prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kStepUp").GetString('WorkingDir')+'/'
-        print('WorkingDir', prefs)
+        prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kStepUp").GetString('prefix3d_1')+'/'
+        print('KISYS3DMOD assigned to: ', prefs)
         prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kStepUp")
         if prefs.GetContents() is not None:
             for p in prefs.GetContents():

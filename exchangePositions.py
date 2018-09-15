@@ -19,7 +19,10 @@ import ksu_locator
 from os.path import expanduser
 import difflib, re, time, datetime
 
-create_sketch=True
+generate_sketch = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kStepUp").GetBool('generate_sketch')
+
+
+generate_sketch=True
 
 def PLine(prm1,prm2):
     if hasattr(Part,"LineSegment"):
@@ -149,7 +152,43 @@ def roundMatrix(mtx):
         #mtxR.append(rv)
         #mtxR.append((str(rv).replace('-0.0','0.0')))
     return mtxR
-
+###
+def roundEdge(edg):    
+    if 'Line' in str(edg):
+        #print (str(edg))
+        ps = edg.StartPoint; psx=round(ps.x,3);psy=round(ps.y,3);psz=round(ps.z,3)
+        pe = edg.EndPoint; pex=round(pe.x,3);pey=round(pe.y,3);pez=round(pe.z,3)
+        return PLine(Base.Vector(psx,psy,psz), Base.Vector(pex,pey,pez))
+    elif 'ArcOfCircle' in str(edg):
+        #print (str(edg))
+        #v=FreeCAD.Vector
+        c=edg.Center;cx=round(c[0],3);cy=round(c[1],3);cz=round(c[0],3);
+        r=round(edg.Radius,3);axis=edg.Axis
+        sa=round(edg.FirstParameter,4);ea=round(edg.LastParameter,4)
+        return Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx,cy,cz),axis,r),sa,ea)        
+    elif 'Circle' in str(edg):
+        #print (str(edg))
+        c=edg.Center;cx=round(c[0],3);cy=round(c[1],3);cz=round(c[0],3);
+        r=round(edg.Radius,3);axis=edg.Axis
+        return Part.Circle(FreeCAD.Vector(cx,cy,cz),axis,r)
+##
+def roundVal(v,n_dec=None):
+    #round to n_dec after '.'
+    if n_dec is None:
+        n_dec = 3
+    v=float(v)
+    rv = str(round(v,n_dec+1))
+    l=len(rv)
+    if '.' in rv:
+        if (len(rv[rv.find('.'):]) > n_dec+1):
+            #print (rv);print (rv.find('.'))
+            rv = rv[:l-1]
+            #print (rv)
+    rv = rv.replace('-0.0','0.0')
+    #rv = truncate(v, 3)
+    #rv = trunc(v,3)
+    return(float(rv))
+###
 def rmvSuffix(doc=None):
     if doc is None:
         doc = FreeCAD.ActiveDocument
@@ -185,7 +224,7 @@ def expPos(doc=None):
     # rmvSuffix(doc)
     full_content=[]
     positions_content=[]
-    sketch_content=[]
+    sketch_content=[];sketch_content_header=[]
     #if doc is not None:
     if len(doc.FileName) == 0:
         docFn = 'File Not Saved'
@@ -236,14 +275,16 @@ def expPos(doc=None):
                 print (line)
             if o.Label == 'PCB_Sketch':
                 line='Sketch geometry -------------------'
-                sketch_content.append(line+'\n')
+                sketch_content_header.append(line+'\n')
                 print('Sketch geometry -------------------')
                 if hasattr(o,'Geometry'):
                     for e in o.Geometry:
                         if not e.Construction:
-                            line=str(e)
+                            line=str(roundEdge(e))
                             sketch_content.append(line+'\n')
-                            print (e) 
+                            #print (e) 
+                sketch_content.sort()
+                sketch_content[:0] = sketch_content_header
                 line='-----------------------------------'
                 sketch_content.append(line+'\n')
                 print(line)
@@ -303,7 +344,7 @@ def cmpPos(doc=None):
     # rmvSuffix(doc)
     full_content=[]
     positions_content=[]
-    sketch_content=[]
+    sketch_content=[];sketch_content_header=[]
     #if doc is not None:
     if len(doc.FileName) == 0:
         docFn = 'File Not Saved'
@@ -338,14 +379,19 @@ def cmpPos(doc=None):
                 #print (line)    
         if o.Label == 'PCB_Sketch':
             line='Sketch geometry -------------------'
-            sketch_content.append(line+'\n')
+            sketch_content_header.append(line+'\n')
             #print('Sketch geometry -------------------')
             if hasattr(o,'Geometry'):
                     for e in o.Geometry:
                         if not e.Construction:
-                            line=str(e)
+                            line=str(roundEdge(e))
                             sketch_content.append(line+'\n')
                             #print (e) 
+            sketch_content.sort()
+            sketch_content[:0] = sketch_content_header
+            #sketch_content_header.extend(sketch_content)
+            #sketch_content=[]
+            #sketch_content=sketch_content_header
             line='-----------------------------------'
             sketch_content.append(line+'\n')
             #print(line)
@@ -422,7 +468,7 @@ def cmpPos(doc=None):
                         points=line.replace('-<Line segment (','').replace(') >','')
                         p1 = points[:points.find(')')].split(',')
                         p2 = points[points.rfind('(')+1:-1].split(',')
-                        sk_sub.append(PLine(Base.Vector(float(p1[0]),float(p1[1]),float(p1[2])), Base.Vector(float(p2[0]),float(p2[1]),float(p2[2]))))
+                        sk_sub.append(PLine(Base.Vector(round(float(p1[0]),3),round(float(p1[1]),3),round(float(p1[2]),3)), Base.Vector(float(p2[0]),float(p2[1]),float(p2[2]))))
                     elif line.startswith('-ArcOfCircle'):
                         data=line.replace('-ArcOfCircle (Radius : ','').replace('))\n','')
                         data=data.split(':')
@@ -431,7 +477,7 @@ def cmpPos(doc=None):
                         dir = data[2][data[2].find('(')+1:data[2].rfind(')')].split(',')
                         par = data[3][data[3].find('(')+1:].split(',')
                         #print (radius,pos,dir,par);stop
-                        sk_sub.append(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(float(pos[0]),float(pos[1]),float(pos[2])),FreeCAD.Vector(float(dir[0]),float(dir[1]),float(dir[2])),float(radius)),float(par[0]),float(par[1])))
+                        sk_sub.append(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(round(float(pos[0]),3),round(float(pos[1]),3),round(float(pos[2]),3)),FreeCAD.Vector(float(dir[0]),float(dir[1]),float(dir[2])),round(float(radius),3)),round(float(par[0]),5),round(float(par[1]),5)))
                     elif line.startswith('-Circle'):
                         data=line.replace('-Circle (Radius : ','').replace('))\n','')
                         data=data.split(':')
@@ -439,7 +485,7 @@ def cmpPos(doc=None):
                         pos = data[1][data[1].find('(')+1:data[1].find(')')].split(',')
                         dir = data[2][data[2].find('(')+1:].split(',')
                         print (radius,pos,dir)
-                        sk_sub.append(Part.Circle(FreeCAD.Vector(float(pos[0]),float(pos[1]),float(pos[2])),FreeCAD.Vector(float(dir[0]),float(dir[1]),float(dir[2])),float(radius)))
+                        sk_sub.append(Part.Circle(FreeCAD.Vector(round(float(pos[0]),3),round(float(pos[1]),3),round(float(pos[2]),3)),FreeCAD.Vector(float(dir[0]),float(dir[1]),float(dir[2])),round(float(radius),3)))
             elif line.startswith("+"):
                 if not line.startswith("+++") and not line.startswith("+title") \
                         and not line.startswith("+FileN") and not line.startswith("+date "):
@@ -484,7 +530,7 @@ def cmpPos(doc=None):
         FreeCADGui.Selection.clearSelection()
         nObj=0;old_pcb_tval=100;pcbN=''
         diff_objs=[]
-        create_sketch=False
+        generate_sketch=False
         for o in doc.Objects:
             if hasattr(o, 'Shape') or o.TypeId == 'App::Link':
                 if 'Sketch' not in o.Label and 'Pcb' not in o.Label:
@@ -502,7 +548,7 @@ def cmpPos(doc=None):
                     FreeCADGui.ActiveDocument.getObject(o.Name).Transparency = 70
                     pcbN=o.Name
                 if 'PCB_Sketch' in o.Label and 'Sketch' in o.TypeId:
-                    create_sketch=True
+                    generate_sketch=True
         #print(''.join(diff_content)); stop
         if nObj > 0:
             dc = ''.join(diff_content)
@@ -524,7 +570,7 @@ def cmpPos(doc=None):
             FreeCAD.Console.PrintWarning('no changes\n')
             if len(pcbN)>0:
                 FreeCADGui.ActiveDocument.getObject(pcbN).Transparency = old_pcb_tval
-        if create_sketch:
+        if generate_sketch:
             if len(sk_add)>0:
                 #print(sk_add)
                 if FreeCAD.activeDocument().getObject("Sketch_Addition") is not None:
