@@ -17404,7 +17404,7 @@ def createEdge(edg,ofs):
             #stop
         else:
             #self.pcbElem.append(['gr_arc', xs, ys, x1, y1, curve, width, layer])
-            k_edg = "  (gr_arc (start {0:.3f} {1:.3f}) (end {2:.3f} {3:.3f}) (angle {4:.3f}) (layer {6}) (width {5}))"\
+            k_edg = "  (gr_arc (start {0:.3f} {1:.3f}) (end {2:.3f} {3:.3f}) (angle {4:.2f}) (layer {6}) (width {5}))"\
                     .format(xs+ofs[0], ys+ofs[1], x1+ofs[0], y1+ofs[1], angle, edge_width, layer)
             #.format(
             #            '{0:.10f}'.format(i[1] + abs(self.minX)), '{0:.10f}'.format(i[2] + abs(self.minY)), '{0:.10f}'.format(i[3] + abs(self.minX)), '{0:.10f}'.format(i[4] + abs(self.minY)), i[5], i[6], i[7]))
@@ -17433,15 +17433,15 @@ def createFp(edg,ofs,layer, edge_thick):
         if 0: #abs(edg[1]+ofs[0])>500 or abs(edg[2]+ofs[1])>500:
             #print edg
             stop
-            k_edg = "  ("+ln+" (start {0} {1}) (end {2} {3}) (angle 90) (layer {5}) (width {4}))"\
+            k_edg = "  ("+ln+" (start {0:.3f} {1:.3f}) (end {2:.3f} {3:.3f}) (angle 90) (layer {5}) (width {4}))"\
                         .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edge_thick, layer)
         else:
-            k_edg = "  ("+ln+" (start {0} {1}) (end {2} {3}) (layer {5}) (width {4}))"\
+            k_edg = "  ("+ln+" (start {0:.3f} {1:.3f}) (end {2:.3f} {3:.3f}) (layer {5}) (width {4}))"\
                         .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edge_thick, layer)
         #k_edg +=os.linesep
         #.format('{0:.10f}').format(edg[1] + abs(0), '{0:.10f}').format(edg[2] + abs(0), '{0:.10f}').format(edg[3] + abs(0), '{0:.10f}').format(edg[4] + abs(0), 'Edge.Cuts', edge_width)
     elif edg[0] == 'circle':
-        k_edg = "  ("+cr+" (center {0} {1}) (end {2} {1}) (layer {4}) (width {3}))".format(edg[2]+ofs[0], -edg[3]+ofs[1], edg[2]+ofs[0]-edg[1], edge_thick, layer)
+        k_edg = "  ("+cr+" (center {0:.3f} {1:.3f}) (end {2:.3f} {1:.3f}) (layer {4}) (width {3}))".format(edg[2]+ofs[0], -edg[3]+ofs[1], edg[2]+ofs[0]-edg[1], edge_thick, layer)
         #k_edg +=os.linesep
                     #.format(
                     #'{0:.10f}'.format(i[1] + abs(self.minX)), '{0:.10f}'.format(i[2] + abs(self.minY)), '{0:.10f}'.format(
@@ -17507,7 +17507,7 @@ def createFp(edg,ofs,layer, edge_thick):
         # Draft.makePoint(x2, -y2, 0)
         
         if abs(xs) > maxRadius or abs(ys) > maxRadius:
-            k_edg = "  ("+ln+" (start {0} {1}) (end {2} {3}) (layer {5}) (width {4}))"\
+            k_edg = "  ("+ln+" (start {0:.3f} {1:.3f}) (end {2:.3f} {3:.3f}) (layer {5}) (width {4}))"\
                         .format(x1+ofs[0], y1+ofs[1], x2+ofs[0], y2+ofs[1], edge_thick, layer)
             #k_edg = "  (gr_line (start {0} {1}) (end {2} {3}) (angle 90) (layer {5}) (width {4}))"\
             #            .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edge_width, 'Edge.Cuts')
@@ -17515,7 +17515,7 @@ def createFp(edg,ofs,layer, edge_thick):
             #stop
         else:
             #self.pcbElem.append(['gr_arc', xs, ys, x1, y1, curve, width, layer])
-            k_edg = "  ("+ac+" (start {0} {1}) (end {2} {3}) (angle {4}) (layer {6}) (width {5}))"\
+            k_edg = "  ("+ac+" (start {0:.3f} {1:.3f}) (end {2:.3f} {3:.3f}) (angle {4:.2f}) (layer {6}) (width {5}))"\
                     .format(xs+ofs[0], ys+ofs[1], x1+ofs[0], y1+ofs[1], angle, edge_thick, layer)
             #.format(
             #            '{0:.10f}'.format(i[1] + abs(self.minX)), '{0:.10f}'.format(i[2] + abs(self.minY)), '{0:.10f}'.format(i[3] + abs(self.minX)), '{0:.10f}'.format(i[4] + abs(self.minY)), i[5], i[6], i[7]))
