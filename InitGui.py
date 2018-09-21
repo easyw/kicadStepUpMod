@@ -157,7 +157,8 @@ class ksuWB ( Workbench ):
             self.appendToolbar("ksu Design Tools", ksuDTB)
         self.appendToolbar("ksu Helpers", ["ksuToolsToggleTreeView", "ksuToolsTransparencyToggle", "ksuToolsHighlightToggle",\
                             "ksuToolsVisibilityToggle", "ksuToolsStepImportModeSTD", "ksuToolsStepImportModeComp",\
-                            "ksuToolsCopyPlacement", "ksuToolsResetPlacement", "ksuToolsAddToTree", "ksuToolsRemoveFromTree", "ksuToolsTurnTable"])
+                            "ksuToolsCopyPlacement", "ksuToolsResetPlacement", "ksuToolsAddToTree", "ksuToolsRemoveFromTree"])
+        self.appendToolbar("ksu Show", ["ksuToolsTurnTable", "ksuToolsExplode"])
         #self.appendMenu("ksu Tools", ["ksuTools","ksuToolsEdit"])
         self.appendMenu("ksu Tools", ["ksuTools","ksuToolsEditPrefs"])
         self.appendMenu("ksu PushPull", ["ksuToolsOpenBoard","ksuToolsPushPCB","ksuToolsPushMoved","ksuToolsSync3DModels",\

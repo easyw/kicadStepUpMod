@@ -26,7 +26,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints
 
-__ksuCMD_version__='1.5.5'
+__ksuCMD_version__='1.5.6'
 
 precision = 0.1 # precision in spline or bezier conversion
 q_deflection = 0.02 # quasi deflection parameter for discretization
@@ -2347,6 +2347,29 @@ class ksuRemoveSuffix:
 
 FreeCADGui.addCommand('ksuRemoveSuffix',ksuRemoveSuffix())
 
+#####
+class ksuToolsExplode:
+    "ksu tools Explode"
+    
+    def GetResources(self):
+        mybtn_tooltip ="ksu Tools PCB Explode\nSelect the top container of a kicad PCB to exlode it"
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Explode_Pcb.svg') , # the name of a svg file available in the resources
+                     'MenuText': mybtn_tooltip ,
+                     'ToolTip' : mybtn_tooltip}
+ 
+    def IsActive(self):
+        if FreeCAD.ActiveDocument is None:
+            return False
+        else:
+            return True
+ 
+    def Activated(self):
+        # do something here...
+        import explode
+        explode.runExplodeGui()
+        #import explode;reload_lib(explode)
+
+FreeCADGui.addCommand('ksuToolsExplode',ksuToolsExplode())
 #####
 class ksuToolsDefeaturingTools:
     "ksu tools DefeaturingTools"
