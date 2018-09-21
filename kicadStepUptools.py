@@ -12480,8 +12480,11 @@ def DrawPCB(mypcb):
                 #         drill_oval=True
                 #     myidx+=1
                 # if drill_oval:
-                ##if p.drill.oval is not None:
-                if p.drill.oval:  #maui temp workaround errorchecking
+                #print (p.drill);print(p.drill.oval);print(str(p.drill).split(',')[0])
+                #if p.drill.oval is not None:
+                if 'oval' in str(p.drill).split(',')[0]:  #py3 dict workaround
+                #if p.drill.oval:  #maui temp workaround errorchecking
+                    #sayw(str(p.drill.oval))
                     #sayw('drill oval')
                     if p.drill[0] >= min_drill_size or p.drill[1] >= min_drill_size:
                         xs=p.at[0]+m.at[0];ys=-p.at[1]-m.at[1]
@@ -12490,6 +12493,8 @@ def DrawPCB(mypcb):
                         rx=float(p.drill[0])
                         #print (p.drill)
                         if len(p.drill)>2:
+                            #print (p.drill[1])
+                            #stop
                             ry=float(p.drill[1])
                         else:
                             ry=rx
