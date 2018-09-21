@@ -786,6 +786,7 @@ class Sexp(object):
             return 0 #maui py3
 
     def __getitem__(self,key):
+        #print(key) #maui test workaround
         v = self._value[key]
         p = getattr(v,'__get__',None)
         return v if p is None else p(self,self.__class__)
@@ -12052,6 +12053,7 @@ def DrawPCB(mypcb):
     PCB_Geo = []
     edges=[]
     PCBs = []
+    #print (mypcb.general) #maui errorchecking
     totalHeight=float(mypcb.general.thickness)
     say('pcb thickness '+str(totalHeight)+'mm')
     version=mypcb.version
@@ -12478,15 +12480,15 @@ def DrawPCB(mypcb):
                 #         drill_oval=True
                 #     myidx+=1
                 # if drill_oval:
-                if p.drill.oval is not None:
-                #if p.drill.oval:
+                ##if p.drill.oval is not None:
+                if p.drill.oval:  #maui temp workaround errorchecking
                     #sayw('drill oval')
                     if p.drill[0] >= min_drill_size or p.drill[1] >= min_drill_size:
                         xs=p.at[0]+m.at[0];ys=-p.at[1]-m.at[1]
                         #x1=mc.end[0]+m.at[0];y1=-mc.end[1]-m.at[1]
                         #radius = float(p.drill[0])/2 #sqrt((xs - x1) ** 2 + (ys - y1) ** 2)
                         rx=float(p.drill[0])
-                        #print p.drill
+                        #print (p.drill)
                         if len(p.drill)>2:
                             ry=float(p.drill[1])
                         else:
