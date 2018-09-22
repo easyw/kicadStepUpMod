@@ -9,7 +9,7 @@
 
 __version__ = "v1.0.1"
 
-import FreeCAD, FreeCADGui
+import FreeCAD, FreeCADGui, os
 from PySide import QtCore, QtGui
 from sys import platform as _platform
 
@@ -18,7 +18,7 @@ global instance_nbr, explode_dwg
 instance_nbr=0
 
 # window GUI dimensions parameters
-wdsExpx=300;wdsExpy=130
+wdsExpx=300;wdsExpy=140
 pt_osx=False
 if _platform == "linux" or _platform == "linux2":
     # linux
@@ -32,6 +32,12 @@ if _platform == "darwin":
 ##   # Windows
 
 toBeReset = None
+btn_iconsize=28
+
+import ksu_locator
+ksuWBpath = os.path.dirname(ksu_locator.__file__)
+#sys.path.append(ksuWB + '/Gui')
+ksuWB_icons_path =  os.path.join( ksuWBpath, 'Resources', 'icons')
 
 ###
 class expSelectionObserver:
@@ -95,13 +101,14 @@ class Ui_explode_dwg(object):
     def setupUi(self, explode_dwg):
         explode_dwg.setObjectName("explode_dwg")
         explode_dwg.resize(303, 141)
+        explode_dwg.setMinimumSize(QtCore.QSize(48, 48))
         explode_dwg.setLayoutDirection(QtCore.Qt.LeftToRight)
         explode_dwg.setFeatures(QtGui.QDockWidget.AllDockWidgetFeatures)
         explode_dwg.setAllowedAreas(QtCore.Qt.LeftDockWidgetArea|QtCore.Qt.RightDockWidgetArea)
         self.dockWidgetContents = QtGui.QWidget()
         self.dockWidgetContents.setObjectName("dockWidgetContents")
         self.mainGroup = QtGui.QGroupBox(self.dockWidgetContents)
-        self.mainGroup.setGeometry(QtCore.QRect(4, 0, 293, 69))
+        self.mainGroup.setGeometry(QtCore.QRect(4, 0, 293, 109))
         self.mainGroup.setTitle("Explode 3D PCB")
         self.mainGroup.setObjectName("mainGroup")
         self.gridLayoutWidget_13 = QtGui.QWidget(self.mainGroup)
@@ -117,16 +124,24 @@ class Ui_explode_dwg(object):
         self.hSlider_explode.setOrientation(QtCore.Qt.Horizontal)
         self.hSlider_explode.setObjectName("hSlider_explode")
         self.gridLayout_15.addWidget(self.hSlider_explode, 0, 0, 1, 1)
-        self.pb_Close = QtGui.QPushButton(self.dockWidgetContents)
-        self.pb_Close.setGeometry(QtCore.QRect(196, 72, 93, 28))
-        self.pb_Close.setToolTip("Exit")
-        self.pb_Close.setText("Exit")
-        self.pb_Close.setObjectName("pb_Close")
-        self.pb_Reset = QtGui.QPushButton(self.dockWidgetContents)
-        self.pb_Reset.setGeometry(QtCore.QRect(12, 72, 93, 28))
+        self.horizontalLayoutWidget = QtGui.QWidget(self.mainGroup)
+        self.horizontalLayoutWidget.setGeometry(QtCore.QRect(8, 64, 277, 41))
+        self.horizontalLayoutWidget.setObjectName("horizontalLayoutWidget")
+        self.horizontalLayout = QtGui.QHBoxLayout(self.horizontalLayoutWidget)
+        self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
+        self.horizontalLayout.setObjectName("horizontalLayout")
+        self.pb_Reset = QtGui.QPushButton(self.horizontalLayoutWidget)
         self.pb_Reset.setToolTip("Reset")
         self.pb_Reset.setText("Reset")
         self.pb_Reset.setObjectName("pb_Reset")
+        self.horizontalLayout.addWidget(self.pb_Reset)
+        spacerItem = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.horizontalLayout.addItem(spacerItem)
+        self.pb_Close = QtGui.QPushButton(self.horizontalLayoutWidget)
+        self.pb_Close.setToolTip("Exit")
+        self.pb_Close.setText("Exit")
+        self.pb_Close.setObjectName("pb_Close")
+        self.horizontalLayout.addWidget(self.pb_Close)
         explode_dwg.setWidget(self.dockWidgetContents)
 
         self.retranslateUi(explode_dwg)
@@ -140,7 +155,20 @@ class Ui_explode_dwg(object):
         self.hSlider_explode.valueChanged.connect(SlideValueChange)
         self.hSlider_explode.setEnabled(False)
         self.hSlider_explode.setToolTip("Explode PCB\nSelect the top container of a kicad PCB to exlode it")
-
+        icon = QtGui.QIcon()
+        myicon=os.path.join( ksuWB_icons_path , 'closeSm.svg')
+        icon.addPixmap(QtGui.QPixmap(myicon), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.pb_Close.setIcon(icon)
+        self.pb_Close.setIconSize(QtCore.QSize(btn_iconsize, btn_iconsize))
+        self.pb_Close.setGeometry(QtCore.QRect(290, 72, btn_iconsize+4, btn_iconsize+4))
+        self.pb_Close.setText("")
+        icon = QtGui.QIcon()
+        myicon=os.path.join( ksuWB_icons_path , 'Reset-to-Center.svg')
+        icon.addPixmap(QtGui.QPixmap(myicon), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.pb_Reset.setIcon(icon)
+        self.pb_Reset.setIconSize(QtCore.QSize(btn_iconsize, btn_iconsize))
+        self.pb_Reset.setGeometry(QtCore.QRect(12, 72, btn_iconsize+4, btn_iconsize+4))
+        self.pb_Reset.setText("")
     def retranslateUi(self, explode_dwg):
         pass
 ##############################################################
@@ -236,6 +264,16 @@ def Exp_centerOnScreen ():
     explode_dwg.setGeometry(xp, yp, sizeX, sizeY)
 ##
 
+def Exp_putOnTopRightCorner():
+    resolution = QtGui.QDesktopWidget().screenGeometry()
+    margin = 80
+    xp=(resolution.width()) - sizeX -margin/5 # - (KSUWidget.frameSize().width() / 2)
+    yp=(resolution.height()) - sizeY - margin # - (KSUWidget.frameSize().height() / 2))
+    # xp=widg.pos().x()-sizeXMax/2;yp=widg.pos().y()#+sizeY/2
+    explode_dwg.setGeometry(xp, margin, sizeX, sizeY)
+    #self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+    #self.show()
+
 def runExplodeGui():
     global explode_dwg
     doc=FreeCAD.ActiveDocument
@@ -257,7 +295,8 @@ def runExplodeGui():
         ExpMw.addDockWidget(QtCore.Qt.RightDockWidgetArea,explode_dwg)
         explode_dwg.setFloating(True)  #undock
         #RHDockWidget.resize(sizeX,sizeY)
-        Exp_centerOnScreen()
+        #Exp_centerOnScreen()
+        Exp_putOnTopRightCorner()
         s=expSelectionObserver()
         FreeCADGui.Selection.addObserver(s)
         

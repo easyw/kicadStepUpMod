@@ -10,6 +10,12 @@
     <height>141</height>
    </rect>
   </property>
+  <property name="minimumSize">
+   <size>
+    <width>48</width>
+    <height>48</height>
+   </size>
+  </property>
   <property name="layoutDirection">
    <enum>Qt::LeftToRight</enum>
   </property>
@@ -29,7 +35,7 @@
       <x>4</x>
       <y>0</y>
       <width>293</width>
-      <height>69</height>
+      <height>109</height>
      </rect>
     </property>
     <property name="title">
@@ -63,38 +69,51 @@
       </item>
      </layout>
     </widget>
-   </widget>
-   <widget class="QPushButton" name="pb_Close">
-    <property name="geometry">
-     <rect>
-      <x>196</x>
-      <y>72</y>
-      <width>93</width>
-      <height>28</height>
-     </rect>
-    </property>
-    <property name="toolTip">
-     <string notr="true">Exit</string>
-    </property>
-    <property name="text">
-     <string notr="true">Exit</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="pb_Reset">
-    <property name="geometry">
-     <rect>
-      <x>12</x>
-      <y>72</y>
-      <width>93</width>
-      <height>28</height>
-     </rect>
-    </property>
-    <property name="toolTip">
-     <string notr="true">Reset</string>
-    </property>
-    <property name="text">
-     <string notr="true">Reset</string>
-    </property>
+    <widget class="QWidget" name="horizontalLayoutWidget">
+     <property name="geometry">
+      <rect>
+       <x>8</x>
+       <y>64</y>
+       <width>277</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QPushButton" name="pb_Reset">
+        <property name="toolTip">
+         <string notr="true">Reset</string>
+        </property>
+        <property name="text">
+         <string notr="true">Reset</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pb_Close">
+        <property name="toolTip">
+         <string notr="true">Exit</string>
+        </property>
+        <property name="text">
+         <string notr="true">Exit</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
    </widget>
   </widget>
  </widget>
