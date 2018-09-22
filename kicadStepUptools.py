@@ -10745,14 +10745,14 @@ def routineDrawFootPrint(content,name):
                         #print anchor
                         #stop
                 elif pShape=='custom' and pGeomC is not None:
-                    #say(pGeomC)
+                    #sayerr(pGeomC)
                     Gc=pGeomC[0].split(' ')
-                    Gcx=float(Gc[1])-x1;Gcy=float(Gc[2])-y1
+                    Gcx=-float(Gc[1])-x1;Gcy=float(Gc[2])-y1
                     Gr=pGeomC[1].split(' ')
                     GRad=float(Gr[1])-float(Gc[1])
                     Gw=pGeomC[2].split(' ')
                     Gw=float(Gw[1])
-                    #print Gcx,Gcy,GRad,Gw
+                    #print (Gcx,Gcy,GRad,Gw)
                     mypad=createGeomC(Gcx, Gcy, GRad,'top', Gw)
                     if anchor is not None:
                         if anchor[0]=="circle":
@@ -12049,6 +12049,7 @@ def DrawPCB(mypcb):
     PCB_Geo = []
     edges=[]
     PCBs = []
+    #print (mypcb.general) #maui errorchecking
     totalHeight=float(mypcb.general.thickness)
     say('pcb thickness '+str(totalHeight)+'mm')
     version=mypcb.version
@@ -12475,16 +12476,21 @@ def DrawPCB(mypcb):
                 #         drill_oval=True
                 #     myidx+=1
                 # if drill_oval:
-                if p.drill.oval is not None:
-                #if p.drill.oval:
+                #print (p.drill);print(p.drill.oval);print(str(p.drill).split(',')[0])
+                #if p.drill.oval is not None:
+                if 'oval' in str(p.drill).split(',')[0]:  #py3 dict workaround
+                #if p.drill.oval:  #maui temp workaround errorchecking
+                    #sayw(str(p.drill.oval))
                     #sayw('drill oval')
                     if p.drill[0] >= min_drill_size or p.drill[1] >= min_drill_size:
                         xs=p.at[0]+m.at[0];ys=-p.at[1]-m.at[1]
                         #x1=mc.end[0]+m.at[0];y1=-mc.end[1]-m.at[1]
                         #radius = float(p.drill[0])/2 #sqrt((xs - x1) ** 2 + (ys - y1) ** 2)
                         rx=float(p.drill[0])
-                        #print p.drill
+                        #print (p.drill)
                         if len(p.drill)>2:
+                            #print (p.drill[1])
+                            #stop
                             ry=float(p.drill[1])
                         else:
                             ry=rx
@@ -17309,18 +17315,18 @@ def createEdge(edg,ofs):
 
     layer='Edge.Cuts'
     if edg[0] == 'line':
-        if 0: #abs(edg[1]+ofs[0])>500 or abs(edg[2]+ofs[1])>500:
+        if 0: #abs(edg[1]+ofs[0])>500 or abs(edg[2]+ofs[1])>500: "{0:.3f}".
             #print edg
             stop
-            k_edg = "  (gr_line (start {0} {1}) (end {2} {3}) (angle 90) (layer {5}) (width {4}))"\
+            k_edg = "  (gr_line (start {0:.3f} {1:.3f}) (end {2:.3f} {3:.3f}) (angle 90) (layer {5}) (width {4}))"\
                         .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edge_width, layer)
         else:
-            k_edg = "  (gr_line (start {0} {1}) (end {2} {3}) (angle 90) (layer {5}) (width {4}))"\
+            k_edg = "  (gr_line (start {0:.3f} {1:.3f}) (end {2:.3f} {3:.3f}) (angle 90) (layer {5}) (width {4}))"\
                         .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edge_width, layer)
         #k_edg +=os.linesep
         #.format('{0:.10f}').format(edg[1] + abs(0), '{0:.10f}').format(edg[2] + abs(0), '{0:.10f}').format(edg[3] + abs(0), '{0:.10f}').format(edg[4] + abs(0), 'Edge.Cuts', edge_width)
     elif edg[0] == 'circle':
-        k_edg = "  (gr_circle (center {0} {1}) (end {2} {1}) (layer {4}) (width {3}))".format(edg[2]+ofs[0], -edg[3]+ofs[1], edg[2]+ofs[0]-edg[1], edge_width, layer)
+        k_edg = "  (gr_circle (center {0:.3f} {1:.3f}) (end {2:.3f} {1:.3f}) (layer {4}) (width {3}))".format(edg[2]+ofs[0], -edg[3]+ofs[1], edg[2]+ofs[0]-edg[1], edge_width, layer)
         #k_edg +=os.linesep
                     #.format(
                     #'{0:.10f}'.format(i[1] + abs(self.minX)), '{0:.10f}'.format(i[2] + abs(self.minY)), '{0:.10f}'.format(
@@ -17386,7 +17392,7 @@ def createEdge(edg,ofs):
         # Draft.makePoint(x2, -y2, 0)
         
         if abs(xs) > maxRadius or abs(ys) > maxRadius:
-            k_edg = "  (gr_line (start {0} {1}) (end {2} {3}) (angle 0) (layer {5}) (width {4}))"\
+            k_edg = "  (gr_line (start {0:.3f} {1:.3f}) (end {2:.3f} {3:.3f}) (angle 0) (layer {5}) (width {4}))"\
                         .format(x1+ofs[0], y1+ofs[1], x2+ofs[0], y2+ofs[1], edge_width, layer)
             #k_edg = "  (gr_line (start {0} {1}) (end {2} {3}) (angle 90) (layer {5}) (width {4}))"\
             #            .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edge_width, 'Edge.Cuts')
@@ -17394,7 +17400,7 @@ def createEdge(edg,ofs):
             #stop
         else:
             #self.pcbElem.append(['gr_arc', xs, ys, x1, y1, curve, width, layer])
-            k_edg = "  (gr_arc (start {0} {1}) (end {2} {3}) (angle {4}) (layer {6}) (width {5}))"\
+            k_edg = "  (gr_arc (start {0:.3f} {1:.3f}) (end {2:.3f} {3:.3f}) (angle {4:.2f}) (layer {6}) (width {5}))"\
                     .format(xs+ofs[0], ys+ofs[1], x1+ofs[0], y1+ofs[1], angle, edge_width, layer)
             #.format(
             #            '{0:.10f}'.format(i[1] + abs(self.minX)), '{0:.10f}'.format(i[2] + abs(self.minY)), '{0:.10f}'.format(i[3] + abs(self.minX)), '{0:.10f}'.format(i[4] + abs(self.minY)), i[5], i[6], i[7]))
@@ -17423,15 +17429,15 @@ def createFp(edg,ofs,layer, edge_thick):
         if 0: #abs(edg[1]+ofs[0])>500 or abs(edg[2]+ofs[1])>500:
             #print edg
             stop
-            k_edg = "  ("+ln+" (start {0} {1}) (end {2} {3}) (angle 90) (layer {5}) (width {4}))"\
+            k_edg = "  ("+ln+" (start {0:.3f} {1:.3f}) (end {2:.3f} {3:.3f}) (angle 90) (layer {5}) (width {4}))"\
                         .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edge_thick, layer)
         else:
-            k_edg = "  ("+ln+" (start {0} {1}) (end {2} {3}) (layer {5}) (width {4}))"\
+            k_edg = "  ("+ln+" (start {0:.3f} {1:.3f}) (end {2:.3f} {3:.3f}) (layer {5}) (width {4}))"\
                         .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edge_thick, layer)
         #k_edg +=os.linesep
         #.format('{0:.10f}').format(edg[1] + abs(0), '{0:.10f}').format(edg[2] + abs(0), '{0:.10f}').format(edg[3] + abs(0), '{0:.10f}').format(edg[4] + abs(0), 'Edge.Cuts', edge_width)
     elif edg[0] == 'circle':
-        k_edg = "  ("+cr+" (center {0} {1}) (end {2} {1}) (layer {4}) (width {3}))".format(edg[2]+ofs[0], -edg[3]+ofs[1], edg[2]+ofs[0]-edg[1], edge_thick, layer)
+        k_edg = "  ("+cr+" (center {0:.3f} {1:.3f}) (end {2:.3f} {1:.3f}) (layer {4}) (width {3}))".format(edg[2]+ofs[0], -edg[3]+ofs[1], edg[2]+ofs[0]-edg[1], edge_thick, layer)
         #k_edg +=os.linesep
                     #.format(
                     #'{0:.10f}'.format(i[1] + abs(self.minX)), '{0:.10f}'.format(i[2] + abs(self.minY)), '{0:.10f}'.format(
@@ -17497,7 +17503,7 @@ def createFp(edg,ofs,layer, edge_thick):
         # Draft.makePoint(x2, -y2, 0)
         
         if abs(xs) > maxRadius or abs(ys) > maxRadius:
-            k_edg = "  ("+ln+" (start {0} {1}) (end {2} {3}) (layer {5}) (width {4}))"\
+            k_edg = "  ("+ln+" (start {0:.3f} {1:.3f}) (end {2:.3f} {3:.3f}) (layer {5}) (width {4}))"\
                         .format(x1+ofs[0], y1+ofs[1], x2+ofs[0], y2+ofs[1], edge_thick, layer)
             #k_edg = "  (gr_line (start {0} {1}) (end {2} {3}) (angle 90) (layer {5}) (width {4}))"\
             #            .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edge_width, 'Edge.Cuts')
@@ -17505,7 +17511,7 @@ def createFp(edg,ofs,layer, edge_thick):
             #stop
         else:
             #self.pcbElem.append(['gr_arc', xs, ys, x1, y1, curve, width, layer])
-            k_edg = "  ("+ac+" (start {0} {1}) (end {2} {3}) (angle {4}) (layer {6}) (width {5}))"\
+            k_edg = "  ("+ac+" (start {0:.3f} {1:.3f}) (end {2:.3f} {3:.3f}) (angle {4:.2f}) (layer {6}) (width {5}))"\
                     .format(xs+ofs[0], ys+ofs[1], x1+ofs[0], y1+ofs[1], angle, edge_thick, layer)
             #.format(
             #            '{0:.10f}'.format(i[1] + abs(self.minX)), '{0:.10f}'.format(i[2] + abs(self.minY)), '{0:.10f}'.format(i[3] + abs(self.minX)), '{0:.10f}'.format(i[4] + abs(self.minY)), i[5], i[6], i[7]))
@@ -18115,9 +18121,11 @@ def export_pcb(fname=None):
                         #print 'too big radius= ',border[3]
                         #print 'border len= ', len(border)
                         #points=border [10].x
-                        p1x = float(border [10].x);p1y=float(border [10].y)
+                        #p1x = float(border [10].x);p1y=float(border [10].y)
+                        p1x = float("{0:.3f}".format(border [10].x));p1y=float("{0:.3f}".format(border [10].y))
                         #print p1x, ' ',p1y
-                        p2x = float(border [11].x);p2y=float(border [11].y)
+                        #p2x = float(border [11].x);p2y=float(border [11].y)
+                        p2x = float("{0:.3f}".format(border [11].x));p2y=float("{0:.3f}".format(border [11].y))
                         #print '1st point ', border [10],' 2nd point ', border [11]
                         sanitized_edge_list.append(['line',p1x,p1y,p2x,p2y])
                     else:
