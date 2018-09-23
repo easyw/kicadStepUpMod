@@ -20,9 +20,9 @@ def reload_lib(lib):
 
 
 def update_ksuGui():
-    vrml_materials = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kStepUp").GetBool('vrml_materials')
-    mode_virtual = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kStepUp").GetBool('mode_virtual')
-    exp_step = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kStepUp").GetBool('exp_step')
+    vrml_materials = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui").GetBool('vrml_materials')
+    mode_virtual = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui").GetBool('mode_virtual')
+    exp_step = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui").GetBool('exp_step')
     #print('\'vrml_materials\' assigned to: ', vrml_materials)
             
     import kicadStepUptools

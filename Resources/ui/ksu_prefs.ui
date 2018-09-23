@@ -72,7 +72,7 @@
             <cstring>prefix3d_1</cstring>
            </property>
            <property name="prefPath" stdset="0">
-            <cstring>Mod/kStepUp</cstring>
+            <cstring>Mod/kicadStepUpGui</cstring>
            </property>
               <property name="mode">
               <enum>Gui::FileChooser::Directory</enum>
@@ -126,7 +126,7 @@
             <cstring>prefix3d_2</cstring>
            </property>
            <property name="prefPath" stdset="0">
-            <cstring>Mod/kStepUp</cstring>
+            <cstring>Mod/kicadStepUpGui</cstring>
            </property>
               <property name="mode">
               <enum>Gui::FileChooser::Directory</enum>
@@ -195,7 +195,7 @@
              <cstring>pcb_color</cstring>
             </property>
             <property name="prefPath" stdset="0">
-             <cstring>Mod/kStepUp</cstring>
+             <cstring>Mod/kicadStepUpGui</cstring>
             </property>
             <item>
              <property name="text">
@@ -279,7 +279,7 @@
              <cstring>pcb_placement</cstring>
             </property>
             <property name="prefPath" stdset="0">
-             <cstring>Mod/kStepUp</cstring>
+             <cstring>Mod/kicadStepUpGui</cstring>
             </property>
             <item>
              <property name="text">
@@ -348,7 +348,7 @@
              <cstring>sketch_constraints</cstring>
             </property>
             <property name="prefPath" stdset="0">
-             <cstring>Mod/kStepUp</cstring>
+             <cstring>Mod/kicadStepUpGui</cstring>
             </property>
             <item>
              <property name="text">
@@ -392,7 +392,7 @@
           <cstring>mode_virtual</cstring>
          </property>
          <property name="prefPath" stdset="0">
-          <cstring>Mod/kStepUp</cstring>
+          <cstring>Mod/kicadStepUpGui</cstring>
          </property>
         </widget>
         <widget class="QWidget" name="layoutWidget_5">
@@ -442,7 +442,7 @@
              <cstring>drill_size</cstring>
             </property>
             <property name="prefPath" stdset="0">
-             <cstring>Mod/kStepUp</cstring>
+             <cstring>Mod/kicadStepUpGui</cstring>
             </property>
            </widget>
           </item>
@@ -493,7 +493,7 @@
              <cstring>bbox_list</cstring>
             </property>
             <property name="prefPath" stdset="0">
-             <cstring>Mod/kStepUp</cstring>
+             <cstring>Mod/kicadStepUpGui</cstring>
             </property>
            </widget>
           </item>
@@ -544,7 +544,7 @@
              <cstring>blacklist</cstring>
             </property>
             <property name="prefPath" stdset="0">
-             <cstring>Mod/kStepUp</cstring>
+             <cstring>Mod/kicadStepUpGui</cstring>
             </property>
            </widget>
           </item>
@@ -585,7 +585,7 @@
           <cstring>make_union</cstring>
          </property>
          <property name="prefPath" stdset="0">
-          <cstring>Mod/kStepUp</cstring>
+          <cstring>Mod/kicadStepUpGui</cstring>
          </property>
         </widget>
         <widget class="Gui::PrefCheckBox" name="cb_exp_step">
@@ -610,7 +610,7 @@
           <cstring>exp_step</cstring>
          </property>
          <property name="prefPath" stdset="0">
-          <cstring>Mod/kStepUp</cstring>
+          <cstring>Mod/kicadStepUpGui</cstring>
          </property>
         </widget>
         <widget class="QWidget" name="layoutWidget">
@@ -661,7 +661,7 @@
              <cstring>step_exp_mode</cstring>
             </property>
             <property name="prefPath" stdset="0">
-             <cstring>Mod/kStepUp</cstring>
+             <cstring>Mod/kicadStepUpGui</cstring>
             </property>
             <item>
              <property name="text">
@@ -730,7 +730,7 @@
              <cstring>step_exp_mode</cstring>
             </property>
             <property name="prefPath" stdset="0">
-             <cstring>Mod/kStepUp</cstring>
+             <cstring>Mod/kicadStepUpGui</cstring>
             </property>
             <item>
              <property name="text">
@@ -773,7 +773,7 @@
           <cstring>asm3_links</cstring>
          </property>
          <property name="prefPath" stdset="0">
-          <cstring>Mod/kStepUp</cstring>
+          <cstring>Mod/kicadStepUpGui</cstring>
          </property>
         </widget>
         <widget class="Gui::PrefCheckBox" name="cb_vrml_materials">
@@ -801,7 +801,7 @@
           <cstring>vrml_materials</cstring>
          </property>
          <property name="prefPath" stdset="0">
-          <cstring>Mod/kStepUp</cstring>
+          <cstring>Mod/kicadStepUpGui</cstring>
          </property>
         </widget>
         <widget class="Gui::PrefCheckBox" name="cb_turntable">
@@ -826,7 +826,7 @@
           <cstring>turntable</cstring>
          </property>
          <property name="prefPath" stdset="0">
-          <cstring>Mod/kStepUp</cstring>
+          <cstring>Mod/kicadStepUpGui</cstring>
          </property>
         </widget>
        </widget>
@@ -864,7 +864,7 @@
           <cstring>generate_sketch</cstring>
          </property>
          <property name="prefPath" stdset="0">
-          <cstring>Mod/kStepUp</cstring>
+          <cstring>Mod/kicadStepUpGui</cstring>
          </property>
         </widget>
        </widget>

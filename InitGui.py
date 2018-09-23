@@ -105,9 +105,9 @@ class kSU_MainPrefPage:
         
     def loadSettings(self):
         print ("loadSettings Helper")
-        prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kStepUp").GetString('prefix3d_1')+'/'
+        prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui").GetString('prefix3d_1')+'/'
         print('KISYS3DMOD assigned to: ', prefs)
-        prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kStepUp")
+        prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
         if prefs.GetContents() is not None:
             for p in prefs.GetContents():
                 print (p)
@@ -171,9 +171,9 @@ class ksuWB ( Workbench ):
         if pref_page:
             FreeCADGui.addPreferencePage(
                 ksuWB_ui_path + '/ksu_prefs.ui',
-                'kStepUp'
+                'kicadStepUpGui'
                 )
-            FreeCADGui.addPreferencePage(kSU_MainPrefPage,"kStepUp")
+            FreeCADGui.addPreferencePage(kSU_MainPrefPage,"kicadStepUpGui")
 
         FreeCADGui.addIconPath(ksuWB_icons_path)
         Log ("Loading ksuModule... done\n")
@@ -323,7 +323,7 @@ dirs = ksuWB.ListDemos()
 for curFile in dirs:
     FreeCADGui.addCommand(curFile, ksuExcDemo(curFile))
 
-#FreeCADGui.addPreferencePage(kSU_MainPrefPage,"kStepUp")
-#FreeCADGui.addPreferencePage(CalendarPage, "kStepUp")
+#FreeCADGui.addPreferencePage(kSU_MainPrefPage,"kicadStepUpGui")
+#FreeCADGui.addPreferencePage(CalendarPage, "kicadStepUpGui")
         
 FreeCADGui.addWorkbench(ksuWB)

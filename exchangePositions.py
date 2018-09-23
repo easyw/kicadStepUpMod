@@ -19,7 +19,7 @@ import ksu_locator
 from os.path import expanduser
 import difflib, re, time, datetime
 
-generate_sketch = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kStepUp").GetBool('generate_sketch')
+generate_sketch = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui").GetBool('generate_sketch')
 
 
 generate_sketch=True
