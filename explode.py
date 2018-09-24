@@ -199,7 +199,7 @@ def explode_pcb(pos):
     sel = FreeCADGui.Selection.getSelection()
     if len(sel) == 1:
         tlo = get_top_level(sel[0])
-        print (tlo)
+        #print (tlo.Label)
         if tlo is not None:
         #if 'App::Part' in sel[0].TypeId:
             for o in tlo.OutListRecursive:
