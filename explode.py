@@ -39,6 +39,17 @@ ksuWBpath = os.path.dirname(ksu_locator.__file__)
 #sys.path.append(ksuWB + '/Gui')
 ksuWB_icons_path =  os.path.join( ksuWBpath, 'Resources', 'icons')
 
+def get_top_level (obj):
+    lvl=10000
+    top=None
+    for ap in obj.InListRecursive:
+        if hasattr(ap,'Placement') and ap.TypeId!='App::FeaturePython' and ap.TypeId!='Part::Part2DObjectPython':
+            if len(ap.InListRecursive) < lvl:
+                top = ap
+                lvl = len(ap.InListRecursive)
+    if top is None and 'App::Part' in obj.TypeId:
+        top = obj
+    return top
 ###
 class expSelectionObserver:
     def addSelection(self,document, object, element, position):
@@ -46,7 +57,9 @@ class expSelectionObserver:
         global explode_dwg
         sel = FreeCADGui.Selection.getSelection()
         if len (sel)== 1:
-            if 'App::Part' in sel[0].TypeId:
+            tlo = get_top_level(sel[0])
+            if tlo is not None:
+            #if 'App::Part' in sel[0].TypeId:
                 explode_dwg.ui.hSlider_explode.setEnabled(True)
         else:
             explode_dwg.ui.hSlider_explode.setEnabled(False)
@@ -61,7 +74,9 @@ class expSelectionObserver:
         global explode_dwg
         sel = FreeCADGui.Selection.getSelection()
         if len (sel)== 1:
-            if 'App::Part' in sel[0].TypeId:
+            tlo = get_top_level(sel[0])
+            if tlo is not None:
+            #if 'App::Part' in sel[0].TypeId:
                 explode_dwg.ui.hSlider_explode.setEnabled(True)
         else:
             explode_dwg.ui.hSlider_explode.setEnabled(False)
@@ -75,7 +90,9 @@ class expSelectionObserver:
         global explode_dwg
         sel = FreeCADGui.Selection.getSelection()
         if len (sel)== 1:
-            if 'App::Part' in sel[0].TypeId:
+            tlo = get_top_level(sel[0])
+            if tlo is not None:
+            #if 'App::Part' in sel[0].TypeId:
                 explode_dwg.ui.hSlider_explode.setEnabled(True)
         else:
             explode_dwg.ui.hSlider_explode.setEnabled(False)
@@ -88,7 +105,9 @@ class expSelectionObserver:
         global explode_dwg
         sel = FreeCADGui.Selection.getSelection()
         if len (sel)== 1:
-            if 'App::Part' in sel[0].TypeId:
+            tlo = get_top_level(sel[0])
+            if tlo is not None:
+            #if 'App::Part' in sel[0].TypeId:
                 explode_dwg.ui.hSlider_explode.setEnabled(True)
         else:
             explode_dwg.ui.hSlider_explode.setEnabled(False)
@@ -179,22 +198,25 @@ def explode_pcb(pos):
     sc = 2.0
     sel = FreeCADGui.Selection.getSelection()
     if len(sel) == 1:
-        if 'App::Part' in sel[0].TypeId:
-            for o in sel[0].OutListRecursive:
-                if o.Label == 'Pcb':
+        tlo = get_top_level(sel[0])
+        print (tlo)
+        if tlo is not None:
+        #if 'App::Part' in sel[0].TypeId:
+            for o in tlo.OutListRecursive:
+                if 'Pcb' in o.Label:
                     if (pos != 0):
                         docG.getObject(o.Name).Transparency=70
                     else:
                         docG.getObject(o.Name).Transparency=0
-                if o.Label == 'Top':
+                elif 'Top' in o.Label and 'TopV' not in o.Label:
                     o.Placement.Base.z=pos
-                if o.Label == 'Bot':
+                elif 'Bot' in o.Label and 'BotV' not in o.Label:
                     o.Placement.Base.z=-pos
-                if o.Label == 'TopV':
+                if 'TopV' in o.Label:
                     o.Placement.Base.z=pos*sc
-                if o.Label == 'BotV':
+                if 'BotV' in o.Label:
                     o.Placement.Base.z=-pos*sc
-            return sel[0]
+            return tlo
         #return None
 
 def SlideValueChange():
@@ -309,7 +331,9 @@ def runExplodeGui():
         explode_dwg.raise_()
         sel = FreeCADGui.Selection.getSelection()
         if len (sel)== 1:
-            if 'App::Part' in sel[0].TypeId:
+            tlo = get_top_level(sel[0])
+            if tlo is not None:
+            #if 'App::Part' in sel[0].TypeId:
                 explode_dwg.ui.hSlider_explode.setEnabled(True)
             else:
                 explode_dwg.ui.hSlider_explode.setEnabled(False)
