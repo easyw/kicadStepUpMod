@@ -7,7 +7,7 @@
 #
 # WARNING! All changes made in this file will be lost!
 
-__version__ = "v1.0.1"
+__version__ = "v1.0.2"
 
 import FreeCAD, FreeCADGui, os
 from PySide import QtCore, QtGui
@@ -47,8 +47,9 @@ def get_top_level (obj):
             if len(ap.InListRecursive) < lvl:
                 top = ap
                 lvl = len(ap.InListRecursive)
-    if top is None and 'App::Part' in obj.TypeId:
-        top = obj
+    if top is None:
+        if 'App::Part' in obj.TypeId or 'App::LinkGroup' in obj.TypeId:
+            top = obj
     return top
 ###
 class expSelectionObserver:
