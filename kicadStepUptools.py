@@ -448,7 +448,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.1.0.5"  
+___ver___ = "8.1.0.6"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -10750,10 +10750,15 @@ def routineDrawFootPrint(content,name):
                         #stop
                 elif pShape=='custom' and pGeomC is not None:
                     #sayerr(pGeomC)
+                    #print('pGeomC',(pGeomC))
+                    #print ('x1',x1,'y1',y1)
                     Gc=pGeomC[0].split(' ')
-                    Gcx=-float(Gc[1])-x1;Gcy=float(Gc[2])-y1
+                    #Gcx=-float(Gc[1])-x1;Gcy=float(Gc[2])-y1
                     Gr=pGeomC[1].split(' ')
-                    GRad=float(Gr[1])-float(Gc[1])
+                    GRad=abs(float(Gr[1])-float(Gc[1]))
+                    Gcx=x1+float(Gc[1])
+                    Gcy=float(Gc[2])-y1
+                    #print('Gr',Gr,'GR',GRad,'Gc1',Gc[1],'Gc2',Gc[2],'Gcx',Gcx)
                     Gw=pGeomC[2].split(' ')
                     Gw=float(Gw[1])
                     #print (Gcx,Gcy,GRad,Gw)
