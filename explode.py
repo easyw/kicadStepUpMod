@@ -7,7 +7,7 @@
 #
 # WARNING! All changes made in this file will be lost!
 
-__version__ = "v1.0.2"
+__version__ = "v1.0.3"
 
 import FreeCAD, FreeCADGui, os
 from PySide import QtCore, QtGui
@@ -120,8 +120,8 @@ class expSelectionObserver:
 class Ui_explode_dwg(object):
     def setupUi(self, explode_dwg):
         explode_dwg.setObjectName("explode_dwg")
-        explode_dwg.resize(303, 141)
-        explode_dwg.setMinimumSize(QtCore.QSize(48, 48))
+        explode_dwg.resize(306, 141)
+        explode_dwg.setMinimumSize(QtCore.QSize(91, 48))
         explode_dwg.setLayoutDirection(QtCore.Qt.LeftToRight)
         explode_dwg.setFeatures(QtGui.QDockWidget.AllDockWidgetFeatures)
         explode_dwg.setAllowedAreas(QtCore.Qt.LeftDockWidgetArea|QtCore.Qt.RightDockWidgetArea)
@@ -157,6 +157,17 @@ class Ui_explode_dwg(object):
         self.horizontalLayout.addWidget(self.pb_Reset)
         spacerItem = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem)
+        self.label = QtGui.QLabel(self.horizontalLayoutWidget)
+        self.label.setText("(+/- mm)")
+        self.label.setObjectName("label")
+        self.horizontalLayout.addWidget(self.label)
+        self.step_lineEdit = QtGui.QLineEdit(self.horizontalLayoutWidget)
+        self.step_lineEdit.setMaximumSize(QtCore.QSize(32, 28))
+        self.step_lineEdit.setToolTip("incremental step (mm)")
+        self.step_lineEdit.setObjectName("step_lineEdit")
+        self.horizontalLayout.addWidget(self.step_lineEdit)
+        spacerItem1 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.horizontalLayout.addItem(spacerItem1)
         self.pb_Close = QtGui.QPushButton(self.horizontalLayoutWidget)
         self.pb_Close.setToolTip("Exit")
         self.pb_Close.setText("Exit")
@@ -189,6 +200,11 @@ class Ui_explode_dwg(object):
         #self.pb_Reset.setIconSize(QtCore.QSize(btn_iconsize, btn_iconsize))
         self.pb_Reset.setGeometry(QtCore.QRect(12, 72, btn_iconsize, btn_iconsize))
         self.pb_Reset.setText("")
+        self.step_lineEdit.setText("1.0")
+        #self.step_lineEdit.setGeometry(QtCore.QRect(12, 12, 12, 12))
+        self.step_lineEdit.setMaximumSize(QtCore.QSize(btn_iconsize*2, btn_iconsize))
+        self.label.setToolTip("incremental step (mm)")
+
     def retranslateUi(self, explode_dwg):
         pass
 ##############################################################
@@ -205,10 +221,19 @@ def explode_pcb(pos):
         #if 'App::Part' in sel[0].TypeId:
             for o in tlo.OutListRecursive:
                 if 'Pcb' in o.Label:
-                    if (pos != 0):
-                        docG.getObject(o.Name).Transparency=70
+                    if o.TypeId == 'App::Part' or o.TypeId == 'App::LinkGroup':
+                        for ob in o.OutList:
+                            if hasattr(ob,'Shape'):
+                                if (pos != 0):
+                                    docG.getObject(ob.Name).Transparency=70
+                                else:
+                                    docG.getObject(ob.Name).Transparency=0
                     else:
-                        docG.getObject(o.Name).Transparency=0
+                        if hasattr(o,'Shape'):
+                            if (pos != 0):
+                                docG.getObject(o.Name).Transparency=70
+                            else:
+                                docG.getObject(o.Name).Transparency=0
                 elif 'Top' in o.Label and 'TopV' not in o.Label:
                     o.Placement.Base.z=pos
                 elif 'Bot' in o.Label and 'BotV' not in o.Label:
@@ -222,7 +247,7 @@ def explode_pcb(pos):
 
 def SlideValueChange():
     global toBeReset, explode_dwg
-    pos = explode_dwg.ui.hSlider_explode.sliderPosition()
+    pos = explode_dwg.ui.hSlider_explode.sliderPosition() * float(explode_dwg.ui.step_lineEdit.text())
     #print('moving',pos)
     toBeReset = explode_pcb(pos)
 #
