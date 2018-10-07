@@ -42,7 +42,7 @@ def addtracks():
         mypcb = KicadPCB.load(filename)
         pcbThickness = float(mypcb.general.thickness)
         #print (mypcb.general.thickness)
-        print(mypcb.layers)
+        #print(mypcb.layers)
         
         #if version>=4:
         Top_lvl=0;Bot_lvl=31
@@ -56,7 +56,6 @@ def addtracks():
         #pcb.setLayer(LvlTopName)
         pcb.setLayer(Top_lvl)
         pcb.makeCopper(holes=True)
-        
         doc=FreeCAD.ActiveDocument
         docG=FreeCADGui.ActiveDocument
         deltaz=0.01 #10 micron
@@ -75,8 +74,11 @@ def addtracks():
         
         #topTracks.Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,0.05),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
         docG.getObject(topTracks.Name).Transparency=40
-        docG.getObject(topTracks.Name).ShapeColor = (0.78,0.46,0.20)
+        if 0:
+            docG.getObject(topTracks.Name).ShapeColor = (0.78,0.46,0.20)
+        FreeCADGui.Selection.clearSelection()
         FreeCADGui.Selection.addSelection(doc.getObject(composed.Name))
+        stop
         removesubtree(FreeCADGui.Selection.getSelection())
         say_time()
         
@@ -92,6 +94,7 @@ def addtracks():
         botTracks.Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,-1.6-deltaz),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))    
         docG.getObject(botTracks.Name).Transparency=40
         docG.getObject(botTracks.Name).ShapeColor = (0.78,0.46,0.20)
+        FreeCADGui.Selection.clearSelection()
         FreeCADGui.Selection.addSelection(doc.getObject(composed.Name))
         removesubtree(FreeCADGui.Selection.getSelection())
         

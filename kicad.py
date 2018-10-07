@@ -339,7 +339,7 @@ class KicadFcad:
         self.merge_vias = not debug
         self.zone_merge_holes = not debug
         self.add_feature = True
-        ## self.part_path = getKicadPath() maui
+        ## self.part_path = getKicadPath() # maui not used
         self.hole_size_offset = 0.001
         if filename is None:
             filename = '/home/thunder/pwr.kicad_pcb'
@@ -581,20 +581,24 @@ class KicadFcad:
                 if len(obj) > 1:
                     ret.Sources = list(ret.Sources) + list(obj[1:])
             else:
-                ret = self._makeObject('Path::FeatureArea',
-                                        '{}_area'.format(name),label)
-                ret.Sources = obj
-                ret.Operation = op
-                ret.Fill = fill
-                ret.Offset = offset
-                ret.Coplanar = 0
-                if workplane:
-                    ret.WorkPlane = self.work_plane
-                ret.FitArcs = fit_arcs
-                ret.Reorient = reorient
-                for o in obj:
-                    o.ViewObject.Visibility = False
-
+                if name != 'copper':  #maui to avoid makefacebullseye
+                    ret = self._makeObject('Path::FeatureArea',
+                                            '{}_area'.format(name),label)
+                    ret.Sources = obj
+                    ret.Operation = op
+                    ret.Fill = fill
+                    ret.Offset = offset
+                    ret.Coplanar = 0
+                    if workplane:
+                        ret.WorkPlane = self.work_plane
+                    ret.FitArcs = fit_arcs
+                    ret.Reorient = reorient
+                    for o in obj:
+                        o.ViewObject.Visibility = False
+                else:
+                    FreeCAD.activeDocument().addObject("Part::Compound",'{}_area'.format(name))
+                    FreeCAD.activeDocument().ActiveObject.Links = obj
+                    ret = FreeCAD.activeDocument().ActiveObject
             recomputeObj(ret)
         else:
             ret = Path.Area(Fill=fill,FitArcs=fit_arcs,Coplanar=0)
@@ -817,7 +821,7 @@ class KicadFcad:
                         skip_count += 1
                         continue
                     ofs = -abs(offset)
-                drill_present=False
+                drill_present=False  #maui
                 #print (p.drill)
                 try:
                     tmp=p.drill[0]
@@ -861,7 +865,7 @@ class KicadFcad:
             skip_count = 0
             ofs = -abs(offset)
             for v in self.pcb.via:
-                drill_present=False
+                drill_present=False  #maui
                 try:
                     tmp=v.drill
                     drill_present=True
@@ -1004,7 +1008,10 @@ class KicadFcad:
                     skip_count+=1
                     continue
                 shape = p[2]
-
+                #print(shape)
+                if shape == 'trapezoid': #maui
+                    shape= 'rect'
+                    logger.warning('trapezoid pad converted to rect')
                 try:
                     make_shape = globals()['make_{}'.format(shape)]
                 except KeyError:
@@ -1313,12 +1320,14 @@ class KicadFcad:
             self._log("done solid")
         else:
             obj = self._makeArea(objs,'copper',fit_arcs=fit_arcs)
-            self.setColor(obj,'copper')
+            if 0: # maui not coloring compound
+                self.setColor(obj,'copper')
             if solid:
                 self._log("makeing solid")
                 obj = self._makeSolid(obj,'copper',thickness)
                 self._log("done solid")
-                self.setColor(obj,'copper')
+                if 0: # maui not coloring compound
+                    self.setColor(obj,'copper')
 
         self._place(obj,Vector(0,0,z))
 
