@@ -141,7 +141,7 @@ class ksuWB ( Workbench ):
 
         #self.appendToolbar("ksu Tools", ["ksuTools"])
         self.appendToolbar("ksu Tools", ["ksuToolsEditPrefs","ksuTools","ksuToolsOpenBoard","ksuToolsLoadFootprint",\
-                           "ksuToolsExportModel","ksuToolsPushPCB","ksuToolsCollisions", \
+                           "ksuToolsExportModel","ksuToolsPushPCB","ksuToolsAddTracks","ksuToolsCollisions", \
                            "ksuToolsImport3DStep","ksuToolsExport3DStep","ksuToolsMakeUnion",\
                            "ksuToolsMakeCompound", "ksuToolsSimpleCopy", "ksuToolsDeepCopy", "ksuToolsCheckSolid", "ksuTools3D2D", "ksuTools2D2Sketch", "ksuTools2DtoFace",\
                            "ksuToolsMergeSketches","ksuToolsSimplifySketck", "ksuToolsConstrainator", "ksuToolsDiscretize","ksuToolsFootprintGen"])

@@ -1515,6 +1515,7 @@ def deep_copy_part(doc, part, compound='flat',suffix='(copy)'):
     make_compound=compound
     copied_subobjects = []
     copied_subobjects_Names = []
+    #print (get_all_subobjects(part))
     for o in get_all_subobjects(part):
         if o.Name not in copied_subobjects_Names:
             if FreeCADGui.ActiveDocument.getObject(o.Name).Visibility:
@@ -2397,6 +2398,31 @@ class ksuToolsDefeaturingTools:
             import DefeaturingTools;reload_lib(DefeaturingTools)
 
 FreeCADGui.addCommand('ksuToolsDefeaturingTools',ksuToolsDefeaturingTools())
+#####
+#####
+class ksuToolsAddTracks:
+    "ksu tools Add Tracks"
+    
+    def GetResources(self):
+        mybtn_tooltip ="ksu tools Add Tracks\nNB: it could be a very intensive loading!"
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Tracks.svg') , # the name of a svg file available in the resources
+                     'MenuText': mybtn_tooltip ,
+                     'ToolTip' : mybtn_tooltip}
+ 
+    def IsActive(self):
+        return True
+        #else:
+        #    self.setToolTip("Grayed Tooltip!")
+        #    print(self.ObjectName)
+        #    grayed_tooltip="Grayed Tooltip!"
+        #    mybtn_tooltip=grayed_tooltip
+ 
+    def Activated(self):
+        # do something here...
+        import tracks
+        tracks.addtracks()
+
+FreeCADGui.addCommand('ksuToolsAddTracks',ksuToolsAddTracks())
 #####
 class ksuExcDemo:
     exFile = None
