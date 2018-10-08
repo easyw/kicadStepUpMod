@@ -35,8 +35,6 @@ silks_diffuse = (0.906,0.906,0.910)
 # brass     0.329412    0.223529    0.027451    0.780392    0.568627    0.113725    0.992157    0.941176    0.807843    0.21794872
 brass_diffuse = (0.780392,0.568627,0.113725)
 
-say("loading... ")
-t = time.time()
 
 import importDXF
 
@@ -53,6 +51,8 @@ def makeFaceDXF():
         #importDXF.open(fname)
         doc=FreeCAD.ActiveDocument
         objects = []
+        say("loading... ")
+        t = time.time()
         if doc is not None:
             for o in doc.Objects:
                 objects.append(o.Name)
