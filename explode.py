@@ -7,7 +7,7 @@
 #
 # WARNING! All changes made in this file will be lost!
 
-__version__ = "v1.0.3"
+__version__ = "v1.0.4"
 
 import FreeCAD, FreeCADGui, os
 from PySide import QtCore, QtGui
@@ -200,7 +200,7 @@ class Ui_explode_dwg(object):
         #self.pb_Reset.setIconSize(QtCore.QSize(btn_iconsize, btn_iconsize))
         self.pb_Reset.setGeometry(QtCore.QRect(12, 72, btn_iconsize, btn_iconsize))
         self.pb_Reset.setText("")
-        self.step_lineEdit.setText("1.0")
+        self.step_lineEdit.setText("0.5")
         #self.step_lineEdit.setGeometry(QtCore.QRect(12, 12, 12, 12))
         self.step_lineEdit.setMaximumSize(QtCore.QSize(btn_iconsize*2, btn_iconsize))
         self.label.setToolTip("incremental step (mm)")
@@ -238,10 +238,15 @@ def explode_pcb(pos):
                     o.Placement.Base.z=pos
                 elif 'Bot' in o.Label and 'BotV' not in o.Label:
                     o.Placement.Base.z=-pos
-                if 'TopV' in o.Label:
+                elif 'TopV' in o.Label:
                     o.Placement.Base.z=pos*sc
-                if 'BotV' in o.Label:
+                elif 'BotV' in o.Label:
                     o.Placement.Base.z=-pos*sc
+                elif 'topTracks' in o.Label or 'botTracks' in o.Label:
+                    if (pos != 0):
+                        docG.getObject(o.Name).Transparency = 50
+                    else:
+                        docG.getObject(o.Name).Transparency = 0
             return tlo
         #return None
 

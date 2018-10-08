@@ -5,7 +5,7 @@ import PySide
 from PySide import QtGui, QtCore
 import sys,os
 import FreeCAD, FreeCADGui
-global start_time, last_pcb_path
+global start_time, last_pcb_path, min_drill_size
 
 current_milli_time = lambda: int(round(time.time() * 1000))
 def say_time():
@@ -20,8 +20,11 @@ from kicadStepUptools import KicadPCB
 #filename="C:/Cad/Progetti_K/ksu-test/pic_smart_switch.kicad_pcb"
 #filename="C:/Cad/Progetti_K/eth-32gpio/eth-32gpio.kicad_pcb"
 def addtracks():
-    global start_time, last_pcb_path
-    #cfg_read_all()
+    global start_time, last_pcb_path, min_drill_size
+    
+    # cfg_read_all() it doesn't work through different files
+    # print (min_drill_size)
+    
     Filter=""
     if 'last_pcb_path' in globals():
         print (last_pcb_path)
@@ -54,11 +57,12 @@ def addtracks():
         #print(LvlTopName,'  ',LvlBotName)
         pcb = kicad.KicadFcad(filename)
         #pcb.setLayer(LvlTopName)
+        minSizeDrill = 0.  #0.8
         pcb.setLayer(Top_lvl)
-        pcb.makeCopper(holes=True)
+        pcb.makeCopper(holes=True, minSize=minSizeDrill)
         doc=FreeCAD.ActiveDocument
         docG=FreeCADGui.ActiveDocument
-        deltaz=0.01 #10 micron
+        deltaz = 0.01 #10 micron
         composed = doc.ActiveObject
         s = composed.Shape
         doc.addObject('Part::Feature','topTracks').Shape=composed.Shape
@@ -92,7 +96,7 @@ def addtracks():
         
         #pcb.setLayer(LvlBotName)
         pcb.setLayer(Bot_lvl)
-        pcb.makeCopper(holes=True)
+        pcb.makeCopper(holes=True, minSize=minSizeDrill)
         
         composed = doc.ActiveObject
         s = composed.Shape

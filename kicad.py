@@ -1295,12 +1295,13 @@ class KicadFcad:
 
 
     def makeCopper(self,shape_type='face',thickness=0.05,fit_arcs=True,
-                    holes=False, z=0, prefix='',fuse=False):
+                    holes=False, minSize= 0, z=0, prefix='',fuse=False):
 
         self._pushLog('making copper layer {}...',self.layer,prefix=prefix)
-
-        holes = self._cutHoles(None,holes,None)
-
+        holes = self._cutHoles(None,holes,None,None,False,minSize)
+        #_cutHoles(self,objs,holes,name,label=None,fit_arcs=False,
+        #            minSize=0,maxSize=0,oval=True,npth=0,offset=0.0)
+        
         objs = []
 
         if shape_type=='solid':
