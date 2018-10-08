@@ -243,10 +243,11 @@ def explode_pcb(pos):
                 elif 'BotV' in o.Label:
                     o.Placement.Base.z=-pos*sc
                 elif 'topTracks' in o.Label or 'botTracks' in o.Label:
-                    if (pos != 0):
-                        docG.getObject(o.Name).Transparency = 50
-                    else:
-                        docG.getObject(o.Name).Transparency = 0
+                    if hasattr (o, 'Shape'):
+                        if (pos != 0):
+                            docG.getObject(o.Name).Transparency = 50
+                        else:
+                            docG.getObject(o.Name).Transparency = 0
             return tlo
         #return None
 
