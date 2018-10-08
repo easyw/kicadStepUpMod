@@ -61,8 +61,16 @@ def addtracks():
         deltaz=0.01 #10 micron
         composed = doc.ActiveObject
         s = composed.Shape
-        doc.addObject('Part::Feature',"topTraks").Shape=s
+        doc.addObject('Part::Feature','topTracks').Shape=composed.Shape
         topTracks = doc.ActiveObject
+        #print (doc.ActiveObject.Label)
+        #print (topTracks.Label)
+        docG.ActiveObject.ShapeColor   = docG.getObject(composed.Name).ShapeColor
+        docG.ActiveObject.LineColor    = docG.getObject(composed.Name).LineColor
+        docG.ActiveObject.PointColor   = docG.getObject(composed.Name).PointColor
+        docG.ActiveObject.DiffuseColor = docG.getObject(composed.Name).DiffuseColor
+        #doc.recompute()
+        #doc.addObject('Part::Feature',"topTraks").Shape=s
         topTracks.Label="topTracks"
         topTracks.Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,deltaz),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
         #if hasattr(doc.Pcb, 'Shape'):
@@ -73,12 +81,12 @@ def addtracks():
                 doc.getObject('Board_Geoms').addObject(topTracks)
         
         #topTracks.Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,0.05),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
-        docG.getObject(topTracks.Name).Transparency=40
+        ##docG.getObject(topTracks.Name).Transparency=40
         if 0:
             docG.getObject(topTracks.Name).ShapeColor = (0.78,0.46,0.20)
         FreeCADGui.Selection.clearSelection()
         FreeCADGui.Selection.addSelection(doc.getObject(composed.Name))
-        stop
+        #stop
         removesubtree(FreeCADGui.Selection.getSelection())
         say_time()
         
@@ -88,16 +96,26 @@ def addtracks():
         
         composed = doc.ActiveObject
         s = composed.Shape
-        doc.addObject('Part::Feature',"botTraks").Shape=s
+        doc.addObject('Part::Feature','botTracks').Shape=composed.Shape
         botTracks = doc.ActiveObject
+        #print (doc.ActiveObject.Label)
+        #print (topTracks.Label)
+        docG.ActiveObject.ShapeColor   = docG.getObject(composed.Name).ShapeColor
+        docG.ActiveObject.LineColor    = docG.getObject(composed.Name).LineColor
+        docG.ActiveObject.PointColor   = docG.getObject(composed.Name).PointColor
+        docG.ActiveObject.DiffuseColor = docG.getObject(composed.Name).DiffuseColor
+        #doc.recompute()
+        #doc.addObject('Part::Feature',"topTraks").Shape=s
         botTracks.Label="botTracks"
-        botTracks.Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,-1.6-deltaz),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))    
-        docG.getObject(botTracks.Name).Transparency=40
-        docG.getObject(botTracks.Name).ShapeColor = (0.78,0.46,0.20)
+        botTracks.Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,-1.6-deltaz),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))            
+        #if hasattr(doc.Pcb, 'Shape'):
+        ##docG.getObject(botTracks.Name).Transparency=40
+        if 0:
+            docG.getObject(botTracks.Name).ShapeColor = (0.78,0.46,0.20)
         FreeCADGui.Selection.clearSelection()
         FreeCADGui.Selection.addSelection(doc.getObject(composed.Name))
-        removesubtree(FreeCADGui.Selection.getSelection())
         
+        removesubtree(FreeCADGui.Selection.getSelection())
         #if hasattr(doc.Pcb, 'Shape'):
         if len (doc.getObjectsByLabel('Pcb')) > 0:
             botTracks.Placement = doc.getObjectsByLabel('Pcb')[0].Placement

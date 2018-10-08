@@ -348,11 +348,14 @@ class KicadFcad:
         self.filename = filename
         self.colors = {
                 'board':makeColor("0x3A6629"),
-                'pad':{0:makeColor(204,204,204)},
-                'zone':{0:makeColor(0,80,0)},
-                'track':{0:makeColor(0,120,0)},
+                'pad':{0:makeColor(219,188,126)},
+                'zone':{0:makeColor(200,117,51)},
+                'track':{0:makeColor(200,117,51)},
                 'copper':{0:makeColor(200,117,51)},
         }
+        #'pad':{0:makeColor(204,204,204)}, 'pad':{0:makeColor(102,70,0)}, 'pad':{0:makeColor(179,68,21)},
+        #'zone':{0:makeColor(0,80,0)}, 'zone':{0:makeColor(199,144,28)},
+        #'track':{0:makeColor(0,120,0)},
         self.layer_type = 0
 
         for key,value in iteritems(kwds):
@@ -595,8 +598,17 @@ class KicadFcad:
                     ret.Reorient = reorient
                     for o in obj:
                         o.ViewObject.Visibility = False
-                else:
+                else:  #maui make compound
+                    if self.layer == 'F.Cu':
+                        deltaz = 0.02 # 20 micron
+                    else:
+                        deltaz = -0.02 # 20 micron
                     FreeCAD.activeDocument().addObject("Part::Compound",'{}_area'.format(name))
+                    for o in obj:
+                        if 'pads' in o.Label:
+                            o.Placement.Base.z+=2*deltaz
+                        if 'zone' in o.Label:
+                            o.Placement.Base.z+=deltaz
                     FreeCAD.activeDocument().ActiveObject.Links = obj
                     ret = FreeCAD.activeDocument().ActiveObject
             recomputeObj(ret)
