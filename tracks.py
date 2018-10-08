@@ -57,7 +57,7 @@ def addtracks():
         #print(LvlTopName,'  ',LvlBotName)
         pcb = kicad.KicadFcad(filename)
         #pcb.setLayer(LvlTopName)
-        minSizeDrill = 0.  #0.8
+        minSizeDrill = 0.0  #0.8
         pcb.setLayer(Top_lvl)
         pcb.makeCopper(holes=True, minSize=minSizeDrill)
         doc=FreeCAD.ActiveDocument

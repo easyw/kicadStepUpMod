@@ -2399,7 +2399,6 @@ class ksuToolsDefeaturingTools:
 
 FreeCADGui.addCommand('ksuToolsDefeaturingTools',ksuToolsDefeaturingTools())
 #####
-#####
 class ksuToolsAddTracks:
     "ksu tools Add Tracks"
     
@@ -2423,6 +2422,30 @@ class ksuToolsAddTracks:
         tracks.addtracks()
 
 FreeCADGui.addCommand('ksuToolsAddTracks',ksuToolsAddTracks())
+#####
+class ksuToolsAddSilks:
+    "ksu tools Add Silks"
+    
+    def GetResources(self):
+        mybtn_tooltip ="ksu tools Add Silks from kicad exported DXF\nNB: it could be a very intensive loading!"
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Silks.svg') , # the name of a svg file available in the resources
+                     'MenuText': mybtn_tooltip ,
+                     'ToolTip' : mybtn_tooltip}
+ 
+    def IsActive(self):
+        return True
+        #else:
+        #    self.setToolTip("Grayed Tooltip!")
+        #    print(self.ObjectName)
+        #    grayed_tooltip="Grayed Tooltip!"
+        #    mybtn_tooltip=grayed_tooltip
+ 
+    def Activated(self):
+        # do something here...
+        import makefacedxf
+        makefacedxf.makeFaceDXF()
+
+FreeCADGui.addCommand('ksuToolsAddSilks',ksuToolsAddSilks())
 #####
 class ksuExcDemo:
     exFile = None
