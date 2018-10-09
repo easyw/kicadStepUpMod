@@ -248,6 +248,12 @@ def explode_pcb(pos):
                             docG.getObject(o.Name).Transparency = 50
                         else:
                             docG.getObject(o.Name).Transparency = 0
+                elif 'topSilk' in o.Label or 'botSilk' in o.Label:
+                    if hasattr (o, 'Shape'):
+                        if (pos != 0):
+                            docG.getObject(o.Name).Transparency = 30
+                        else:
+                            docG.getObject(o.Name).Transparency = 0
             return tlo
         #return None
 
