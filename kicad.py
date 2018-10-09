@@ -1014,6 +1014,17 @@ class KicadFcad:
             pads = []
             count += len(m.pad)
             for j,p in enumerate(m.pad):
+                try:
+                    if self.layer not in p.layers \
+                        and layer_match not in p.layers \
+                        and '*' not in p.layers:
+                        skip_count+=1
+                        continue
+                except:
+                    skip_count+=1
+                    continue
+                #for pd in m.pad:
+                #    print(pd)
                 if self.layer not in p.layers \
                     and layer_match not in p.layers \
                     and '*' not in p.layers:
