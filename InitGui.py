@@ -141,10 +141,10 @@ class ksuWB ( Workbench ):
 
         #self.appendToolbar("ksu Tools", ["ksuTools"])
         self.appendToolbar("ksu Tools", ["ksuToolsEditPrefs","ksuTools","ksuToolsOpenBoard","ksuToolsLoadFootprint",\
-                           "ksuToolsExportModel","ksuToolsPushPCB","ksuToolsAddTracks","ksuToolsAddSilks","ksuToolsCollisions", \
-                           "ksuToolsImport3DStep","ksuToolsExport3DStep","ksuToolsMakeUnion",\
+                           "ksuToolsExportModel","ksuToolsPushPCB","ksuToolsFootprintGen","Separator","ksuToolsAddTracks","ksuToolsAddSilks","Separator",\
+                           "ksuToolsCollisions","ksuToolsImport3DStep","ksuToolsExport3DStep","ksuToolsMakeUnion",\
                            "ksuToolsMakeCompound", "ksuToolsSimpleCopy", "ksuToolsDeepCopy", "ksuToolsCheckSolid", "ksuTools3D2D", "ksuTools2D2Sketch", "ksuTools2DtoFace",\
-                           "ksuToolsMergeSketches","ksuToolsSimplifySketck", "ksuToolsConstrainator", "ksuToolsDiscretize","ksuToolsFootprintGen"])
+                           "ksuToolsMergeSketches","ksuToolsSimplifySketck", "ksuToolsConstrainator", "ksuToolsDiscretize"])
                            #, "ksuToolsPushMoved","ksuToolsSync3DModels"])
         ksuTB = ["ksuToolsOpenBoard","ksuToolsPushPCB","ksuToolsPushMoved","ksuToolsSync3DModels","ksuAsm2Part",\
                  "Separator","ksuToolsGeneratePositions","ksuToolsComparePositions",\
@@ -157,7 +157,7 @@ class ksuWB ( Workbench ):
             self.appendToolbar("ksu Design Tools", ksuDTB)
         self.appendToolbar("ksu Helpers", ["ksuToolsToggleTreeView", "ksuToolsTransparencyToggle", "ksuToolsHighlightToggle",\
                             "ksuToolsVisibilityToggle", "ksuToolsStepImportModeSTD", "ksuToolsStepImportModeComp",\
-                            "ksuToolsCopyPlacement", "ksuToolsResetPlacement", "ksuToolsAddToTree", "ksuToolsRemoveFromTree"])
+                            "ksuToolsCopyPlacement", "ksuToolsResetPlacement", "ksuToolsAddToTree", "ksuToolsRemoveFromTree", "ksuToolsRemoveSubTree"])
         self.appendToolbar("ksu Show", ["ksuToolsTurnTable", "ksuToolsExplode"])
         #self.appendMenu("ksu Tools", ["ksuTools","ksuToolsEdit"])
         self.appendMenu("ksu Tools", ["ksuTools","ksuToolsEditPrefs"])

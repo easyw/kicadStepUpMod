@@ -1226,6 +1226,7 @@ class KicadFcad:
             for idx,p in enumerate(z.filled_polygon):
                 zone_holes = []
                 table = {}
+                #print(p.pts)
                 pts = SexpList(p.pts.xy)
 
                 # close the polygon

@@ -2399,6 +2399,36 @@ class ksuToolsDefeaturingTools:
 
 FreeCADGui.addCommand('ksuToolsDefeaturingTools',ksuToolsDefeaturingTools())
 #####
+class ksuToolsRemoveSubTree:
+    "ksu tools Remove Sub Tree"
+    
+    def GetResources(self):
+        mybtn_tooltip ="Remove Sub Tree"
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'RemoveSubtree.svg') , # the name of a svg file available in the resources
+                     'MenuText': mybtn_tooltip ,
+                     'ToolTip' : mybtn_tooltip}
+ 
+    def IsActive(self):
+        if FreeCADGui.Selection.getSelection():
+            return True
+        #else:
+        #    self.setToolTip("Grayed Tooltip!")
+        #    print(self.ObjectName)
+        #    grayed_tooltip="Grayed Tooltip!"
+        #    mybtn_tooltip=grayed_tooltip
+ 
+    def Activated(self):
+        # do something here...
+        from PySide import QtGui, QtCore
+        reply = QtGui.QMessageBox.question(None, "DelTree","Remove Sub Tree?\n[Undo WILL NOT work!]", QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
+        if reply == QtGui.QMessageBox.Ok:
+            #print('OK clicked.')
+            import kicadStepUptools
+            kicadStepUptools.removesubtree(FreeCADGui.Selection.getSelection())
+        else:
+            FreeCAD.Console.PrintMessage('Cancel clicked.')
+FreeCADGui.addCommand('ksuToolsRemoveSubTree',ksuToolsRemoveSubTree())
+####
 class ksuToolsAddTracks:
     "ksu tools Add Tracks"
     
