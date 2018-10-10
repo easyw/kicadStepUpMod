@@ -1,7 +1,7 @@
 from __future__ import (absolute_import, division,
         print_function, unicode_literals)
 #from builtins import *
-from future.utils import iteritems
+# from future.utils import iteritems
 
 from collections import defaultdict
 from math import sqrt, atan2, degrees, sin, cos, radians, pi, hypot
@@ -358,7 +358,7 @@ class KicadFcad:
         #'track':{0:makeColor(0,120,0)},
         self.layer_type = 0
 
-        for key,value in iteritems(kwds):
+        for key,value in dict.items(kwds): #iteritems(kwds):  #maui
             if not hasattr(self,key):
                 raise ValueError('unknown parameter "{}"'.format(key))
             setattr(self,key,value)
@@ -911,7 +911,7 @@ class KicadFcad:
                 for r in ((ovals,'oval'),(holes,'hole')):
                     if not r[0]:
                         continue
-                    for (width,rs) in iteritems(r[0]):
+                    for (width,rs) in dict.items(r[0]): #iteritems(r[0]):  #maui
                         objs.append(func(rs,r[1]))
 
             if not npth:
@@ -1148,7 +1148,7 @@ class KicadFcad:
 
         objs = []
         i = 0
-        for (width,ss) in iteritems(tracks):
+        for (width,ss) in dict.items(tracks): #iteritems(tracks): #maui
             self._log('making {} tracks of width {:.2f}, ({}/{})',
                     len(ss),width,i,count)
             i+=len(ss)
@@ -1226,7 +1226,6 @@ class KicadFcad:
             for idx,p in enumerate(z.filled_polygon):
                 zone_holes = []
                 table = {}
-                #print(p.pts)
                 pts = SexpList(p.pts.xy)
 
                 # close the polygon
