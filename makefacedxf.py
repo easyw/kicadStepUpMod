@@ -42,79 +42,80 @@ def makeFaceDXF():
     global copper_diffuse, silks_diffuse
     Filter=""
     last_fp_path=""
-    fname, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Open File...",
+    fn, Filter = PySide.QtGui.QFileDialog.getOpenFileNames(None, "Open File...",
                 last_fp_path, "*.dxf")
-    path, name = os.path.split(fname)
-    filename=os.path.splitext(name)[0]
-    #importDXF.open(os.path.join(dirname,filename))
-    if len(fname) > 0:
-        #importDXF.open(fname)
-        doc=FreeCAD.ActiveDocument
-        objects = []
-        say("loading... ")
-        t = time.time()
-        if doc is not None:
-            for o in doc.Objects:
-                objects.append(o.Name)
-            importDXF.insert(fname, doc.Name)
-        else:
-            importDXF.open(fname)
-        doc=FreeCAD.ActiveDocument
-        docG=FreeCADGui.ActiveDocument
-        FreeCADGui.SendMsgToActiveView("ViewFit")
-        timeP = time.time() - t
-        say("loading time = "+str(timeP) + "s")
-        
-        
-        edges=[]
-        sorted_edges=[]
-        w=[]
-        
-        for o in doc.Objects:
-            if o.Name not in str(objects):
-                if hasattr(o,'Shape'):
-                    w1 = Part.Wire(Part.__sortEdges__(o.Shape.Edges))
-                    w.append(w1)
-        #print (w)
-        f=Part.makeFace(w,'Part::FaceMakerBullseye')
-        for o in doc.Objects:
-            if o.Name not in str(objects):
-                doc.removeObject(o.Name)
-        if 'Silk' in filename:
-            layerName = 'Silks'
-        else:
-            layerName = 'Tracks'
-        if 'F.' in filename:
-            layerName = 'top'+layerName
-        if 'B.' in filename:
-            layerName = 'bot'+layerName
-    
-        doc.addObject('Part::Feature',layerName).Shape=f
-        newShape=doc.ActiveObject
-        botOffset = 1.6
-        if 'Silk' in layerName:
-            docG.getObject(newShape.Name).ShapeColor = silks_diffuse
-        else:
-            docG.getObject(newShape.Name).ShapeColor = brass_diffuse #copper_diffuse  #(0.78,0.56,0.11)
-        if len (doc.getObjectsByLabel('Pcb')) > 0:
-            newShape.Placement = doc.getObjectsByLabel('Pcb')[0].Placement
-            #botTracks.Placement = doc.Pcb.Placement
-            if len (doc.getObjectsByLabel('Board_Geoms')) > 0:
-                doc.getObject('Board_Geoms').addObject(newShape)
-            if hasattr(doc.getObjectsByLabel('Pcb')[0], 'Shape'):
-                botOffset = doc.getObjectsByLabel('Pcb')[0].Shape.BoundBox.ZLength
+    for fname in fn:
+        path, name = os.path.split(fname)
+        filename=os.path.splitext(name)[0]
+        #importDXF.open(os.path.join(dirname,filename))
+        if len(fname) > 0:
+            #importDXF.open(fname)
+            doc=FreeCAD.ActiveDocument
+            objects = []
+            say("loading... ")
+            t = time.time()
+            if doc is not None:
+                for o in doc.Objects:
+                    objects.append(o.Name)
+                importDXF.insert(fname, doc.Name)
             else:
-                botOffset = doc.getObjectsByLabel('Pcb')[0].OutList[1].Shape.BoundBox.ZLength
-        #elif 'bot' in layerName:
-        #    newShape.Placement.Base.z-=1.6
-        if 'top' in layerName:
-            newShape.Placement.Base.z+=0.07
-        if 'bot' in layerName:
-            newShape.Placement.Base.z-=botOffset+0.07
-        timeD = time.time() - t - timeP
-        say("displaying time = "+str(timeD) + "s")
-        FreeCADGui.SendMsgToActiveView("ViewFit")
-        docG.activeView().viewAxonometric()
+                importDXF.open(fname)
+            doc=FreeCAD.ActiveDocument
+            docG=FreeCADGui.ActiveDocument
+            FreeCADGui.SendMsgToActiveView("ViewFit")
+            timeP = time.time() - t
+            say("loading time = "+str(timeP) + "s")
+            
+            
+            edges=[]
+            sorted_edges=[]
+            w=[]
+            
+            for o in doc.Objects:
+                if o.Name not in str(objects):
+                    if hasattr(o,'Shape'):
+                        w1 = Part.Wire(Part.__sortEdges__(o.Shape.Edges))
+                        w.append(w1)
+            #print (w)
+            f=Part.makeFace(w,'Part::FaceMakerBullseye')
+            for o in doc.Objects:
+                if o.Name not in str(objects):
+                    doc.removeObject(o.Name)
+            if 'Silk' in filename:
+                layerName = 'Silks'
+            else:
+                layerName = 'Tracks'
+            if 'F.' in filename:
+                layerName = 'top'+layerName
+            if 'B.' in filename:
+                layerName = 'bot'+layerName
+        
+            doc.addObject('Part::Feature',layerName).Shape=f
+            newShape=doc.ActiveObject
+            botOffset = 1.6
+            if 'Silk' in layerName:
+                docG.getObject(newShape.Name).ShapeColor = silks_diffuse
+            else:
+                docG.getObject(newShape.Name).ShapeColor = brass_diffuse #copper_diffuse  #(0.78,0.56,0.11)
+            if len (doc.getObjectsByLabel('Pcb')) > 0:
+                newShape.Placement = doc.getObjectsByLabel('Pcb')[0].Placement
+                #botTracks.Placement = doc.Pcb.Placement
+                if len (doc.getObjectsByLabel('Board_Geoms')) > 0:
+                    doc.getObject('Board_Geoms').addObject(newShape)
+                if hasattr(doc.getObjectsByLabel('Pcb')[0], 'Shape'):
+                    botOffset = doc.getObjectsByLabel('Pcb')[0].Shape.BoundBox.ZLength
+                else:
+                    botOffset = doc.getObjectsByLabel('Pcb')[0].OutList[1].Shape.BoundBox.ZLength
+            #elif 'bot' in layerName:
+            #    newShape.Placement.Base.z-=1.6
+            if 'top' in layerName:
+                newShape.Placement.Base.z+=0.07
+            if 'bot' in layerName:
+                newShape.Placement.Base.z-=botOffset+0.07
+            timeD = time.time() - t - timeP
+            say("displaying time = "+str(timeD) + "s")
+    FreeCADGui.SendMsgToActiveView("ViewFit")
+    docG.activeView().viewAxonometric()
 ##
 
 #makeFaceDXF()
