@@ -192,6 +192,7 @@ class ksuWB ( Workbench ):
             upd=True
             pg.SetInt("updateDaysInterval",1)
             pg.SetInt("lastCheck",tnow-2*oneday)
+            pg.SetInt("dockingMode",0)
             interval=True
             FreeCAD.Console.PrintError('new \'check for updates\' feature added!!!\n')
             msg="""

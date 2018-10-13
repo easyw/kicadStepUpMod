@@ -727,7 +727,7 @@
              <number>0</number>
             </property>
             <property name="prefEntry" stdset="0">
-             <cstring>step_exp_mode</cstring>
+             <cstring>3D_loading_mode</cstring>
             </property>
             <property name="prefPath" stdset="0">
              <cstring>Mod/kicadStepUpGui</cstring>

@@ -448,7 +448,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.1.0.6"  
+___ver___ = "8.1.0.7"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -3566,6 +3566,156 @@ font_size = 8
 """
 
 def cfg_read_all():
+    global ksu_config_fname, default_ksu_config_ini, applymaterials
+    ##ksu pre-set
+    global models3D_prefix, models3D_prefix2, blacklisted_model_elements, col, colr, colg, colb
+    global bbox, volume_minimum, height_minimum, idf_to_origin, aux_orig
+    global base_orig, base_point, bbox_all, bbox_list, whitelisted_model_elements
+    global fusion, addVirtual, blacklisted_models, exportFusing, min_drill_size
+    global last_fp_path, last_pcb_path, plcmnt, xp, yp, exportFusing, export_board_2step
+    global enable_materials, docking_mode, mat_section, dock_section, compound_section, turntable_section
+    global font_section, ini_vars, num_min_lines, animate_result, allow_compound, font_size, grid_orig
+    global constraints_section, addConstraints, exporting_mode_section, stp_exp_mode
+    global links_importing_mode_section, links_imp_mode, generate_sketch
+    
+    import os, sys, re
+    from sys import platform as _platform
+    
+    # window GUI dimensions parameters
+    pt_lnx = False;pt_osx = False;pt_win = False;
+    if _platform == "linux" or _platform == "linux2":
+        # linux
+        pt_lnx = True
+        default_prefix3d = '/usr/share/kicad/modules/packages3d'
+        #'/usr/share/kicad/modules/packages3d'
+    elif _platform == "darwin":
+        #osx
+        pt_osx = True
+        default_prefix3d = '/Library/Application Support/kicad/packages3d' 
+        #/Library/Application Support/kicad/modules/packages3d/' wrong location
+    else:
+        # Windows
+        pt_win = True
+        default_prefix3d = os.path.join(os.environ["ProgramFiles"],u'\\KiCad\\share\\kicad\\modules\\packages3d')
+        default_prefix3d = re.sub("\\\\", "/", default_prefix3d) #default_prefix3d.replace('\\','/')
+        #print (default_prefix3d)
+    prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+    if prefs.GetContents() is None:
+        print('Creating first time ksu preferences')
+        stop
+    #else:
+    #    for i,p in enumerate (prefs.GetContents()):
+    #        print (p)
+
+    models3D_prefix1 = prefs.GetString('prefix3d_1')
+    if len (models3D_prefix1) == 0:
+        prefs.SetString('prefix3d_1',default_prefix3d)
+        models3D_prefix = prefs.GetString('prefix3d_1')
+    models3D_prefix2 = prefs.GetString('prefix3d_2')
+    light_green = [0.0,0.5,0.0]
+    blue = [0.3333,0.3333,0.5]
+    red = [1.0,0.1,0.0] # (255,25,0)
+    purple = [0.498,0.090,0.424] # oshpark purple #6D0A8E
+    darkgreen = [0.180,0.373,0.275] # (45,95,70)
+    darkblue = [0.211,0.305,0.455] # (54,79,116)
+    lightblue = [0.0,0.298,1.0] # (0,76,255)
+    pcb_color_values = [light_green,blue,red,purple,darkgreen,darkblue,lightblue]
+    pcb_color_pos = prefs.GetInt('pcb_color')
+    pcb_color = pcb_color_values [pcb_color_pos]
+    col = []
+    col.append(pcb_color[0]);col.append(pcb_color[1]);col.append(pcb_color[2])
+    colr=col[0];colg=col[1];colb=col[2]
+    #print(colr,colg,colb)
+    min_drill_size = float(prefs.GetString('drill_size'))
+    #print(min_drill_size)
+    if prefs.GetBool('vrml_materials'):
+        enable_materials=1
+    else:
+        enable_materials=0
+    if prefs.GetBool('mode_virtual'):
+        addVirtual=1
+    else:
+        addVirtual=0
+    fusion = prefs.GetBool('make_union')
+    export_board_2step = prefs.GetBool('exp_step')
+    animate_result = prefs.GetBool('turntable')
+    generate_sketch = prefs.GetBool('generate_sketch')
+    if prefs.GetBool('asm3_links'):
+        links_imp_mode = 'links_allowed'
+    else:
+        links_imp_mode = 'links_not_allowed'
+    aux_orig=0;base_orig=0;base_point=0; grid_orig=0
+    #grid_orig -> 0; aux_orig-> 1; base_orig -> 2
+    pcb_placement = prefs.GetInt('pcb_placement')
+    if pcb_placement == 0:
+        grid_orig = 1
+    elif pcb_placement == 1:
+        aux_orig = 1
+    else:
+        base_orig = 1
+    step_exp_mode = prefs.GetInt('step_exp_mode')    
+    if step_exp_mode == 0:
+        stp_exp_mode = 'hierarchy'
+    elif step_exp_mode == 1:
+        stp_exp_mode = 'flat'
+    else:
+        stp_exp_mode = 'onelevel'
+    m3D_loading_mode = prefs.GetInt('3D_loading_mode')
+    if m3D_loading_mode == 0:
+        allow_compound = 'False'
+    elif m3D_loading_mode == 1:
+        allow_compound = 'Simplified'
+    else:
+        allow_compound = 'True'
+    sketch_constraints = prefs.GetInt('sketch_constraints')
+    if sketch_constraints == 0:
+        addConstraints='all'
+    elif sketch_constraints == 1:
+        addConstraints='coincident'
+    else:
+        addConstraints='none'
+    bbox_all=0; bbox_list=0; whitelisted_model_elements=''
+    bbox_opt = prefs.GetString('blacklist')
+    if bbox_opt.upper().find('ALL') !=-1:
+        bbox_all=1
+        whitelisted_model_elements=''
+    elif bbox_opt.upper().find('LIST') !=-1:
+            bbox_list=1
+            whitelisted_model_elements=bbox_opt.strip('\r\n')
+            #whitelisted_models=whitelisted_model_elements.split(",")
+    bbox=0;blacklisted_model_elements=''
+    volume_minimum=0 #0.8  ##1 #mm^3, 0 skipped #global var default
+    height_minimum=0 #0.8  ##1 #mm, 0 skipped   #global var default
+    bklist = prefs.GetString('blacklist')
+    if bklist.lower().find('none') !=-1:
+        blacklisted_model_elements=''
+    elif bklist.lower().find('volume') !=-1:
+        vval=bklist.strip('\r\n')
+        vvalue=vval.split("=")
+        volume_minimum=float(vvalue[1])
+        #reply = QtGui.QMessageBox.information(None,"info ...","volume "+str(volume_minimum))
+    elif bklist.lower().find('height') !=-1:
+        vval=bklist.strip('\r\n')
+        vvalue=vval.split("=")
+        height_minimum=float(vvalue[1])
+        #reply = QtGui.QMessageBox.information(None,"info ...","height "+str(height_minimum))
+    else:
+        blacklisted_model_elements=bklist.strip('\r\n')
+        #say(bklist);
+        blacklisted_models=blacklisted_model_elements.split(",")
+        #say(blacklisted_models)
+    pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+    dock_mode = pg.GetInt("dockingMode")
+    if dock_mode == 0:
+        docking_mode='float'
+    elif dock_mode == 1:
+        docking_mode='left'
+    else:
+        docking_mode='right'
+    #stop
+    
+##
+def cfg_read_all_old():
     global ksu_config_fname, default_ksu_config_ini, applymaterials
     ##ksu pre-set
     global models3D_prefix, models3D_prefix2, blacklisted_model_elements, col, colr, colg, colb
