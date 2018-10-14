@@ -227,6 +227,26 @@
               <string>DarkBlue</string>
              </property>
             </item>
+            <item>
+             <property name="text">
+              <string>LightBlue</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Yellow</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Black</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>White</string>
+             </property>
+            </item>
            </widget>
           </item>
          </layout>
@@ -721,7 +741,8 @@
           <item>
            <widget class="Gui::PrefComboBox" name="gui::prefcombobox_5">
             <property name="toolTip">
-             <string>3D Loading mode</string>
+             <string>3D_loading_mode
+Allowing or not Loading Multi Parts objects</string>
             </property>
             <property name="currentIndex">
              <number>0</number>
@@ -739,12 +760,12 @@
             </item>
             <item>
              <property name="text">
-              <string>Compound</string>
+              <string>Simplified</string>
              </property>
             </item>
             <item>
              <property name="text">
-              <string>Simplified</string>
+              <string>NotMultiParts</string>
              </property>
             </item>
            </widget>

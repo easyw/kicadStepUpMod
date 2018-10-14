@@ -2116,7 +2116,9 @@ def dock():
     cfg_read_all()
     ini_vars[16] = u'left'
     docking_mode='left'
-    cfg_update_all()
+    #cfg_update_all()
+    pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+    dock_mode = pg.SetInt("dockingMode", 1)
     tabify()
     #KSUWidget.setFloating(False)  #dock
     #say ("now!")
@@ -2172,7 +2174,9 @@ def dock_right():
     cfg_read_all()
     ini_vars[16] = u'right'
     docking_mode='right'
-    cfg_update_all()
+    #cfg_update_all()
+    pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+    dock_mode = pg.SetInt("dockingMode", 2)    
     #KSUWidget.setFloating(False)  #dock
     #say ("now!")
 ##
@@ -2189,7 +2193,9 @@ def undock():
     cfg_read_all()
     ini_vars[16] = u'float'
     docking_mode='float'
-    cfg_update_all()
+    #cfg_update_all()
+    pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+    dock_mode = pg.SetInt("dockingMode", 0)
     #KSUWidget.resize(QtCore.QSize(300,100).expandedTo(KSUWidget.maximumSize())) # sets size of the widget
     #KSUWidget.setFloating(False)  #dock
     #say ("now!")
@@ -3602,24 +3608,27 @@ def cfg_read_all():
     prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
     if prefs.GetContents() is None:
         print('Creating first time ksu preferences')
-        stop
+        stop #TBD
     #else:
     #    for i,p in enumerate (prefs.GetContents()):
     #        print (p)
 
-    models3D_prefix1 = prefs.GetString('prefix3d_1')
-    if len (models3D_prefix1) == 0:
+    models3D_prefix = prefs.GetString('prefix3d_1')
+    if len (models3D_prefix) == 0:
         prefs.SetString('prefix3d_1',default_prefix3d)
         models3D_prefix = prefs.GetString('prefix3d_1')
     models3D_prefix2 = prefs.GetString('prefix3d_2')
-    light_green = [0.0,0.5,0.0]
-    blue = [0.3333,0.3333,0.5]
-    red = [1.0,0.1,0.0] # (255,25,0)
+    light_green = [0.20,0.60,0.40] # std Green
+    blue = [0.13,0.40,0.73] # Deep Sea Blue
+    red = [1.0,0.16,0.0] # Ferrari Red
     purple = [0.498,0.090,0.424] # oshpark purple #6D0A8E
     darkgreen = [0.180,0.373,0.275] # (45,95,70)
     darkblue = [0.211,0.305,0.455] # (54,79,116)
     lightblue = [0.0,0.298,1.0] # (0,76,255)
-    pcb_color_values = [light_green,blue,red,purple,darkgreen,darkblue,lightblue]
+    yellow = [0.98,0.98,0.34] #sunshine yellow
+    black = [0.18,0.18,0.18] #slick black
+    white = [0.98,0.92,0.84] #antique white
+    pcb_color_values = [light_green,blue,red,purple,darkgreen,darkblue,lightblue,yellow,black,white]
     pcb_color_pos = prefs.GetInt('pcb_color')
     pcb_color = pcb_color_values [pcb_color_pos]
     col = []
@@ -3662,11 +3671,11 @@ def cfg_read_all():
         stp_exp_mode = 'onelevel'
     m3D_loading_mode = prefs.GetInt('3D_loading_mode')
     if m3D_loading_mode == 0:
-        allow_compound = 'False'
+        allow_compound = 'True'
     elif m3D_loading_mode == 1:
         allow_compound = 'Simplified'
     else:
-        allow_compound = 'True'
+        allow_compound = 'False' #NotAllowedMultiParts
     sketch_constraints = prefs.GetInt('sketch_constraints')
     if sketch_constraints == 0:
         addConstraints='all'
@@ -3712,6 +3721,11 @@ def cfg_read_all():
         docking_mode='left'
     else:
         docking_mode='right'
+    idf_to_origin = True
+    pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+    last_pcb_path = pg.GetString("last_pcb_path")
+    last_fp_path = pg.GetString("last_fp_path")
+            
     #stop
     
 ##
@@ -4305,7 +4319,7 @@ def cfg_read_all_old():
     return data_ini_content
 #
 
-def cfg_update_all():
+def cfg_update_all_old():
     global ksu_config_fname, default_ksu_config_ini
     ##ksu pre-set
     global models3D_prefix, models3D_prefix2, blacklisted_model_elements, col, colr, colg, colb
@@ -5581,6 +5595,7 @@ def Load_models(pcbThickness,modules):
                                 counterTmp+=1#stop
                             if counterTmp!=counterObj+1:
                                 #multipart loaded
+                                #print (allow_compound)
                                 if allow_compound != 'False' :
                                     create_compound(counterObj,model_name)                        
                             myStep = FreeCAD.ActiveDocument.ActiveObject
@@ -5642,8 +5657,8 @@ def Load_models(pcbThickness,modules):
                         except: #else: # except:    
                             sayerr('3D STEP model '+model_name+' is WRONG')
                             msg="""3D STEP model <b><font color=red>"""
-                            msg+=model_name+"</font> is WRONG</b> ...<br>"
-                            msg+="@ "+module_path+" <br>...stopping execution! <br>Please <b>fix</b> the model."
+                            msg+=model_name+"</font> is WRONG</b><br>or are not allowed Multi Part objects...<br>"
+                            msg+="@ "+module_path+" <br>...stopping execution! <br>Please <b>fix</b> the model or change your settings."
                             QtGui.QApplication.restoreOverrideCursor()
                             reply = QtGui.QMessageBox.information(None,"Info ...",msg)
                             stop   
@@ -7007,7 +7022,9 @@ def onLoadFootprint(file_name=None):
         ini_vars[11] = last_fp_path
         ##with __builtin__.open(configFilePath, 'wb') as configfile:
         #    configParser.write(configfile)
-        cfg_update_all()
+        #cfg_update_all()
+        pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+        pg.SetString("last_fp_path", last_fp_path)
         data=u''.join(content)
         #for item in content:
         #    data += item
@@ -7410,7 +7427,7 @@ def onLoadBoard(file_name=None):
     #lastPcb_dir='C:/Cad/Progetti_K/ksu-test'
     #say(lastPcb_dir+' last Pcb dir')
     if not os.path.isdir(last_pcb_path):
-        last_pcb_path="./"
+        last_pcb_path=u"./"
     #say(last_pcb_path)
     if file_name is not None:
         #export_board_2step=True #for cmd line force exporting to STEP
@@ -7444,7 +7461,7 @@ def onLoadBoard(file_name=None):
             #filePath = os.path.split(os.path.realpath(__file__))[0]
             say ('my file path '+fpth)
             if fpth == "":
-                fpth = "."
+                fpth = u"."
             last_pcb_path = fpth
             #last_pcb_path=path
             pcb_path=fpth
@@ -7455,8 +7472,15 @@ def onLoadBoard(file_name=None):
             #    configParser.write(configfile)
             ##stop utf-8 test
             ini_vars[10] = last_pcb_path
-            cfg_update_all()
+            #cfg_update_all()
             doc=FreeCAD.newDocument(fname)
+            pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+            if sys.version_info[0] == 2: #py2 test utf-8
+                pg.SetString("last_pcb_path", last_pcb_path.encode("utf-8"))
+                #stop
+            else: #py3
+                pg.SetString("last_pcb_path", last_pcb_path) # py3 .decode("utf-8")
+            #pg.SetString("last_pcb_path", last_pcb_path.decode("utf-8"))
             modules=[]
             start_time=current_milli_time()
             #filename="C:/Cad/Progetti_K/D-can-term/can-term-test-fcad.kicad_pcb"
@@ -13350,13 +13374,15 @@ if len(args) >= 3:
     say ('arg file path '+filePath)
     filefound=True
     if filePath == "":
-        filePath = "."
+        filePath = u"."
     last_pcb_path = filePath
     #say(fullFileName)
     if os.path.exists(fullFileName):
         #say("opening "+ fullFileName)
         #cfgParsWrite(configFilePath)
-        cfg_update_all()
+        #cfg_update_all()
+        pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+        pg.SetString("last_pcb_path", last_pcb_path)
         original_filename=fullFileName
         onLoadBoard(fullFileName)
     else:
@@ -13365,7 +13391,9 @@ if len(args) >= 3:
         if os.path.exists(fullfilePath):
             #say("opening "+ fullfilePath)
             #cfgParsWrite(configFilePath)
-            cfg_update_all()
+            #cfg_update_all()
+            pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+            pg.SetString("last_pcb_path", last_pcb_path)
             original_filename=fullfilePath
             onLoadBoard(fullfilePath)
         else:
@@ -14234,12 +14262,16 @@ class Ui_DockWidget(object):
             enable_materials=1
             ini_vars[13] = u'enablematerials'
             #cfgParsWrite(configFilePath)
-            cfg_update_all()
+            #cfg_update_all()
+            prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+            prefs.SetBool('vrml_materials',1)
         else:
             enable_materials=0
             ini_vars[13] = u'nomaterials'
             #cfgParsWrite(configFilePath)
-            cfg_update_all()
+            #cfg_update_all()
+            prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+            prefs.SetBool('vrml_materials',0)
         say("materials = "+str(enable_materials))
 ##
     def onScaleVRML(self):
@@ -14377,12 +14409,16 @@ class Ui_DockWidget(object):
             export_board_2step=True
             ini_vars[12] = u'yes'
             #cfgParsWrite(configFilePath)
-            cfg_update_all()
+            #cfg_update_all()
+            prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+            prefs.SetBool('exp_step',1)
         else:
             export_board_2step=False
             ini_vars[12] = u'no'
             #cfgParsWrite(configFilePath)
-            cfg_update_all()
+            #cfg_update_all()
+            prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+            prefs.SetBool('exp_step',0)
         say("export STEP = "+str(export_board_2step))
 ##
     def on_cb_virtual_clicked(self):
@@ -14391,12 +14427,16 @@ class Ui_DockWidget(object):
             addVirtual=1
             ini_vars[7] = u'addVirtual'
             #cfgParsWrite(configFilePath)
-            cfg_update_all()
+            #cfg_update_all()
+            prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+            prefs.SetBool('mode_virtual',1)
         else:
             addVirtual=0
             ini_vars[7] = u'noVirtual'
             #cfgParsWrite(configFilePath)
-            cfg_update_all()
+            #cfg_update_all()
+            prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+            prefs.SetBool('mode_virtual',0)
         say("virtual = "+str(addVirtual))
 ##
     def onCfg(self):
@@ -14978,8 +15018,10 @@ def Sync3DModel():
                             last_pcb_path = fpth
                             last_pcb_path = re.sub("\\\\", "/", last_pcb_path)
                             ini_vars[10] = last_pcb_path
-                            cfg_update_all()
+                            #cfg_update_all()
                             #sayerr(name+':'+ext)
+                            pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+                            pg.SetString("last_pcb_path", last_pcb_path)
                             mypcb = KicadPCB.load(fpath)
                             reply=False;ref_found=False;input_ref=''
                             input_ref = QtGui.QInputDialog.getText(None, 'Sync Ref', 'Reference to be synced',QtGui.QLineEdit.Normal,'REF#',reply)
@@ -15150,7 +15192,9 @@ def PushMoved():
                         last_pcb_path = fpth
                         last_pcb_path = re.sub("\\\\", "/", last_pcb_path)
                         ini_vars[10] = last_pcb_path
-                        cfg_update_all()
+                        #cfg_update_all()
+                        pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+                        pg.SetString("last_pcb_path", last_pcb_path)
                         #sayerr(name+':'+ext)
                         #mypcb = KicadPCB.load(fpath)
                         with codecs.open(fpath,'r', encoding='utf-8') as txtFile:
@@ -15509,7 +15553,9 @@ def export_footprint(fname=None):
         last_fp_path = fpth
         last_fp_path = re.sub("\\\\", "/", last_fp_path)
         ini_vars[11] = last_fp_path
-        cfg_update_all()
+        #cfg_update_all()
+        pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+        pg.SetString("last_fp_path", last_fp_path)
         #sayerr(name+':'+ext)
         new_edge_list, not_supported, to_discretize, construction_geom = getBoardOutline()
         #print new_edge_list, to_discretize
@@ -18088,7 +18134,9 @@ def export_pcb(fname=None):
         last_pcb_path = fpth
         last_pcb_path = re.sub("\\\\", "/", last_pcb_path)
         ini_vars[10] = last_pcb_path
-        cfg_update_all()
+        #cfg_update_all()
+        pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+        pg.SetString("last_pcb_path", last_pcb_path)
         #sayerr(name+':'+ext)
         with codecs.open(fpath,'r', encoding='utf-8') as txtFile:
             content = txtFile.readlines() # problems?
