@@ -5409,7 +5409,9 @@ def Load_models(pcbThickness,modules):
                     #    models3D_prefix2_U = models3D_prefix2
                     models3D_prefix2_U = models3D_prefix2
                     utf_path2=os.path.join(models3D_prefix2_U,step_module) # utf-8 chars
-
+                    print(utf_path)
+                    print(utf_path2)
+                    print(step_module)
                     #.step
                     if os.path.exists(utf_path):
                         #module_path=models3D_prefix+step_module
@@ -5425,7 +5427,7 @@ def Load_models(pcbThickness,modules):
                     if (module_path=='not-found'):
                         pos=utf_path.rfind('.')
                         rel_pos=len(utf_path)-pos
-                        utf_path=utf_path[:-rel_pos+1]+'STEP'
+                        utf_path=utf_path[:-rel_pos+1]+u'STEP'
                         if os.path.exists(utf_path):
                             #module_path=models3D_prefix+step_module
                             module_path=utf_path
@@ -5433,13 +5435,13 @@ def Load_models(pcbThickness,modules):
                         else:
                             pos=step_module.rfind('.')
                             rel_pos=len(step_module)-pos
-                            step_module_t=step_module[:-rel_pos+1]+'STEP'
+                            step_module_t=step_module[:-rel_pos+1]+u'STEP'
                             if os.path.exists(step_module_t): # absolute path
                                 module_path=step_module_t
                             else:
                                 pos=utf_path2.rfind('.')
                                 rel_pos=len(utf_path2)-pos
-                                utf_path2=utf_path2[:-rel_pos+1]+'STEP'
+                                utf_path2=utf_path2[:-rel_pos+1]+u'STEP'
                                 if os.path.exists(utf_path2):
                                     module_path=utf_path2
                     #adding .stp support
@@ -5469,7 +5471,7 @@ def Load_models(pcbThickness,modules):
                     if (module_path=='not-found'):
                         pos=utf_path.rfind('.')
                         rel_pos=len(utf_path)-pos
-                        utf_path=utf_path[:-rel_pos+1]+'STP'
+                        utf_path=utf_path[:-rel_pos+1]+u'STP'
                         if os.path.exists(utf_path):
                             #module_path=models3D_prefix+step_module
                             module_path=utf_path
@@ -5477,13 +5479,13 @@ def Load_models(pcbThickness,modules):
                         else:
                             pos=step_module.rfind('.')
                             rel_pos=len(step_module2)-pos
-                            step_module_t=step_module2[:-rel_pos+1]+'STP'
+                            step_module_t=step_module2[:-rel_pos+1]+u'STP'
                             if os.path.exists(step_module_t): # absolute path
                                 module_path=step_module_t
                             else:
                                 pos=utf_path2.rfind('.')
                                 rel_pos=len(utf_path2)-pos
-                                utf_path2=utf_path2[:-rel_pos+1]+'STP'
+                                utf_path2=utf_path2[:-rel_pos+1]+u'STP'
                                 if os.path.exists(utf_path2):
                                     module_path=utf_path2
                     #adding .iges support
@@ -5508,7 +5510,7 @@ def Load_models(pcbThickness,modules):
                     if (module_path=='not-found'):
                         pos=utf_path.rfind('.')
                         rel_pos=len(utf_path)-pos
-                        utf_path=utf_path[:-rel_pos+1]+'IGES'
+                        utf_path=utf_path[:-rel_pos+1]+u'IGES'
                         if os.path.exists(utf_path):
                             #module_path=models3D_prefix+step_module
                             module_path=utf_path
@@ -5516,13 +5518,13 @@ def Load_models(pcbThickness,modules):
                         else:
                             pos=step_module.rfind('.')
                             rel_pos=len(step_module3)-pos
-                            step_module_t=step_module3[:-rel_pos+1]+'IGES'
+                            step_module_t=step_module3[:-rel_pos+1]+u'IGES'
                             if os.path.exists(step_module_t): # absolute path
                                 module_path=step_module_t
                             else:
                                 pos=utf_path2.rfind('.')
                                 rel_pos=len(utf_path2)-pos
-                                utf_path2=utf_path2[:-rel_pos+1]+'IGES'
+                                utf_path2=utf_path2[:-rel_pos+1]+u'IGES'
                                 if os.path.exists(utf_path2):
                                     module_path=utf_path2
                     #if (module_path!='not-found'):
@@ -5547,7 +5549,7 @@ def Load_models(pcbThickness,modules):
                     if (module_path=='not-found'):
                         pos=utf_path.rfind('.')
                         rel_pos=len(utf_path)-pos
-                        utf_path=utf_path[:-rel_pos+1]+'IGS'
+                        utf_path=utf_path[:-rel_pos+1]+u'IGS'
                         if os.path.exists(utf_path):
                             #module_path=models3D_prefix+step_module
                             module_path=utf_path
@@ -5555,13 +5557,13 @@ def Load_models(pcbThickness,modules):
                         else:
                             pos=step_module.rfind('.')
                             rel_pos=len(step_module4)-pos
-                            step_module_t=step_module4[:-rel_pos+1]+'IGS'
+                            step_module_t=step_module4[:-rel_pos+1]+u'IGS'
                             if os.path.exists(step_module_t): # absolute path
                                 module_path=step_module_t
                             else:
                                 pos=utf_path2.rfind('.')
                                 rel_pos=len(utf_path2)-pos
-                                utf_path2=utf_path2[:-rel_pos+1]+'IGS'
+                                utf_path2=utf_path2[:-rel_pos+1]+u'IGS'
                                 if os.path.exists(utf_path2):
                                     module_path=utf_path2
                 else:
