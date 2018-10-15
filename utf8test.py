@@ -55,11 +55,13 @@ check_type(models3D_prefix)
 pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
 last_pcb_path = pg.GetString("last_pcb_path")
 print(last_pcb_path)
+pg.SetString("last_pcb_path",make_string(models3D_prefix))
+print ('writing done')
 check_type(last_pcb_path)
 model1 = '10rx.wrl'
 model_u=u'Würfel1.stp'
 fullpath = os.path.join(make_unicode(last_pcb_path), make_unicode(model_u))
-fullpath3 = os.path.join(last_pcb_path, model_u)
+#fullpath3 = os.path.join(last_pcb_path, model_u)
 print (fullpath)
 check_type(fullpath)
 

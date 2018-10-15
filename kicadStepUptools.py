@@ -5396,7 +5396,7 @@ def Load_models(pcbThickness,modules):
                     #else:
                     #    step_module = step_module.encode('utf-8')
                     #utf_path=os.path.join(models3D_prefix,step_module)
-                    utf_path=os.path.join(models3D_prefix_U,step_module)
+                    utf_path=os.path.join(make_unicode(models3D_prefix_U),make_unicode(step_module))
                     #sayw(utf_path)
                     #utf_path=os.path.join(models3D_prefix,step_module)
                     ##adding 2nd 3Dprefix support to step
@@ -5445,8 +5445,8 @@ def Load_models(pcbThickness,modules):
                     #adding .stp support
                     #if isinstance(step_module2, str):
                     #    step_module = step_module2.decode('unicode_escape')
-                    utf_path=os.path.join(models3D_prefix_U,step_module2)
-                    utf_path2=os.path.join(models3D_prefix2_U,step_module2)
+                    utf_path=os.path.join(make_unicode(models3D_prefix_U),make_unicode(step_module2))
+                    utf_path2=os.path.join(make_unicode(models3D_prefix2_U),make_unicode(step_module2))
                     #sayerr(step_module2)
                     #sayerr(utf_path)
                     #sayerr(utf_path2)
@@ -5489,8 +5489,8 @@ def Load_models(pcbThickness,modules):
                     #adding .iges support
                     #if isinstance(step_module3, str):
                     #    step_module = step_module3.decode('unicode_escape')
-                    utf_path=os.path.join(models3D_prefix_U,step_module3)
-                    utf_path2=os.path.join(models3D_prefix2_U,step_module3)
+                    utf_path=os.path.join(make_unicode(models3D_prefix_U),make_unicode(step_module3))
+                    utf_path2=os.path.join(make_unicode(models3D_prefix2_U),make_unicode(step_module3))
                     ## new utf-8 test
                     if (module_path=='not-found'):
                         if os.path.exists(utf_path):
@@ -5529,8 +5529,8 @@ def Load_models(pcbThickness,modules):
                     #    sayerr(module_path)
                     #    stop
                     #adding .igs support
-                    utf_path=os.path.join(models3D_prefix_U,step_module4)
-                    utf_path2=os.path.join(models3D_prefix2_U,step_module4)
+                    utf_path=os.path.join(make_unicode(models3D_prefix_U),make_unicode(step_module4))
+                    utf_path2=os.path.join(make_unicode(models3D_prefix2_U),make_unicode(step_module4))
                     ## new utf-8 test
                     if (module_path=='not-found'):
                         if os.path.exists(utf_path):
@@ -6042,10 +6042,10 @@ def Load_models(pcbThickness,modules):
                     else:                        
                         FreeCAD.ActiveDocument.removeObject(impPart.Name)
                 else:
-                    say("error missing "+ models3D_prefix+step_module)
-                    test = missing_models.find(step_module)
+                    say("error missing "+ make_string(models3D_prefix)+make_string(step_module))
+                    test = missing_models.find(make_string(step_module))
                     if test is -1:
-                        missing_models += models3D_prefix+step_module+'\r\n' #matched        
+                        missing_models += make_string(models3D_prefix)+make_string(step_module)+'\r\n' #matched        
             ###
         gui_refresh=20
         if int(PySide.QtCore.qVersion().split('.')[0]) > 4 or use_Links:  # Qt5 or Links refresh
@@ -7001,7 +7001,7 @@ def onLoadFootprint(file_name=None):
         #except Exception:
         #    FreeCAD.Console.PrintError("Error : " + str(name) + "\n")
         name, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Open File...",
-             last_fp_path, "*.kicad_mod")
+             make_string(last_fp_path), "*.kicad_mod")
     else:
         name="C:/Cad/Progetti_K/ksu-test/test.kicad_mod"
     if len(name) > 0:
@@ -7024,7 +7024,7 @@ def onLoadFootprint(file_name=None):
         #    configParser.write(configfile)
         #cfg_update_all()
         pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
-        pg.SetString("last_fp_path", last_fp_path)
+        pg.SetString("last_fp_path", make_string(last_fp_path))
         data=u''.join(content)
         #for item in content:
         #    data += item
@@ -7426,7 +7426,9 @@ def onLoadBoard(file_name=None):
     clear_console()
     #lastPcb_dir='C:/Cad/Progetti_K/ksu-test'
     #say(lastPcb_dir+' last Pcb dir')
-    if not os.path.isdir(last_pcb_path):
+    print(make_string(last_pcb_path))
+    print (make_unicode(last_pcb_path))
+    if not os.path.isdir(make_unicode(last_pcb_path)):
         last_pcb_path=u"./"
     #say(last_pcb_path)
     if file_name is not None:
@@ -7447,7 +7449,7 @@ def onLoadBoard(file_name=None):
         #restore main window
         #self.setWindowState(QtCore.Qt.WindowActive)
         name, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Open kicad PCB File...",
-             last_pcb_path, "*.kicad_pcb")
+             make_unicode(last_pcb_path), "*.kicad_pcb")
     else:
         name="C:/Cad/Progetti_K/ksu-test/multidrill.kicad_pcb"
     if len(name) > 0:
@@ -7475,11 +7477,7 @@ def onLoadBoard(file_name=None):
             #cfg_update_all()
             doc=FreeCAD.newDocument(fname)
             pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
-            if sys.version_info[0] == 2: #py2 test utf-8
-                pg.SetString("last_pcb_path", last_pcb_path.encode("utf-8"))
-                #stop
-            else: #py3
-                pg.SetString("last_pcb_path", last_pcb_path) # py3 .decode("utf-8")
+            pg.SetString("last_pcb_path", make_string(last_pcb_path)) # py3 .decode("utf-8")
             #pg.SetString("last_pcb_path", last_pcb_path.decode("utf-8"))
             modules=[]
             start_time=current_milli_time()
@@ -13376,13 +13374,14 @@ if len(args) >= 3:
     if filePath == "":
         filePath = u"."
     last_pcb_path = filePath
+    print (last_pcb_path)
     #say(fullFileName)
     if os.path.exists(fullFileName):
         #say("opening "+ fullFileName)
         #cfgParsWrite(configFilePath)
         #cfg_update_all()
         pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
-        pg.SetString("last_pcb_path", last_pcb_path)
+        pg.SetString("last_pcb_path", make_string(last_pcb_path))
         original_filename=fullFileName
         onLoadBoard(fullFileName)
     else:
@@ -13393,7 +13392,7 @@ if len(args) >= 3:
             #cfgParsWrite(configFilePath)
             #cfg_update_all()
             pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
-            pg.SetString("last_pcb_path", last_pcb_path)
+            pg.SetString("last_pcb_path", make_string(last_pcb_path))
             original_filename=fullfilePath
             onLoadBoard(fullfilePath)
         else:
@@ -14726,7 +14725,7 @@ def Export3DStepF():
             #getSaveFileName(self,"saveFlle","Result.txt",filter ="txt (*.txt *.)")
             Filter=""
             name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Export 3D STEP ...",
-                last_3d_path, "*.step")
+                make_unicode(last_3d_path), "*.step")
             #say(name)
             if name:
                 #my_sk=FreeCAD.ActiveDocument.copyObject(FreeCAD.ActiveDocument.PCB_Sketch,False)
@@ -14858,7 +14857,7 @@ def Import3DModelF():
         sayw(last_pcb_path)
     Filter=""
     name, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Import 3D File...",
-         last_3d_path, "*.step *.stp *.iges *.igs *.FCStd")
+         make_unicode(last_3d_path), "*.step *.stp *.iges *.igs *.FCStd")
     #say(name)
     if name:
         ext = os.path.splitext(os.path.basename(name))[1]
@@ -14930,7 +14929,7 @@ def PushPullPCB():
                 if not testing:
                     Filter=""
                     name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Push Sketch PCB Edge to KiCad board ...",
-                        last_3d_path, "*.kicad_pcb")
+                        make_unicode(last_3d_path), "*.kicad_pcb")
                 else:
                     name='d:/Temp/e2.kicad_pcb'
                 #say(name)
@@ -14984,7 +14983,7 @@ def Sync3DModel():
                 if not testing:
                     Filter=""
                     fname, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Load KiCad PCB board data...",
-                        last_3d_path, "*.kicad_pcb")
+                        make_unicode(last_3d_path), "*.kicad_pcb")
                 else:
                     fname='c:/Temp/demo/demo-test-mp.kicad_pcb'
                 if fname is not None:
@@ -15021,7 +15020,7 @@ def Sync3DModel():
                             #cfg_update_all()
                             #sayerr(name+':'+ext)
                             pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
-                            pg.SetString("last_pcb_path", last_pcb_path)
+                            pg.SetString("last_pcb_path", make_string(last_pcb_path))
                             mypcb = KicadPCB.load(fpath)
                             reply=False;ref_found=False;input_ref=''
                             input_ref = QtGui.QInputDialog.getText(None, 'Sync Ref', 'Reference to be synced',QtGui.QLineEdit.Normal,'REF#',reply)
@@ -15158,7 +15157,7 @@ def PushMoved():
             if not testing:
                 Filter=""
                 fname, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Push Sketch PCB Edge to KiCad board ...",
-                    last_3d_path, "*.kicad_pcb")
+                    make_unicode(last_3d_path), "*.kicad_pcb")
             else:
                 fname='c:/Temp/demo/test-rot.kicad_pcb'
             if fname:
@@ -15194,7 +15193,7 @@ def PushMoved():
                         ini_vars[10] = last_pcb_path
                         #cfg_update_all()
                         pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
-                        pg.SetString("last_pcb_path", last_pcb_path)
+                        pg.SetString("last_pcb_path", make_string(last_pcb_path))
                         #sayerr(name+':'+ext)
                         #mypcb = KicadPCB.load(fpath)
                         with codecs.open(fpath,'r', encoding='utf-8') as txtFile:
@@ -15394,7 +15393,7 @@ def PushFootprint():
                 if not testing:
                     Filter=""
                     name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Push Footprint to KiCad module ...",
-                        last_3d_path, "*.kicad_mod")
+                        make_unicode(last_3d_path), "*.kicad_mod")
                 else:
                     if os.path.isdir("d:/Temp/"):
                         name='d:/Temp/ex2.kicad_mod'
@@ -15555,7 +15554,7 @@ def export_footprint(fname=None):
         ini_vars[11] = last_fp_path
         #cfg_update_all()
         pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
-        pg.SetString("last_fp_path", last_fp_path)
+        pg.SetString("last_fp_path", make_string(last_fp_path))
         #sayerr(name+':'+ext)
         new_edge_list, not_supported, to_discretize, construction_geom = getBoardOutline()
         #print new_edge_list, to_discretize
@@ -18136,7 +18135,7 @@ def export_pcb(fname=None):
         ini_vars[10] = last_pcb_path
         #cfg_update_all()
         pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
-        pg.SetString("last_pcb_path", last_pcb_path)
+        pg.SetString("last_pcb_path", make_string(last_pcb_path))
         #sayerr(name+':'+ext)
         with codecs.open(fpath,'r', encoding='utf-8') as txtFile:
             content = txtFile.readlines() # problems?
