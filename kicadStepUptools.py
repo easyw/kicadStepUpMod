@@ -448,7 +448,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.1.0.7"  
+___ver___ = "8.1.0.8"  
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -1514,13 +1514,23 @@ class KicadPCB(SexpParser):
 
     @staticmethod
     def load(filename):
+        #global py2
+        import sys
         #with open(filename,'r') as f:
         #    return KicadPCB(parseSexp(f.read()))
         #print 'ciao'
-        with builtin.open(filename, 'r') as f: #py3 #test parser
-            #return KicadPCB(parseSexp(f.read())) # maui
-            #return KicadPCB(parseSexp(f.read().replace('\\"','_').replace("\\'",'_'))) # maui replacing  \" and \' with _ to avoid wrong parsing
-            return KicadPCB(parseSexp(f.read().replace('\\"','_'))) # maui replacing  \" with _ to avoid wrong parsing
+        if sys.version_info[0] == 2: #if py2:
+            print('py2')
+            with builtin.open(filename, 'r') as f: #py3 #test parser
+                #return KicadPCB(parseSexp(f.read())) # maui
+                #return KicadPCB(parseSexp(f.read().replace('\\"','_').replace("\\'",'_'))) # maui replacing  \" and \' with _ to avoid wrong parsing
+                return KicadPCB(parseSexp(f.read().replace('\\"','_'))) # maui replacing  \" with _ to avoid wrong parsing  test py3
+        else:
+            print('py3')
+            with builtin.open(filename, 'rb') as f: #py3 #test parser
+                #return KicadPCB(parseSexp(f.read())) # maui
+                #return KicadPCB(parseSexp(f.read().replace('\\"','_').replace("\\'",'_'))) # maui replacing  \" and \' with _ to avoid wrong parsing
+                return KicadPCB(parseSexp(f.read().decode('utf8').replace(u'\\"',u'_'))) # maui replacing  \" with _ to avoid wrong parsing  test py3
 
 ##--------------------------------------------------------------------------------------
 ###
@@ -5274,6 +5284,7 @@ def Load_models(pcbThickness,modules):
     mod_cnt=0
     for i in range(len(modules)):
         step_module=modules[i][0]
+        #print(type(step_module))  #maui test py3
         #sayw('added '+str(i)+' model(s)')
         #say(modules[i]);
         #FreeCAD.Console.PrintMessage('step-module '+step_module)
@@ -5349,11 +5360,11 @@ def Load_models(pcbThickness,modules):
             rel_pos=len(step_module)-pos
             #sayw(rel_pos)
             #stop
-            step_module=step_module[:-rel_pos+1]+'step'
+            step_module=step_module[:-rel_pos+1]+u'step'
             #step_module=step_module[:-3]+'step'
-            step_module2=step_module[:-4]+'stp'
-            step_module3=step_module[:-4]+'iges'
-            step_module4=step_module[:-4]+'igs'
+            step_module2=step_module[:-4]+u'stp'
+            step_module3=step_module[:-4]+u'iges'
+            step_module4=step_module[:-4]+u'igs'
             if encoded!=1:
                 #step_module=step_module.decode("utf-8").replace(u'"', u'')  # name with spaces
                 step_module=step_module.replace(u'"', u'')  # name with spaces
@@ -5396,6 +5407,7 @@ def Load_models(pcbThickness,modules):
                     #else:
                     #    step_module = step_module.encode('utf-8')
                     #utf_path=os.path.join(models3D_prefix,step_module)
+                    #print(type(step_module))  #maui test py3
                     utf_path=os.path.join(make_unicode(models3D_prefix_U),make_unicode(step_module))
                     #sayw(utf_path)
                     #utf_path=os.path.join(models3D_prefix,step_module)
@@ -5409,9 +5421,9 @@ def Load_models(pcbThickness,modules):
                     #    models3D_prefix2_U = models3D_prefix2
                     models3D_prefix2_U = models3D_prefix2
                     utf_path2=os.path.join(models3D_prefix2_U,step_module) # utf-8 chars
-                    print(utf_path)
-                    print(utf_path2)
-                    print(step_module)
+                    #print(utf_path)
+                    #print(utf_path2)
+                    #print(step_module)
                     #.step
                     if os.path.exists(utf_path):
                         #module_path=models3D_prefix+step_module
@@ -7428,8 +7440,8 @@ def onLoadBoard(file_name=None):
     clear_console()
     #lastPcb_dir='C:/Cad/Progetti_K/ksu-test'
     #say(lastPcb_dir+' last Pcb dir')
-    print(make_string(last_pcb_path))
-    print (make_unicode(last_pcb_path))
+    #print(make_string(last_pcb_path))
+    #print (make_unicode(last_pcb_path))
     if not os.path.isdir(make_unicode(last_pcb_path)):
         last_pcb_path=u"./"
     #say(last_pcb_path)
@@ -12544,7 +12556,7 @@ def DrawPCB(mypcb):
                 #stop
             else: #py3
                 model=md[0] # py3 .decode("utf-8")
-            #print (model, ' MODEL')
+            #print (model, ' MODEL', type(model)) #maui test py3
             if (virtual==1 and addVirtual==0):
                 model_name='no3Dmodel'
                 side='noLayer'
@@ -15779,7 +15791,7 @@ def export_footprint(fname=None):
                             ])
                 #lyr=u'Pads_Geom'
                 pgeom.append(border)
-                print (pgeom);print(pgeomG)
+                #print (pgeom);print(pgeomG)
             #sayw(prrect); sayw(pply)
             #sayw(pth)
             
@@ -15910,7 +15922,7 @@ def export_footprint(fname=None):
             #print len(prrect)
             if len (pGm)>0:
                 sayw('normalized Geom')
-                print(pGm)
+                #print(pGm)
             # ## impiling pads 
             # for p in drl_found:
             #     for e in p:
