@@ -37,19 +37,25 @@ brass_diffuse = (0.780392,0.568627,0.113725)
 
 
 import importDXF
+from kicadStepUptools import make_unicode, make_string
 
 def makeFaceDXF():
     global copper_diffuse, silks_diffuse
     Filter=""
-    last_fp_path=""
+    last_pcb_path=""
+    pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+    last_pcb_path = pg.GetString("last_pcb_path")
     fn, Filter = PySide.QtGui.QFileDialog.getOpenFileNames(None, "Open File...",
-                last_fp_path, "*.dxf")
+                make_unicode(last_pcb_path), "*.dxf")
     for fname in fn:
         path, name = os.path.split(fname)
         filename=os.path.splitext(name)[0]
         #importDXF.open(os.path.join(dirname,filename))
         if len(fname) > 0:
             #importDXF.open(fname)
+            last_pcb_path=os.path.dirname(fname)
+            pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+            pg.SetString("last_pcb_path", make_string(last_pcb_path)) # py3 .decode("utf-8")
             doc=FreeCAD.ActiveDocument
             objects = []
             say("loading... ")

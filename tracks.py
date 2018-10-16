@@ -16,7 +16,7 @@ def say_time():
 ###
 
 from kicadStepUptools import removesubtree, cfg_read_all
-from kicadStepUptools import KicadPCB
+from kicadStepUptools import KicadPCB, make_unicode, make_string
 #filename="C:/Cad/Progetti_K/ksu-test/pic_smart_switch.kicad_pcb"
 #filename="C:/Cad/Progetti_K/eth-32gpio/eth-32gpio.kicad_pcb"
 def addtracks():
@@ -26,22 +26,21 @@ def addtracks():
     # print (min_drill_size)
     
     Filter=""
-    if 'last_pcb_path' in globals():
-        print (last_pcb_path)
-        if len (last_pcb_path) == 0:
+    pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+    last_pcb_path = pg.GetString("last_pcb_path")
+    if len (last_pcb_path) == 0:
             last_pcb_path = ""
-    else:
-        last_pcb_path = ""
-    print(last_pcb_path)
     fname, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Open File...",
-                last_pcb_path, "*.kicad_pcb")
+            make_unicode(last_pcb_path), "*.kicad_pcb")
     path, name = os.path.split(fname)
     #filename=os.path.splitext(name)[0]
     filename = fname
     #importDXF.open(os.path.join(dirname,filename))
     if len(fname) > 0:
         start_time=current_milli_time()
-        
+        last_pcb_path=os.path.dirname(fname)
+        pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+        pg.SetString("last_pcb_path", make_string(last_pcb_path)) # py3 .decode("utf-8")
         mypcb = KicadPCB.load(filename)
         pcbThickness = float(mypcb.general.thickness)
         #print (mypcb.general.thickness)

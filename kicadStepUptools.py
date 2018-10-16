@@ -493,7 +493,7 @@ warning_nbr=10 #if missing more than 'warning_nbr' models, a warning will raise
 
 timer_Collisions= 3000 # ms
 mingui = 0 #Gui status: mingui = 1 -> minimized
-last_3d_path=""
+last_3d_path=u''
 expanded_view=0 # 0=not expanded; 1 edit expanded; 2 help expanded
 shape_col=(1.0, 0.0, 0.0)
 align_vrml_step_colors=True
@@ -7015,7 +7015,7 @@ def onLoadFootprint(file_name=None):
         #except Exception:
         #    FreeCAD.Console.PrintError("Error : " + str(name) + "\n")
         name, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Open File...",
-             make_string(last_fp_path), "*.kicad_mod")
+             make_unicode(last_fp_path), "*.kicad_mod")
     else:
         name="C:/Cad/Progetti_K/ksu-test/test.kicad_mod"
     if len(name) > 0:
@@ -14723,7 +14723,7 @@ class Ui_DockWidget(object):
 ## sketch testing button
 
 def Export3DStepF():
-    global last_3d_path, stp_exp_mode, use_AppPart, use_Links, links_imp_mode
+    global last_3d_path, last_pcb_path, stp_exp_mode, use_AppPart, use_Links, links_imp_mode
     
     #say("export3DSTEP")
     sel = FreeCADGui.Selection.getSelection()
@@ -14733,7 +14733,10 @@ def Export3DStepF():
             msg="""<b>App::Part hierarchy</b> cannot be exported ATM<br>use the buttons to <b>make a Union or Compound</b> before exporting it"""
             say_warning(msg)                
         else:
-            if last_3d_path is "":
+            cfg_read_all()
+            pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+            last_3d_path = pg.GetString("last_3d_path") 
+            if len(last_3d_path) is 0:
                 last_3d_path=last_pcb_path
                 sayw(last_pcb_path)
             #getSaveFileName(self,"saveFlle","Result.txt",filter ="txt (*.txt *.)")
@@ -14742,6 +14745,9 @@ def Export3DStepF():
                 make_unicode(last_3d_path), "*.step")
             #say(name)
             if name:
+                last_3d_path=os.path.dirname(name)
+                pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+                pg.SetString("last_3d_path",make_string(last_3d_path))
                 #my_sk=FreeCAD.ActiveDocument.copyObject(FreeCAD.ActiveDocument.PCB_Sketch,False)
                 #my_sk_name=FreeCAD.ActiveDocument.ActiveObject.Name
                 #FreeCAD.ActiveDocument.removeObject(FreeCAD.ActiveDocument.PCB_Sketch.Name)
@@ -14863,10 +14869,13 @@ def Export3DStepF():
 
 def Import3DModelF():
     
-    global last_3d_path
+    global last_3d_path, last_pcb_path
     say("import3DModel")
     #sayw(doc.Name)
-    if last_3d_path is "":
+    pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+    last_3d_path = pg.GetString("last_3d_path") 
+    cfg_read_all()
+    if len(last_3d_path) == 0:
         last_3d_path=last_pcb_path
         sayw(last_pcb_path)
     Filter=""
@@ -14909,12 +14918,15 @@ def Import3DModelF():
         
         FreeCADGui.SendMsgToActiveView("ViewFit")
         last_3d_path=os.path.dirname(name)
+        pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+        pg.SetString("last_3d_path",make_string(last_3d_path))
+    
 ##
 
 ##
 def PushPullPCB():
 #def onExport3DStep(self):
-    global last_3d_path, start_time, load_sketch
+    global last_3d_path, start_time, load_sketch, last_pcb_path
     #say("export3DSTEP")
     if load_sketch==False:
         msg="""<b>Edge editing NOT supported on FC0.15!</b><br>please upgrade your FC release"""
@@ -14935,21 +14947,24 @@ def PushPullPCB():
             #sayw(doc.Name)
             if "Sketch" in sel[0].TypeId:
                 cfg_read_all()
-                if last_3d_path is "":
-                    last_3d_path=last_pcb_path
-                    sayw(last_pcb_path)
+                if len(last_pcb_path) == 0:
+                    last_pcb_path = ""
+                #    last_3d_path=last_pcb_path
+                #    sayw(last_pcb_path)
                 #getSaveFileName(self,"saveFlle","Result.txt",filter ="txt (*.txt *.)")
                 testing=False
                 if not testing:
                     Filter=""
                     name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Push Sketch PCB Edge to KiCad board ...",
-                        make_unicode(last_3d_path), "*.kicad_pcb")
+                        make_unicode(last_pcb_path), "*.kicad_pcb")
                 else:
                     name='d:/Temp/e2.kicad_pcb'
                 #say(name)
                 if name:
                     if os.path.exists(name):
-                        last_3d_path=os.path.dirname(name)
+                        last_pcb_path=os.path.dirname(name)
+                        pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+                        pg.SetString("last_pcb_path",make_string(last_pcb_path))
                         start_time=current_milli_time()
                         export_pcb(name)
                     else:
@@ -14989,20 +15004,22 @@ def Sync3DModel():
         if len (sel) == 1:
             if hasattr(sel[0],"Shape") or "Link" in sel[0].TypeId:
                 cfg_read_all()
-                if last_3d_path is "":
-                    last_3d_path=last_pcb_path
-                    sayw(last_pcb_path)
+                if len(last_pcb_path) == 0:
+                    last_pcb_path = ""
+                    #sayw(last_pcb_path)
                 #getSaveFileName(self,"saveFlle","Result.txt",filter ="txt (*.txt *.)")
                 testing=False
                 if not testing:
                     Filter=""
                     fname, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Load KiCad PCB board data...",
-                        make_unicode(last_3d_path), "*.kicad_pcb")
+                        make_unicode(last_pcb_path), "*.kicad_pcb")
                 else:
                     fname='c:/Temp/demo/demo-test-mp.kicad_pcb'
                 if fname is not None:
                     if os.path.exists(fname):
-                        last_3d_path=os.path.dirname(fname)
+                        last_pcb_path=os.path.dirname(fname)
+                        pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+                        pg.SetString("last_pcb_path",make_string(last_pcb_path))
                         start_time=current_milli_time()
                         doc=FreeCAD.ActiveDocument
                         #filePath=last_pcb_path
@@ -15163,20 +15180,24 @@ def PushMoved():
             #    say_warning(msg)
         if check_ok:
             cfg_read_all()
-            if last_3d_path is "":
-                last_3d_path=last_pcb_path
-                sayw(last_pcb_path)
+            #pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+            #pg.GetString("last_3d_path")
+            if len(last_pcb_path) == 0:
+                last_pcb_path=u''
+                #sayw(last_pcb_path)
             #getSaveFileName(self,"saveFlle","Result.txt",filter ="txt (*.txt *.)")
             testing=False #True
             if not testing:
                 Filter=""
                 fname, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Push Sketch PCB Edge to KiCad board ...",
-                    make_unicode(last_3d_path), "*.kicad_pcb")
+                    make_unicode(last_pcb_path), "*.kicad_pcb")
             else:
                 fname='c:/Temp/demo/test-rot.kicad_pcb'
             if fname:
                 if os.path.exists(fname):
                     last_3d_path=os.path.dirname(fname)
+                    pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+                    pg.SetString("last_3d_path",make_string(last_3d_path))
                     start_time=current_milli_time()
                     doc=FreeCAD.ActiveDocument
                     #filePath=last_pcb_path
@@ -15314,7 +15335,7 @@ def PushMoved():
 
 def PushFootprint():
 #def onExport3DStep(self):
-    global last_3d_path, start_time, load_sketch
+    global last_3d_path, start_time, load_sketch, last_pcb_path
     #say("export3DSTEP")
     if load_sketch==False:
         msg="""<b>Edge editing NOT supported on FC0.15!</b><br>please upgrade your FC release"""
@@ -15399,15 +15420,17 @@ def PushFootprint():
                 #    for o in FreeCAD.ActiveDocument.Objects:
                 #        FreeCADGui.Selection.addSelection(o)
                 cfg_read_all()
-                if last_3d_path is "":
-                    last_3d_path=last_pcb_path
-                    sayw(last_pcb_path)
+                pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+                last_fp_path = pg.GetString("last_fp_path")
+                if len(last_fp_path) == 0:
+                    last_fp_path=last_pcb_path
+                    #sayw(last_pcb_path)
                 #getSaveFileName(self,"saveFlle","Result.txt",filter ="txt (*.txt *.)")
                 testing=False #False
                 if not testing:
                     Filter=""
                     name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Push Footprint to KiCad module ...",
-                        make_unicode(last_3d_path), "*.kicad_mod")
+                        make_unicode(last_fp_path), "*.kicad_mod")
                 else:
                     if os.path.isdir("d:/Temp/"):
                         name='d:/Temp/ex2.kicad_mod'
@@ -15417,6 +15440,8 @@ def PushFootprint():
                 if name:
                     #if os.path.exists(name):
                     last_fp_path=os.path.dirname(name)
+                    pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+                    pg.SetString("last_fp_path", make_string(last_fp_path)) # py3 .decode("utf-8")
                     start_time=current_milli_time()
                     export_footprint(name)
                     for s in sk_to_discr:
