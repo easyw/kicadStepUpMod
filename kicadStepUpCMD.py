@@ -170,6 +170,7 @@ class Ui_CDialog(object):
         icon.addPixmap(QtGui.QPixmap(myicon), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.coincident.setIcon(icon)
         self.coincident.setIconSize(QtCore.QSize(myiconsize, myiconsize))
+        self.coincident.setChecked(True)
         icon1 = QtGui.QIcon()
         myicon=os.path.join( ksuWB_icons_path , 'Sketcher_LockAll.svg')
         icon1.addPixmap(QtGui.QPixmap(myicon), QtGui.QIcon.Normal, QtGui.QIcon.Off)
