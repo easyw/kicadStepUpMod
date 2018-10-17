@@ -51,6 +51,8 @@ def makeFaceDXF():
         path, name = os.path.split(fname)
         filename=os.path.splitext(name)[0]
         #importDXF.open(os.path.join(dirname,filename))
+        doc=FreeCAD.ActiveDocument
+        docG=FreeCADGui.ActiveDocument
         if len(fname) > 0:
             #importDXF.open(fname)
             last_pcb_path=os.path.dirname(fname)
@@ -66,8 +68,6 @@ def makeFaceDXF():
                 importDXF.insert(fname, doc.Name)
             else:
                 importDXF.open(fname)
-            doc=FreeCAD.ActiveDocument
-            docG=FreeCADGui.ActiveDocument
             FreeCADGui.SendMsgToActiveView("ViewFit")
             timeP = time.time() - t
             say("loading time = "+str(timeP) + "s")
