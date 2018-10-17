@@ -19,7 +19,7 @@ import ksu_locator
 from os.path import expanduser
 import difflib, re, time, datetime
 
-generate_sketch = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui").GetBool('generate_sketch')
+generateSketch = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui").GetBool('generate_sketch')
 
 
 generate_sketch=True
@@ -570,7 +570,8 @@ def cmpPos(doc=None):
             FreeCAD.Console.PrintWarning('no changes\n')
             if len(pcbN)>0:
                 FreeCADGui.ActiveDocument.getObject(pcbN).Transparency = old_pcb_tval
-        if generate_sketch:
+        generateSketch = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui").GetBool('generate_sketch')
+        if generate_sketch and generateSketch:
             if len(sk_add)>0:
                 #print(sk_add)
                 if FreeCAD.activeDocument().getObject("Sketch_Addition") is not None:
