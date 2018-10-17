@@ -41,6 +41,8 @@ from kicadStepUptools import make_unicode, make_string
 
 def makeFaceDXF():
     global copper_diffuse, silks_diffuse
+    doc=FreeCAD.ActiveDocument
+    docG=FreeCADGui.ActiveDocument
     Filter=""
     last_pcb_path=""
     pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
@@ -51,8 +53,6 @@ def makeFaceDXF():
         path, name = os.path.split(fname)
         filename=os.path.splitext(name)[0]
         #importDXF.open(os.path.join(dirname,filename))
-        doc=FreeCAD.ActiveDocument
-        docG=FreeCADGui.ActiveDocument
         if len(fname) > 0:
             #importDXF.open(fname)
             last_pcb_path=os.path.dirname(fname)
