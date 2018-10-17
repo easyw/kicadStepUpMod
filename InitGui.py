@@ -108,9 +108,9 @@ class kSU_MainPrefPage:
         prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui").GetString('prefix3d_1')+'/'
         print('KISYS3DMOD assigned to: ', prefs)
         prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
-        if prefs.GetContents() is not None:
-            for p in prefs.GetContents():
-                print (p)
+        #if prefs.GetContents() is not None:
+        #    for p in prefs.GetContents():
+        #        print (p)
         print(FreeCAD.getUserAppDataDir())
 ##
 class ksuWB ( Workbench ):
@@ -182,7 +182,8 @@ class ksuWB ( Workbench ):
                 # do something here if needed...
         Msg ("ksuWB.Activated("+ksu_wb_version+")\n")
         from PySide import QtGui
-        import time
+        import time, sys
+        import FreeCAD, FreeCADGui
         
         pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
         tnow = int(time.time())
@@ -205,6 +206,50 @@ class ksuWB ( Workbench ):
             reply = QtGui.QMessageBox.information(None,"Warning", msg)
         else:
             upd=pg.GetBool("checkUpdates")
+        prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+        if prefs.GetContents() is None:
+            def mk_str(input):
+                if (sys.version_info > (3, 0)):  #py3
+                    if isinstance(input, str):
+                        return input
+                    else:
+                        input =  input.encode('utf-8')
+                        return input
+                else:  #py2
+                    if type(input) == unicode:
+                        input =  input.encode('utf-8')
+                        return input
+                    else:
+                        return input
+            ##
+            FreeCAD.Console.PrintError('Creating first time ksu preferences')
+            #prefs.SetString('prefix3d_1',make_string(default_prefix3d))
+            prefs.SetInt('pcb_color',0)
+            prefs.SetString('drill_size',u'0.0')
+            prefs.SetBool('make_union',0)
+            prefs.SetBool('exp_step',0)
+            prefs.SetBool('turntable',0)
+            prefs.SetBool('generate_sketch',1)
+            prefs.SetBool('asm3_links',1)
+            prefs.SetBool('vrml_materials',1)
+            prefs.SetBool('mode_virtual',1)
+            prefs.SetInt('pcb_placement',0)
+            prefs.SetInt('step_exp_mode',0)
+            prefs.SetInt('3D_loading_mode',0)
+            prefs.SetInt('sketch_constraints',0)
+            prefs.SetString('blacklist',u'')
+            prefs.SetString('blacklist',u'')
+            FreeCAD.Console.PrintError('new \'preferences Page\' added to configure StepUp!!!\n')
+            msg="""
+            <font color=red>new \'preference Page\' added to configure StepUp!!!</font>
+            <br>
+            <br>old method using <b>ksu-config.ini</b>
+            <br>has been dropped.
+            """
+            QtGui.QApplication.restoreOverrideCursor()
+            reply = QtGui.QMessageBox.information(None,"Warning", msg)
+            # FreeCADGui.runCommand("Std_DlgPreferences") it cannot launched here until InitGui has run!!!
+        ##
         time_interval = pg.GetInt("updateDaysInterval")
         if time_interval <= 0:
             time_interval = 1
