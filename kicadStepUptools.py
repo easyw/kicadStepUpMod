@@ -3612,7 +3612,8 @@ def cfg_read_all():
     else:
         # Windows
         pt_win = True
-        default_prefix3d = os.path.join(os.environ["ProgramFiles"],u'\\KiCad\\share\\kicad\\modules\\packages3d')
+        #default_prefix3d = os.path.join(os.environ["ProgramFiles"],u'\\KiCad\\share\\kicad\\modules\\packages3d')
+        default_prefix3d = (os.environ["ProgramFiles"]+u'\\KiCad\\share\\kicad\\modules\\packages3d')
         default_prefix3d = re.sub("\\\\", "/", default_prefix3d) #default_prefix3d.replace('\\','/')
         #print (default_prefix3d)
     prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
