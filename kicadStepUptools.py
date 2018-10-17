@@ -5420,7 +5420,7 @@ def Load_models(pcbThickness,modules):
                     #else:
                     #    models3D_prefix2_U = models3D_prefix2
                     models3D_prefix2_U = models3D_prefix2
-                    utf_path2=os.path.join(models3D_prefix2_U,step_module) # utf-8 chars
+                    utf_path2=os.path.join(make_unicode(models3D_prefix2_U),make_unicode(step_module)) # utf-8 chars
                     #print(utf_path)
                     #print(utf_path2)
                     #print(step_module)
@@ -15238,7 +15238,8 @@ def PushMoved():
                         data=u''.join(content)
                         tml= time.localtime()
                         now=str(tml.tm_year)+'-'+str(tml.tm_mon)+'-'+str(tml.tm_mday)+'-'+str(tml.tm_hour)+'.'+str(tml.tm_min)+'.'+str(tml.tm_sec)
-                        foname=os.path.join(path, name+'-bkp-'+now+ext+'-bak')
+                        #foname=os.path.join(path, name+'-bkp-'+now+ext+'-bak')
+                        foname=os.path.join(path, name+u'-bkp-'+make_unicode(now)+ext+u'-bak')
                         oft=None
                         if aux_orig == 1:
                             oft=getAuxOrigin(data)
@@ -18183,7 +18184,8 @@ def export_pcb(fname=None):
         data=u''.join(content)
         tml= time.localtime()
         now=str(tml.tm_year)+'-'+str(tml.tm_mon)+'-'+str(tml.tm_mday)+'-'+str(tml.tm_hour)+'.'+str(tml.tm_min)+'.'+str(tml.tm_sec)
-        foname=os.path.join(path, name+'-bkp-'+now+ext+'-bak')
+        #foname=os.path.join(path, name+'-bkp-'+now+ext+'-bak')
+        foname=os.path.join(path, name+u'-bkp-'+make_unicode(now)+ext+u'-bak')
         pcb_push=True
         testing=False
         if testing is not True:
