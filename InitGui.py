@@ -182,7 +182,9 @@ class ksuWB ( Workbench ):
                 # do something here if needed...
         Msg ("ksuWB.Activated("+ksu_wb_version+")\n")
         from PySide import QtGui
-        import time, sys
+        import time, sys, os, re
+        from os.path import expanduser
+        import codecs #utf-8 config parser
         import FreeCAD, FreeCADGui
         
         pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
@@ -221,8 +223,21 @@ class ksuWB ( Workbench ):
                         return input
                     else:
                         return input
+            def mk_uni(input):
+                if (sys.version_info > (3, 0)):  #py3
+                    if isinstance(input, str):
+                        return input
+                    else:
+                        input =  input.decode('utf-8')
+                        return input
+                else: #py2
+                    if type(input) != unicode:
+                        input =  input.decode('utf-8')
+                        return input
+                    else:
+                        return input
             ##
-            FreeCAD.Console.PrintError('Creating first time ksu preferences')
+            FreeCAD.Console.PrintError('Creating first time ksu preferences\n')
             #prefs.SetString('prefix3d_1',make_string(default_prefix3d))
             prefs.SetInt('pcb_color',0)
             prefs.SetString('drill_size',u'0.0')
@@ -239,6 +254,77 @@ class ksuWB ( Workbench ):
             prefs.SetInt('sketch_constraints',0)
             prefs.SetString('blacklist',u'')
             prefs.SetString('blacklist',u'')
+            home = expanduser("~")
+            fname_ksu=home+os.sep+'ksu-config.ini'
+            ksu_config_fname=fname_ksu
+            if os.path.isfile(ksu_config_fname): # and len (models3D_prefix) == 0:
+                FreeCAD.Console.PrintMessage("ksu file \'ksu-config.ini\' exists; getting old config values\n")
+                ini_vars=[]
+                for i in range (0,20):
+                    ini_vars.append('-')
+                ini_content=[];cfg_content=[]
+                #Kicad_Board_elaborated = open(filename, "r").read()[0:]
+                #txtFile = __builtin__.open(ksu_config_fname,"r")
+                #with io.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
+                with codecs.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
+                    cfg_content = cfg_file.readlines() #
+                    #ini_content = cfg_content
+                    cfg_file.close()
+                for line in cfg_content:
+                    if re.match(r'^\s*$', line): #empty lines
+                        FreeCAD.Console.PrintMessage('line empty\n')
+                    else:
+                        #ini_content.append(make_unicode(line))
+                        #print(line)
+                        ini_content.append(line)
+                def find_nm(n):
+                    n=n.lower()
+                    return {
+                        'prefix3d_1'    : 1,
+                        'prefix3d_2'    : 2,
+                        'pcb_color'     : 3,
+                        'bklist'        : 4,
+                        'bbox'          : 5,
+                        'placement'     : 6,
+                        'virt'          : 7,
+                        'exportfusing'  : 8,
+                        'min_drill_size': 9,
+                        'last_pcb_path' :10,
+                        'last_fp_path'  :11,
+                        'export_to_step':12,
+                        'mat'           :13,
+                        'spin'          :14,
+                        'compound'      :15,
+                        'dkmode'        :16,
+                        'font_size'     :17,
+                        'exporting_mode':18,
+                        'importing_mode':19,
+                    }.get(n, 0)    # 0 is default if x not found
+                for line in ini_content:
+                    line = line.strip() #removes all whitespace at the start and end, including spaces, tabs, newlines and carriage returns
+                    if len(line)>0:
+                        if line[0] != ';' and line[0] != '[':
+                            if '=' in line:
+                                data = line.split('=', 1)
+                                #sayw(len(data))
+                                if len(data) == 1:
+                                    name = mk_uni(data[0].strip())
+                                    key_value = u"" #None
+                                else:
+                                    name = mk_uni(data[0].strip())
+                                    key_value = mk_uni(data[1].strip())
+                                # sayerr(len(ini_vars))
+                                # sayw(str(find_name(name))+' -> '+name+' -> '+key_value)
+                                ini_vars[find_nm(name)]= key_value
+                #print(ini_vars)
+                models3D_prefix = ini_vars[1]
+                models3D_prefix2=ini_vars[2]
+                FreeCAD.Console.PrintMessage('3D models prefix='+mk_str(models3D_prefix)+'\n')
+                FreeCAD.Console.PrintMessage('3D models prefix2='+mk_str(models3D_prefix2)+'\n')
+                prefs.SetString('prefix3d_1',mk_str(models3D_prefix.replace('\\','/').rstrip('/')))
+                prefs.SetString('prefix3d_2',mk_str(models3D_prefix2.replace('\\','/').rstrip('/')))
+                #stop
+            ##
             FreeCAD.Console.PrintError('new \'preferences Page\' added to configure StepUp!!!\n')
             msg="""
             <font color=red>new \'preference Page\' added to configure StepUp!!!</font>

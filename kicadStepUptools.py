@@ -3617,29 +3617,13 @@ def cfg_read_all():
         default_prefix3d = re.sub("\\\\", "/", default_prefix3d) #default_prefix3d.replace('\\','/')
         #print (default_prefix3d)
     prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
-    # if prefs.GetContents() is None:
-    #     print('Creating first time ksu preferences')
-    #     prefs.SetString('prefix3d_1',make_string(default_prefix3d))
-    #     prefs.SetInt('pcb_color',0)
-    #     prefs.SetString('drill_size',u'0.0')
-    #     prefs.SetBool('make_union',0)
-    #     prefs.SetBool('exp_step',0)
-    #     prefs.SetBool('turntable',0)
-    #     prefs.SetBool('generate_sketch',1)
-    #     prefs.SetBool('asm3_links',1)
-    #     prefs.SetBool('vrml_materials',1)
-    #     prefs.SetBool('mode_virtual',1)
-    #     prefs.SetInt('pcb_placement',0)
-    #     prefs.SetInt('step_exp_mode',0)
-    #     prefs.SetInt('3D_loading_mode',0)
-    #     prefs.SetInt('sketch_constraints',0)
-    #     prefs.SetString('blacklist',u'')
-    #     prefs.SetString('blacklist',u'')
-        #stop #TBD
+    #if prefs.GetContents() is None:
+    #    print('Creating first time ksu preferences')
+    #    stop #TBD
     #else:
     #    for i,p in enumerate (prefs.GetContents()):
     #        print (p)
-
+            
     models3D_prefix = prefs.GetString('prefix3d_1')
     if len (models3D_prefix) == 0:
         prefs.SetString('prefix3d_1',default_prefix3d)
@@ -3662,7 +3646,10 @@ def cfg_read_all():
     col.append(pcb_color[0]);col.append(pcb_color[1]);col.append(pcb_color[2])
     colr=col[0];colg=col[1];colb=col[2]
     #print(colr,colg,colb)
-    min_drill_size = float(prefs.GetString('drill_size'))
+    try:
+        min_drill_size = float(prefs.GetString('drill_size'))
+    except:
+        min_drill_size = 0.0
     #print(min_drill_size)
     if prefs.GetBool('vrml_materials'):
         enable_materials=1
