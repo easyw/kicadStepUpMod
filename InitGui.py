@@ -209,7 +209,8 @@ class ksuWB ( Workbench ):
         else:
             upd=pg.GetBool("checkUpdates")
         prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
-        if prefs.GetContents() is None:
+        if prefs.IsEmpty():
+        #if prefs.GetContents() is None:
             def mk_str(input):
                 if (sys.version_info > (3, 0)):  #py3
                     if isinstance(input, str):
