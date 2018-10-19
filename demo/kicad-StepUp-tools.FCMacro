@@ -448,7 +448,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.1.0.8"  
+___ver___ = "8.1.0.9"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -656,7 +656,11 @@ else:
     basestring = basestring
     py2=True
 
-
+PY3 = sys.version_info[0] == 3  # maui @realthunder fcad_pcb py3
+if PY3:
+    string_types = str,
+else:
+    string_types = basestring,
 
 '''
 S-Expression parser written in Python
@@ -1195,7 +1199,7 @@ class SexpBool(Sexp):
             self._value = _yes_values[_no_values.index(self._value)]
 
     def __set__(self,instance,value):
-        if isinstance(value,basestring):
+        if isinstance(value,string_types): # if isinstance(value,basestring): # maui @realthunder fcad_pcb py3
             if value not in _yes_values and \
                 value not in _no_values:
                 raise ValueError('invalid boolean value')
