@@ -4681,7 +4681,8 @@ def Display_info(blacklisted_models):
         msg+="<br>found  <b><font color=red>multi-part</font></b></b> object(s)"
     if addVirtual==0:
         msg+="<br><b>Virtual models skipped</b>"
-    msg+="<br>kicad StepUp config file in:<br><b>"+ksu_config_fname+"</b><br>location."
+    #msg+="<br>kicad StepUp config file in:<br><b>"+ksu_config_fname+"</b><br>location."
+    msg+="<br>StepUp configuration options are located in the preferences system of FreeCAD."
     if (grid_orig==1):
         say("Board Placed @ "+"{0:.3f}".format(board_base_point_x)+";"+"{0:.3f}".format(board_base_point_y)+";0.0")
     else:
@@ -5103,7 +5104,8 @@ def Export2MCAD(blacklisted_model_elements):
         msg+="<br>found  <b><font color=red>multi-part</font></b></b> object(s)"
     if addVirtual==0:
         msg+="<br><b>Virtual models skipped</b>"
-    msg+="<br>kicad StepUp config file in:<br><b>"+ksu_config_fname+"</b><br>location."
+    #msg+="<br>kicad StepUp config file in:<br><b>"+ksu_config_fname+"</b><br>location."
+    msg+="<br>StepUp configuration options are located in the preferences system of FreeCAD."
     if (grid_orig==1):
         say("Board Placed @ "+"{0:.3f}".format(board_base_point_x)+";"+"{0:.3f}".format(board_base_point_y)+";0.0")
     else:
@@ -6114,6 +6116,7 @@ def Load_models(pcbThickness,modules):
             wmsg="""<font color=red>"""
             wmsg+="too many missing modules <b>["
             wmsg+=str(len (missings))+"]<br></b></font><font color=blue><b>Have configured your KISYS3DMOD path<br>or 3d model prefix path?</font></b>"
+            wmsg+="<br>StepUp configuration options are located in the preferences system of FreeCAD."
             reply = QtGui.QMessageBox.information(None,"Error ...",wmsg)
     #if blacklisted_model_elements != '':
     #    FreeCAD.Console.PrintMessage("black-listed module "+ '\n'.join(map(str, blacklisted_models)))

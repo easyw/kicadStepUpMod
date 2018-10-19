@@ -331,8 +331,8 @@ class ksuWB ( Workbench ):
             <font color=red>new \'preference Page\' added to configure StepUp!!!</font>
             <br>
             <br>old method using <b>ksu-config.ini</b>
-            <br>has been DROPPED.
-            <br>Please have a look at the <b>\'KiCad StepUp tools cheat sheet\'</b> pdf
+            <br><font color=red>has been DROPPED</font>.
+            <br>Please have a look at the <b><a href='https://github.com/easyw/kicadStepUpMod/blob/master/demo/kicadStepUp-cheat-sheet.pdf' target='_blank'>\'KiCad StepUp tools cheat sheet\'</a></b> pdf
             """
             QtGui.QApplication.restoreOverrideCursor()
             reply = QtGui.QMessageBox.information(None,"Warning", msg)

@@ -2155,6 +2155,7 @@ class ksuToolsEditPrefs:
  
     def Activated(self):
         # do something here...
+        #import kicadStepUptools
         FreeCADGui.runCommand("Std_DlgPreferences")
         
 FreeCADGui.addCommand('ksuToolsEditPrefs',ksuToolsEditPrefs())
