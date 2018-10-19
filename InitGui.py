@@ -10,8 +10,13 @@
 #*  Kicad STEPUP (TM) is a TradeMark and cannot be freely useable           *
 #*                                                                          *
 
+<<<<<<< HEAD
 ksu_wb_version='v 7.8.2'
 global myurlKWB
+=======
+ksu_wb_version='v 7.8.1'
+global myurlKWB, ksuWBpath
+>>>>>>> dev
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
 mycommitsKWB=146 #v7.8.2
@@ -32,19 +37,90 @@ from kicadStepUpCMD import *
 ksuWBpath = os.path.dirname(ksu_locator.__file__)
 #sys.path.append(ksuWB + '/Gui')
 ksuWB_icons_path =  os.path.join( ksuWBpath, 'Resources', 'icons')
+ksuWB_ui_path = os.path.join( ksuWBpath, 'Resources','ui' )
 
 global main_ksu_Icon
 main_ksu_Icon = os.path.join( ksuWB_icons_path , 'kicad-StepUp-tools-WB.svg')
 
+from PySide import QtGui
+
+import hlp
+help_t = hlp.help_txt
 
 #try:
 #    from FreeCADGui import Workbench
 #except ImportError as e:
 #    FreeCAD.Console.PrintWarning("error")
+class CalendarPage:
+    def __init__(self):
+        from PySide import QtGui
+        self.form = QtGui.QCalendarWidget()
+        self.form.setWindowTitle("Calendar")
+    def saveSettings(self):
+        print ("saveSettings")
+    def loadSettings(self):
+        print ("loadSettings")
 
+class kSU_MainPrefPage:
 
+    def selectDirectory(self):
+        from PySide import QtGui, QtCore
+        selected_directory = QtGui.QFileDialog.getExistingDirectory()
+        # Use the selected directory...
+        print ('selected_directory:', selected_directory)
+
+    def __init__(self, parent=None):
+        from PySide import QtGui, QtCore
+        import os, hlp
+        global ksuWBpath
+        print ("Created kSU Auxiliar Pref page")
+        help_t = hlp.help_txt        
+        
+        self.form = QtGui.QWidget()
+        self.form.setWindowTitle("kSU \'Help Tips\'")
+        self.form.verticalLayoutWidget = QtGui.QWidget(self.form)
+        self.form.verticalLayoutWidget.setGeometry(QtCore.QRect(0, 0, 530, 650)) #top corner, width, height
+        self.form.verticalLayoutWidget.setObjectName("verticalLayoutWidget")
+        self.form.verticalLayout = QtGui.QVBoxLayout(self.form.verticalLayoutWidget)
+        self.form.verticalLayout.setContentsMargins(0, 0, 0, 0)
+        self.form.verticalLayout.setObjectName("verticalLayout")
+        #self.form.label = QtGui.QLabel(self.form.verticalLayoutWidget)
+        #self.form.label.setObjectName("label")
+        #self.form.label.setText("Hello world!")
+        #self.form.verticalLayout.addWidget(self.form.label)
+        self.form.textEdit = QtGui.QTextBrowser(self.form.verticalLayoutWidget)
+        self.form.textEdit.setGeometry(QtCore.QRect(00, 10, 530, 640)) #top corner, width, height
+        self.form.textEdit.setOpenExternalLinks(True)
+        self.form.textEdit.setObjectName("textEdit")
+        self.form.textEdit.setText(help_t)        
+# Button UI
+        add_button=False
+        if add_button:
+            self.form.btn = QtGui.QPushButton('Create Folder', self.form.verticalLayoutWidget)
+            self.form.btn.setToolTip('This creates the folders.')
+            self.form.btn.resize(self.form.btn.sizeHint())
+            self.form.btn.move(5, 60)       
+            self.form.btn.clicked.connect(self.selectDirectory)   
+            self.form.verticalLayout.addWidget(self.form.btn)        
+        
+    def saveSettings(self):
+        print ("saveSettings Helper")
+        import SaveSettings
+        SaveSettings.update_ksuGui()
+        
+    def loadSettings(self):
+        print ("loadSettings Helper")
+        prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui").GetString('prefix3d_1')+'/'
+        print('KISYS3DMOD assigned to: ', prefs)
+        prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+        #if prefs.GetContents() is not None:
+        #    for p in prefs.GetContents():
+        #        print (p)
+        print(FreeCAD.getUserAppDataDir())
+##
 class ksuWB ( Workbench ):
-    global main_ksu_Icon, ksu_wb_version, myurlKWB, mycommitsKWB, ksuWB_icons_path
+    global main_ksu_Icon, ksu_wb_version, myurlKWB, mycommitsKWB
+    global ksuWB_ui_path, kSU_MainPrefPage, ksuWB_icons_path
     
     "kicad StepUp WB object"
     Icon = main_ksu_Icon
@@ -57,7 +133,8 @@ class ksuWB ( Workbench ):
     
     def Initialize(self):
         import kicadStepUpCMD, sys
-        pref_page = False #True #
+        global pref_page
+        pref_page = True # False #True #
 
         submenu = ['demo.kicad_pcb','d-pak.kicad_mod', 'demo-sketch.FCStd', 'demo.step',\
                    'footprint-template.FCStd', 'footprint-Edge-template.FCStd', 'footprint-template-roundrect-polylines.FCStd',\
@@ -68,11 +145,11 @@ class ksuWB ( Workbench ):
         dirs = self.ListDemos()
 
         #self.appendToolbar("ksu Tools", ["ksuTools"])
-        self.appendToolbar("ksu Tools", ["ksuTools","ksuToolsOpenBoard","ksuToolsLoadFootprint",\
-                           "ksuToolsExportModel","ksuToolsPushPCB","ksuToolsCollisions", \
-                           "ksuToolsImport3DStep","ksuToolsExport3DStep","ksuToolsMakeUnion",\
+        self.appendToolbar("ksu Tools", ["ksuToolsEditPrefs","ksuTools","ksuToolsOpenBoard","ksuToolsLoadFootprint",\
+                           "ksuToolsExportModel","ksuToolsPushPCB","ksuToolsFootprintGen","Separator","ksuToolsAddTracks","ksuToolsAddSilks","Separator",\
+                           "ksuToolsCollisions","ksuToolsImport3DStep","ksuToolsExport3DStep","ksuToolsMakeUnion",\
                            "ksuToolsMakeCompound", "ksuToolsSimpleCopy", "ksuToolsDeepCopy", "ksuToolsCheckSolid", "ksuTools3D2D", "ksuTools2D2Sketch", "ksuTools2DtoFace",\
-                           "ksuToolsSimplifySketck", "ksuToolsConstrainator", "ksuToolsDiscretize","ksuToolsFootprintGen"])
+                           "ksuToolsMergeSketches","ksuToolsSimplifySketck", "ksuToolsConstrainator", "ksuToolsDiscretize"])
                            #, "ksuToolsPushMoved","ksuToolsSync3DModels"])
         ksuTB = ["ksuToolsOpenBoard","ksuToolsPushPCB","ksuToolsPushMoved","ksuToolsSync3DModels","ksuAsm2Part",\
                  "Separator","ksuToolsGeneratePositions","ksuToolsComparePositions",\
@@ -85,9 +162,10 @@ class ksuWB ( Workbench ):
             self.appendToolbar("ksu Design Tools", ksuDTB)
         self.appendToolbar("ksu Helpers", ["ksuToolsToggleTreeView", "ksuToolsTransparencyToggle", "ksuToolsHighlightToggle",\
                             "ksuToolsVisibilityToggle", "ksuToolsStepImportModeSTD", "ksuToolsStepImportModeComp",\
-                            "ksuToolsCopyPlacement", "ksuToolsResetPlacement", "ksuToolsAddToTree", "ksuToolsRemoveFromTree", "ksuToolsTurnTable"])
+                            "ksuToolsCopyPlacement", "ksuToolsResetPlacement", "ksuToolsAddToTree", "ksuToolsRemoveFromTree", "ksuToolsRemoveSubTree"])
+        self.appendToolbar("ksu Show", ["ksuToolsTurnTable", "ksuToolsExplode"])
         #self.appendMenu("ksu Tools", ["ksuTools","ksuToolsEdit"])
-        self.appendMenu("ksu Tools", ["ksuTools"])
+        self.appendMenu("ksu Tools", ["ksuTools","ksuToolsEditPrefs"])
         self.appendMenu("ksu PushPull", ["ksuToolsOpenBoard","ksuToolsPushPCB","ksuToolsPushMoved","ksuToolsSync3DModels",\
                         "Separator","ksuToolsGeneratePositions","ksuToolsComparePositions",\
                         "Separator","ksuRemoveTimeStamp","ksuRemoveSuffix",\
@@ -97,9 +175,11 @@ class ksuWB ( Workbench ):
         #FreeCADGui.addPreferencePage( a2plib.pathOfModule() + '/GuiA2p/ui/a2p_prefs.ui','A2plus' )
         if pref_page:
             FreeCADGui.addPreferencePage(
-                ksuWB_icons_path +
-                '/ksu_prefs.ui','kStepUp'
+                ksuWB_ui_path + '/ksu_prefs.ui',
+                'kicadStepUpGui'
                 )
+            FreeCADGui.addPreferencePage(kSU_MainPrefPage,"kicadStepUpGui")
+
         FreeCADGui.addIconPath(ksuWB_icons_path)
         Log ("Loading ksuModule... done\n")
  
@@ -107,7 +187,10 @@ class ksuWB ( Workbench ):
                 # do something here if needed...
         Msg ("ksuWB.Activated("+ksu_wb_version+")\n")
         from PySide import QtGui
-        import time
+        import time, sys, os, re
+        from os.path import expanduser
+        import codecs #utf-8 config parser
+        import FreeCAD, FreeCADGui
         
         pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
         tnow = int(time.time())
@@ -117,6 +200,7 @@ class ksuWB ( Workbench ):
             upd=True
             pg.SetInt("updateDaysInterval",1)
             pg.SetInt("lastCheck",tnow-2*oneday)
+            pg.SetInt("dockingMode",0)
             interval=True
             FreeCAD.Console.PrintError('new \'check for updates\' feature added!!!\n')
             msg="""
@@ -129,6 +213,136 @@ class ksuWB ( Workbench ):
             reply = QtGui.QMessageBox.information(None,"Warning", msg)
         else:
             upd=pg.GetBool("checkUpdates")
+        prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+        if prefs.IsEmpty():
+        #if prefs.GetContents() is None:
+            def mk_str(input):
+                if (sys.version_info > (3, 0)):  #py3
+                    if isinstance(input, str):
+                        return input
+                    else:
+                        input =  input.encode('utf-8')
+                        return input
+                else:  #py2
+                    if type(input) == unicode:
+                        input =  input.encode('utf-8')
+                        return input
+                    else:
+                        return input
+            def mk_uni(input):
+                if (sys.version_info > (3, 0)):  #py3
+                    if isinstance(input, str):
+                        return input
+                    else:
+                        input =  input.decode('utf-8')
+                        return input
+                else: #py2
+                    if type(input) != unicode:
+                        input =  input.decode('utf-8')
+                        return input
+                    else:
+                        return input
+            ##
+            FreeCAD.Console.PrintError('Creating first time ksu preferences\n')
+            #prefs.SetString('prefix3d_1',make_string(default_prefix3d))
+            prefs.SetInt('pcb_color',0)
+            prefs.SetString('drill_size',u'0.0')
+            prefs.SetBool('make_union',0)
+            prefs.SetBool('exp_step',0)
+            prefs.SetBool('turntable',0)
+            prefs.SetBool('generate_sketch',1)
+            prefs.SetBool('asm3_links',1)
+            prefs.SetBool('vrml_materials',1)
+            prefs.SetBool('mode_virtual',1)
+            prefs.SetInt('pcb_placement',0)
+            prefs.SetInt('step_exp_mode',0)
+            prefs.SetInt('3D_loading_mode',0)
+            prefs.SetInt('sketch_constraints',0)
+            prefs.SetString('blacklist',u'')
+            prefs.SetString('blacklist',u'')
+            home = expanduser("~")
+            fname_ksu=home+os.sep+'ksu-config.ini'
+            ksu_config_fname=fname_ksu
+            if os.path.isfile(ksu_config_fname): # and len (models3D_prefix) == 0:
+                FreeCAD.Console.PrintMessage("ksu file \'ksu-config.ini\' exists; getting old config values\n")
+                ini_vars=[]
+                for i in range (0,20):
+                    ini_vars.append('-')
+                ini_content=[];cfg_content=[]
+                #Kicad_Board_elaborated = open(filename, "r").read()[0:]
+                #txtFile = __builtin__.open(ksu_config_fname,"r")
+                #with io.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
+                with codecs.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
+                    cfg_content = cfg_file.readlines() #
+                    #ini_content = cfg_content
+                    cfg_file.close()
+                for line in cfg_content:
+                    if re.match(r'^\s*$', line): #empty lines
+                        FreeCAD.Console.PrintMessage('line empty\n')
+                    else:
+                        #ini_content.append(make_unicode(line))
+                        #print(line)
+                        ini_content.append(line)
+                def find_nm(n):
+                    n=n.lower()
+                    return {
+                        'prefix3d_1'    : 1,
+                        'prefix3d_2'    : 2,
+                        'pcb_color'     : 3,
+                        'bklist'        : 4,
+                        'bbox'          : 5,
+                        'placement'     : 6,
+                        'virt'          : 7,
+                        'exportfusing'  : 8,
+                        'min_drill_size': 9,
+                        'last_pcb_path' :10,
+                        'last_fp_path'  :11,
+                        'export_to_step':12,
+                        'mat'           :13,
+                        'spin'          :14,
+                        'compound'      :15,
+                        'dkmode'        :16,
+                        'font_size'     :17,
+                        'exporting_mode':18,
+                        'importing_mode':19,
+                    }.get(n, 0)    # 0 is default if x not found
+                for line in ini_content:
+                    line = line.strip() #removes all whitespace at the start and end, including spaces, tabs, newlines and carriage returns
+                    if len(line)>0:
+                        if line[0] != ';' and line[0] != '[':
+                            if '=' in line:
+                                data = line.split('=', 1)
+                                #sayw(len(data))
+                                if len(data) == 1:
+                                    name = mk_uni(data[0].strip())
+                                    key_value = u"" #None
+                                else:
+                                    name = mk_uni(data[0].strip())
+                                    key_value = mk_uni(data[1].strip())
+                                # sayerr(len(ini_vars))
+                                # sayw(str(find_name(name))+' -> '+name+' -> '+key_value)
+                                ini_vars[find_nm(name)]= key_value
+                #print(ini_vars)
+                models3D_prefix = ini_vars[1]
+                models3D_prefix2=ini_vars[2]
+                FreeCAD.Console.PrintMessage('3D models prefix='+mk_str(models3D_prefix)+'\n')
+                FreeCAD.Console.PrintMessage('3D models prefix2='+mk_str(models3D_prefix2)+'\n')
+                prefs.SetString('prefix3d_1',mk_str(models3D_prefix.replace('\\','/').rstrip('/')))
+                prefs.SetString('prefix3d_2',mk_str(models3D_prefix2.replace('\\','/').rstrip('/')))
+                #stop
+            ##
+            FreeCAD.Console.PrintError('new \'preferences Page\' added to configure StepUp!!!\n')
+            msg="""
+            <font color=red>new \'preference Page\' added to configure StepUp!!!</font>
+            <br>
+            <br>old method using <b>ksu-config.ini</b>
+            <br><font color=red>has been DROPPED</font>.
+            <br>Please have a look at the <b><a href='https://github.com/easyw/kicadStepUpMod/blob/master/demo/kicadStepUp-cheat-sheet.pdf' target='_blank'>\'KiCad StepUp tools cheat sheet\'</a></b> pdf
+            """
+            QtGui.QApplication.restoreOverrideCursor()
+            reply = QtGui.QMessageBox.information(None,"Warning", msg)
+            # FreeCADGui.runCommand("Std_DlgPreferences") it cannot launched here until InitGui has run!!!
+        ##
         time_interval = pg.GetInt("updateDaysInterval")
         if time_interval <= 0:
             time_interval = 1
@@ -248,4 +462,7 @@ dirs = ksuWB.ListDemos()
 for curFile in dirs:
     FreeCADGui.addCommand(curFile, ksuExcDemo(curFile))
 
+#FreeCADGui.addPreferencePage(kSU_MainPrefPage,"kicadStepUpGui")
+#FreeCADGui.addPreferencePage(CalendarPage, "kicadStepUpGui")
+        
 FreeCADGui.addWorkbench(ksuWB)

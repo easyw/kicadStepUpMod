@@ -8,12 +8,27 @@
 
 
 import FreeCAD, FreeCADGui,sys, os 
+from FreeCAD import Base
+import Part
+
 import PySide 
-from PySide import QtGui
+from PySide import QtGui, QtCore
 #from PySide.QtGui import QTreeWidgetItemIterator
+import ksu_locator
 
 from os.path import expanduser
 import difflib, re, time, datetime
+
+generateSketch = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui").GetBool('generate_sketch')
+
+
+generate_sketch=True
+
+def PLine(prm1,prm2):
+    if hasattr(Part,"LineSegment"):
+        return Part.LineSegment(prm1, prm2)
+    else:
+        return Part.Line(prm1, prm2)
 
 def get_Selected ():
     InListRec=[]
@@ -137,7 +152,43 @@ def roundMatrix(mtx):
         #mtxR.append(rv)
         #mtxR.append((str(rv).replace('-0.0','0.0')))
     return mtxR
-
+###
+def roundEdge(edg):    
+    if 'Line' in str(edg):
+        #print (str(edg))
+        ps = edg.StartPoint; psx=round(ps.x,3);psy=round(ps.y,3);psz=round(ps.z,3)
+        pe = edg.EndPoint; pex=round(pe.x,3);pey=round(pe.y,3);pez=round(pe.z,3)
+        return PLine(Base.Vector(psx,psy,psz), Base.Vector(pex,pey,pez))
+    elif 'ArcOfCircle' in str(edg):
+        #print (str(edg))
+        #v=FreeCAD.Vector
+        c=edg.Center;cx=round(c[0],3);cy=round(c[1],3);cz=round(c[0],3);
+        r=round(edg.Radius,3);axis=edg.Axis
+        sa=round(edg.FirstParameter,4);ea=round(edg.LastParameter,4)
+        return Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx,cy,cz),axis,r),sa,ea)        
+    elif 'Circle' in str(edg):
+        #print (str(edg))
+        c=edg.Center;cx=round(c[0],3);cy=round(c[1],3);cz=round(c[0],3);
+        r=round(edg.Radius,3);axis=edg.Axis
+        return Part.Circle(FreeCAD.Vector(cx,cy,cz),axis,r)
+##
+def roundVal(v,n_dec=None):
+    #round to n_dec after '.'
+    if n_dec is None:
+        n_dec = 3
+    v=float(v)
+    rv = str(round(v,n_dec+1))
+    l=len(rv)
+    if '.' in rv:
+        if (len(rv[rv.find('.'):]) > n_dec+1):
+            #print (rv);print (rv.find('.'))
+            rv = rv[:l-1]
+            #print (rv)
+    rv = rv.replace('-0.0','0.0')
+    #rv = truncate(v, 3)
+    #rv = trunc(v,3)
+    return(float(rv))
+###
 def rmvSuffix(doc=None):
     if doc is None:
         doc = FreeCAD.ActiveDocument
@@ -170,10 +221,10 @@ def rmvSuffix(doc=None):
 def expPos(doc=None):
     if doc is None:
         doc = FreeCAD.ActiveDocument
-    rmvSuffix(doc)
+    # rmvSuffix(doc)
     full_content=[]
     positions_content=[]
-    sketch_content=[]
+    sketch_content=[];sketch_content_header=[]
     #if doc is not None:
     if len(doc.FileName) == 0:
         docFn = 'File Not Saved'
@@ -224,13 +275,16 @@ def expPos(doc=None):
                 print (line)
             if o.Label == 'PCB_Sketch':
                 line='Sketch geometry -------------------'
-                sketch_content.append(line+'\n')
+                sketch_content_header.append(line+'\n')
                 print('Sketch geometry -------------------')
                 if hasattr(o,'Geometry'):
                     for e in o.Geometry:
-                        line=str(e)
-                        sketch_content.append(line+'\n')
-                        print (e) 
+                        if not e.Construction:
+                            line=str(roundEdge(e))
+                            sketch_content.append(line+'\n')
+                            #print (e) 
+                sketch_content.sort()
+                sketch_content[:0] = sketch_content_header
                 line='-----------------------------------'
                 sketch_content.append(line+'\n')
                 print(line)
@@ -287,10 +341,10 @@ def expPos(doc=None):
 def cmpPos(doc=None):
     if doc is None:
         doc = FreeCAD.ActiveDocument
-    rmvSuffix(doc)
+    # rmvSuffix(doc)
     full_content=[]
     positions_content=[]
-    sketch_content=[]
+    sketch_content=[];sketch_content_header=[]
     #if doc is not None:
     if len(doc.FileName) == 0:
         docFn = 'File Not Saved'
@@ -325,13 +379,19 @@ def cmpPos(doc=None):
                 #print (line)    
         if o.Label == 'PCB_Sketch':
             line='Sketch geometry -------------------'
-            sketch_content.append(line+'\n')
+            sketch_content_header.append(line+'\n')
             #print('Sketch geometry -------------------')
             if hasattr(o,'Geometry'):
-                for e in o.Geometry:
-                    line=str(e)
-                    sketch_content.append(line+'\n')
-                    #print (e) 
+                    for e in o.Geometry:
+                        if not e.Construction:
+                            line=str(roundEdge(e))
+                            sketch_content.append(line+'\n')
+                            #print (e) 
+            sketch_content.sort()
+            sketch_content[:0] = sketch_content_header
+            #sketch_content_header.extend(sketch_content)
+            #sketch_content=[]
+            #sketch_content=sketch_content_header
             line='-----------------------------------'
             sketch_content.append(line+'\n')
             #print(line)
@@ -388,6 +448,8 @@ def cmpPos(doc=None):
         diff = difflib.unified_diff(a_content,b_content)
         diff_content=[]
         diff_list=[]
+        sk_add=[]
+        sk_sub=[]
         header="***** Unified diff ************"
         diff_content.append(header+os.linesep)
         #print(header)
@@ -402,6 +464,28 @@ def cmpPos(doc=None):
                     #print(i,'\t\t'+line)
                     #print('Ln '+str(i)+(8-(len(str(i))))*' '),(line),
                     diff_content.append('Ln '+str(i)+(8-len(str(i)))*' '+line)
+                    if line.startswith('-<Line'):
+                        points=line.replace('-<Line segment (','').replace(') >','')
+                        p1 = points[:points.find(')')].split(',')
+                        p2 = points[points.rfind('(')+1:-1].split(',')
+                        sk_sub.append(PLine(Base.Vector(round(float(p1[0]),3),round(float(p1[1]),3),round(float(p1[2]),3)), Base.Vector(float(p2[0]),float(p2[1]),float(p2[2]))))
+                    elif line.startswith('-ArcOfCircle'):
+                        data=line.replace('-ArcOfCircle (Radius : ','').replace('))\n','')
+                        data=data.split(':')
+                        radius = data[0].split(',')[0]
+                        pos = data[1][data[1].find('(')+1:data[1].find(')')].split(',')
+                        dir = data[2][data[2].find('(')+1:data[2].rfind(')')].split(',')
+                        par = data[3][data[3].find('(')+1:].split(',')
+                        #print (radius,pos,dir,par);stop
+                        sk_sub.append(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(round(float(pos[0]),3),round(float(pos[1]),3),round(float(pos[2]),3)),FreeCAD.Vector(float(dir[0]),float(dir[1]),float(dir[2])),round(float(radius),3)),round(float(par[0]),5),round(float(par[1]),5)))
+                    elif line.startswith('-Circle'):
+                        data=line.replace('-Circle (Radius : ','').replace('))\n','')
+                        data=data.split(':')
+                        radius = data[0].split(',')[0]
+                        pos = data[1][data[1].find('(')+1:data[1].find(')')].split(',')
+                        dir = data[2][data[2].find('(')+1:].split(',')
+                        print (radius,pos,dir)
+                        sk_sub.append(Part.Circle(FreeCAD.Vector(round(float(pos[0]),3),round(float(pos[1]),3),round(float(pos[2]),3)),FreeCAD.Vector(float(dir[0]),float(dir[1]),float(dir[2])),round(float(radius),3)))
             elif line.startswith("+"):
                 if not line.startswith("+++") and not line.startswith("+title") \
                         and not line.startswith("+FileN") and not line.startswith("+date "):
@@ -409,6 +493,29 @@ def cmpPos(doc=None):
                     #print('Ln '+str(i)+(8-(len(str(i))))*' '),(line),
                     diff_content.append('Ln '+str(i)+(8-len(str(i)))*' '+line)
                     diff_list.append(line[1:])
+                    if line.startswith('+<Line'):
+                        points=line.replace('+<Line segment (','').replace(') >','')
+                        p1 = points[:points.find(')')].split(',')
+                        p2 = points[points.rfind('(')+1:-1].split(',')
+                        sk_add.append(PLine(Base.Vector(float(p1[0]),float(p1[1]),float(p1[2])), Base.Vector(float(p2[0]),float(p2[1]),float(p2[2]))))
+                    #    sk_add.append(line.replace('+<Line segment ','').replace(' >',''))
+                    elif line.startswith('+ArcOfCircle'):
+                        data=line.replace('+ArcOfCircle (Radius : ','').replace('))\n','')
+                        data=data.split(':')
+                        radius = data[0].split(',')[0]
+                        pos = data[1][data[1].find('(')+1:data[1].find(')')].split(',')
+                        dir = data[2][data[2].find('(')+1:data[2].rfind(')')].split(',')
+                        par = data[3][data[3].find('(')+1:].split(',')
+                        #print (radius,pos,dir,par);stop
+                        sk_add.append(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(float(pos[0]),float(pos[1]),float(pos[2])),FreeCAD.Vector(float(dir[0]),float(dir[1]),float(dir[2])),float(radius)),float(par[0]),float(par[1])))
+                    elif line.startswith('+Circle'):
+                        data=line.replace('+Circle (Radius : ','').replace('))\n','')
+                        data=data.split(':')
+                        radius = data[0].split(',')[0]
+                        pos = data[1][data[1].find('(')+1:data[1].find(')')].split(',')
+                        dir = data[2][data[2].find('(')+1:].split(',')
+                        print (radius,pos,dir)
+                        sk_add.append(Part.Circle(FreeCAD.Vector(float(pos[0]),float(pos[1]),float(pos[2])),FreeCAD.Vector(float(dir[0]),float(dir[1]),float(dir[2])),float(radius)))
         #for d in (diff_content):
         #    print (d)
         #for d in (diff_list):
@@ -423,6 +530,7 @@ def cmpPos(doc=None):
         FreeCADGui.Selection.clearSelection()
         nObj=0;old_pcb_tval=100;pcbN=''
         diff_objs=[]
+        generate_sketch=False
         for o in doc.Objects:
             if hasattr(o, 'Shape') or o.TypeId == 'App::Link':
                 if 'Sketch' not in o.Label and 'Pcb' not in o.Label:
@@ -439,24 +547,144 @@ def cmpPos(doc=None):
                     old_pcb_tval = FreeCADGui.ActiveDocument.getObject(o.Name).Transparency
                     FreeCADGui.ActiveDocument.getObject(o.Name).Transparency = 70
                     pcbN=o.Name
+                if 'PCB_Sketch' in o.Label and 'Sketch' in o.TypeId:
+                    generate_sketch=True
         #print(''.join(diff_content)); stop
         if nObj > 0:
-            print(''.join(diff_content))
+            dc = ''.join(diff_content)
+            print(dc)
             for o in diff_objs:
                 FreeCAD.Console.PrintWarning(o.Label+'\n')
             FreeCAD.Console.PrintError('N.'+str(nObj)+' Object(s) with changed placement \'Selected\'\n')
+            #print ('Circle' in diff_content)
+            if dc.find('Circle')!=-1 or dc.find('Line segment')!=-1: # or dc.find('ArcOfCircle')!=-1:
+                FreeCAD.Console.PrintError('*** \'Pcb Sketch\' modified! ***\n')
         elif len(diff_content) > 3:
             FreeCAD.Console.PrintError('\'Pcb Sketch\' modified!\n')
             #for d in (diff_content):
             #    print (d)
-            print(''.join(diff_content))
+            #print(''.join(diff_content))
             if len(pcbN)>0:
                 FreeCADGui.ActiveDocument.getObject(pcbN).Transparency = old_pcb_tval
         else:
             FreeCAD.Console.PrintWarning('no changes\n')
             if len(pcbN)>0:
                 FreeCADGui.ActiveDocument.getObject(pcbN).Transparency = old_pcb_tval
+        generateSketch = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui").GetBool('generate_sketch')
+        if generate_sketch and generateSketch:
+            if len(sk_add)>0:
+                #print(sk_add)
+                if FreeCAD.activeDocument().getObject("Sketch_Addition") is not None:
+                    FreeCAD.activeDocument().removeObject("Sketch_Addition")
+                Sketch_Addition = FreeCAD.activeDocument().addObject('Sketcher::SketchObject','Sketch_Addition')
+                FreeCADGui.activeDocument().getObject("Sketch_Addition").LineColor = (0.000,0.000,1.000)
+                FreeCADGui.activeDocument().getObject("Sketch_Addition").PointColor = (0.000,0.000,1.000)
+                Sketch_Addition.Geometry = sk_add
+            if len(sk_sub)>0:
+                #print(sk_sub)
+                if FreeCAD.activeDocument().getObject("Sketch_Subtraction") is not None:
+                    FreeCAD.activeDocument().removeObject("Sketch_Subtraction")
+                Sketch_Subtraction = FreeCAD.activeDocument().addObject('Sketcher::SketchObject','Sketch_Subtraction')
+                FreeCADGui.activeDocument().getObject("Sketch_Subtraction").LineColor = (0.667,0.000,0.498)
+                FreeCADGui.activeDocument().getObject("Sketch_Subtraction").PointColor = (0.667,0.000,0.498)
+                Sketch_Subtraction.Geometry = sk_sub
+            if len(sk_add)>0 or len(sk_sub)>0:
+                FreeCAD.ActiveDocument.recompute()
+
 ## https://stackoverflow.com/questions/3605680/creating-a-simple-xml-file-using-python
 
 
+    
+class RemoveSuffixDlg(QtGui.QDialog):
+    
+    def __init__(self, parent= None):
+        super(RemoveSuffixDlg, self).__init__(parent, QtCore.Qt.WindowStaysOnTopHint)    
+        #QtGui.QMainWindow.__init__(self, None, QtCore.Qt.WindowStaysOnTopHint)
+        #icon = style.standardIcon(
+        #    QtGui.QStyle.SP_MessageBoxCritical, None, widget)
+        #self.setWindowIcon(self.style().standardIcon(QtGui.QStyle.SP_MessageBoxCritical))
+        #self.setIcon(self.style().standardIcon(QtGui.QStyle.SP_MessageBoxCritical))
+        #self.setIcon(self.style().standardIcon(QStyle.SP_DirIcon))
+        #QtGui.QIcon(QtGui.QMessageBox.Critical))
+        #icon = QtGui.QIcon()
+        #icon.addPixmap(QtGui.QPixmap("icons/157-stats-bars.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        #Widget.setWindowIcon(icon)
+        ksuWBpath = os.path.dirname(ksu_locator.__file__)
+        ksuWB_icons_path =  os.path.join( ksuWBpath, 'Resources', 'icons')
+        
+        self.pix =  QtGui.QLabel()
+        self.pix.setText('')
+        self.pix.setText('')
+        self.pix.setPixmap(QtGui.QPixmap(ksuWB_icons_path+'/warning.svg'))
+        self.pix.setObjectName("pix")
+        self.txt =  QtGui.QLabel()
+        self.txt.setText("This will remove ALL Suffix from selection objects.  \nDo you want to continue?")
+        
+        self.txt2 =  QtGui.QLabel()
+        self.txt2.setText("\'suffix\'")
+        self.le = QtGui.QLineEdit()
+        self.le.setObjectName("suffix_filter")
+        self.le.setText(".step")
+        self.le.setToolTip("change the text to be\nstripped out from the end of Labels")
+    
+        #self.pb = QtGui.QPushButton()
+        #self.pb.setObjectName("OK")
+        #self.pb.setText("OK") 
+        #
+        #self.pbC = QtGui.QPushButton()
+        #self.pbC.setObjectName("Cancel")
+        #self.pbC.setText("Cancel") 
+    
+        self.buttonBox = QtGui.QDialogButtonBox()
+        self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
+        self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
+        self.buttonBox.setObjectName("buttonBox")
+            
+        layout2 = QtGui.QHBoxLayout()
+        layout2.addWidget(self.pix)
+        layout2.addWidget(self.txt)
+        
+        layout3 = QtGui.QHBoxLayout()
+        #layout3.addWidget(self.pb)
+        #layout3.addWidget(self.pbC)
+        
+        
+        layout = QtGui.QVBoxLayout()
+        layout.addLayout(layout2)
+        layout.addWidget(self.txt2)
+        layout.addWidget(self.le)
+        layout.addLayout(layout3)
+        layout.addWidget(self.buttonBox)
+        
+        #layout.addWidget(self.pb)
+        #layout.addWidget(self.pbC)
+    
+        self.setWindowTitle("Warning ...")
+        #self.setWindowIcon(self.style().standardIcon(QtGui.QStyle.SP_MessageBoxCritical))
+        
+        self.setLayout(layout)
+        #self.setLayout(layout)
+        #self.connect(self.pb, QtCore.SIGNAL("clicked()"),self.OK_click)
+        #self.connect(self.pbC, QtCore.SIGNAL("clicked()"),self.Cancel_click)
+        
+        self.buttonBox.button(QtGui.QDialogButtonBox.Ok).clicked.connect(self.OK_click)
+        self.buttonBox.button(QtGui.QDialogButtonBox.Cancel).clicked.connect(self.Cancel_click)
+        
+    
+    def OK_click(self):
+        # shost is a QString object
+        filtered = self.le.text()
+        #print (self.le.text())
+        #return (QtGui.QMessageBox.Ok)
+        #self.close()*
+        self.accept()
+        
+    def Cancel_click(self):
+        # shost is a QString object
+        #filtered = '.stp'
+        self.le.setText('')
+        # print (filtered)
+        #return (QtGui.QMessageBox.Cancel)
+        #self.close()*
+        self.close()
 

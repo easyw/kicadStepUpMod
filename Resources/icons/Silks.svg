@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="68.26667"
+   height="68.26667"
+   id="svg5821"
+   sodipodi:version="0.32"
+   inkscape:version="0.92.3 (2405546, 2018-03-11)"
+   sodipodi:docname="Silks.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   version="1.1"
+   inkscape:export-filename="/media/data/Yorik/FreeCAD/icons/Sketcher.png"
+   inkscape:export-xdpi="45"
+   inkscape:export-ydpi="45"
+   viewBox="0 0 64 64">
+  <defs
+     id="defs5823">
+    <linearGradient
+       id="linearGradient4569">
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1;"
+         offset="0"
+         id="stop4571" />
+      <stop
+         style="stop-color:#a9a9a9;stop-opacity:1;"
+         offset="1"
+         id="stop4573" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       id="linearGradient6349">
+      <stop
+         style="stop-color:#000000;stop-opacity:1;"
+         offset="0"
+         id="stop6351" />
+      <stop
+         style="stop-color:#000000;stop-opacity:0;"
+         offset="1"
+         id="stop6353" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient3377">
+      <stop
+         style="stop-color:#0019a3;stop-opacity:1;"
+         offset="0"
+         id="stop3379" />
+      <stop
+         style="stop-color:#0069ff;stop-opacity:1;"
+         offset="1"
+         id="stop3381" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3377"
+       id="linearGradient3383"
+       x1="901.1875"
+       y1="1190.875"
+       x2="1267.9062"
+       y2="1190.875"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(-1,0,0,1,2199.356,0)" />
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 31.999998 : 1"
+       inkscape:vp_y="0 : 999.99995 : 0"
+       inkscape:vp_z="63.999997 : 31.999998 : 1"
+       inkscape:persp3d-origin="31.999998 : 21.333332 : 1"
+       id="perspective5829" />
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient6349"
+       id="radialGradient6355"
+       cx="1103.6399"
+       cy="1424.4465"
+       fx="1103.6399"
+       fy="1424.4465"
+       r="194.40614"
+       gradientTransform="matrix(-1.4307499,-1.3605156e-7,-1.202713e-8,0.1264801,2674.7488,1244.2826)"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient4569"
+       id="linearGradient4575"
+       x1="12.932842"
+       y1="14.796122"
+       x2="49.987103"
+       y2="48.776375"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient4569-9"
+       id="linearGradient4575-8"
+       x1="12.932842"
+       y1="14.796122"
+       x2="49.987103"
+       y2="48.776375"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       id="linearGradient4569-9">
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1;"
+         offset="0"
+         id="stop4571-0" />
+      <stop
+         style="stop-color:#708cff;stop-opacity:1;"
+         offset="1"
+         id="stop4573-8" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient4569-7"
+       id="linearGradient4643-6"
+       gradientUnits="userSpaceOnUse"
+       x1="12.932842"
+       y1="14.796122"
+       x2="49.987103"
+       y2="48.776375" />
+    <linearGradient
+       id="linearGradient4569-7">
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1;"
+         offset="0"
+         id="stop4571-5" />
+      <stop
+         style="stop-color:#a9a9a9;stop-opacity:1;"
+         offset="1"
+         id="stop4573-3" />
+    </linearGradient>
+    <pattern
+       y="0"
+       x="0"
+       height="6"
+       width="6"
+       patternUnits="userSpaceOnUse"
+       id="EMFhbasepattern" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient4569-7"
+       id="linearGradient875"
+       gradientUnits="userSpaceOnUse"
+       x1="1003.5433"
+       y1="1318.1499"
+       x2="1170.7256"
+       y2="1232.5364" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="9.4464322"
+     inkscape:cx="-10.863155"
+     inkscape:cy="25.251015"
+     inkscape:current-layer="g3360"
+     showgrid="true"
+     inkscape:document-units="px"
+     inkscape:grid-bbox="true"
+     inkscape:window-width="2560"
+     inkscape:window-height="1361"
+     inkscape:window-x="-9"
+     inkscape:window-y="-9"
+     inkscape:window-maximized="1"
+     inkscape:snap-nodes="false"
+     inkscape:snap-bbox="true">
+    <inkscape:grid
+       type="xygrid"
+       id="grid3022"
+       units="px"
+       empspacing="2"
+       visible="true"
+       enabled="true"
+       snapvisiblegridlinesonly="true"
+       spacingx="0.99999995"
+       spacingy="0.99999995"
+       originx="0"
+       originy="0" />
+    <inkscape:grid
+       type="xygrid"
+       id="grid3800"
+       units="px"
+       empspacing="1"
+       visible="true"
+       enabled="true"
+       snapvisiblegridlinesonly="true"
+       spacingx="15.999999"
+       spacingy="15.999999"
+       empcolor="#ff0000"
+       empopacity="0.25098039"
+       originx="0"
+       originy="0" />
+  </sodipodi:namedview>
+  <g
+     id="layer1"
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer">
+    <g
+       id="g3360"
+       inkscape:export-filename="/home/yorik/Documents/Lab/Draft/icons/draft.png"
+       inkscape:export-xdpi="3.2478156"
+       inkscape:export-ydpi="3.2478156"
+       transform="matrix(0.1367863,0,0,0.1367863,-119.15519,-134.86962)">
+      <g
+         id="g887"
+         transform="matrix(2.8559044,0,0,2.8559044,-1101.2845,-2196.9277)">
+        <path
+           sodipodi:nodetypes="ccc"
+           inkscape:connector-curvature="0"
+           id="path3765"
+           d="m 761.44461,1172.41 h 32.89803 l 43.864,95.0388"
+           style="fill:#000000;fill-opacity:0;stroke:#008000;stroke-width:21.93202019;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+        <circle
+           r="25.587357"
+           cy="1172.4099"
+           cx="732.2019"
+           id="path3815"
+           style="fill:#000000;fill-opacity:0;stroke:#008000;stroke-width:21.93202019;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <g
+         id="g891"
+         transform="translate(53.689896,-34.825878)">
+        <path
+           inkscape:connector-curvature="0"
+           style="fill:#000033;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:17.19315529"
+           d="m 1078.739,1088.7336 h -26.1334 c -27.5089,0 -42.6387,1.3755 -52.2668,9.6282 -8.2527,6.8773 -19.25623,17.8809 -24.75798,42.6387 H 949.4474 l 8.25265,-94.9053 h 292.96915 l 8.2527,94.9053 h -26.1334 c -5.5018,-26.1333 -16.5053,-35.7614 -26.1334,-42.6387 -8.2527,-8.2527 -23.3825,-9.6282 -50.8914,-9.6282 h -26.1334 v 224.1973 c 0,17.8806 2.7509,38.5124 8.2527,42.6387 6.8772,4.1261 16.5053,16.5052 34.386,17.8807 v 16.5054 h -137.5442 v -16.5054 c 20.6317,-1.3755 30.2597,-12.3791 34.3861,-17.8807 2.7509,-2.7509 5.5017,-34.3862 5.5017,-42.6387 0,-6.8772 2.7509,-222.8218 4.1264,-232.4497 z"
+           id="path848" />
+        <path
+           sodipodi:nodetypes="csccccccccscsccccccsc"
+           inkscape:connector-curvature="0"
+           style="fill:url(#linearGradient875);fill-opacity:1;stroke:#2e3436;stroke-width:17.88074875px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+           d="m 1077.6507,1089.0963 -25.0451,-0.3627 c -27.506,-0.3984 -42.6387,1.3755 -52.2668,9.6282 -8.2527,6.8773 -19.25623,17.8809 -24.75798,42.6387 H 949.4474 l 8.25265,-94.9053 h 292.96915 l 8.2527,94.9053 h -26.1334 c -5.5018,-26.1333 -16.5053,-35.7614 -26.1334,-42.6387 -8.2527,-8.2527 -23.3825,-9.6282 -50.8914,-9.6282 h -26.1334 v 224.1973 c 0,17.8806 2.7509,38.5124 8.2527,42.6387 6.8772,4.1261 16.5053,16.5052 34.386,17.8807 v 16.5054 h -137.5442 v -16.5054 c 20.6317,-1.3755 30.2597,-12.3791 34.3861,-17.8807 2.7509,-2.7509 5.5017,-34.3862 5.5017,-42.6387 0,-6.8772 2.0253,-221.008 2.3125,-232.8125"
+           id="path850" />
+      </g>
+    </g>
+  </g>
+  <metadata
+     id="metadata4697">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+        <cc:license
+           rdf:resource="" />
+        <dc:date>Wed Mar 6 12:14:14 2013 -0300</dc:date>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>[Yorik van Havre]</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:rights>
+          <cc:Agent>
+            <dc:title>FreeCAD LGPL2+</dc:title>
+          </cc:Agent>
+        </dc:rights>
+        <dc:publisher>
+          <cc:Agent>
+            <dc:title>FreeCAD</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:identifier>FreeCAD/src/Mod/Draft/Resources/icons/Draft_Heal.svg</dc:identifier>
+        <dc:relation>http://www.freecadweb.org/wiki/index.php?title=Artwork</dc:relation>
+        <dc:contributor>
+          <cc:Agent>
+            <dc:title>[agryson] Alexander Gryson</dc:title>
+          </cc:Agent>
+        </dc:contributor>
+        <dc:subject>
+          <rdf:Bag>
+            <rdf:li>red cross</rdf:li>
+            <rdf:li>cross</rdf:li>
+            <rdf:li>circle</rdf:li>
+          </rdf:Bag>
+        </dc:subject>
+        <dc:description>A red cross similar to a medical red cross on a white circle</dc:description>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+</svg>

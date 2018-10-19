@@ -26,7 +26,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints
 
-__ksuCMD_version__='1.5.5'
+__ksuCMD_version__='1.5.6'
 
 precision = 0.1 # precision in spline or bezier conversion
 q_deflection = 0.02 # quasi deflection parameter for discretization
@@ -170,6 +170,7 @@ class Ui_CDialog(object):
         icon.addPixmap(QtGui.QPixmap(myicon), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.coincident.setIcon(icon)
         self.coincident.setIconSize(QtCore.QSize(myiconsize, myiconsize))
+        self.coincident.setChecked(True)
         icon1 = QtGui.QIcon()
         myicon=os.path.join( ksuWB_icons_path , 'Sketcher_LockAll.svg')
         icon1.addPixmap(QtGui.QPixmap(myicon), QtGui.QIcon.Normal, QtGui.QIcon.Off)
@@ -1515,6 +1516,7 @@ def deep_copy_part(doc, part, compound='flat',suffix='(copy)'):
     make_compound=compound
     copied_subobjects = []
     copied_subobjects_Names = []
+    #print (get_all_subobjects(part))
     for o in get_all_subobjects(part):
         if o.Name not in copied_subobjects_Names:
             if FreeCADGui.ActiveDocument.getObject(o.Name).Visibility:
@@ -2107,6 +2109,58 @@ class ksuToolsCaliper:
 
 FreeCADGui.addCommand('ksuToolsCaliper',ksuToolsCaliper())
 #####
+class ksuToolsMergeSketches:
+    "ksu tools Merge Sketches"
+    
+    def GetResources(self):
+        mybtn_tooltip ="Merge Sketches"
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Sketcher_MergeSketch.svg') , # the name of a svg file available in the resources
+                     'MenuText': mybtn_tooltip ,
+                     'ToolTip' : mybtn_tooltip}
+ 
+    def IsActive(self):
+        combined_path = '\t'.join(sys.path)
+        if FreeCADGui.Selection.getSelection():
+            return True
+        #else:
+        #    self.setToolTip("Grayed Tooltip!")
+        #    print(self.ObjectName)
+        #    grayed_tooltip="Grayed Tooltip!"
+        #    mybtn_tooltip=grayed_tooltip
+ 
+    def Activated(self):
+        # do something here...
+        FreeCADGui.runCommand('Sketcher_MergeSketches')
+        for s in FreeCADGui.Selection.getSelection():
+            FreeCADGui.ActiveDocument.getObject(s.Name).Visibility=False
+        
+FreeCADGui.addCommand('ksuToolsMergeSketches',ksuToolsMergeSketches())
+###
+class ksuToolsEditPrefs:
+    "ksu tools Edit Preferences"
+    
+    def GetResources(self):
+        mybtn_tooltip ="Edit Preferences"
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Preferences-Edit.svg') , # the name of a svg file available in the resources
+                     'MenuText': mybtn_tooltip ,
+                     'ToolTip' : mybtn_tooltip}
+ 
+    def IsActive(self):
+        return True
+        #else:
+        #    self.setToolTip("Grayed Tooltip!")
+        #    print(self.ObjectName)
+        #    grayed_tooltip="Grayed Tooltip!"
+        #    mybtn_tooltip=grayed_tooltip
+ 
+    def Activated(self):
+        # do something here...
+        #import kicadStepUptools
+        FreeCADGui.runCommand("Std_DlgPreferences")
+        
+FreeCADGui.addCommand('ksuToolsEditPrefs',ksuToolsEditPrefs())
+
+#####
 class ksuRemoveTimeStamp:
     "ksu  Remove TimeStamp"
     
@@ -2187,7 +2241,7 @@ class ksuRemoveSuffix:
     "ksu  Remove Suffix"
     
     def GetResources(self):
-        mybtn_tooltip ="Remove Suffix \'.stp\', '\.step\' from Labels"
+        mybtn_tooltip ="Remove \'custom\' Suffix from Labels"
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'RemoveSuffix.svg') , # the name of a svg file available in the resources
                      'MenuText': mybtn_tooltip ,
                      'ToolTip' : mybtn_tooltip}
@@ -2206,21 +2260,48 @@ class ksuRemoveSuffix:
         if FreeCADGui.Selection.getSelection():
             sel=FreeCADGui.Selection.getSelection()
             if len(sel)!=1:
-                msg="Select one tree object to remove its Label Suffix  \'.stp\', \'.step\'!\n"
+                msg="Select one tree object to remove its Label Suffix!\n"
                 reply = QtGui.QMessageBox.information(None,"Warning", msg)
                 FreeCAD.Console.PrintWarning(msg)             
             else:
+                import exchangePositions;reload_lib(exchangePositions)
                 #msgBox = QtGui.QMessageBox()
                 #msgBox.setText("This will remove ALL TimeStamps from selection objects.\nIt cannot be ondone.")
                 #msgBox.setInformativeText("Do you want to continue?")
                 #msgBox.setStandardButtons(QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel)
                 #msgBox.setDefaultButton(QtGui.QMessageBox.Cancel)
-                ret = QtGui.QMessageBox.warning(None, ("Warning"),
-                               ("This will remove ALL Suffix \'.stp\', \'.step\' from selection objects.\nDo you want to continue?"),
-                               QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel,
-                               QtGui.QMessageBox.Cancel)
+                #ret = QtGui.QMessageBox.warning(None, ("Warning"),
+                # message box
+                rdlg = exchangePositions.RemoveSuffixDlg()
+                #msg_box = QtGui.QMessageBox()
+                #msg_box.setWindowTitle("Warning")
+                #msg_box.setText("This will remove ALL Suffix \'.stp\', \'.step\' from selection objects.\nDo you want to continue?")
+                ##layout = msg_box.layout()
+                #msg_box.txtInp = QtGui.QLineEdit()
+                ##layout.addWidget(msg_box.txtInp)
+                #gl = QtGui.QVBoxLayout()
+                #gl.addWidget(msg_box.txtInp)
+                #msg_box.setLayout(gl) 
+                #msg_box.setInformativeText('Informative text.')
+                #msg_box.setDetailedText("Detailed text.")
+                ##msg_box.DetailedText.setTextInteractionFlags (QtCore.Qt.TextEditorInteraction)  #(QtCore.Qt.NoTextInteraction) # (QtCore.Qt.TextSelectableByMouse)
+                #msg_box.setIcon(QtGui.QMessageBox.Critical)
+                #msg_box.setStandardButtons(QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel)
+                #msg_box.setDefaultButton(QtGui.QMessageBox.Cancel)
+                #
+                #ret = msg_box.exec_()
+                
+                ret = rdlg.exec_()
+                
+                # ret = QtGui.QMessageBox.warning(None, ("Warning"),
+                #                ("This will remove ALL Suffix \'.stp\', \'.step\' from selection objects.\nDo you want to continue?"),
+                #                QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel,
+                #                QtGui.QMessageBox.Cancel)
                 #ret = msgBox.exec_()
-                if ret == QtGui.QMessageBox.Ok:
+                # print(ret)
+                # print (rdlg.le.text())
+                filtering=rdlg.le.text()
+                if ret: # == QtGui.QMessageBox.Ok:
                     for ob in sel:
                     #for o in doc.Objects:
                         #print (ob.Name,ob.Label,ob.TypeId)    
@@ -2235,27 +2316,63 @@ class ksuRemoveSuffix:
                                         and ('Axis' not in o.Label and 'Plane' not in o.Label and 'Sketch' not in o.Label):
                                     #suffix1 = '.stp';suffix2 = '.step'
                                     #if o.Label.lower().endswith(suffix1) or o.Label.lower().endswith(suffix2):
-                                    o.Label = re.sub('.stp', '', o.Label, flags=re.IGNORECASE)
-                                    o.Label = re.sub('.step', '', o.Label, flags=re.IGNORECASE)
+                                    #o.Label = re.sub(rdlg.le.text()+'$', '', o.Label, flags=re.IGNORECASE)
+                                    #print(o.Label[:o.Label.rfind (filtering)])
+                                    if o.Label.rfind (filtering) != -1:
+                                        o.Label = o.Label[:o.Label.rfind (filtering)]
+                                    #o.Label = re.sub('.stp', '', o.Label, flags=re.IGNORECASE)
+                                    #o.Label = re.sub('.step', '', o.Label, flags=re.IGNORECASE)
                                     #print (o.Label)
                                 if o.TypeId == 'App::Part' or o.TypeId == 'App::LinkGroup':
-                                    o.Label = re.sub('_stp', '', o.Label, flags=re.IGNORECASE)
-                                    o.Label = re.sub('_step', '', o.Label, flags=re.IGNORECASE)
-                                    o.Label = re.sub('.stp', '', o.Label, flags=re.IGNORECASE)
-                                    o.Label = re.sub('.step', '', o.Label, flags=re.IGNORECASE)                              
+                                    #o.Label = re.sub(rdlg.le.text()+'$', '', o.Label, flags=re.IGNORECASE)
+                                    fixfiltering = filtering.replace('.','_')
+                                    #print (fixfiltering)
+                                    #print(o.Label[:o.Label.rfind (fixfiltering)])
+                                    if o.Label.rfind (fixfiltering) != -1:
+                                        o.Label = o.Label[:o.Label.rfind (fixfiltering)]
+                                    #o.Label = re.sub('_stp', '', o.Label, flags=re.IGNORECASE)
+                                    #o.Label = re.sub('_step', '', o.Label, flags=re.IGNORECASE)
+                                    #o.Label = re.sub('.stp', '', o.Label, flags=re.IGNORECASE)
+                                    #o.Label = re.sub('.step', '', o.Label, flags=re.IGNORECASE)                              
                             for o in o_list:
                                 if (o.TypeId == 'App::Link'):
                                     o.Label = o.LinkedObject.Label
-                    FreeCAD.Console.PrintWarning('removed Suffix \'.stp\', \'.step\' \n')
-                elif ret == QtGui.QMessageBox.Cancel:
-                    FreeCAD.Console.PrintMessage('Operation Aborted\n')                
+                    FreeCAD.Console.PrintWarning('removed Suffix \''+filtering+'\' \n')
+                elif ret == 0: #== QtGui.QMessageBox.Cancel:
+                    msg='Operation Aborted\n'
+                    FreeCAD.Console.PrintMessage(msg)
+                    reply = QtGui.QMessageBox.information(None,"Warning", msg)
+                    FreeCAD.Console.PrintWarning(msg)                    
         else:
-            msg="Select one tree object to remove its Label Suffix \'.stp\', \'.step\' !\n"
+            msg="Select one tree object to remove its Label Suffix!\n"
             reply = QtGui.QMessageBox.information(None,"Warning", msg)
             FreeCAD.Console.PrintWarning(msg)             
 
 FreeCADGui.addCommand('ksuRemoveSuffix',ksuRemoveSuffix())
 
+#####
+class ksuToolsExplode:
+    "ksu tools Explode"
+    
+    def GetResources(self):
+        mybtn_tooltip ="ksu Tools PCB Explode\nSelect the top container of a kicad PCB to exlode it"
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Explode_Pcb.svg') , # the name of a svg file available in the resources
+                     'MenuText': mybtn_tooltip ,
+                     'ToolTip' : mybtn_tooltip}
+ 
+    def IsActive(self):
+        if FreeCAD.ActiveDocument is None:
+            return False
+        else:
+            return True
+ 
+    def Activated(self):
+        # do something here...
+        import explode
+        explode.runExplodeGui()
+        #import explode;reload_lib(explode)
+
+FreeCADGui.addCommand('ksuToolsExplode',ksuToolsExplode())
 #####
 class ksuToolsDefeaturingTools:
     "ksu tools DefeaturingTools"
@@ -2283,6 +2400,84 @@ class ksuToolsDefeaturingTools:
             import DefeaturingTools;reload_lib(DefeaturingTools)
 
 FreeCADGui.addCommand('ksuToolsDefeaturingTools',ksuToolsDefeaturingTools())
+#####
+class ksuToolsRemoveSubTree:
+    "ksu tools Remove Sub Tree"
+    
+    def GetResources(self):
+        mybtn_tooltip ="Remove Sub Tree"
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'RemoveSubtree.svg') , # the name of a svg file available in the resources
+                     'MenuText': mybtn_tooltip ,
+                     'ToolTip' : mybtn_tooltip}
+ 
+    def IsActive(self):
+        if FreeCADGui.Selection.getSelection():
+            return True
+        #else:
+        #    self.setToolTip("Grayed Tooltip!")
+        #    print(self.ObjectName)
+        #    grayed_tooltip="Grayed Tooltip!"
+        #    mybtn_tooltip=grayed_tooltip
+ 
+    def Activated(self):
+        # do something here...
+        from PySide import QtGui, QtCore
+        reply = QtGui.QMessageBox.question(None, "DelTree","Remove Sub Tree?\n[Undo WILL NOT work!]", QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
+        if reply == QtGui.QMessageBox.Ok:
+            #print('OK clicked.')
+            import kicadStepUptools
+            kicadStepUptools.removesubtree(FreeCADGui.Selection.getSelection())
+        else:
+            FreeCAD.Console.PrintMessage('Cancel clicked.')
+FreeCADGui.addCommand('ksuToolsRemoveSubTree',ksuToolsRemoveSubTree())
+####
+class ksuToolsAddTracks:
+    "ksu tools Add Tracks"
+    
+    def GetResources(self):
+        mybtn_tooltip ="ksu tools Add Tracks\nNB: it could be a very intensive loading!"
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Tracks.svg') , # the name of a svg file available in the resources
+                     'MenuText': mybtn_tooltip ,
+                     'ToolTip' : mybtn_tooltip}
+ 
+    def IsActive(self):
+        return True
+        #else:
+        #    self.setToolTip("Grayed Tooltip!")
+        #    print(self.ObjectName)
+        #    grayed_tooltip="Grayed Tooltip!"
+        #    mybtn_tooltip=grayed_tooltip
+ 
+    def Activated(self):
+        # do something here...
+        import tracks
+        tracks.addtracks()
+
+FreeCADGui.addCommand('ksuToolsAddTracks',ksuToolsAddTracks())
+#####
+class ksuToolsAddSilks:
+    "ksu tools Add Silks"
+    
+    def GetResources(self):
+        mybtn_tooltip ="ksu tools Add Silks from kicad exported DXF\nNB: it could be a very intensive loading!"
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Silks.svg') , # the name of a svg file available in the resources
+                     'MenuText': mybtn_tooltip ,
+                     'ToolTip' : mybtn_tooltip}
+ 
+    def IsActive(self):
+        return True
+        #else:
+        #    self.setToolTip("Grayed Tooltip!")
+        #    print(self.ObjectName)
+        #    grayed_tooltip="Grayed Tooltip!"
+        #    mybtn_tooltip=grayed_tooltip
+ 
+    def Activated(self):
+        # do something here...
+        import makefacedxf
+        makefacedxf.makeFaceDXF()
+
+FreeCADGui.addCommand('ksuToolsAddSilks',ksuToolsAddSilks())
 #####
 class ksuExcDemo:
     exFile = None

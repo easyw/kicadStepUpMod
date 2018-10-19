@@ -1,0 +1,22 @@
+import kicadStepUptools; import importlib; importlib.reload(kicadStepUptools)
+
+import kicadStepUptools; reload(kicadStepUptools)
+
+import utf8test; import importlib; importlib.reload(utf8test)
+import utf8test; reload(utf8test)
+
+    last_pcb_path
+    last_fp_path
+    utf-8?
+
+    first time 
+    print('Creating first time ksu preferences')
+#TBD
+check program with utf-8
+update hlp
+update cheatsheet
+
+File "C:\Users\mau\AppData\Roaming\FreeCAD\Mod\kicadStepUpMod\kicadStepUptools.py", line 5399, in Load_models
+    utf_path=os.path.join(models3D_prefix_U,step_module)
+  File "D:\FreeCAD_0.18\bin\lib\ntpath.py", line 85, in join
+    result_path = result_path + p_path
