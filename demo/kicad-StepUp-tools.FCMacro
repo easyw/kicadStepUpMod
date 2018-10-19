@@ -3614,6 +3614,7 @@ def cfg_read_all():
         pt_win = True
         #default_prefix3d = os.path.join(os.environ["ProgramFiles"],u'\\KiCad\\share\\kicad\\modules\\packages3d')
         default_prefix3d = (os.environ["ProgramFiles"]+u'\\KiCad\\share\\kicad\\modules\\packages3d')
+        #print (default_prefix3d)
         default_prefix3d = re.sub("\\\\", "/", default_prefix3d) #default_prefix3d.replace('\\','/')
         #print (default_prefix3d)
     prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
@@ -3626,7 +3627,7 @@ def cfg_read_all():
             
     models3D_prefix = prefs.GetString('prefix3d_1')
     if len (models3D_prefix) == 0:
-        prefs.SetString('prefix3d_1',default_prefix3d)
+        prefs.SetString('prefix3d_1',make_string(default_prefix3d))
         models3D_prefix = prefs.GetString('prefix3d_1')
     models3D_prefix2 = prefs.GetString('prefix3d_2')
     light_green = [0.20,0.60,0.40] # std Green
