@@ -29,12 +29,20 @@ metal_copper="""material DEF MET-COPPER Material {
         }"""    
 
 copper_diffuse = (0.7038, 0.27048, 0.0828)
-silks_diffuse = (0.906,0.906,0.910)
+#silks_diffuse = (0.906,0.906,0.910)
 
 # Name      Ambient                             Diffuse                             Specular                            Shininess
 # brass     0.329412    0.223529    0.027451    0.780392    0.568627    0.113725    0.992157    0.941176    0.807843    0.21794872
 brass_diffuse = (0.780392,0.568627,0.113725)
 
+
+pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+pcb_color_pos = pg.GetInt('pcb_color')
+if pcb_color_pos == 9:
+    silks_diffuse = (0.18,0.18,0.18)  #slick black
+else:
+    silks_diffuse = (0.98,0.92,0.84) # #antique white  # white (0.906,0.906,0.910)
+        
 
 import importDXF
 from kicadStepUptools import make_unicode, make_string

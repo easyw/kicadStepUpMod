@@ -1,3 +1,7 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+#****************************************************************************
+
 import kicad
 #import kicad; import importlib; importlib.reload(kicad)
 import time
@@ -14,6 +18,73 @@ def say_time():
     msg="running time: "+str(running_time)+"sec"
     print(msg)
 ###
+#try:  #maui
+#  basestring
+#except NameError:
+#  basestring = str
+py2=False
+try:  ## maui py3
+    unicode = unicode
+except NameError:
+    # 'unicode' is undefined, must be Python 3
+    str = str
+    unicode = str
+    bytes = bytes
+    basestring = (str,bytes)
+else:
+    # 'unicode' exists, must be Python 2
+    str = str
+    unicode = unicode
+    bytes = str
+    basestring = basestring
+    py2=True
+
+def reload_lib(lib):
+    if (sys.version_info > (3, 0)):
+        import importlib
+        importlib.reload(lib)
+    else:
+        reload (lib)
+
+def mkColor(*color):
+    if len(color)==1:
+        if isinstance(color[0],basestring):
+            if color[0].startswith('#'):
+                #color = color[0].replace('#','0x')
+                #color = int(color,0)
+                #print (color)
+                #r = float((color>>24)&0xFF)
+                #g = float((color>>16)&0xFF)
+                #b = float((color>>8)&0xFF)
+                color = color[0] #[1:]
+                #print(color[1:3])
+                r = int((color[1:3]), 16) #/255
+                g = int((color[3:5]), 16) #/255
+                b = int((color[5:7]), 16) #/255
+                #print(r,g,b);stop
+                #print(r,g,b)
+                #stop
+            else:
+                color = int(color[0],0)
+                r = float((color>>24)&0xFF)
+                g = float((color>>16)&0xFF)
+                b = float((color>>8)&0xFF)
+        else:
+            color = color[0]
+            r = float((color>>24)&0xFF)
+            g = float((color>>16)&0xFF)
+            b = float((color>>8)&0xFF)
+    else:
+        r,g,b = color
+    return (r/255.0,g/255.0,b/255.0)
+##
+#colors = {
+#           'board':makeColor("0x3A6629"),
+#           'pad':{0:makeColor(219,188,126)},
+#           'zone':{0:makeColor(200,117,51)},
+#           'track':{0:makeColor(200,117,51)},
+#           'copper':{0:makeColor(200,117,51)},
+#        }
 
 from kicadStepUptools import removesubtree, cfg_read_all
 from kicadStepUptools import KicadPCB, make_unicode, make_string
@@ -41,6 +112,16 @@ def addtracks():
         last_pcb_path=os.path.dirname(fname)
         pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
         pg.SetString("last_pcb_path", make_string(last_pcb_path)) # py3 .decode("utf-8")
+        prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+        pcb_color_pos = prefs.GetInt('pcb_color')
+        #pcb_color_values = [light_green,blue,red,purple,darkgreen,darkblue,lightblue,yellow,black,white]
+        assign_col=['#41c382','#2474cf','#ff4000','#9a1a85','#3c7f5d','#426091','#005fff','#fff956','#4d4d4d','#f0f0f0']
+        #print(pcb_color_pos)
+        trk_col = (assign_col[pcb_color_pos])
+        if pcb_color_pos == 9:
+            slk_col = '#2d2d2d'
+        else:
+            slk_col = '#f8f8f0'
         mypcb = KicadPCB.load(filename)
         pcbThickness = float(mypcb.general.thickness)
         #print (mypcb.general.thickness)
@@ -54,9 +135,30 @@ def addtracks():
         #    if float(lynbr) == Bot_lvl:
         #        LvlBotName=(mypcb.layers['{0}'.format(str(lynbr))][0])
         #print(LvlTopName,'  ',LvlBotName)
+        import kicad; reload_lib(kicad)
         pcb = kicad.KicadFcad(filename)
         #pcb.setLayer(LvlTopName)
         minSizeDrill = 0.0  #0.8
+        #print(pcb.colors)
+        # https://www.seeedstudio.com/blog/2017/07/23/why-are-printed-circuit-boards-are-usually-green-in-colour/
+        # <span style="color: #105e7d;">deep-sea blue</span></strong>, <strong><span style="color: #ff2f00;">Ferrari red</span></strong>, <strong><span style="color: #ffcc00;">sunshine yellow</span></strong>, <strong>slick black</strong>, <span style="color: #999999;"><strong>pure white</strong></span> and of course <strong><span style="color: #339966;">good</span></strong> <strong><span style="color: #339966;">ol’ green</span>
+        # (r/255.0,g/255.0,b/255.0)
+        pcb_col = pcb.colors
+        #zone_col = pcb_col['zone'][0]
+        #track_col = pcb_col['track'][0]
+        pcb_col['track'][0] = mkColor(trk_col)
+        pcb_col['zone'][0] = mkColor(trk_col)
+        
+        #pcb_col['track'][0] = mkColor('#147b9d')
+        #pcb_col['zone'][0] = mkColor('#147b9d')
+        #pcb.colors = {
+        #   'board':mkColor("0x3A6629"),
+        #   'pad':{0:mkColor(219,188,126)},
+        #   'zone':{0:mkColor('#147b9d')},
+        #   'track':{0:mkColor(26,157,204)},
+        #   'copper':{0:mkColor(200,117,51)},
+        #}
+        #pcb.colors={'board':(1.,1.,1.),'pad':{0:(219/255,188/255,126/255)},'zone':{0:(0.,1.,0.)},'track':{0:(0.,1.,1.)},'copper':{0:(0.,1.,1.)},}  
         pcb.setLayer(Top_lvl)
         pcb.makeCopper(holes=True, minSize=minSizeDrill)
         doc=FreeCAD.ActiveDocument

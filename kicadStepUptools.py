@@ -3643,7 +3643,7 @@ def cfg_read_all():
     lightblue = [0.0,0.298,1.0] # (0,76,255)
     yellow = [0.98,0.98,0.34] #sunshine yellow
     black = [0.18,0.18,0.18] #slick black
-    white = [0.98,0.92,0.84] #antique white
+    white = [0.973,0.973,0.941] #[0.98,0.92,0.84] #antique white
     pcb_color_values = [light_green,blue,red,purple,darkgreen,darkblue,lightblue,yellow,black,white]
     pcb_color_pos = prefs.GetInt('pcb_color')
     pcb_color = pcb_color_values [pcb_color_pos]
