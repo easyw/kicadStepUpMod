@@ -2436,7 +2436,7 @@ class ksuToolsAddTracks:
     
     def GetResources(self):
         mybtn_tooltip ="ksu tools Add Tracks\nNB: it could be a very intensive loading!"
-        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Tracks.svg') , # the name of a svg file available in the resources
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'tracks.svg') , # the name of a svg file available in the resources
                      'MenuText': mybtn_tooltip ,
                      'ToolTip' : mybtn_tooltip}
  
