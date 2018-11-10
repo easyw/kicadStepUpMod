@@ -448,7 +448,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.1.0.9"
+___ver___ = "8.1.1.0"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -1525,11 +1525,13 @@ class KicadPCB(SexpParser):
         #print 'ciao'
         if sys.version_info[0] == 2: #if py2:
             print('py2')
+            py2=True
             with builtin.open(filename, 'r') as f: #py3 #test parser
                 #return KicadPCB(parseSexp(f.read())) # maui
                 #return KicadPCB(parseSexp(f.read().replace('\\"','_').replace("\\'",'_'))) # maui replacing  \" and \' with _ to avoid wrong parsing
                 return KicadPCB(parseSexp(f.read().replace('\\"','_'))) # maui replacing  \" with _ to avoid wrong parsing  test py3
         else:
+            py2=False
             print('py3')
             with builtin.open(filename, 'rb') as f: #py3 #test parser
                 #return KicadPCB(parseSexp(f.read())) # maui
@@ -3643,7 +3645,7 @@ def cfg_read_all():
     lightblue = [0.0,0.298,1.0] # (0,76,255)
     yellow = [0.98,0.98,0.34] #sunshine yellow
     black = [0.18,0.18,0.18] #slick black
-    white = [0.98,0.92,0.84] #antique white
+    white = [0.973,0.973,0.941] #[0.98,0.92,0.84] #antique white
     pcb_color_values = [light_green,blue,red,purple,darkgreen,darkblue,lightblue,yellow,black,white]
     pcb_color_pos = prefs.GetInt('pcb_color')
     pcb_color = pcb_color_values [pcb_color_pos]
@@ -3696,9 +3698,9 @@ def cfg_read_all():
     else:
         allow_compound = 'False' #NotAllowedMultiParts
     sketch_constraints = prefs.GetInt('sketch_constraints')
-    if sketch_constraints == 0:
+    if sketch_constraints == 1:
         addConstraints='all'
-    elif sketch_constraints == 1:
+    elif sketch_constraints == 0:
         addConstraints='coincident'
     else:
         addConstraints='none'
@@ -4672,7 +4674,7 @@ def Display_info(blacklisted_models):
         msg+="<br>Board Placed @ "+"{0:.3f}".format(board_base_point_x)+";"+"{0:.3f}".format(board_base_point_y)+";0.0"
     else:
         msg+="<br>Board Placed @ "+"{0:.3f}".format(new_pos_x)+";"+"{0:.3f}".format(new_pos_y)+";0.0"
-    msg+="<br>kicad pcb pos: ("+"{0:.3f}".format(real_board_pos_x)+";"+"{0:.3f}".format(real_board_pos_y)+";"+"{0:.2f}".format(0)+")"
+    msg+="<br>kicad pcb pos: ("+"{0:.3f}".format(real_board_pos_x)+";"+"{0:.3f}".format(real_board_pos_y)+";"+"{0:.3f}".format(0)+")"
     if (bbox_all==1) or (bbox_list==1):
         msg+="<br>bounding box modules applied"
     if (volume_minimum!=0):
@@ -4691,7 +4693,7 @@ def Display_info(blacklisted_models):
         say("Board Placed @ "+"{0:.3f}".format(board_base_point_x)+";"+"{0:.3f}".format(board_base_point_y)+";0.0")
     else:
         say("Board Placed @ "+"{0:.3f}".format(new_pos_x)+";"+"{0:.3f}".format(new_pos_y)+";0.0")
-    say("kicad pcb pos: ("+"{0:.3f}".format(real_board_pos_x)+";"+"{0:.3f}".format(real_board_pos_y)+";"+"{0:.2f}".format(0)+")")      
+    say("kicad pcb pos: ("+"{0:.3f}".format(real_board_pos_x)+";"+"{0:.3f}".format(real_board_pos_y)+";"+"{0:.3f}".format(0)+")")      
     if (show_messages==True):
         QtGui.QApplication.restoreOverrideCursor()
         #RotateXYZGuiClass().setGeometry(25, 250, 500, 500)
@@ -5095,7 +5097,7 @@ def Export2MCAD(blacklisted_model_elements):
         msg+="<br>Board Placed @ "+"{0:.3f}".format(board_base_point_x)+";"+"{0:.3f}".format(board_base_point_y)+";0.0"
     else:
         msg+="<br>Board Placed @ "+"{0:.3f}".format(new_pos_x)+";"+"{0:.3f}".format(new_pos_y)+";0.0"
-    msg+="<br>kicad pcb pos: ("+"{0:.3f}".format(real_board_pos_x)+";"+"{0:.3f}".format(real_board_pos_y)+";"+"{0:.2f}".format(0)+")"
+    msg+="<br>kicad pcb pos: ("+"{0:.3f}".format(real_board_pos_x)+";"+"{0:.3f}".format(real_board_pos_y)+";"+"{0:.3f}".format(0)+")"
     if (bbox_all==1) or (bbox_list==1):
         msg+="<br>bounding box modules applied"
     if (volume_minimum!=0):
@@ -5114,7 +5116,7 @@ def Export2MCAD(blacklisted_model_elements):
         say("Board Placed @ "+"{0:.3f}".format(board_base_point_x)+";"+"{0:.3f}".format(board_base_point_y)+";0.0")
     else:
         say("Board Placed @ "+"{0:.3f}".format(new_pos_x)+";"+"{0:.3f}".format(new_pos_y)+";0.0")
-    say("kicad pcb pos: ("+"{0:.3f}".format(real_board_pos_x)+";"+"{0:.3f}".format(real_board_pos_y)+";"+"{0:.2f}".format(0)+")")    
+    say("kicad pcb pos: ("+"{0:.3f}".format(real_board_pos_x)+";"+"{0:.3f}".format(real_board_pos_y)+";"+"{0:.3f}".format(0)+")")    
     say_time()
     if (show_messages==True):
         QtGui.QApplication.restoreOverrideCursor()
@@ -7181,7 +7183,11 @@ def add_constraints(s_name):
             #points.append([[point2[0],point2[1]],[geom_index],[2]])
             #points.append([[point1[0],point1[1]],[geom_index]]) #,[1]])
             #points.append([[point2[0],point2[1]],[geom_index]]) #,[2]])
-            geoms.append([point1[0],point1[1],point2[0],point2[1]])
+            if 'Line' in type(s.Geometry[geom_index]).__name__:
+                tp = 'Line'
+            else:
+                tp = 'Arc'
+            geoms.append([point1[0],point1[1],point2[0],point2[1],tp])
 
     #print points
     def simu_distance(p0, p1):
@@ -7190,18 +7196,18 @@ def add_constraints(s_name):
     #print geom
     sk_constraints = []
     cnt=1
-    # print addConstraints, ' constraints'
-    # stop
+    #print (addConstraints, ' constraints')
+    #stop
     if addConstraints=='all':
         for i, geo in enumerate(geoms):
         #for i in range(len(geom)):
             p_g0_0=[geo[0],geo[1]]
             p_g0_1=[geo[2],geo[3]]
             #print p_g0_0,pg_g0_1
-            if abs(p_g0_0[0]-p_g0_1[0])< edge_tolerance:
+            if abs(p_g0_0[0]-p_g0_1[0])< edge_tolerance and geo[4] == 'Line':
                 #s.addConstraint(Sketcher.Constraint('Vertical',i))
                 sk_constraints.append(Sketcher.Constraint('Vertical',i))
-            elif abs(p_g0_0[1]-p_g0_1[1])< edge_tolerance:
+            elif abs(p_g0_0[1]-p_g0_1[1])< edge_tolerance and geo[4] == 'Line':
                 #s.addConstraint(Sketcher.Constraint('Horizontal',i))
                 sk_constraints.append(Sketcher.Constraint('Horizontal',i))
             j=i+1
@@ -7232,6 +7238,8 @@ def add_constraints(s_name):
     elif addConstraints=='coincident':
         for i, geo in enumerate(geoms):
         #for i in range(len(geom)):
+            #print (geo)
+            #stop
             p_g0_0=[geo[0],geo[1]]
             p_g0_1=[geo[2],geo[3]]
             #print p_g0_0,pg_g0_1
@@ -11821,6 +11829,12 @@ class OSCD2Dg_Overlappingfaces():
         dchildren=[]
         for child in isinsidedict.get(parent,[]):
             direct = True
+            import sys
+            if sys.version_info[0] == 2: #if py2:
+                #print('py2')
+                py2=True
+            else:
+                py2=False
             if py2:
                 for key, value in isinsidedict.iteritems():
                     if key != parent and child in value and parent not in value:
@@ -12474,7 +12488,10 @@ def DrawPCB(mypcb):
                 say('start adding constraints to pcb sketch')
                 get_time()
                 t0=(running_time)
-                add_constraints("PCB_Sketch_draft")
+                if hasattr (FreeCAD.ActiveDocument.getObject("PCB_Sketch_draft"), "autoconstraint"):
+                    FreeCAD.ActiveDocument.getObject("PCB_Sketch_draft").autoconstraint(edge_tolerance*5,0.01)
+                else:
+                    add_constraints("PCB_Sketch_draft")
                 get_time()
                 say('adding constraints time ' +str(running_time-t0))
             if 0: #dont_use_constraints:
@@ -12482,19 +12499,45 @@ def DrawPCB(mypcb):
                 add_missing_geo("PCB_Sketch_draft")
                 #stop
                 
-            FreeCAD.ActiveDocument.addObject("Part::Face", "Face_PCB_Sketch_draft").Sources = (FreeCAD.ActiveDocument.PCB_Sketch_draft, )
+            make_face_mode = 1
             FreeCAD.ActiveDocument.recompute()
-            s_PCB_Sketch_draft = FreeCAD.ActiveDocument.getObject("Face_PCB_Sketch_draft").Shape.copy()
+            if make_face_mode == 1:  ## face creation method
+                shsk = FreeCAD.ActiveDocument.PCB_Sketch_draft.Shape.copy()
+                #Part.show(shsk)
+                edgs = shsk.Edges
+                #print(edgs)
+                if len(edgs)== 0:
+                    sayerr('No edges found for pcb!!!')
+                    stop
+                if 1:
+                    s_PCB_Sketch_draft = OSCD2Dg_edgestofaces(edgs,3 , edge_tolerance)
+                if 0:
+                    import OpenSCAD2Dgeom
+                    s_PCB_Sketch_draft = OpenSCAD2Dgeom.edgestofaces(Part.__sortEdges__(edgs))
+                Part.show(s_PCB_Sketch_draft)
+                Face_PCB_Sketch_draft = FreeCAD.ActiveDocument.ActiveObject
+                s_PCB_Sketch_draft = Face_PCB_Sketch_draft.Shape.copy()
+                ## OpenSCAD2Dgeom.edgestofaces(edgs)
+                
+            else:
+                FreeCAD.ActiveDocument.addObject("Part::Face", "Face_PCB_Sketch_draft").Sources = (FreeCAD.ActiveDocument.PCB_Sketch_draft, )
+                FreeCAD.ActiveDocument.recompute()
+                s_PCB_Sketch_draft = FreeCAD.ActiveDocument.getObject("Face_PCB_Sketch_draft").Shape.copy()
+                
             #s_PCB_Sketch_draft = s.copy()
-            #sayerr ('creating PCB face')
+            sayw ('created PCB face')
             if aux_orig ==1 or grid_orig ==1:
                 s_PCB_Sketch_draft.translate((off_x, off_y,0))
             #else:
             #    s_PCB_Sketch_draft.translate(xs, ys,0)
             #if use_Links:
             #Part.show(s_PCB_Sketch_draft)
-            FreeCAD.ActiveDocument.removeObject("Face_PCB_Sketch_draft")
-            FreeCAD.ActiveDocument.recompute()
+            if make_face_mode == 1:  ## face creation method
+                FreeCAD.ActiveDocument.removeObject(Face_PCB_Sketch_draft.Name)
+                FreeCAD.ActiveDocument.recompute()
+            else:
+                FreeCAD.ActiveDocument.removeObject("Face_PCB_Sketch_draft")
+                FreeCAD.ActiveDocument.recompute()
             
             #FreeCAD.ActiveDocument.addObject("Part::Face", "Face").Sources = (FreeCAD.ActiveDocument.PCB_Sketch_draft001, )
             FreeCADGui.SendMsgToActiveView("ViewFit")
