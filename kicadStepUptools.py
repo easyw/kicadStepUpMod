@@ -448,7 +448,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.1.1.0"
+___ver___ = "8.1.1.1"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -3702,6 +3702,8 @@ def cfg_read_all():
         addConstraints='all'
     elif sketch_constraints == 0:
         addConstraints='coincident'
+    elif sketch_constraints == 2:
+        addConstraints='full'
     else:
         addConstraints='none'
     bbox_all=0; bbox_list=0; whitelisted_model_elements=''
@@ -7235,7 +7237,7 @@ def add_constraints(s_name):
                     #print i,2,i+1,2
                 j=j+1
                 cnt=cnt+1
-    elif addConstraints=='coincident':
+    elif addConstraints=='coincident' or addConstraints=='full':
         for i, geo in enumerate(geoms):
         #for i in range(len(geom)):
             #print (geo)
@@ -12489,7 +12491,10 @@ def DrawPCB(mypcb):
                 get_time()
                 t0=(running_time)
                 if hasattr (FreeCAD.ActiveDocument.getObject("PCB_Sketch_draft"), "autoconstraint"):
-                    FreeCAD.ActiveDocument.getObject("PCB_Sketch_draft").autoconstraint(edge_tolerance*5,0.01)
+                    if addConstraints=='full':
+                        FreeCAD.ActiveDocument.getObject("PCB_Sketch_draft").autoconstraint(edge_tolerance*5,0.01)
+                    else:
+                        add_constraints("PCB_Sketch_draft")
                 else:
                     add_constraints("PCB_Sketch_draft")
                 get_time()

@@ -382,6 +382,11 @@
             </item>
             <item>
              <property name="text">
+              <string>Full</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
               <string>None</string>
              </property>
             </item>
