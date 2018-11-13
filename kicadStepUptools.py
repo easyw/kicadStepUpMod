@@ -448,7 +448,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.1.1.1"
+___ver___ = "8.1.1.2"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -15526,11 +15526,35 @@ def PushFootprint():
 ###
 
 def simplify_sketch():
+    ''' simplifying & sanitizing sketches '''
     global maxRadius
     
     doc = FreeCAD.ActiveDocument
     sel = FreeCADGui.Selection.getSelection()
     if len(sel)==1:
+        if 'Sketcher' in sel[0].TypeId:
+            new_geo=[]
+            for g in sel[0].Geometry:
+                print(g)
+                if 'Line' in str(g):
+                    print(g.length())
+                    if g.length() <= 0.1:
+                        print(g,'too short')
+                    else:
+                        new_geo.append(g)
+                elif 'Point' not in str(g):
+                    new_geo.append(g)
+            #new_constrs=sel[0].Constraints
+            if len(sel[0].Geometry) != len (new_geo):
+                FreeCAD.ActiveDocument.addObject('Sketcher::SketchObject',sel[0].Label+u'_sanitized')
+                new_sk=FreeCAD.ActiveDocument.ActiveObject
+                new_sk.Placement = sel[0].Placement
+                new_sk.Geometry=new_geo
+                #new_sk.Constraints=new_constrs
+                FreeCAD.ActiveDocument.recompute()
+                FreeCADGui.ActiveDocument.getObject(sel[0].Name).Visibility=False
+                FreeCADGui.Selection.clearSelection()
+                FreeCADGui.Selection.addSelection(FreeCAD.activeDocument().ActiveObject) #.addSelection(new_sk.Name)
         new_edge_list, not_supported, to_discretize, construction_geom = getBoardOutline()
         ## support for arcs, lines and bsplines in F_Silks
         sel = FreeCADGui.Selection.getSelection()
