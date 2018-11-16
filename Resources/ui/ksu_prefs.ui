@@ -7,14 +7,23 @@
     <x>0</x>
     <y>0</y>
     <width>542</width>
-    <height>638</height>
+    <height>664</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>General</string>
   </property>
   <layout class="QGridLayout" name="gridLayout1">
-   <property name="margin">
+   <property name="leftMargin">
+    <number>9</number>
+   </property>
+   <property name="topMargin">
+    <number>9</number>
+   </property>
+   <property name="rightMargin">
+    <number>9</number>
+   </property>
+   <property name="bottomMargin">
     <number>9</number>
    </property>
    <property name="spacing">
@@ -128,10 +137,7 @@
            <property name="prefPath" stdset="0">
             <cstring>Mod/kicadStepUpGui</cstring>
            </property>
-              <property name="mode">
-              <enum>Gui::FileChooser::Directory</enum>
-              </property>
-        </widget>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -141,7 +147,7 @@
           <x>-1</x>
           <y>105</y>
           <width>524</width>
-          <height>231</height>
+          <height>261</height>
          </rect>
         </property>
         <property name="title">
@@ -398,7 +404,7 @@
          <property name="geometry">
           <rect>
            <x>10</x>
-           <y>110</y>
+           <y>140</y>
            <width>463</width>
            <height>20</height>
           </rect>
@@ -424,7 +430,7 @@
          <property name="geometry">
           <rect>
            <x>10</x>
-           <y>140</y>
+           <y>165</y>
            <width>491</width>
            <height>24</height>
           </rect>
@@ -477,7 +483,7 @@
          <property name="geometry">
           <rect>
            <x>10</x>
-           <y>170</y>
+           <y>195</y>
            <width>491</width>
            <height>24</height>
           </rect>
@@ -528,7 +534,7 @@
          <property name="geometry">
           <rect>
            <x>10</x>
-           <y>200</y>
+           <y>225</y>
            <width>491</width>
            <height>24</height>
           </rect>
@@ -575,12 +581,65 @@
           </item>
          </layout>
         </widget>
+        <widget class="QWidget" name="layoutWidget_9">
+         <property name="geometry">
+          <rect>
+           <x>9</x>
+           <y>110</y>
+           <width>491</width>
+           <height>24</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_5">
+          <item>
+           <widget class="QLabel" name="label_2">
+            <property name="toolTip">
+             <string>minimum Edge Tolerance applied to PCB
+default '0.01mm'</string>
+            </property>
+            <property name="text">
+             <string>minimum edge tolerance</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_12">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="Gui::PrefLineEdit" name="lineEdit_edgeTolerance">
+            <property name="toolTip">
+             <string>minimum Edge Tolerance applied to PCB
+default '0.01mm'</string>
+            </property>
+            <property name="text">
+             <string>0.01</string>
+            </property>
+            <property name="prefEntry" stdset="0">
+             <cstring>edge_tolerance</cstring>
+            </property>
+            <property name="prefPath" stdset="0">
+             <cstring>Mod/kicadStepUpGui</cstring>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
        </widget>
        <widget class="QGroupBox" name="imp_exp_setting">
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>340</y>
+          <y>370</y>
           <width>522</width>
           <height>216</height>
          </rect>
@@ -860,7 +919,7 @@ Allowing or not Loading Multi Parts objects</string>
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>565</y>
+          <y>590</y>
           <width>522</width>
           <height>46</height>
          </rect>

@@ -12,12 +12,37 @@ import FreeCAD, Part, Sketcher
 from FreeCAD import Base
 from math import sqrt
 
-__ksuConstrainator_version__='1.1.0'
+__ksuConstrainator_version__='1.1.2'
 
 def sk_distance(p0, p1):
     return sqrt((p0[0] - p1[0])**2 + (p0[1] - p1[1])**2)
 #
-
+def sanitizeSk(s_name, edg_tol):
+    ''' simplifying & sanitizing sketches '''
+    #global edge_tolerance
+    
+    s=FreeCAD.ActiveDocument.getObject(s_name)
+    FreeCAD.Console.PrintWarning('check to sanitize')
+    if 'Sketcher' in s.TypeId:
+        idx_to_del=[]
+        for i,g in enumerate (s.Geometry):
+            #print(g,i)
+            if 'Line' in str(g):
+                #print(g.length())
+                if g.length() <= edg_tol:
+                    FreeCAD.Console.PrintMessage(g,i,'too short')
+                    idx_to_del.append(i)
+            elif 'Circle' in str(g):
+                if g.Radius <= edg_tol:
+                    FreeCAD.Console.PrintMessage(g,i,'too short')
+                    idx_to_del.append(i)
+        j=0
+        if len(idx_to_del) >0:
+            FreeCAD.Console.PrintMessage(u'sanitizing '+s.Label)
+        for i in idx_to_del:
+            sel[0].delGeometry(i-j)
+            j+=1
+##
 def add_constraints(s_name, edge_tolerance, add_Constraints):
     """ adding coincident points constaints """
     
@@ -105,55 +130,53 @@ def add_constraints(s_name, edge_tolerance, add_Constraints):
                 j=j+1
                 cnt=cnt+1
     elif add_Constraints=='coincident':
-        for i, geo in enumerate(geoms):
-        #for i in range(len(geom)):
-            p_g0_0=[geo[0],geo[1]]
-            p_g0_1=[geo[2],geo[3]]
-            #print p_g0_0,pg_g0_1
-            #if add_Constraints=='all':
-            #    if abs(p_g0_0[0]-p_g0_1[0])< edge_tolerance:
-            #        s.addConstraint(Sketcher.Constraint('Vertical',i))
-            #    elif abs(p_g0_0[1]-p_g0_1[1])< edge_tolerance:
-            #        s.addConstraint(Sketcher.Constraint('Horizontal',i))
-            j=i+1
-            for geo2 in geoms[(i + 1):]:
-                p_g1_0=[geo2[0],geo2[1]]
-                p_g1_1=[geo2[2],geo2[3]]
-                #rint p_g0_0, p_g0_1
-                #rint p_g1_0, p_g1_1
-                if sk_distance(p_g0_0,p_g1_0)< edge_tolerance:
-                ##App.ActiveDocument.PCB_Sketch.addConstraint(Sketcher.Constraint('Coincident',0,2,3,1)) 
-                    #s.addConstraint(Sketcher.Constraint('Coincident',i,1,j,1))
-                    sk_constraints.append(Sketcher.Constraint('Coincident',i,1,j,1))
-                    #print i,1,i+1,1
-                elif sk_distance(p_g0_0,p_g1_1)< edge_tolerance:
-                    #s.addConstraint(Sketcher.Constraint('Coincident',i,1,j,2))
-                    sk_constraints.append(Sketcher.Constraint('Coincident',i,1,j,2))
-                    #print i,1,i+1,2
-                elif sk_distance(p_g0_1,p_g1_0)< edge_tolerance:
-                    #s.addConstraint(Sketcher.Constraint('Coincident',i,2,j,1))
-                    sk_constraints.append(Sketcher.Constraint('Coincident',i,2,j,1))                    
-                    #print i,2,i+1,1
-                elif sk_distance(p_g0_1,p_g1_1)< edge_tolerance:
-                    #s.addConstraint(Sketcher.Constraint('Coincident',i,2,j,2))
-                    sk_constraints.append(Sketcher.Constraint('Coincident',i,2,j,2))
-                    #print i,2,i+1,2
-                j=j+1
-                cnt=cnt+1
-    
-
-    #myList=['ciao','ciok']
-    #myText='ci'
-    #for myItem in myList :
-    #    if myItem in myText :
-    #        print(myText)
-        #elif 0:
-        #    doStuff
-        #elif otherThing2:
-        #    doOther stuff
-        #else:
-        #    forget this, go have a drink
-    
+        if hasattr (FreeCAD.ActiveDocument.getObject(s_name), "autoconstraint"):
+            FreeCAD.Console.PrintWarning('using constrainator')
+            sanitizeSk(s_name, edge_tolerance)
+            sk1=FreeCAD.ActiveDocument.getObject(s_name)
+            sk1.detectMissingPointOnPointConstraints(edge_tolerance)
+            sk1.makeMissingPointOnPointCoincident()
+            FreeCAD.activeDocument().recompute()
+            sk1.autoRemoveRedundants(True)
+            sk1.solve()
+            FreeCAD.activeDocument().recompute()
+        else:
+            FreeCAD.Console.PrintWarning('using old constrainator')
+            for i, geo in enumerate(geoms):
+            #for i in range(len(geom)):
+                p_g0_0=[geo[0],geo[1]]
+                p_g0_1=[geo[2],geo[3]]
+                #print p_g0_0,pg_g0_1
+                #if add_Constraints=='all':
+                #    if abs(p_g0_0[0]-p_g0_1[0])< edge_tolerance:
+                #        s.addConstraint(Sketcher.Constraint('Vertical',i))
+                #    elif abs(p_g0_0[1]-p_g0_1[1])< edge_tolerance:
+                #        s.addConstraint(Sketcher.Constraint('Horizontal',i))
+                j=i+1
+                for geo2 in geoms[(i + 1):]:
+                    p_g1_0=[geo2[0],geo2[1]]
+                    p_g1_1=[geo2[2],geo2[3]]
+                    #rint p_g0_0, p_g0_1
+                    #rint p_g1_0, p_g1_1
+                    if sk_distance(p_g0_0,p_g1_0)< edge_tolerance:
+                    ##App.ActiveDocument.PCB_Sketch.addConstraint(Sketcher.Constraint('Coincident',0,2,3,1)) 
+                        #s.addConstraint(Sketcher.Constraint('Coincident',i,1,j,1))
+                        sk_constraints.append(Sketcher.Constraint('Coincident',i,1,j,1))
+                        #print i,1,i+1,1
+                    elif sk_distance(p_g0_0,p_g1_1)< edge_tolerance:
+                        #s.addConstraint(Sketcher.Constraint('Coincident',i,1,j,2))
+                        sk_constraints.append(Sketcher.Constraint('Coincident',i,1,j,2))
+                        #print i,1,i+1,2
+                    elif sk_distance(p_g0_1,p_g1_0)< edge_tolerance:
+                        #s.addConstraint(Sketcher.Constraint('Coincident',i,2,j,1))
+                        sk_constraints.append(Sketcher.Constraint('Coincident',i,2,j,1))                    
+                        #print i,2,i+1,1
+                    elif sk_distance(p_g0_1,p_g1_1)< edge_tolerance:
+                        #s.addConstraint(Sketcher.Constraint('Coincident',i,2,j,2))
+                        sk_constraints.append(Sketcher.Constraint('Coincident',i,2,j,2))
+                        #print i,2,i+1,2
+                    j=j+1
+                    cnt=cnt+1
     if len(sk_constraints) > 0:
         old_sk_constraints = []
         for c in s.Constraints:

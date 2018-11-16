@@ -448,7 +448,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.1.1.3"
+___ver___ = "8.1.1.4"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -3598,7 +3598,7 @@ def cfg_read_all():
     global enable_materials, docking_mode, mat_section, dock_section, compound_section, turntable_section
     global font_section, ini_vars, num_min_lines, animate_result, allow_compound, font_size, grid_orig
     global constraints_section, addConstraints, exporting_mode_section, stp_exp_mode
-    global links_importing_mode_section, links_imp_mode, generate_sketch
+    global links_importing_mode_section, links_imp_mode, generate_sketch, edge_tolerance
     
     import os, sys, re
     from sys import platform as _platform
@@ -3657,6 +3657,10 @@ def cfg_read_all():
         min_drill_size = float(prefs.GetString('drill_size'))
     except:
         min_drill_size = 0.0
+    try:
+        edge_tolerance = float(prefs.GetString('edge_tolerance'))
+    except:
+        edge_tolerance = 0.01
     #print(min_drill_size)
     if prefs.GetBool('vrml_materials'):
         enable_materials=1
@@ -7146,6 +7150,32 @@ def check_requirements():
         msg+="when fusing a lot of objects\r\nplease consider to use bbox or blacklist small objects\r\n\r\n"    
     ##start_time=current_milli_time()
 ###
+def sanitizeSketch(s_name):
+    ''' simplifying & sanitizing sketches '''
+    global edge_tolerance
+    
+    s=FreeCAD.ActiveDocument.getObject(s_name)
+    sayw('check to sanitize')
+    if 'Sketcher' in s.TypeId:
+        idx_to_del=[]
+        for i,g in enumerate (s.Geometry):
+            #print(g,i)
+            if 'Line' in str(g):
+                #print(g.length())
+                if g.length() <= edge_tolerance:
+                    print(g,i,'too short')
+                    idx_to_del.append(i)
+            elif 'Circle' in str(g):
+                if g.Radius <= edge_tolerance:
+                    print(g,i,'too short')
+                    idx_to_del.append(i)
+        j=0
+        if len(idx_to_del) >0:
+            print(u'sanitizing '+s.Label)
+        for i in idx_to_del:
+            sel[0].delGeometry(i-j)
+            j+=1
+##
 def add_constraints(s_name):
     """ adding coincident points constaints """
     global addConstraints, edge_tolerance
@@ -7239,14 +7269,17 @@ def add_constraints(s_name):
                 cnt=cnt+1
     elif addConstraints=='coincident' or addConstraints=='full':
         if hasattr (FreeCAD.ActiveDocument.getObject(s_name), "autoconstraint"):
+            sayw('using constrainator')
+            sanitizeSketch(s_name)
             sk1=FreeCAD.ActiveDocument.getObject(s_name)
             sk1.detectMissingPointOnPointConstraints(edge_tolerance)
             sk1.makeMissingPointOnPointCoincident()
             FreeCAD.activeDocument().recompute()
-            sk1.autoRemoveRedundants(False)
+            sk1.autoRemoveRedundants(True)
             sk1.solve()
             FreeCAD.activeDocument().recompute()
         else:
+            sayw('using old constrainator')
             for i, geo in enumerate(geoms):
             #for i in range(len(geom)):
                 #print (geo)
@@ -12539,7 +12572,7 @@ def DrawPCB(mypcb):
                 s_PCB_Sketch_draft = FreeCAD.ActiveDocument.getObject("Face_PCB_Sketch_draft").Shape.copy()
                 
             #s_PCB_Sketch_draft = s.copy()
-            sayw ('created PCB face')
+            sayw ('created PCB face w/ edge tolerance -> '+str(edge_tolerance)+' mm')
             if aux_orig ==1 or grid_orig ==1:
                 s_PCB_Sketch_draft.translate((off_x, off_y,0))
             #else:
@@ -15542,29 +15575,7 @@ def simplify_sketch():
     sel = FreeCADGui.Selection.getSelection()
     if len(sel)==1:
         if 'Sketcher' in sel[0].TypeId:
-            new_geo=[]
-            for g in sel[0].Geometry:
-                print(g)
-                if 'Line' in str(g):
-                    print(g.length())
-                    if g.length() <= edge_tolerance: # 0.1:
-                        print(g,'too short')
-                    else:
-                        new_geo.append(g)
-                elif 'Point' not in str(g):
-                    new_geo.append(g)
-            #new_constrs=sel[0].Constraints
-            if len(sel[0].Geometry) != len (new_geo):
-                FreeCAD.ActiveDocument.addObject('Sketcher::SketchObject',sel[0].Label+u'_sanitized')
-                new_sk=FreeCAD.ActiveDocument.ActiveObject
-                new_sk.Placement = sel[0].Placement
-                new_sk.Geometry=new_geo
-                #new_sk.Constraints=new_constrs
-                FreeCAD.ActiveDocument.recompute()
-                FreeCADGui.ActiveDocument.getObject(sel[0].Name).Visibility=False
-                FreeCADGui.Selection.clearSelection()
-                FreeCADGui.Selection.addSelection(FreeCAD.activeDocument().ActiveObject) #.addSelection(new_sk.Name)
-                sayw('new sanitized sketch')
+            sanitizeSketch(sel[0].Name)
         new_edge_list, not_supported, to_discretize, construction_geom = getBoardOutline()
         ## support for arcs, lines and bsplines in F_Silks
         sel = FreeCADGui.Selection.getSelection()
