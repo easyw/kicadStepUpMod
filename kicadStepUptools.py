@@ -448,7 +448,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.1.1.4"
+___ver___ = "8.1.1.5"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -7173,7 +7173,7 @@ def sanitizeSketch(s_name):
         if len(idx_to_del) >0:
             print(u'sanitizing '+s.Label)
         for i in idx_to_del:
-            sel[0].delGeometry(i-j)
+            s.delGeometry(i-j)
             j+=1
 ##
 def add_constraints(s_name):

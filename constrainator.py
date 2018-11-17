@@ -12,7 +12,7 @@ import FreeCAD, Part, Sketcher
 from FreeCAD import Base
 from math import sqrt
 
-__ksuConstrainator_version__='1.1.3'
+__ksuConstrainator_version__='1.1.4'
 
 def sk_distance(p0, p1):
     return sqrt((p0[0] - p1[0])**2 + (p0[1] - p1[1])**2)
@@ -84,7 +84,11 @@ def add_constraints(s_name, edge_tolerance, add_Constraints):
             #points.append([[point2[0],point2[1]],[geom_index],[2]])
             #points.append([[point1[0],point1[1]],[geom_index]]) #,[1]])
             #points.append([[point2[0],point2[1]],[geom_index]]) #,[2]])
-            geoms.append([point1[0],point1[1],point2[0],point2[1]])
+            if 'Line' in type(s.Geometry[geom_index]).__name__:
+                tp = 'Line'
+            else:
+                tp = 'Arc'
+            geoms.append([point1[0],point1[1],point2[0],point2[1],tp])
 
     #
     #print geom
@@ -110,10 +114,10 @@ def add_constraints(s_name, edge_tolerance, add_Constraints):
                 p_g0_1=[geo[2],geo[3]]
                 #print p_g0_0,pg_g0_1
                 #sayw(abs(p_g0_0[0]-p_g0_1[0]))
-                if abs(p_g0_0[0]-p_g0_1[0])< edge_tolerance:
+                if abs(p_g0_0[0]-p_g0_1[0])< edge_tolerance and geo[4] == 'Line':
                     #s.addConstraint(Sketcher.Constraint('Vertical',i))
                     sk_constraints.append(Sketcher.Constraint('Vertical',i))
-                elif abs(p_g0_0[1]-p_g0_1[1])< edge_tolerance:
+                elif abs(p_g0_0[1]-p_g0_1[1])< edge_tolerance and geo[4] == 'Line':
                     #s.addConstraint(Sketcher.Constraint('Horizontal',i))
                     sk_constraints.append(Sketcher.Constraint('Horizontal',i))
                 j=i+1
@@ -124,10 +128,10 @@ def add_constraints(s_name, edge_tolerance, add_Constraints):
                 p_g0_1=[geo[2],geo[3]]
                 #print p_g0_0,pg_g0_1
                 #sayw(abs(p_g0_0[0]-p_g0_1[0]))
-                if abs(p_g0_0[0]-p_g0_1[0])< edge_tolerance:
+                if abs(p_g0_0[0]-p_g0_1[0])< edge_tolerance and geo[4] == 'Line':
                     #s.addConstraint(Sketcher.Constraint('Vertical',i))
                     sk_constraints.append(Sketcher.Constraint('Vertical',i))
-                elif abs(p_g0_0[1]-p_g0_1[1])< edge_tolerance:
+                elif abs(p_g0_0[1]-p_g0_1[1])< edge_tolerance and geo[4] == 'Line':
                     #s.addConstraint(Sketcher.Constraint('Horizontal',i))
                     sk_constraints.append(Sketcher.Constraint('Horizontal',i))
                 j=i+1
