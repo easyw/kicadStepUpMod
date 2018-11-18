@@ -336,6 +336,7 @@
 # improved writing fp data 
 # push Moved 3D model(s) to kicad PCB
 # sync Reference in case of lost correct Label (import export STEP file with Links)
+# improved precision on board data using "{:.3f}".format for pushpcb & Pushfootprint and angles
 # most clean code and comments done
 
 ##todo
@@ -448,7 +449,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.1.1.5"
+___ver___ = "8.1.1.6"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -4677,10 +4678,10 @@ def Display_info(blacklisted_models):
         new_pos_x=board_base_point_x
         new_pos_y=board_base_point_y
     if (grid_orig==1):
-        msg+="<br>Board Placed @ "+"{0:.3f}".format(board_base_point_x)+";"+"{0:.3f}".format(board_base_point_y)+";0.0"
+        msg+="<br>Board Placed @ "+"{0:.2f}".format(board_base_point_x)+";"+"{0:.2f}".format(board_base_point_y)+";0.0"
     else:
-        msg+="<br>Board Placed @ "+"{0:.3f}".format(new_pos_x)+";"+"{0:.3f}".format(new_pos_y)+";0.0"
-    msg+="<br>kicad pcb pos: ("+"{0:.3f}".format(real_board_pos_x)+";"+"{0:.3f}".format(real_board_pos_y)+";"+"{0:.3f}".format(0)+")"
+        msg+="<br>Board Placed @ "+"{0:.2f}".format(new_pos_x)+";"+"{0:.2f}".format(new_pos_y)+";0.0"
+    msg+="<br>kicad pcb pos: ("+"{0:.2f}".format(real_board_pos_x)+";"+"{0:.2f}".format(real_board_pos_y)+";"+"{0:.2f}".format(0)+")"
     if (bbox_all==1) or (bbox_list==1):
         msg+="<br>bounding box modules applied"
     if (volume_minimum!=0):
@@ -4696,10 +4697,10 @@ def Display_info(blacklisted_models):
     #msg+="<br>kicad StepUp config file in:<br><b>"+ksu_config_fname+"</b><br>location."
     msg+="<br>StepUp configuration options are located in the preferences system of FreeCAD."
     if (grid_orig==1):
-        say("Board Placed @ "+"{0:.3f}".format(board_base_point_x)+";"+"{0:.3f}".format(board_base_point_y)+";0.0")
+        say("Board Placed @ "+"{0:.2f}".format(board_base_point_x)+";"+"{0:.2f}".format(board_base_point_y)+";0.0")
     else:
-        say("Board Placed @ "+"{0:.3f}".format(new_pos_x)+";"+"{0:.3f}".format(new_pos_y)+";0.0")
-    say("kicad pcb pos: ("+"{0:.3f}".format(real_board_pos_x)+";"+"{0:.3f}".format(real_board_pos_y)+";"+"{0:.3f}".format(0)+")")      
+        say("Board Placed @ "+"{0:.2f}".format(new_pos_x)+";"+"{0:.2f}".format(new_pos_y)+";0.0")
+    say("kicad pcb pos: ("+"{0:.2f}".format(real_board_pos_x)+";"+"{0:.2f}".format(real_board_pos_y)+";"+"{0:.2f}".format(0)+")")      
     if (show_messages==True):
         QtGui.QApplication.restoreOverrideCursor()
         #RotateXYZGuiClass().setGeometry(25, 250, 500, 500)
@@ -5100,10 +5101,10 @@ def Export2MCAD(blacklisted_model_elements):
         new_pos_x=board_base_point_x
         new_pos_y=board_base_point_y
     if (grid_orig==1):
-        msg+="<br>Board Placed @ "+"{0:.3f}".format(board_base_point_x)+";"+"{0:.3f}".format(board_base_point_y)+";0.0"
+        msg+="<br>Board Placed @ "+"{0:.2f}".format(board_base_point_x)+";"+"{0:.2f}".format(board_base_point_y)+";0.0"
     else:
-        msg+="<br>Board Placed @ "+"{0:.3f}".format(new_pos_x)+";"+"{0:.3f}".format(new_pos_y)+";0.0"
-    msg+="<br>kicad pcb pos: ("+"{0:.3f}".format(real_board_pos_x)+";"+"{0:.3f}".format(real_board_pos_y)+";"+"{0:.3f}".format(0)+")"
+        msg+="<br>Board Placed @ "+"{0:.2f}".format(new_pos_x)+";"+"{0:.2f}".format(new_pos_y)+";0.0"
+    msg+="<br>kicad pcb pos: ("+"{0:.2f}".format(real_board_pos_x)+";"+"{0:.2f}".format(real_board_pos_y)+";"+"{0:.2f}".format(0)+")"
     if (bbox_all==1) or (bbox_list==1):
         msg+="<br>bounding box modules applied"
     if (volume_minimum!=0):
@@ -5119,10 +5120,10 @@ def Export2MCAD(blacklisted_model_elements):
     #msg+="<br>kicad StepUp config file in:<br><b>"+ksu_config_fname+"</b><br>location."
     msg+="<br>StepUp configuration options are located in the preferences system of FreeCAD."
     if (grid_orig==1):
-        say("Board Placed @ "+"{0:.3f}".format(board_base_point_x)+";"+"{0:.3f}".format(board_base_point_y)+";0.0")
+        say("Board Placed @ "+"{0:.2f}".format(board_base_point_x)+";"+"{0:.2f}".format(board_base_point_y)+";0.0")
     else:
-        say("Board Placed @ "+"{0:.3f}".format(new_pos_x)+";"+"{0:.3f}".format(new_pos_y)+";0.0")
-    say("kicad pcb pos: ("+"{0:.3f}".format(real_board_pos_x)+";"+"{0:.3f}".format(real_board_pos_y)+";"+"{0:.3f}".format(0)+")")    
+        say("Board Placed @ "+"{0:.2f}".format(new_pos_x)+";"+"{0:.2f}".format(new_pos_y)+";0.0")
+    say("kicad pcb pos: ("+"{0:.2f}".format(real_board_pos_x)+";"+"{0:.2f}".format(real_board_pos_y)+";"+"{0:.2f}".format(0)+")")    
     say_time()
     if (show_messages==True):
         QtGui.QApplication.restoreOverrideCursor()
@@ -17756,7 +17757,7 @@ def createEdge(edg,ofs):
             #stop
         else:
             #self.pcbElem.append(['gr_arc', xs, ys, x1, y1, curve, width, layer])
-            k_edg = "  (gr_arc (start {0:.3f} {1:.3f}) (end {2:.3f} {3:.3f}) (angle {4:.2f}) (layer {6}) (width {5}))"\
+            k_edg = "  (gr_arc (start {0:.3f} {1:.3f}) (end {2:.3f} {3:.3f}) (angle {4:.3f}) (layer {6}) (width {5}))"\
                     .format(xs+ofs[0], ys+ofs[1], x1+ofs[0], y1+ofs[1], angle, edge_width, layer)
             #.format(
             #            '{0:.10f}'.format(i[1] + abs(self.minX)), '{0:.10f}'.format(i[2] + abs(self.minY)), '{0:.10f}'.format(i[3] + abs(self.minX)), '{0:.10f}'.format(i[4] + abs(self.minY)), i[5], i[6], i[7]))
@@ -17867,7 +17868,7 @@ def createFp(edg,ofs,layer, edge_thick):
             #stop
         else:
             #self.pcbElem.append(['gr_arc', xs, ys, x1, y1, curve, width, layer])
-            k_edg = "  ("+ac+" (start {0:.3f} {1:.3f}) (end {2:.3f} {3:.3f}) (angle {4:.2f}) (layer {6}) (width {5}))"\
+            k_edg = "  ("+ac+" (start {0:.3f} {1:.3f}) (end {2:.3f} {3:.3f}) (angle {4:.3f}) (layer {6}) (width {5}))"\
                     .format(xs+ofs[0], ys+ofs[1], x1+ofs[0], y1+ofs[1], angle, edge_thick, layer)
             #.format(
             #            '{0:.10f}'.format(i[1] + abs(self.minX)), '{0:.10f}'.format(i[2] + abs(self.minY)), '{0:.10f}'.format(i[3] + abs(self.minX)), '{0:.10f}'.format(i[4] + abs(self.minY)), i[5], i[6], i[7]))
@@ -18616,14 +18617,14 @@ def push3D2pcb(s,cnt,tsp):
                 mod_old_angle = mod_old_angle.replace(' ','')
                 #print (mod_old_angle)
                 if len(mod_old_angle) > 0:
-                    mod_old_angle=float("{0:.2f}".format(float(mod_old_angle)))
+                    mod_old_angle=float("{0:.3f}".format(float(mod_old_angle)))
                 else:
                     mod_old_angle = 0
             say ('module old angle '+str(mod_old_angle))
             nbr_spaces = len(cnt[idxF+1]) - len(cnt[idxF+1].lstrip())
             #new_pos="{0:.3f}".format(bbpx+off_x)+" "+"{0:.3f}".format(-1*(bbpy+off_y))+\
-            #        " "+"{0:.2f}".format(bbpa)+")"
-#                    " "+"{0:.2f}".format(bbpa-mod_old_angle)+")"
+            #        " "+"{0:.3f}".format(bbpa)+")"
+#                    " "+"{0:.3f}".format(bbpa-mod_old_angle)+")"
             #print(new_pos)
             ##cnt[idxF+1]=" " * nbr_spaces + '(at '+new_pos+os.linesep
             #say (content[idxF+1])
@@ -18709,7 +18710,7 @@ def push3D2pcb(s,cnt,tsp):
                     else:
                         old_val_angle = 0
                     base_val_angle = old_val_angle - mod_old_angle
-                    new_val_angle = ' '+("{0:.2f}".format(base_val_angle + bbpa))
+                    new_val_angle = ' '+("{0:.3f}".format(base_val_angle + bbpa))
                     if float(new_val_angle) == 0:
                         new_val_angle=''
                     #print (pad_values);print(ln.split('(at '))
@@ -18725,7 +18726,7 @@ def push3D2pcb(s,cnt,tsp):
                     else:
                         old_usr_angle = 0
                     base_usr_angle = old_usr_angle - mod_old_angle
-                    new_usr_angle = ' '+("{0:.2f}".format(base_usr_angle + bbpa))
+                    new_usr_angle = ' '+("{0:.3f}".format(base_usr_angle + bbpa))
                     if float(new_usr_angle) == 0:
                         new_usr_angle=''
                     #print (pad_values);print(ln.split('(at '))
@@ -18737,10 +18738,10 @@ def push3D2pcb(s,cnt,tsp):
             else:
                 new_angle=(bbpa-z_rot) # 180+(bbpa+z_rot)
             #new_angle=bbpa+z_rot
-            if "{0:.2f}".format(new_angle) == '-0.00' or "{0:.2f}".format(new_angle) == '0.00':
+            if "{0:.3f}".format(new_angle) == '-0.00' or "{0:.3f}".format(new_angle) == '0.00':
                 new_angle_str=''
             else:
-                new_angle_str = ' '+"{0:.2f}".format(new_angle)
+                new_angle_str = ' '+"{0:.3f}".format(new_angle)
             new_pos="{0:.3f}".format(bbpx+off_x-x_o*FLayer)+" "+"{0:.3f}".format(-1*(bbpy+off_y-y_o*FLayer))\
                     +new_angle_str+")"
              #print(new_pos)
@@ -18748,28 +18749,28 @@ def push3D2pcb(s,cnt,tsp):
             #adjusting reference
             if old_ref_angle is not None:
                 base_ref_angle = old_ref_angle - mod_old_angle # - z_rot
-                new_ref_angle = ' '+("{0:.2f}".format(base_ref_angle + bbpa + z_rot))
+                new_ref_angle = ' '+("{0:.3f}".format(base_ref_angle + bbpa + z_rot))
                 if float(new_ref_angle) == 0:
                     new_ref_angle=''
                 ln=cnt[idx_ref]
                 cnt[idx_ref] = ln.split('(at ')[0]+'(at ' + ref_values[0] +' '+ ref_values[1]+new_ref_angle+ln[ln.index(')'):]
             if old_val_angle is not None:
                 base_val_angle = old_ref_angle - mod_old_angle # 
-                new_val_angle = ' '+("{0:.2f}".format(base_val_angle + bbpa + z_rot))
+                new_val_angle = ' '+("{0:.3f}".format(base_val_angle + bbpa + z_rot))
                 if float(new_val_angle) == 0:
                     new_val_angle=''
                 ln=cnt[idx_val]
                 cnt[idx_val] = ln.split('(at ')[0]+'(at ' + val_values[0] +' '+ val_values[1]+new_val_angle+ln[ln.index(')'):]
             if old_usr_angle is not None:
                 base_usr_angle = old_usr_angle - mod_old_angle # 
-                new_usr_angle = ' '+("{0:.2f}".format(base_usr_angle + bbpa + z_rot))
+                new_usr_angle = ' '+("{0:.3f}".format(base_usr_angle + bbpa + z_rot))
                 if float(new_usr_angle) == 0:
                     new_usr_angle=''
                 ln=cnt[idx_usr]
                 cnt[idx_usr] = ln.split('(at ')[0]+'(at ' + usr_values[0] +' '+ usr_values[1]+new_usr_angle+ln[ln.index(')'):]
                 #print(new_ref_angle);print(old_ref_angle);print(z_rot);print(bbpa);print(base_ref_angle+bbpa);stop
             for p2r in pads_2rot:
-                new_pad_angle = ' '+("{0:.2f}".format(p2r[0] + bbpa + z_rot))
+                new_pad_angle = ' '+("{0:.3f}".format(p2r[0] + bbpa + z_rot))
                 if float(new_pad_angle) == 0:
                     new_pad_angle=''
                 #print (pad_values);print(ln.split('(at '))
