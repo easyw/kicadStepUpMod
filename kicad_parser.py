@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 #****************************************************************************
 
-
 from __future__ import (absolute_import, division,
         print_function, unicode_literals)
 #from builtins import *
@@ -21,6 +20,10 @@ import Path
 import sys, os
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 from kicadStepUptools import KicadPCB,SexpList
+
+__kicad_parser_version__ = '1.1.0'
+print('kicad_parser_version '+__kicad_parser_version__)
+
 
 try:  #maui
   basestring
@@ -1230,7 +1233,10 @@ class KicadFcad:
 
         objs = []
         for z in self.pcb.zone:
-            if z.layer != self.layer:
+            try:
+                if z.layer != self.layer:
+                    continue
+            except:
                 continue
             count = len(z.filled_polygon)
             self._pushLog('making zone {}...', z.net_name)
