@@ -449,7 +449,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.1.1.6"
+___ver___ = "8.1.1.7"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -12787,9 +12787,12 @@ def DrawPCB(mypcb):
                         rx=float(p.drill[0])
                         #print (p.drill)
                         if len(p.drill)>2:
-                            #print (p.drill[1])
-                            #stop
-                            ry=float(p.drill[1])
+                            try:
+                                #print (p.drill[1])
+                                #stop
+                                ry=float(p.drill[1])
+                            except:
+                                ry=rx
                         else:
                             ry=rx
                         #print(p.at[0],p.at[1], p.drill[0])

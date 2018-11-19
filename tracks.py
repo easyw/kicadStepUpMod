@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 #****************************************************************************
 
-import kicad
-#import kicad; import importlib; importlib.reload(kicad)
+import kicad_parser
+#import kicad_parser; import importlib; importlib.reload(kicad_parser)
 import time
 import PySide
 from PySide import QtGui, QtCore
@@ -135,8 +135,8 @@ def addtracks():
         #    if float(lynbr) == Bot_lvl:
         #        LvlBotName=(mypcb.layers['{0}'.format(str(lynbr))][0])
         #print(LvlTopName,'  ',LvlBotName)
-        import kicad; reload_lib(kicad)
-        pcb = kicad.KicadFcad(filename)
+        import kicad_parser; reload_lib(kicad_parser)
+        pcb = kicad_parser.KicadFcad(filename)
         #pcb.setLayer(LvlTopName)
         minSizeDrill = 0.0  #0.8
         #print(pcb.colors)

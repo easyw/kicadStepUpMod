@@ -851,7 +851,13 @@ class KicadFcad:
                     #if p.drill.oval:
                         if not oval:
                             continue
-                        size = Vector(p.drill[0],p.drill[1])
+                        try:
+                            #print (p.drill[1])
+                            #stop
+                            size = Vector(p.drill[0],p.drill[1])
+                        except:
+                            size = Vector(p.drill[0],p.drill[0])                       
+                        #size = Vector(p.drill[0],p.drill[1])
                         w = make_oval(size+Vector(ofs,ofs))
                         ovals[min(size.x,size.y)].append(w)
                         oval_count += 1
