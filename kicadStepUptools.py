@@ -452,7 +452,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.2.0.2"
+___ver___ = "8.2.0.3"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -3718,14 +3718,16 @@ def cfg_read_all():
     else:
         addConstraints='none'
     bbox_all=0; bbox_list=0; whitelisted_model_elements=''
-    bbox_opt = prefs.GetString('blacklist')
+    bbox_opt = prefs.GetString('bbox_list')
     if bbox_opt.upper().find('ALL') !=-1:
         bbox_all=1
         whitelisted_model_elements=''
     elif bbox_opt.upper().find('LIST') !=-1:
-            bbox_list=1
-            whitelisted_model_elements=bbox_opt.strip('\r\n')
-            #whitelisted_models=whitelisted_model_elements.split(",")
+        bbox_list=1
+        whitelisted_model_elements=bbox_opt.strip('\r\n')
+        #whitelisted_models=whitelisted_model_elements.split(",")
+    #elif len(bbox_opt) > 0:
+        
     bbox=0;blacklisted_model_elements=''
     volume_minimum=0 #0.8  ##1 #mm^3, 0 skipped #global var default
     height_minimum=0 #0.8  ##1 #mm, 0 skipped   #global var default
