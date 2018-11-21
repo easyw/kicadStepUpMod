@@ -337,6 +337,8 @@
 # push Moved 3D model(s) to kicad PCB
 # sync Reference in case of lost correct Label (import export STEP file with Links)
 # improved precision on board data using "{:.3f}".format for pushpcb & Pushfootprint and angles
+# re-introduced ability to use footprints with edge cuts inside
+# added option (not used) to simplify compsolid to solid
 # most clean code and comments done
 
 ##todo
@@ -449,7 +451,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.1.1.7"
+___ver___ = "8.2.0.1"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -519,6 +521,9 @@ conflict_tolerance=1e-6  #volume tolerance
 #edge_tolerance=0.005 #edge coincidence tolerance (5000nm = 1/2 centesimo) base is mm
 edge_tolerance=0.01 #edge coincidence tolerance (500nm = 0.1 decimo) base is mm
 edge_tolerance_warning = 1e-6 #(1nm) base is mm
+apply_edge_tol = True
+simplifyComSolid = False #True  this can be quite time consuming
+
 font_size=8
 bbox_r_col=(0.411765, 0.411765, 0.411765)  #dimgrey
 bbox_c_col=(0.823529, 0.411765, 0.117647)  #chocolate
@@ -7704,7 +7709,8 @@ def onLoadBoard(file_name=None):
                 say('start adding constraints to pcb sketch')
                 add_constraints(s_name)
                 get_time()
-                say('adding constraints time ' +str(running_time-t1))
+                #say('adding constraints time ' +str(running_time-t1))
+                say('adding constraints time ' + "{0:.3f}".format(running_time-t1))
 
             ##FreeCAD.ActiveDocument.recompute()
             pcb_sk=FreeCAD.ActiveDocument.PCB_Sketch
@@ -12286,7 +12292,7 @@ def OSCD2Dg_edgestofaces(edges,algo=3,eps=0.001):
 def DrawPCB(mypcb):
     global start_time, use_AppPart, force_oldGroups, min_drill_size
     global addVirtual, load_sketch, off_x, off_y, aux_orig, grid_orig
-    global running_time, conv_offs, use_Links
+    global running_time, conv_offs, use_Links, apply_edge_tol, simplifyComSolid
 
     def simu_distance(p0, p1):
         return max (abs(p0[0] - p1[0]), abs(p0[1] - p1[1]))
@@ -12541,7 +12547,8 @@ def DrawPCB(mypcb):
                 else:
                     add_constraints("PCB_Sketch_draft")
                 get_time()
-                say('adding constraints time ' +str(running_time-t0))
+                #say('adding constraints time ' +str(running_time-t0))
+                say('adding constraints time ' + "{0:.3f}".format(running_time-t0))
             if 0: #dont_use_constraints:
                 sayw('adding missing geometry')
                 add_missing_geo("PCB_Sketch_draft")
@@ -12836,6 +12843,7 @@ def DrawPCB(mypcb):
             if (Base.Vector(x1,y1,0)) != (Base.Vector(x2,y2,0)): #non coincident points
                 line1=Part.Edge(PLine(Base.Vector(x1,y1,0), Base.Vector(x2,y2,0)))
                 edges.append(line1);
+                EdgeCuts.append(line1)
                 PCB.append(['Line', x1, y1, x2, y2])
                 if show_border:
                     Part.show(line1)
@@ -12848,6 +12856,7 @@ def DrawPCB(mypcb):
             radius = sqrt((xs - x1) ** 2 + (ys - y1) ** 2)
             [x1, y1] = rotPoint2([xs, ys], [m.at[0], -m.at[1]], m_angle)
             circle1=Part.Edge(Part.Circle(Base.Vector(x1, y1,0), Base.Vector(0, 0, 1), radius))
+            circle2=circle1
             if show_border:
                 Part.show(circle1)
             circle1=Part.Wire(circle1)
@@ -12856,6 +12865,7 @@ def DrawPCB(mypcb):
                 Part.show(circle1)
             say('2d circle closed path')
             PCBs.append(circle1)
+            EdgeCuts.append(circle2)
             PCB.append(['Circle', x1, y1, radius])
             #mod_circles.append (['Circle', x1, y1, e[2]])
             #PCB.append(['Circle', x1, y1, radius])
@@ -12875,10 +12885,28 @@ def DrawPCB(mypcb):
             [x2, y2] = rotPoint2([x2, y2], [m.at[0], -m.at[1]], m_angle)
             arc1=Part.Edge(Part.Arc(Base.Vector(x2,y2,0),mid_point(Base.Vector(x2,y2,0),Base.Vector(x1,y1,0),curve),Base.Vector(x1,y1,0)))
             edges.append(arc1)
+            EdgeCuts.append(arc1)
             if show_border:
                 Part.show(arc1)
             PCB.append(['Arc', x1, y1, x2, y2, curve])         
 
+    if len(EdgeCuts):
+        try:
+            s_PCB_Cuts = OSCD2Dg_edgestofaces(EdgeCuts,3 , edge_tolerance)
+            HoleList.append(s_PCB_Cuts)
+        except:
+            sayerr('error in making footprint Edcge Cuts')
+    if 0:
+        Part.show(s_PCB_Cuts)
+        fc_PCB_Cuts = FreeCAD.ActiveDocument.ActiveObject
+        face_PCB_Cuts = fc_PCB_Cuts.Shape.copy()
+        if aux_orig ==1 or grid_orig ==1:
+            face_PCB_Cuts.translate((-off_x, -off_y,0))
+        Part.show(face_PCB_Cuts)
+    #obj = FreeCAD.ActiveDocument.ActiveObject
+    #stop
+    #HoleList.append(face_PCB_Cuts)
+    #stop PCB_Cuts
     #sayw(len(HoleList))
     #say (PCB_Models)
     #stop
@@ -12966,8 +12994,9 @@ def DrawPCB(mypcb):
                 firstCoordinate = newEdges[0].Vertexes[-1].Point
             #nextCoordinate = newEdges[0].Curve.EndPoint
             #firstCoordinate = newEdges[0].Curve.StartPoint
-            for e in edges:
-                for v in e.Vertexes: v.setTolerance(edge_tolerance)  #adding tolerance to vertex
+            if apply_edge_tol:
+                for e in edges:
+                    for v in e.Vertexes: v.setTolerance(edge_tolerance)  #adding tolerance to vertex
             if show_data:
                 # print findWires(edges)
                 sayw(len(edges))
@@ -13428,6 +13457,25 @@ def DrawPCB(mypcb):
     #Part.show(cut_base)
     pcb_name=FreeCAD.ActiveDocument.ActiveObject.Name
     pcb_board=FreeCAD.ActiveDocument.ActiveObject
+    if simplifyComSolid:
+        faces=[]
+        for f in pcb_board.Shape.Faces:
+            faces.append(f) 
+        try:
+            _ = Part.Shell(faces)
+            _=Part.Solid(_)
+            FreeCAD.ActiveDocument.removeObject(pcb_name)
+            doc.addObject('Part::Feature','Pcb').Shape=_
+            pcb_name=FreeCAD.ActiveDocument.ActiveObject.Name
+            pcb_board=FreeCAD.ActiveDocument.ActiveObject
+        except:
+            sayerr('error in simplifying compsolid')
+    
+    # simple_pcb=doc.addObject("Part::Feature","simple_Pcb")
+    # simple_pcb.Shape=pcb_board.Shape
+    # spcb=pcb_board.Shape
+    # Part.show(spcb)
+    
     #FreeCAD.ActiveDocument.ActiveObject.Label ="Pcb"
     FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (colr,colg,colb)
     #FreeCADGui.ActiveDocument.ActiveObject.Transparency = 20
@@ -18941,4 +18989,5 @@ def getComboView(self,window):
 ## 
 ## if QtGui.QApplication.style().metaObject().className() == "QStyleSheetStyle":
 ##     form.setStyleSheet('QPushButton {border-radius: 0px; padding: 1px 2px;}')
+
 
