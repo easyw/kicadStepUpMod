@@ -338,6 +338,7 @@
 # sync Reference in case of lost correct Label (import export STEP file with Links)
 # improved precision on board data using "{:.3f}".format for pushpcb & Pushfootprint and angles
 # re-introduced ability to use footprints with edge cuts inside
+# restored ability to load pcb edge from footprint instead of Sketch
 # added option (not used) to simplify compsolid to solid
 # most clean code and comments done
 
@@ -451,7 +452,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.2.0.1"
+___ver___ = "8.2.0.2"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -521,7 +522,7 @@ conflict_tolerance=1e-6  #volume tolerance
 #edge_tolerance=0.005 #edge coincidence tolerance (5000nm = 1/2 centesimo) base is mm
 edge_tolerance=0.01 #edge coincidence tolerance (500nm = 0.1 decimo) base is mm
 edge_tolerance_warning = 1e-6 #(1nm) base is mm
-apply_edge_tol = True
+apply_edge_tolerance = False #True
 simplifyComSolid = False #True  this can be quite time consuming
 
 font_size=8
@@ -12292,7 +12293,7 @@ def OSCD2Dg_edgestofaces(edges,algo=3,eps=0.001):
 def DrawPCB(mypcb):
     global start_time, use_AppPart, force_oldGroups, min_drill_size
     global addVirtual, load_sketch, off_x, off_y, aux_orig, grid_orig
-    global running_time, conv_offs, use_Links, apply_edge_tol, simplifyComSolid
+    global running_time, conv_offs, use_Links, apply_edge_tolerance, simplifyComSolid
 
     def simu_distance(p0, p1):
         return max (abs(p0[0] - p1[0]), abs(p0[1] - p1[1]))
@@ -12890,12 +12891,19 @@ def DrawPCB(mypcb):
                 Part.show(arc1)
             PCB.append(['Arc', x1, y1, x2, y2, curve])         
 
-    if len(EdgeCuts):
+    if len(EdgeCuts) >0 and not create_pcb_from_edges:
         try:
             s_PCB_Cuts = OSCD2Dg_edgestofaces(EdgeCuts,3 , edge_tolerance)
             HoleList.append(s_PCB_Cuts)
         except:
-            sayerr('error in making footprint Edcge Cuts')
+            sayerr('error in making footprint Edge Cuts')
+    elif len(EdgeCuts) > 0:
+        try:
+            s_PCB_Cuts = OSCD2Dg_edgestofaces(EdgeCuts,3 , edge_tolerance)
+            #Part.show(s_PCB_Cuts)
+        except:
+            sayerr('error in making PCB from footprint Edge Cuts')
+    
     if 0:
         Part.show(s_PCB_Cuts)
         fc_PCB_Cuts = FreeCAD.ActiveDocument.ActiveObject
@@ -12982,7 +12990,7 @@ def DrawPCB(mypcb):
         if (len(edges)==0) and (len(PCBs)==0):
             sayw("no PCBs found")
         else:
-            sayw('creating pcb from edges instead of sketch')
+            sayerr('creating pcb from edges instead of sketch')
             newEdges = [];
             if (len(edges)>0):
                 newEdges.append(edges.pop(0))
@@ -12994,7 +13002,7 @@ def DrawPCB(mypcb):
                 firstCoordinate = newEdges[0].Vertexes[-1].Point
             #nextCoordinate = newEdges[0].Curve.EndPoint
             #firstCoordinate = newEdges[0].Curve.StartPoint
-            if apply_edge_tol:
+            if apply_edge_tolerance:
                 for e in edges:
                     for v in e.Vertexes: v.setTolerance(edge_tolerance)  #adding tolerance to vertex
             if show_data:
