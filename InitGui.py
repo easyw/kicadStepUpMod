@@ -117,10 +117,10 @@ class ksuWB ( Workbench ):
     global main_ksu_Icon, ksu_wb_version, myurlKWB, mycommitsKWB
     global ksuWB_ui_path, kSU_MainPrefPage, ksuWB_icons_path
     
-    "kicad StepUp WB object"
+    "KiCad StepUp Wb object"
     Icon = main_ksu_Icon
     #Icon = ":Resources/icons/kicad-StepUp-tools-WB.svg"
-    MenuText = "kicad StepUp WB"
+    MenuText = "KiCad StepUp Wb"
     ToolTip = "kicad StepUp workbench"
  
     def GetClassName(self):
@@ -416,7 +416,7 @@ class ksuWB ( Workbench ):
                     <font color=red>PLEASE UPDATE "kicadStepUpMod" WB.</font>
                     <br>through \"Tools\" \"Addon manager\" Menu
                     <br><br><b>your release is """+str(delta)+""" commit"""+s+""" behind</b><br>
-                    <br><a href=\""""+myurlKWB+"""\">kicad StepUp WB</a>
+                    <br><a href=\""""+myurlKWB+"""\">KiCad StepUp Wb</a>
                     <br>
                     <br>set \'checkUpdates\' to \'False\' to avoid this checking
                     <br>in \"Tools\", \"Edit Parameters\",<br>\"Preferences\"->\"Mod\"->\"kicadStepUp\"
