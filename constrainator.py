@@ -12,7 +12,7 @@ import FreeCAD, Part, Sketcher
 from FreeCAD import Base
 from math import sqrt
 
-__ksuConstrainator_version__='1.1.4'
+__ksuConstrainator_version__='1.1.5'
 
 def sk_distance(p0, p1):
     return sqrt((p0[0] - p1[0])**2 + (p0[1] - p1[1])**2)
@@ -30,18 +30,18 @@ def sanitizeSk(s_name, edg_tol):
             if 'Line' in str(g):
                 #print(g.length())
                 if g.length() <= edg_tol:
-                    FreeCAD.Console.PrintMessage(g,i,'too short\n')
+                    FreeCAD.Console.PrintMessage(str(g)+' '+str(i)+' too short\n')
                     idx_to_del.append(i)
             elif 'Circle' in str(g):
                 if g.Radius <= edg_tol:
-                    FreeCAD.Console.PrintMessage(g,i,'too short\n')
+                    FreeCAD.Console.PrintMessage(str(g)+' '+str(i)+' too short\n')
                     idx_to_del.append(i)
         j=0
         if len(idx_to_del) >0:
             FreeCAD.Console.PrintMessage(u'sanitizing '+s.Label)
             FreeCAD.Console.PrintMessage('\n')
         for i in idx_to_del:
-            sel[0].delGeometry(i-j)
+            s.delGeometry(i-j)
             j+=1
 ##
 def add_constraints(s_name, edge_tolerance, add_Constraints):
