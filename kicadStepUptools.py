@@ -340,6 +340,7 @@
 # re-introduced ability to use footprints with edge cuts inside
 # restored ability to load pcb edge from footprint instead of Sketch
 # added option (not used) to simplify compsolid to solid
+# added support for pcb reading gr_poly on Edge.Cuts
 # most clean code and comments done
 
 ##todo
@@ -452,7 +453,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.2.0.3"
+___ver___ = "8.2.0.4"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -1502,6 +1503,7 @@ class KicadPCB(SexpParser):
                 'gr_line',
                 'gr_circle',
                 'gr_arc',
+                'gr_poly',
                 'segment',
                 'via',
                 ('module',
@@ -12348,6 +12350,7 @@ def DrawPCB(mypcb):
     # say(len(mypcb.gr_arc))
     #edg_segms = len(mypcb.gr_line)+len(mypcb.gr_arc)
     edg_segms = 0
+    sayw('parsing')
     for ln in mypcb.gr_line:
         if 'Edge.Cuts' in ln.layer:
             #say(ln.layer)
@@ -12356,7 +12359,21 @@ def DrawPCB(mypcb):
         if 'Edge.Cuts' in ar.layer:
             #say(ln.layer)
             edg_segms+=1
+    for lp in mypcb.gr_poly:
+        #print(lp)
+        #print(lp.layer)
+        #print(lp.pts)
+        if 'Edge.Cuts' in lp.layer:
+            #sayerr(lp.layer)
+            for p in lp.pts.xy:
+                edg_segms+=1
+                #sayerr(p)
+            #stop
+            #edg_segms+=1
     sayw(str(edg_segms)+' edge segments')
+    #for lp in mypcb.gr_poly: #pcb polylines
+    #    if lp.layer != 'Edge.Cuts':
+    #        continue
     if edg_segms > max_edges_admitted:
         sayerr('too many segments ('+str(edg_segms)+'), skipping sketches & constraints')
         # load_sketch = False
@@ -12411,7 +12428,35 @@ def DrawPCB(mypcb):
             PCB.append(['Line', l.start[0], -l.start[1], l.end[0], -l.end[1]])
             if show_border:
                 Part.show(line1)
-
+    for lp in mypcb.gr_poly: #pcb polylines
+        if lp.layer != 'Edge.Cuts':
+            continue
+        ind = 0
+        l = len(lp.pts.xy)
+        for p in lp.pts.xy:
+            if ind == 0:
+                line1=Part.Edge(PLine(Base.Vector(lp.pts.xy[l-1][0],-lp.pts.xy[l-1][1],0), Base.Vector(lp.pts.xy[0][0],-lp.pts.xy[0][1],0)))
+                edges.append(line1);
+                if load_sketch:
+                    if aux_orig ==1 or grid_orig ==1:
+                        #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0]-off_x,-l.start[1]-off_y,0), Base.Vector(l.end[0]-off_x,-l.end[1]-off_y,0)))
+                        PCB_Geo.append(PLine(Base.Vector(lp.pts.xy[l-1][0]-off_x,-lp.pts.xy[l-1][1]-off_y,0), Base.Vector(lp.pts.xy[0][0]-off_x,-lp.pts.xy[0][1]-off_y,0)))
+                    else:
+                        #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0],-l.start[1],0), Base.Vector(l.end[0],-l.end[1],0)))
+                        PCB_Geo.append(PLine(Base.Vector(lp.pts.xy[l-1][0],-lp.pts.xy[l-1][1],0), Base.Vector(lp.pts.xy[0][0],-lp.pts.xy[0][1],0)))
+            else:
+                line1=Part.Edge(PLine(Base.Vector(lp.pts.xy[ind-1][0],-lp.pts.xy[ind-1][1],0), Base.Vector(lp.pts.xy[ind][0],-lp.pts.xy[ind][1],0)))
+                edges.append(line1);
+                if load_sketch:
+                    if aux_orig ==1 or grid_orig ==1:
+                        #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0]-off_x,-l.start[1]-off_y,0), Base.Vector(l.end[0]-off_x,-l.end[1]-off_y,0)))
+                        PCB_Geo.append(PLine(Base.Vector(lp.pts.xy[ind-1][0]-off_x,-lp.pts.xy[ind-1][1]-off_y,0), Base.Vector(lp.pts.xy[ind][0]-off_x,-lp.pts.xy[ind][1]-off_y,0)))
+                    else:
+                        #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0],-l.start[1],0), Base.Vector(l.end[0],-l.end[1],0)))
+                        PCB_Geo.append(PLine(Base.Vector(lp.pts.xy[ind-1][0],-lp.pts.xy[ind-1][1],0), Base.Vector(lp.pts.xy[ind][0],-lp.pts.xy[ind][1],0)))
+            ind+=1
+        #closing edge
+                
     ## NB use always float() to guarantee number not string!!!
     for a in mypcb.gr_arc: #pcb arcs
         if a.layer != 'Edge.Cuts':
@@ -18385,7 +18430,9 @@ def export_pcb(fname=None):
                 edge_pcb_exists=True
             if not edge_pcb_exists and len(re.findall('\s\(fp_circle(.+?)Edge(.+?)\)\)\r\n|\(fp_circle(.+?)Edge(.+?)\)\)\r|\(fp_circle(.+?)Edge(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
                 edge_pcb_exists=True
- 
+            if not edge_pcb_exists and len(re.findall('\s\(gr_poly(.+?)Edge(.+?)\)\)\r\n|\(gr_poly(.+?)Edge(.+?)\)\)\r|\(gr_poly(.+?)Edge(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
+                edge_pcb_exists=True
+  
             oft=None
             if aux_orig == 1:
                 oft=getAuxOrigin(data)
@@ -18429,6 +18476,7 @@ def export_pcb(fname=None):
                     repl = re.sub('\s\(gr_line(.+?)Edge(.+?)\)\)\r\n|\(gr_line(.+?)Edge(.+?)\)\)\r|\(gr_line(.+?)Edge(.+?)\)\)\n','',data, flags=re.MULTILINE)
                     repl = re.sub('\s\(gr_arc(.+?)Edge(.+?)\)\)\r\n|\(gr_arc(.+?)Edge(.+?)\)\)\r|\(gr_arc(.+?)Edge(.+?)\)\)\n','',repl, flags=re.MULTILINE)
                     repl = re.sub('\s\(gr_circle(.+?)Edge(.+?)\)\)\r\n|\(gr_circle(.+?)Edge(.+?)\)\)\r|\(gr_circle(.+?)Edge(.+?)\)\)\n','',repl, flags=re.MULTILINE)
+                    repl = re.sub('\s\(gr_poly(.+?)Edge(.+?)\)\)\r\n|\(gr_poly(.+?)Edge(.+?)\)\)\r|\(gr_poly(.+?)Edge(.+?)\)\)\n','',repl, flags=re.MULTILINE)
                     #sayerr(replace)
                     k = repl.rfind(")")  #removing latest ')'
                     newcontent = repl[:k]
