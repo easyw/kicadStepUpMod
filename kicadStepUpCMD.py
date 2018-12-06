@@ -1801,8 +1801,11 @@ def toggle_transparency_subtree(objs):
     while not checkinlistcomplete:
         for obj in totoggle:
             if (obj not in objs) and (frozenset(obj.InList) - totoggle):
-                totoggle.toggle(obj)
-                break
+                try:
+                    totoggle.toggle(obj)
+                    break
+                except:
+                    FreeCAD.Console.PrintWarning('totoggle not allowed\n')
         else:
             checkinlistcomplete = True
     for obj in totoggle:
