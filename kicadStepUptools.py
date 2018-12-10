@@ -341,6 +341,7 @@
 # restored ability to load pcb edge from footprint instead of Sketch
 # added option (not used) to simplify compsolid to solid
 # added support for pcb reading gr_poly on Edge.Cuts
+# improved fp parsing for custom geo
 # most clean code and comments done
 
 ##todo
@@ -453,7 +454,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.2.0.4"
+___ver___ = "8.2.0.5"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -10997,19 +10998,25 @@ def routineDrawFootPrint(content,name):
                 bot=True
             if top==True:
                 #mypad=addPadLong(x1, y1, dx, dy, perc, 0, 0)
-                mypad2=None
+                mypad2 = None
+                skip = False
                 if pShape=='custom' and pGeomC is None:
                     #sayw(pnts.groups(0)[0].split('(xy'))
-                    poly_points=pnts.groups(0)[0].split('(xy')[1:]
-                    mypad=createPoly(x1, y1, dx, dy, xs,ys,rx,ry,pShape,'top', poly_points)
-                    if anchor is not None:
-                        if anchor[0]=="circle":
-                            perc=100
-                        #print 'anchor ',anchor[0]
-                        mypad2=createPad3(x1, y1, dx, dy, xs,ys,rx,ry,anchor,'top')
-                        #Part.show(mypad2)
-                        #print anchor
-                        #stop
+                    #print(pGeomC)
+                    try:
+                        poly_points=pnts.groups(0)[0].split('(xy')[1:]
+                        mypad=createPoly(x1, y1, dx, dy, xs,ys,rx,ry,pShape,'top', poly_points)
+                        if anchor is not None:
+                            if anchor[0]=="circle":
+                                perc=100
+                            #print 'anchor ',anchor[0]
+                            mypad2=createPad3(x1, y1, dx, dy, xs,ys,rx,ry,anchor,'top')
+                            #Part.show(mypad2)
+                            #print anchor
+                            #stop
+                    except:
+                        sayerr('geometry unsupported')
+                        skip = True
                 elif pShape=='custom' and pGeomC is not None:
                     #sayerr(pGeomC)
                     #print('pGeomC',(pGeomC))
@@ -11039,34 +11046,40 @@ def routineDrawFootPrint(content,name):
                     mypad=createPad3(x1, y1, dx, dy, xs,ys,rx,ry,pShape,'top',pRratio)
                 ##pad pos x,y; pad size x,y; drillcenter x,y; drill size x,y, layer
                 obj=mypad
-                if rot!=0:
+                if rot != 0 and not skip:
                     rotateObj(obj, [xs, ys, rot])
                     if mypad2 is not None:
                         rotateObj(mypad2, [xs, ys, rot])
-                TopPadList.append(obj)
+                if not skip:
+                    TopPadList.append(obj)
                 if mypad2 is not None:
                     TopPadList.append(mypad2)
                 
             if bot==True:
                 #mypad=addPadLong(x1, y1, dx, dy, perc, 0, -1.6)
-                mypad2=None
+                mypad2=None; skip = False
                 if pShape=='custom':
                     #sayw(pnts.groups(0)[0].split('(xy'))
-                    poly_points=pnts.groups(0)[0].split('(xy')[1:]
-                    mypad=createPoly(x1, y1, dx, dy, xs,ys,rx,ry,pShape,'bot', poly_points)
-                    if anchor is not None:
-                        if anchor=="circle":
-                            perc=100
-                        mypad2=createPad3(x1, y1, dx, dy, xs,ys,rx,ry,anchor,'bot')
+                    try:
+                        poly_points=pnts.groups(0)[0].split('(xy')[1:]
+                        mypad=createPoly(x1, y1, dx, dy, xs,ys,rx,ry,pShape,'bot', poly_points)
+                        if anchor is not None:
+                            if anchor=="circle":
+                                perc=100
+                            mypad2=createPad3(x1, y1, dx, dy, xs,ys,rx,ry,anchor,'bot')
+                    except:
+                        sayerr('geometry unsupported')
+                        skip = True
                 else:
                     mypad=createPad3(x1, y1, dx, dy, xs,ys,rx,ry,pShape,'bot',pRratio)
                 ##pad pos x,y; pad size x,y; drillcenter x,y; drill size x,y, layerobj=mypad
                 obj=mypad
-                if rot!=0:
+                if rot!=0 and not skip:
                     rotateObj(obj, [xs, ys, -rot+180])
                     if mypad2 is not None:
                         rotateObj(mypad2, [xs, ys, -rot+180])
-                BotPadList.append(obj)
+                if not skip:
+                    BotPadList.append(obj)
                 if mypad2 is not None:
                     BotPadList.append(mypad2)
         if rx!=0:
