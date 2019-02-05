@@ -26,7 +26,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints
 
-__ksuCMD_version__='1.5.6'
+__ksuCMD_version__='1.5.7'
 
 precision = 0.1 # precision in spline or bezier conversion
 q_deflection = 0.02 # quasi deflection parameter for discretization
@@ -852,6 +852,10 @@ class ksuToolsTurnTable:
         # https://grey.colorado.edu/coin3d/annotated.html
         
         imgfilename = os.path.join( ksuWB_icons_path , '../textures/infinite_reflection_blur.png')
+        paramGet = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/View")
+        #old_AutoRotation = paramGet.GetBool("UseAutoRotation")
+        #print(old_AutoRotation);print(paramGet.GetBool("UseAutoRotation"))
+        paramGet.SetBool("UseAutoRotation",1)
         sg = FreeCADGui.ActiveDocument.ActiveView.getSceneGraph()
         tex = sg.getByName("myTexture")
         tc = sg.getByName("myTextCoord")
@@ -870,6 +874,13 @@ class ksuToolsTurnTable:
         if tc:
             sg.removeChild(tc)
             FreeCADGui.ActiveDocument.ActiveView.stopAnimating()
+            # uar = 0 if (old_AutoRotation) else 1
+            #if (old_AutoRotation):
+            #    uar = 1 
+            #else:
+            #    uar = 0
+            #paramGet.SetBool("UseAutoRotation",uar)
+            #print(old_AutoRotation);print (uar);print(paramGet.GetBool("UseAutoRotation"))
         else:
             tc = coin.SoTextureCoordinateEnvironment()
             tc.setName("myTextCoord")
@@ -1368,7 +1379,10 @@ class ksuToolsCopyPlacement:
             FreeCAD.Console.PrintWarning("Select at least two objects!\n")
             FreeCAD.Console.PrintMessage("all selected objects will receive first object placement\n")
         else:
+            doc = FreeCAD.ActiveDocument
+            doc.openTransaction("cpyPlacement")
             copy_placement(FreeCADGui.Selection.getSelection())
+            doc.commitTransaction()
             FreeCAD.Console.PrintMessage("Placement copied\n")
 
 FreeCADGui.addCommand('ksuToolsCopyPlacement',ksuToolsCopyPlacement())

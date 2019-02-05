@@ -42,6 +42,9 @@ from kicadStepUptools import make_unicode, make_string
 def makeFaceDXF():
     global copper_diffuse, silks_diffuse
     doc=FreeCAD.ActiveDocument
+    if doc is None:
+        FreeCAD.newDocument()
+        doc=FreeCAD.ActiveDocument
     docG=FreeCADGui.ActiveDocument
     Filter=""
     last_pcb_path=""
@@ -98,9 +101,9 @@ def makeFaceDXF():
                 layerName = 'Silks'
             else:
                 layerName = 'Tracks'
-            if 'F.' in filename:
+            if 'F.' in filename or 'F_' in filename:
                 layerName = 'top'+layerName
-            if 'B.' in filename:
+            if 'B.' in filename or 'B_' in filename:
                 layerName = 'bot'+layerName
         
             doc.addObject('Part::Feature',layerName).Shape=f
