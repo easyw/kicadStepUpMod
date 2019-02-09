@@ -26,7 +26,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints
 
-__ksuCMD_version__='1.5.7'
+__ksuCMD_version__='1.5.8'
 
 precision = 0.1 # precision in spline or bezier conversion
 q_deflection = 0.02 # quasi deflection parameter for discretization
@@ -2492,7 +2492,15 @@ class ksuToolsAddSilks:
     def Activated(self):
         # do something here...
         import makefacedxf
-        makefacedxf.makeFaceDXF()
+        if makefacedxf.checkDXFsettings():
+            makefacedxf.makeFaceDXF()
+        else:
+            msg = """<b>DXF import setting NOT as required.</b><br>Please check to have selected:<br>
+            - DXF Legacy Importer<br>
+            - DXF Join Geometries<br>
+            - DXF Create Simple Part Shapes<br>
+            in DXF Preferences Import options"""
+            reply = QtGui.QMessageBox.information(None,"Warning", msg)
 
 FreeCADGui.addCommand('ksuToolsAddSilks',ksuToolsAddSilks())
 #####

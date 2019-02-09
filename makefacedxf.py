@@ -133,5 +133,23 @@ def makeFaceDXF():
     FreeCADGui.SendMsgToActiveView("ViewFit")
     docG.activeView().viewAxonometric()
 ##
-
+def checkDXFsettings():
+    
+    pgD = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Draft")
+    dxfLI = pgD.GetBool("dxfUseLegacyImporter")
+    dxfJG = pgD.GetBool("joingeometry")
+    dxfCP = pgD.GetBool("dxfCreatePart")
+    checkResult = True
+    #FreeCAD.Console.PrintMessage (dxfLI);FreeCAD.Console.PrintMessage (dxfJG); FreeCAD.Console.PrintMessage (dxfCP)
+    if not dxfLI:
+        FreeCAD.Console.PrintError('DXF Legacy Importer NOT selected\n')
+        checkResult = False
+    if not dxfJG:
+        FreeCAD.Console.PrintError('DXF Join Geometries NOT selected\n')
+        checkResult = False
+    if not dxfCP:
+        FreeCAD.Console.PrintError('DXF Create Simple Part Shapes NOT selected\n')
+        checkResult = False
+    return checkResult
+    
 #makeFaceDXF()
