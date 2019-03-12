@@ -342,6 +342,7 @@
 # added option (not used) to simplify compsolid to solid
 # added support for pcb reading gr_poly on Edge.Cuts
 # improved fp parsing for custom geo
+# improved fp parsing for custom geo again
 # most clean code and comments done
 
 ##todo
@@ -454,7 +455,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.2.0.5"
+___ver___ = "8.2.0.6"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -16543,6 +16544,9 @@ def export_footprint(fname=None):
         mpad=[]
         nline=1
         pad_nbr=1
+        #say (pgeom)
+        #stop
+        i=0
         for pad in pgeom:
             #sayerr(pad)
             #if pad[0]=='circle':
@@ -16553,9 +16557,10 @@ def export_footprint(fname=None):
                 #print npad
                 #print 'mpad';print mpad
                 mpad.append(pad)
-                npad=npad+os.linesep+createFpPad(mpad,offset,u'Pads_Geom', pgeompad_pos)
+                npad=npad+os.linesep+createFpPad(mpad,offset,u'Pads_Geom', [pgeompad_pos[i]])
                 nline=1
                 mpad=[]
+            i+=1
             #nline=nline+1
         #print npad        
         
