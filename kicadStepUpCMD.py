@@ -26,7 +26,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints
 
-__ksuCMD_version__='1.5.8'
+__ksuCMD_version__='1.5.9'
 
 precision = 0.1 # precision in spline or bezier conversion
 q_deflection = 0.02 # quasi deflection parameter for discretization
@@ -1016,8 +1016,8 @@ class ksuTools2D2Sketch:
                 if reload_Gui:
                     reload_lib( kicadStepUptools )
                 #face = OpenSCAD2DgeomMau.edgestofaces(edges)
-                FC_majorV=int(FreeCAD.Version()[0])
-                FC_minorV=int(FreeCAD.Version()[1])
+                FC_majorV=int(float(FreeCAD.Version()[0]))
+                FC_minorV=int(float(FreeCAD.Version()[1]))
                 using_draft_makeSketch=True
                 faceobj=None
                 if not using_draft_makeSketch or (FC_majorV==0 and FC_minorV<=16):
@@ -1463,7 +1463,7 @@ class ksuToolsDeepCopy:
                      'ToolTip' : "PartDN Copy object\nwith relative placement\n[flattened model]"}
  
     def IsActive(self):
-        if int(FreeCAD.Version()[0])==0 and int(FreeCAD.Version()[1])<=16: #active only for FC>0.16
+        if int(float(FreeCAD.Version()[0]))==0 and int(float(FreeCAD.Version()[1]))<=16: #active only for FC>0.16
             return False
         else:
             return True
@@ -2563,8 +2563,8 @@ class ksuExcDemo:
         stepfname=(os.path.join(exs_dir_path, 'shapes',demo_model))
         ext = os.path.splitext(os.path.basename(fnameDemo))[1]
         nme = os.path.splitext(os.path.basename(fnameDemo))[0]
-        FC_majorV=int(FreeCAD.Version()[0])
-        FC_minorV=int(FreeCAD.Version()[1])
+        FC_majorV=int(float(FreeCAD.Version()[0]))
+        FC_minorV=int(float(FreeCAD.Version()[1]))
 
         if ext.lower()==".pdf":
             import subprocess, sys
