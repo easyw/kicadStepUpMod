@@ -455,7 +455,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.2.0.7"
+___ver___ = "8.2.0.8"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -7087,8 +7087,8 @@ def onLoadFootprint(file_name=None):
         #content=data
         #FreeCAD.Console.PrintMessage(content)
         #FreeCAD.Console.PrintMessage(data)
-        FC_majorV=FreeCAD.Version()[0]
-        FC_minorV=FreeCAD.Version()[1]
+        FC_majorV=int(float(FreeCAD.Version()[0]))
+        FC_minorV=int(float(FreeCAD.Version()[1]))
         say('FC Version '+FC_majorV+FC_minorV)    
         if int(FC_majorV) <= 0 and int(FC_minorV) < 16:
             routineDrawFootPrint_old(content,name)
