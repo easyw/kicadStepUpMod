@@ -455,7 +455,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.2.0.6"
+___ver___ = "8.2.0.7"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -1506,6 +1506,7 @@ class KicadPCB(SexpParser):
                 'gr_circle',
                 'gr_arc',
                 'gr_poly',
+                'gr_curve',
                 'segment',
                 'via',
                 ('module',
@@ -1554,10 +1555,10 @@ class KicadPCB(SexpParser):
 
 def getFCversion():
 
-    FC_majorV=int(FreeCAD.Version()[0])
-    FC_minorV=int(FreeCAD.Version()[1])
+    FC_majorV=int(float(FreeCAD.Version()[0]))
+    FC_minorV=int(float(FreeCAD.Version()[1]))
     try:
-        FC_git_Nbr=int (FreeCAD.Version()[2].strip(" (Git)").split(' ')[0]) #+int(FreeCAD.Version()[2].strip(" (Git)").split(' ')[1])
+        FC_git_Nbr=int (float(FreeCAD.Version()[2].strip(" (Git)").split(' ')[0])) #+int(FreeCAD.Version()[2].strip(" (Git)").split(' ')[1])
     except:
         FC_git_Nbr=0
     return FC_majorV,FC_minorV,FC_git_Nbr
@@ -12317,6 +12318,7 @@ def DrawPCB(mypcb):
         return max (abs(p0[0] - p1[0]), abs(p0[1] - p1[1]))
     
     import PySide
+    import FreeCAD, Part
     from PySide import QtGui, QtCore
     
     say("PCB Loader ")
@@ -12383,6 +12385,12 @@ def DrawPCB(mypcb):
                 edg_segms+=1
                 #sayerr(p)
             #stop
+            #edg_segms+=1
+    for bs in mypcb.gr_curve:
+        if 'Edge.Cuts' in bs.layer:
+            #sayerr(bs.layer)
+            for p in bs.pts.xy:
+                edg_segms+=1
             #edg_segms+=1
     sayw(str(edg_segms)+' edge segments')
     #for lp in mypcb.gr_poly: #pcb polylines
@@ -12470,7 +12478,23 @@ def DrawPCB(mypcb):
                         PCB_Geo.append(PLine(Base.Vector(lp.pts.xy[ind-1][0],-lp.pts.xy[ind-1][1],0), Base.Vector(lp.pts.xy[ind][0],-lp.pts.xy[ind][1],0)))
             ind+=1
         #closing edge
-                
+
+    #bsplines
+    for bs in mypcb.gr_curve:
+        if bs.layer != 'Edge.Cuts':
+            continue
+        ind = 0
+        #sayerr(bs.layer)
+        poles = []
+        for p in bs.pts.xy:
+            # sayerr(p)
+            poles.append(FreeCAD.Vector (p[0],p[1],0.0))
+            # sayerr(poles)
+        spline=Part.BSplineCurve()
+        spline.buildFromPoles(poles, False, 3)
+        # Part.show(spline.toShape())
+        edges.append(Part.Edge(spline))        
+    #stop
     ## NB use always float() to guarantee number not string!!!
     for a in mypcb.gr_arc: #pcb arcs
         if a.layer != 'Edge.Cuts':
