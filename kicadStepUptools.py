@@ -346,6 +346,7 @@
 # first implementation of bspline edge import (TBD: spline w control points, push to pcb)
 # pushpcb working with gr_curves, downgrading to arcs and lines (TBD: use spline)
 # spline w control points
+# fixing pushing pcb
 # most clean code and comments done
 
 ##todo
@@ -458,7 +459,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.3.0.2"
+___ver___ = "8.3.0.3"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -18558,17 +18559,17 @@ def export_pcb(fname=None):
                     say('pcb edge exists')
                     sayw('removing old Edge')
                     ## removing old Edge
-                    removing_string =  '\s\(gr_line(.+?)Edge(.+?)\)\)\r\n|\s\(gr_line(.+?)Edge(.+?)\)\)\r|\s\(gr_line(.+?)Edge(.+?)\)\)\n'
-                    removing_string += '\s\(gr_curve(.+?)Edge(.+?)\)\)\r\n|\s\(gr_curve(.+?)Edge(.+?)\)\)\r|\s\(gr_curve(.+?)Edge(.+?)\)\)\n'
-                    removing_string += '\s\(gr_arc(.+?)Edge(.+?)\)\)\r\n|\s\(gr_arc(.+?)Edge(.+?)\)\)\r|\s\(gr_arc(.+?)Edge(.+?)\)\)\n'
-                    removing_string += '\s\(gr_circle(.+?)Edge(.+?)\)\)\r\n|\s\(gr_circle(.+?)Edge(.+?)\)\)\r|\s\(gr_circle(.+?)Edge(.+?)\)\)\n'
-                    removing_string += '\s\(gr_poly(.+?)Edge(.+?)\)\)\r\n|\s\(gr_poly(.+?)Edge(.+?)\)\)\r|\s\(gr_poly(.+?)Edge(.+?)\)\)\n'
-                    repl = re.sub(removing_string,'',data, flags=re.MULTILINE)
-                    # repl = re.sub('\s\(gr_line(.+?)Edge(.+?)\)\)\r\n|\s\(gr_line(.+?)Edge(.+?)\)\)\r|\s\(gr_line(.+?)Edge(.+?)\)\)\n','',data, flags=re.MULTILINE)
-                    # repl = re.sub('\s\(gr_curve(.+?)Edge(.+?)\)\)\r\n|\s\(gr_curve(.+?)Edge(.+?)\)\)\r|\s\(gr_curve(.+?)Edge(.+?)\)\)\n','',data, flags=re.MULTILINE)
-                    # repl = re.sub('\s\(gr_arc(.+?)Edge(.+?)\)\)\r\n|\s\(gr_arc(.+?)Edge(.+?)\)\)\r|\s\(gr_arc(.+?)Edge(.+?)\)\)\n','',repl, flags=re.MULTILINE)
-                    # repl = re.sub('\s\(gr_circle(.+?)Edge(.+?)\)\)\r\n|\s\(gr_circle(.+?)Edge(.+?)\)\)\r|\s\(gr_circle(.+?)Edge(.+?)\)\)\n','',repl, flags=re.MULTILINE)
-                    # repl = re.sub('\s\(gr_poly(.+?)Edge(.+?)\)\)\r\n|\s\(gr_poly(.+?)Edge(.+?)\)\)\r|\s\(gr_poly(.+?)Edge(.+?)\)\)\n','',repl, flags=re.MULTILINE)
+                    ## removing_string =  '\s\(gr_line(.+?)Edge(.+?)\)\)\r\n|\s\(gr_line(.+?)Edge(.+?)\)\)\r|\s\(gr_line(.+?)Edge(.+?)\)\)\n'
+                    ## removing_string += '\s\(gr_curve(.+?)Edge(.+?)\)\)\r\n|\s\(gr_curve(.+?)Edge(.+?)\)\)\r|\s\(gr_curve(.+?)Edge(.+?)\)\)\n'
+                    ## removing_string += '\s\(gr_arc(.+?)Edge(.+?)\)\)\r\n|\s\(gr_arc(.+?)Edge(.+?)\)\)\r|\s\(gr_arc(.+?)Edge(.+?)\)\)\n'
+                    ## removing_string += '\s\(gr_circle(.+?)Edge(.+?)\)\)\r\n|\s\(gr_circle(.+?)Edge(.+?)\)\)\r|\s\(gr_circle(.+?)Edge(.+?)\)\)\n'
+                    ## removing_string += '\s\(gr_poly(.+?)Edge(.+?)\)\)\r\n|\s\(gr_poly(.+?)Edge(.+?)\)\)\r|\s\(gr_poly(.+?)Edge(.+?)\)\)\n'
+                    ## repl = re.sub(removing_string,'',data, flags=re.MULTILINE)
+                    repl = re.sub('\s\(gr_line(.+?)Edge(.+?)\)\)\r\n|\s\(gr_line(.+?)Edge(.+?)\)\)\r|\s\(gr_line(.+?)Edge(.+?)\)\)\n','',data, flags=re.MULTILINE)
+                    repl = re.sub('\s\(gr_curve(.+?)Edge(.+?)\)\)\r\n|\s\(gr_curve(.+?)Edge(.+?)\)\)\r|\s\(gr_curve(.+?)Edge(.+?)\)\)\n','',data, flags=re.MULTILINE)
+                    repl = re.sub('\s\(gr_arc(.+?)Edge(.+?)\)\)\r\n|\s\(gr_arc(.+?)Edge(.+?)\)\)\r|\s\(gr_arc(.+?)Edge(.+?)\)\)\n','',repl, flags=re.MULTILINE)
+                    repl = re.sub('\s\(gr_circle(.+?)Edge(.+?)\)\)\r\n|\s\(gr_circle(.+?)Edge(.+?)\)\)\r|\s\(gr_circle(.+?)Edge(.+?)\)\)\n','',repl, flags=re.MULTILINE)
+                    repl = re.sub('\s\(gr_poly(.+?)Edge(.+?)\)\)\r\n|\s\(gr_poly(.+?)Edge(.+?)\)\)\r|\s\(gr_poly(.+?)Edge(.+?)\)\)\n','',repl, flags=re.MULTILINE)
                     #sayerr(replace)
                     k = repl.rfind(")")  #removing latest ')'
                     newcontent = repl[:k]
