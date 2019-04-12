@@ -343,6 +343,7 @@
 # added support for pcb reading gr_poly on Edge.Cuts
 # improved fp parsing for custom geo
 # improved fp parsing for custom geo again
+# first implementation of bspline edge import (TBD: spline w control points, push to pcb)
 # most clean code and comments done
 
 ##todo
@@ -455,7 +456,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.2.0.9"
+___ver___ = "8.3.0.0"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -7202,6 +7203,7 @@ def add_constraints(s_name):
             Part.LineSegment: [1, 2],  # first point, last point
             Part.Circle: [0, 3],  # curve, center
             Part.ArcOfCircle: [1, 2, 3],  # first point, last point, center
+            Part.BSplineCurve: [0,1,2,3], # for poles
         }
     else:
         g_geom_points = {
@@ -7209,6 +7211,7 @@ def add_constraints(s_name):
             Part.Line: [1, 2],  # first point, last point
             Part.Circle: [0, 3],  # curve, center
             Part.ArcOfCircle: [1, 2, 3],  # first point, last point, center
+            Part.BSplineCurve: [0,1,2,3], # for poles
         }
     points=[]
     geoms=[]
@@ -12488,12 +12491,66 @@ def DrawPCB(mypcb):
         poles = []
         for p in bs.pts.xy:
             # sayerr(p)
-            poles.append(FreeCAD.Vector (p[0],p[1],0.0))
+            poles.append(FreeCAD.Vector (p[0]-off_x,-p[1]-off_y,0.0))
             # sayerr(poles)
-        spline=Part.BSplineCurve()
-        spline.buildFromPoles(poles, False, 3)
+        if (1):
+            spline=Part.BSplineCurve()
+            spline.buildFromPoles(poles, False, 3)
+            edges.append(Part.Edge(spline))
+        else:
+            import Draft
+            #spline2=Part.BSplineCurve()
+            #spline2.buildFromPoles(poles, False, 3)            
+            spline = Draft.makeBSpline(poles,closed=False,face=False,support=None)
+            Draft.autogroup(spline)
+            bsd = FreeCAD.ActiveDocument.ActiveObject
+            Draft.makeSketch(FreeCADGui.Selection.getSelection(),autoconstraints=True)
+            sk = FreeCAD.ActiveDocument.ActiveObject
+            # skgeo = sk.Geometry
+            # FreeCAD.ActiveDocument.addObject('Sketcher::SketchObject','Sketch')
+            # sk1 = FreeCAD.ActiveDocument.ActiveObject
+            # sk1.Geometry = sk.Geometry
+            # FreeCAD.ActiveDocument.recompute()
+            edges.append(sk.Shape.Edges)
+            FreeCAD.ActiveDocument.removeObject(bsd.Name)
+            # FreeCAD.ActiveDocument.removeObject(sk.Name)
+        #stop
+        #edges.append(Part.Edge(spline2))
         # Part.show(spline.toShape())
-        edges.append(Part.Edge(spline))        
+        # import kicadStepUptools; import importlib; importlib.reload(kicadStepUptools);kicadStepUptools.open(u"C:/Temp/bspline.kicad_pcb")
+        if load_sketch:
+            if aux_orig ==1 or grid_orig ==1:
+                if (1):
+                    PCB_Geo.append(spline)
+                else:
+                    gm = sk.Shape.Geometry
+                    for g in gm:
+                        PCB_Geo.append(g)
+                    FreeCAD.ActiveDocument.removeObject(sk.Name)
+                pi = 0
+                #for p in bs.pts.xy:
+                #    if (pi == 1) or (pi == 2):
+                #        PCB_Geo.append(Part.Circle (FreeCAD.Vector(p[0]-off_x, -p[1]-off_y), FreeCAD.Vector(0, 0, 1), 0.5))
+                #        l = len(PCB_Geo)
+                #        print(PCB_Geo[l-1].Construction)
+                #        PCB_Geo[l-1].Construction = True
+                #        #PCB_Geo.append(Part.Circle (0.5, Base.Vector(p[0]-off_x, -p[1]-off_y, 0.0), Base.Vector(1,0,0)))
+                #    pi+=1
+                #for p in bs.pts.xy:
+                #    if (pi == 0) or (pi == 4):
+                #        PCB_Geo.append(Part.Point (FreeCAD.Vector(p[0]-off_x, -p[1]-off_y, 0.0)))
+                #        l = len(PCB_Geo)
+                #        print(PCB_Geo[l-1].Construction)
+                #        PCB_Geo[l-1].Construction = True
+                #        #PCB_Geo.append(Part.Circle (0.5, Base.Vector(p[0]-off_x, -p[1]-off_y, 0.0), Base.Vector(1,0,0)))
+                #    pi+=1
+            else:
+                PCB_Geo.append(spline)
+                pi = 0
+                # for p in bs.pts.xy:
+                #     if (pi == 1) or (pi == 2):
+                #         PCB_Geo.append(Part.makeCircle (0.5, Base.Vector(p[0]-off_x, -p[1]-off_y, 0.0), Base.Vector(1,0,0)))
+                #     pi+=1                
     #stop
     ## NB use always float() to guarantee number not string!!!
     for a in mypcb.gr_arc: #pcb arcs

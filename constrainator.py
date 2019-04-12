@@ -57,6 +57,7 @@ def add_constraints(s_name, edge_tolerance, add_Constraints):
             Part.LineSegment: [1, 2],  # first point, last point
             Part.Circle: [0, 3],  # curve, center
             Part.ArcOfCircle: [1, 2, 3],  # first point, last point, center
+            Part.BSplineCurve: [0,1,2,3], # for poles
         }
     else:
         g_geom_points = {
@@ -64,6 +65,7 @@ def add_constraints(s_name, edge_tolerance, add_Constraints):
             Part.Line: [1, 2],  # first point, last point
             Part.Circle: [0, 3],  # curve, center
             Part.ArcOfCircle: [1, 2, 3],  # first point, last point, center
+            Part.BSplineCurve: [0,1,2,3], # for poles
         }
     points=[]
     geoms=[]
