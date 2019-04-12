@@ -344,6 +344,7 @@
 # improved fp parsing for custom geo
 # improved fp parsing for custom geo again
 # first implementation of bspline edge import (TBD: spline w control points, push to pcb)
+# pushpcb working with gr_curves, downgrading to arcs and lines (TBD: use spline)
 # most clean code and comments done
 
 ##todo
@@ -456,7 +457,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.3.0.0"
+___ver___ = "8.3.0.1"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -18517,19 +18518,21 @@ def export_pcb(fname=None):
         if pcb_push==True:    
             #stop
             edge_pcb_exists=False
-            if len(re.findall('\s\(gr_line(.+?)Edge(.+?)\)\)\r\n|\(gr_line(.+?)Edge(.+?)\)\)\r|\(gr_line(.+?)Edge(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
+            if len(re.findall('\s\(gr_line(.+?)Edge(.+?)\)\)\r\n|\s\(gr_line(.+?)Edge(.+?)\)\)\r|\s\(gr_line(.+?)Edge(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
                 edge_pcb_exists=True
-            if not edge_pcb_exists and len(re.findall('\s\(gr_arc(.+?)Edge(.+?)\)\)\r\n|\(gr_arc(.+?)Edge(.+?)\)\)\r|\(gr_arc(.+?)Edge(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
+            if len(re.findall('\s\(gr_curve(.+?)Edge(.+?)\)\)\r\n|\s\(gr_curve(.+?)Edge(.+?)\)\)\r|\s\(gr_curve(.+?)Edge(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0: # spline
                 edge_pcb_exists=True
-            if not edge_pcb_exists and len(re.findall('\s\(gr_circle(.+?)Edge(.+?)\)\)\r\n|\(gr_circle(.+?)Edge(.+?)\)\)\r|\(gr_circle(.+?)Edge(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
+            if not edge_pcb_exists and len(re.findall('\s\(gr_arc(.+?)Edge(.+?)\)\)\r\n|\s\(gr_arc(.+?)Edge(.+?)\)\)\r|\s\(gr_arc(.+?)Edge(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
                 edge_pcb_exists=True
-            if len(re.findall('\s\(fp_line(.+?)Edge(.+?)\)\)\r\n|\(fp_line(.+?)Edge(.+?)\)\)\r|\(fp_line(.+?)Edge(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
+            if not edge_pcb_exists and len(re.findall('\s\(gr_circle(.+?)Edge(.+?)\)\)\r\n|\s\(gr_circle(.+?)Edge(.+?)\)\)\r|\s\(gr_circle(.+?)Edge(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
                 edge_pcb_exists=True
-            if not edge_pcb_exists and len(re.findall('\s\(fp_arc(.+?)Edge(.+?)\)\)\r\n|\(fp_arc(.+?)Edge(.+?)\)\)\r|\(fp_arc(.+?)Edge(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
+            if len(re.findall('\s\(fp_line(.+?)Edge(.+?)\)\)\r\n|\s\(fp_line(.+?)Edge(.+?)\)\)\r|\s\(fp_line(.+?)Edge(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
                 edge_pcb_exists=True
-            if not edge_pcb_exists and len(re.findall('\s\(fp_circle(.+?)Edge(.+?)\)\)\r\n|\(fp_circle(.+?)Edge(.+?)\)\)\r|\(fp_circle(.+?)Edge(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
+            if not edge_pcb_exists and len(re.findall('\s\(fp_arc(.+?)Edge(.+?)\)\)\r\n|\s\(fp_arc(.+?)Edge(.+?)\)\)\r|\s\(fp_arc(.+?)Edge(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
                 edge_pcb_exists=True
-            if not edge_pcb_exists and len(re.findall('\s\(gr_poly(.+?)Edge(.+?)\)\)\r\n|\(gr_poly(.+?)Edge(.+?)\)\)\r|\(gr_poly(.+?)Edge(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
+            if not edge_pcb_exists and len(re.findall('\s\(fp_circle(.+?)Edge(.+?)\)\)\r\n|\s\(fp_circle(.+?)Edge(.+?)\)\)\r|\s\(fp_circle(.+?)Edge(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
+                edge_pcb_exists=True
+            if not edge_pcb_exists and len(re.findall('\s\(gr_poly(.+?)Edge(.+?)\)\)\r\n|\s\(gr_poly(.+?)Edge(.+?)\)\)\r|\s\(gr_poly(.+?)Edge(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
                 edge_pcb_exists=True
   
             oft=None
@@ -18572,10 +18575,17 @@ def export_pcb(fname=None):
                     say('pcb edge exists')
                     sayw('removing old Edge')
                     ## removing old Edge
-                    repl = re.sub('\s\(gr_line(.+?)Edge(.+?)\)\)\r\n|\(gr_line(.+?)Edge(.+?)\)\)\r|\(gr_line(.+?)Edge(.+?)\)\)\n','',data, flags=re.MULTILINE)
-                    repl = re.sub('\s\(gr_arc(.+?)Edge(.+?)\)\)\r\n|\(gr_arc(.+?)Edge(.+?)\)\)\r|\(gr_arc(.+?)Edge(.+?)\)\)\n','',repl, flags=re.MULTILINE)
-                    repl = re.sub('\s\(gr_circle(.+?)Edge(.+?)\)\)\r\n|\(gr_circle(.+?)Edge(.+?)\)\)\r|\(gr_circle(.+?)Edge(.+?)\)\)\n','',repl, flags=re.MULTILINE)
-                    repl = re.sub('\s\(gr_poly(.+?)Edge(.+?)\)\)\r\n|\(gr_poly(.+?)Edge(.+?)\)\)\r|\(gr_poly(.+?)Edge(.+?)\)\)\n','',repl, flags=re.MULTILINE)
+                    removing_string =  '\s\(gr_line(.+?)Edge(.+?)\)\)\r\n|\s\(gr_line(.+?)Edge(.+?)\)\)\r|\s\(gr_line(.+?)Edge(.+?)\)\)\n'
+                    removing_string += '\s\(gr_curve(.+?)Edge(.+?)\)\)\r\n|\s\(gr_curve(.+?)Edge(.+?)\)\)\r|\s\(gr_curve(.+?)Edge(.+?)\)\)\n'
+                    removing_string += '\s\(gr_arc(.+?)Edge(.+?)\)\)\r\n|\s\(gr_arc(.+?)Edge(.+?)\)\)\r|\s\(gr_arc(.+?)Edge(.+?)\)\)\n'
+                    removing_string += '\s\(gr_circle(.+?)Edge(.+?)\)\)\r\n|\s\(gr_circle(.+?)Edge(.+?)\)\)\r|\s\(gr_circle(.+?)Edge(.+?)\)\)\n'
+                    removing_string += '\s\(gr_poly(.+?)Edge(.+?)\)\)\r\n|\s\(gr_poly(.+?)Edge(.+?)\)\)\r|\s\(gr_poly(.+?)Edge(.+?)\)\)\n'
+                    repl = re.sub(removing_string,'',data, flags=re.MULTILINE)
+                    # repl = re.sub('\s\(gr_line(.+?)Edge(.+?)\)\)\r\n|\s\(gr_line(.+?)Edge(.+?)\)\)\r|\s\(gr_line(.+?)Edge(.+?)\)\)\n','',data, flags=re.MULTILINE)
+                    # repl = re.sub('\s\(gr_curve(.+?)Edge(.+?)\)\)\r\n|\s\(gr_curve(.+?)Edge(.+?)\)\)\r|\s\(gr_curve(.+?)Edge(.+?)\)\)\n','',data, flags=re.MULTILINE)
+                    # repl = re.sub('\s\(gr_arc(.+?)Edge(.+?)\)\)\r\n|\s\(gr_arc(.+?)Edge(.+?)\)\)\r|\s\(gr_arc(.+?)Edge(.+?)\)\)\n','',repl, flags=re.MULTILINE)
+                    # repl = re.sub('\s\(gr_circle(.+?)Edge(.+?)\)\)\r\n|\s\(gr_circle(.+?)Edge(.+?)\)\)\r|\s\(gr_circle(.+?)Edge(.+?)\)\)\n','',repl, flags=re.MULTILINE)
+                    # repl = re.sub('\s\(gr_poly(.+?)Edge(.+?)\)\)\r\n|\s\(gr_poly(.+?)Edge(.+?)\)\)\r|\s\(gr_poly(.+?)Edge(.+?)\)\)\n','',repl, flags=re.MULTILINE)
                     #sayerr(replace)
                     k = repl.rfind(")")  #removing latest ')'
                     newcontent = repl[:k]
