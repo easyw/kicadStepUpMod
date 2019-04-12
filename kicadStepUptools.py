@@ -345,6 +345,7 @@
 # improved fp parsing for custom geo again
 # first implementation of bspline edge import (TBD: spline w control points, push to pcb)
 # pushpcb working with gr_curves, downgrading to arcs and lines (TBD: use spline)
+# spline w control points
 # most clean code and comments done
 
 ##todo
@@ -457,7 +458,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.3.0.1"
+___ver___ = "8.3.0.2"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -7726,6 +7727,12 @@ def onLoadBoard(file_name=None):
 
             ##FreeCAD.ActiveDocument.recompute()
             pcb_sk=FreeCAD.ActiveDocument.PCB_Sketch
+            gi = 0
+            for g in pcb_sk.Geometry:
+                if 'BSplineCurve object' in str(g):
+                    # say(str(g))
+                    FreeCAD.ActiveDocument.PCB_Sketch.exposeInternalGeometry(gi)
+                gi+=1
             FreeCAD.ActiveDocument.Board_Geoms.addObject(pcb_sk)
         #updating pcb_sketch
 
@@ -12494,40 +12501,16 @@ def DrawPCB(mypcb):
             # sayerr(p)
             poles.append(FreeCAD.Vector (p[0]-off_x,-p[1]-off_y,0.0))
             # sayerr(poles)
-        if (1):
-            spline=Part.BSplineCurve()
-            spline.buildFromPoles(poles, False, 3)
-            edges.append(Part.Edge(spline))
-        else:
-            import Draft
-            #spline2=Part.BSplineCurve()
-            #spline2.buildFromPoles(poles, False, 3)            
-            spline = Draft.makeBSpline(poles,closed=False,face=False,support=None)
-            Draft.autogroup(spline)
-            bsd = FreeCAD.ActiveDocument.ActiveObject
-            Draft.makeSketch(FreeCADGui.Selection.getSelection(),autoconstraints=True)
-            sk = FreeCAD.ActiveDocument.ActiveObject
-            # skgeo = sk.Geometry
-            # FreeCAD.ActiveDocument.addObject('Sketcher::SketchObject','Sketch')
-            # sk1 = FreeCAD.ActiveDocument.ActiveObject
-            # sk1.Geometry = sk.Geometry
-            # FreeCAD.ActiveDocument.recompute()
-            edges.append(sk.Shape.Edges)
-            FreeCAD.ActiveDocument.removeObject(bsd.Name)
-            # FreeCAD.ActiveDocument.removeObject(sk.Name)
+        spline=Part.BSplineCurve()
+        spline.buildFromPoles(poles, False, 3)
+        edges.append(Part.Edge(spline))
         #stop
         #edges.append(Part.Edge(spline2))
         # Part.show(spline.toShape())
         # import kicadStepUptools; import importlib; importlib.reload(kicadStepUptools);kicadStepUptools.open(u"C:/Temp/bspline.kicad_pcb")
         if load_sketch:
             if aux_orig ==1 or grid_orig ==1:
-                if (1):
-                    PCB_Geo.append(spline)
-                else:
-                    gm = sk.Shape.Geometry
-                    for g in gm:
-                        PCB_Geo.append(g)
-                    FreeCAD.ActiveDocument.removeObject(sk.Name)
+                PCB_Geo.append(spline)
                 pi = 0
                 #for p in bs.pts.xy:
                 #    if (pi == 1) or (pi == 2):
