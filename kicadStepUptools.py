@@ -347,6 +347,7 @@
 # pushpcb working with gr_curves, downgrading to arcs and lines (TBD: use spline)
 # spline w control points
 # fixing pushing pcb
+# adding support for double quotes on kicad_pcb and kicad_mod format
 # most clean code and comments done
 
 ##todo
@@ -459,7 +460,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.3.0.4"
+___ver___ = "8.3.0.5"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -1306,7 +1307,7 @@ def parseDefault(obj,sexp):
         force_string=False
     value = []
     for v in sexp[2:]:
-        #print (v)
+        # print (v)
         if isinstance(v,list):
             return SexpParser(sexp)
         if force_string:
@@ -9361,7 +9362,7 @@ def getPadsList(content):
     #model_name = re.search(r'\(module\s+(.+?)\(layer', model, re.MULTILINE|re.DOTALL).groups(0)[0]
     #say(model_name)
 
-    found = re.findall(r'\(pad .* ', model, re.MULTILINE|re.DOTALL)
+    found = re.findall(r'\(pad .*', model, re.MULTILINE|re.DOTALL)
     if len(found):
         found = found[0].strip().split('(pad')
         for j in found:
@@ -9393,6 +9394,8 @@ def getPadsList(content):
                     layers = 'F.SilkS'
                     #layers = None
                     sayerr('NO LAYERS on PAD') #test utf-8 test pads
+                # print(layers)
+                # stop
                 data = re.search(r'\(drill(\s+oval\s+|\s+)(.*?)(\s+[-0-9\.]*?|)(\s+\(offset\s+(.*?)\s+(.*?)\)|)\)', j)
                 data_off = re.search(r'\(offset\s+([0-9\.-]+?)\s+([0-9\.-]+?)\)', j)
                 pnts = re.search(r'\(gr_poly\s\(pts(.*?)\)\s\(width', j, re.MULTILINE|re.DOTALL)
@@ -10452,7 +10455,6 @@ def routineDrawFootPrint_old(content,name):  #for FC = 0.15
     HoleList=[]
     THPList=[]
     for pad in getPadsList(content):
-        #say(pad)
         #
         #   pads.append({'x': x, 'y': y, 'rot': rot, 'padType': pType, 'padShape': pShape, 'rx': drill_x, 'ry': drill_y, 'dx': dx, 'dy': dy, 'holeType': hType, 'xOF': xOF, 'yOF': yOF, 'layers': layers})
         pType = pad['padType']
@@ -10957,7 +10959,7 @@ def routineDrawFootPrint(content,name):
     HoleList=[]
     THPList=[]
     for pad in getPadsList(content):
-        #sayerr(pad)
+        # sayerr(pad)
         #
         #   pads.append({'x': x, 'y': y, 'rot': rot, 'padType': pType, 'padShape': pShape, 'rx': drill_x, 'ry': drill_y, 'dx': dx, 'dy': dy, 'holeType': hType, 'xOF': xOF, 'yOF': yOF, 'layers': layers})
         pType = pad['padType']
@@ -10976,7 +10978,9 @@ def routineDrawFootPrint(content,name):
         rot = pad['rot']
         rx=drill_x
         ry=drill_y
-        numberOfLayers = pad['layers'].split(' ')
+        numberOfLayers = pad['layers'].replace('"', '').split(' ')  # fixing double quotes in layers & pads
+        # print(numberOfLayers)
+        # print('F.Cu' in numberOfLayers)
         pnts = pad['points']
         anchor = pad['anchor']
         #if pnts is not None:
@@ -12443,7 +12447,8 @@ def DrawPCB(mypcb):
     ## NB use always float() to guarantee number not string!!!
        
     for l in mypcb.gr_line: #pcb lines
-        if l.layer != 'Edge.Cuts':
+        #if l.layer != 'Edge.Cuts':
+        if 'Edge.Cuts' not in l.layer:
             continue
         #edges.append(Part.makeLine(makeVect(l.start),makeVect(l.end)))
         #say(l.start);say(l.end)
@@ -12463,7 +12468,8 @@ def DrawPCB(mypcb):
             if show_border:
                 Part.show(line1)
     for lp in mypcb.gr_poly: #pcb polylines
-        if lp.layer != 'Edge.Cuts':
+        if 'Edge.Cuts' not in lp.layer:
+        # if lp.layer != 'Edge.Cuts':
             continue
         ind = 0
         l = len(lp.pts.xy)
@@ -12493,7 +12499,8 @@ def DrawPCB(mypcb):
 
     #bsplines
     for bs in mypcb.gr_curve:
-        if bs.layer != 'Edge.Cuts':
+        # if bs.layer != 'Edge.Cuts':
+        if 'Edge.Cuts' not in bs.layer:
             continue
         ind = 0
         #sayerr(bs.layer)
@@ -12539,7 +12546,8 @@ def DrawPCB(mypcb):
     #stop
     ## NB use always float() to guarantee number not string!!!
     for a in mypcb.gr_arc: #pcb arcs
-        if a.layer != 'Edge.Cuts':
+        # if a.layer != 'Edge.Cuts':
+        if 'Edge.Cuts' not in a.layer:
             continue
         # for gr_arc, 'start' is actual the center, and 'end' is the start
         #edges.append(makeArc(makeVect(l.start),makeVect(l.end),l.angle))
@@ -12586,7 +12594,8 @@ def DrawPCB(mypcb):
         
     ## NB use always float() to guarantee number not string!!!
     for c in mypcb.gr_circle: #pcb circles
-        if c.layer != 'Edge.Cuts':
+        # if c.layer != 'Edge.Cuts':
+        if 'Edge.Cuts' not in c.layer:
             continue
         [xs, ys] = c.center
         [x1, y1] = c.end
@@ -12961,7 +12970,8 @@ def DrawPCB(mypcb):
                 ##pads.append({'x': x, 'y': y, 'rot': rot, 'padType': pType, 'padShape': pShape, 'rx': drill_x, 'ry': drill_y, 'dx': dx, 'dy': dy, 'holeType': hType, 'xOF': xOF, 'yOF': yOF, 'layers': layers})        
                 #stop
         for ml in m.fp_line:
-            if ml.layer != 'Edge.Cuts':
+            # if ml.layer != 'Edge.Cuts':
+            if 'Edge.Cuts' not in ml.layer:
                 continue
             #print ml.start,ml.end
             x1=ml.start[0]+m.at[0];y1=-ml.start[1]-m.at[1]
@@ -12976,7 +12986,8 @@ def DrawPCB(mypcb):
                 if show_border:
                     Part.show(line1)
         for mc in m.fp_circle:
-            if mc.layer != 'Edge.Cuts':
+            # if mc.layer != 'Edge.Cuts':
+            if 'Edge.Cuts' not in mc.layer:
                 continue
             #print mc.center,mc.end
             xs=mc.center[0]+m.at[0];ys=-mc.center[1]-m.at[1]
@@ -12998,7 +13009,8 @@ def DrawPCB(mypcb):
             #mod_circles.append (['Circle', x1, y1, e[2]])
             #PCB.append(['Circle', x1, y1, radius])
         for ma in m.fp_arc:
-            if ma.layer != 'Edge.Cuts':
+            # if ma.layer != 'Edge.Cuts':
+            if 'Edge.Cuts' not in ma.layer:
                 continue
             #print ma.start, ma.end, ma.angle           
             #xs=ma.start[0]+m.at[0];ys=-ma.start[1]-m.at[1]
@@ -15844,6 +15856,97 @@ def simplify_sketch():
         # to do: evaluate sanitize check
         ####stop
 
+###
+
+def normalize_bsplines():
+    ''' simplifying & sanitizing sketches '''
+    global maxRadius, edge_tolerance
+    
+    doc = FreeCAD.ActiveDocument
+    sel = FreeCADGui.Selection.getSelection()
+    if len(sel)==1:
+        if 'Sketcher' in sel[0].TypeId:
+            sanitizeSketch(sel[0].Name)
+        new_edge_list, not_supported, to_discretize, construction_geom = getBoardOutline()
+        ## support for arcs, lines and bsplines in F_Silks
+        sel = FreeCADGui.Selection.getSelection()
+        sk_name=None
+        sk_name=sel[0].Name
+        sk_label=sel[0].Label
+        if len(to_discretize)>0 and sk_name is not None:
+            FreeCADGui.ActiveDocument.getObject(sk_name).Visibility=False # hidden Sketch
+            #sel = FreeCADGui.Selection.getSelection()
+            #for s in sel:
+            #    if 'F_Silks' in s.Label:
+            #        sk_name=s.Name
+            #if len (sel)==1:
+                #sk_name=sel[0].Name
+            t_name=cpy_sketch(sk_name)
+            ###t_sk=FreeCAD.ActiveDocument.copyObject(FreeCAD.ActiveDocument.getObject(sk_name))
+            elist, to_dis=check_geom(t_name)
+            #Draft.clone(FreeCAD.ActiveDocument.getObject(sk_name),copy=True)
+            #clone_name=App.ActiveDocument.ActiveObject.Name
+            geoBasic=[]
+            geoBasic=split_basic_geom(t_name, to_dis)
+            #print geoBasic
+            #remove_basic_geom(t_name, to_dis)
+            ## remove_basic_geom(t_name, to_dis)
+            ##remove_basic_geom(t_sk.Name, to_discretize)
+            ##elist, to_dis=check_geom(t_sk.Name)
+            #print elist
+            #stop
+            obj_list_prev=[]
+            for obj in doc.Objects:
+                #print obj.TypeId
+                if (obj.TypeId=="Part::Feature") or (obj.TypeId=="Sketcher::SketchObject"):
+                    obj_list_prev.append(obj.Name)
+            #Draft.draftify(FreeCAD.ActiveDocument.getObject(t_name),delete=True)
+            #Draft.draftify(FreeCAD.ActiveDocument.getObject(t_name),delete=False)
+            b=FreeCAD.ActiveDocument.getObject(t_name)
+            shp1=b.Shape.copy()
+            Part.show(shp1)
+            FreeCAD.ActiveDocument.removeObject(t_name)
+            FreeCAD.ActiveDocument.recompute()
+            #stop
+            obj_list_after=[]
+            for obj in doc.Objects:
+                if (obj.TypeId=="Part::Feature") or (obj.TypeId=="Sketcher::SketchObject")\
+                   or (obj.TypeId=="Part::Part2DObjectPython"):
+                    if obj.Name not in obj_list_prev:
+                        obj_list_after.append(obj.Name)
+            #print obj_list_after #, obj_list_prev
+            sk_to_conv=[]
+            for obj in doc.Objects:
+                if obj.Name in obj_list_after:
+                    if (obj.TypeId=="Part::Part2DObjectPython"):
+                        FreeCAD.ActiveDocument.removeObject(obj.Name)
+                        FreeCAD.ActiveDocument.recompute() 
+                    else:
+                       sk_to_conv.append(obj.Name)
+            keep_sketch_converted=True #False
+            for s in sk_to_conv:
+                #sayerr(s) ## 
+                ns=Discretize(s)
+                for g in geoBasic:
+                    FreeCAD.ActiveDocument.getObject(ns).addGeometry(g)
+                offset1=[-FreeCAD.ActiveDocument.getObject(sk_name).Placement.Base[0],-FreeCAD.ActiveDocument.getObject(sk_name).Placement.Base[1]]
+                elist, to_dis=check_geom(ns,offset1)
+                for e in elist:
+                    #print e[(len(e)-1):][0]
+                    e[(len(e)-1)]=sk_label
+                    #print e[(len(e)-1):][0]
+                #stop
+                new_edge_list=new_edge_list+elist
+                if not keep_sketch_converted:
+                    FreeCAD.ActiveDocument.removeObject(ns)
+                else:
+                    FreeCAD.ActiveDocument.getObject(ns).Label=sel[0].Label+'_simplified'
+                FreeCAD.ActiveDocument.recompute()
+            #############  end discretizing
+        else:
+            sayw('nothing to simplify')
+        # to do: evaluate sanitize check
+        ####stop
 
 ###
 def export_footprint(fname=None):

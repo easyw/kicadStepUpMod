@@ -21,7 +21,7 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 from kicadStepUptools import KicadPCB,SexpList
 
-__kicad_parser_version__ = '1.1.0'
+__kicad_parser_version__ = '1.1.2'
 print('kicad_parser_version '+__kicad_parser_version__)
 
 
@@ -380,11 +380,14 @@ class KicadFcad:
         self.setLayer(self.layer_type)
 
     def setLayer(self,layer):
+        #print(layer)
+        # print(self.pcb.layers)
         try:
             layer = int(layer)
         except:
             for layer_type in self.pcb.layers:
                 if self.pcb.layers[layer_type][0] == layer:
+                # if layer in self.pcb.layers[layer_type][0]:
                     self.layer = layer
                     self.layer_type = int(layer_type)
                     return
@@ -607,7 +610,8 @@ class KicadFcad:
                     for o in obj:
                         o.ViewObject.Visibility = False
                 else:  #maui make compound
-                    if self.layer == 'F.Cu':
+                    # if self.layer == 'F.Cu':
+                    if 'F.Cu' in self.layer:
                         deltaz = 0.02 # 20 micron
                     else:
                         deltaz = -0.02 # 20 micron
@@ -1012,7 +1016,9 @@ class KicadFcad:
         except KeyError:
             raise ValueError('invalid shape type: {}'.format(shape_type))
 
-        layer_match = '*.{}'.format(self.layer.split('.')[-1])
+        # print('layer...',self.layer)
+        
+        layer_match = '*.{}'.format(self.layer.replace('"','').split('.')[-1]) #removing extra double quotes from layer
 
         objs = []
 

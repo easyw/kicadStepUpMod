@@ -26,7 +26,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints
 
-__ksuCMD_version__='1.5.9'
+__ksuCMD_version__='1.6.0'
 
 precision = 0.1 # precision in spline or bezier conversion
 q_deflection = 0.02 # quasi deflection parameter for discretization
@@ -39,7 +39,7 @@ try:
     FreeCAD.Console.PrintWarning('A3 available\n')
     a3 = True
 except:
-    FreeCAD.Console.PrintWarning('A3 not available\n')
+    # FreeCAD.Console.PrintWarning('A3 not available\n')
     a3 = False
 
 
@@ -1245,6 +1245,33 @@ class ksuToolsSimplifySketck:
             FreeCAD.Console.PrintWarning("Select ONE Sketch to be Simplified\n")             
 
 FreeCADGui.addCommand('ksuToolsSimplifySketck',ksuToolsSimplifySketck())
+#####
+
+class ksuToolsBsplineNormalize:
+    "ksu tools Normalize Bspline for KiCAD format"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Sketcher_BSplineNormalize.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksu Normalize Bspline" ,
+                     'ToolTip' : "Normalize Bspline for KiCAD format"}
+ 
+    def IsActive(self):
+        #return True
+        return False
+ 
+    def Activated(self):
+        # do something here...
+        if len(FreeCADGui.Selection.getSelection()):
+            import kicadStepUptools
+            if reload_Gui:
+                reload_lib( kicadStepUptools )
+            kicadStepUptools.normalize_bsplines()
+        else:
+            #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
+            reply = QtGui.QMessageBox.information(None,"Warning", "Select ONE Sketch to be Normalized")
+            FreeCAD.Console.PrintWarning("Select ONE Sketch to be Normalized\n")             
+
+FreeCADGui.addCommand('ksuToolsBsplineNormalize',ksuToolsBsplineNormalize())
 
 #####
 class ksuToolsFootprintGen:
