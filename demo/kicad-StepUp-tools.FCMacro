@@ -461,7 +461,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.3.1.0"
+___ver___ = "8.3.1.1"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -18105,8 +18105,9 @@ def getBoardOutline():
                                     j.Label
                                 ])
                                 #print(outline)
-                        elif (use_discretize) and (accept_spline) and ('Parabola' in type(j.Geometry[k]).__name__ or 'Hyperbola' in type(j.Geometry[k]).__name__\
-                             or 'Ellipse' in type(j.Geometry[k]).__name__): 
+                        # elif (use_discretize) and (accept_spline) and ('Parabola' in type(j.Geometry[k]).__name__ or 'Hyperbola' in type(j.Geometry[k]).__name__\
+                        #      or 'Ellipse' in type(j.Geometry[k]).__name__): 
+                        elif (accept_spline) and ('Parabol' in type(j.Geometry[k]).__name__ or 'Hyperbol' in type(j.Geometry[k]).__name__): 
                         ## discretizing
                          # or 'Ellipse' in type(j.Geometry[k]).__name__  ## Elipses are not well approximated by Splines
                             gd = j.Geometry[k]
@@ -18135,11 +18136,12 @@ def getBoardOutline():
                                     v1y,
                                     v2x,
                                     v2y,
-                                    j.Label()
+                                    j.Label,
                                 ])    
                                 #print(v1x,v1y,v2x,v2y,i)
-                        elif (not use_discretize) and (accept_spline) and ('Parabola' in type(j.Geometry[k]).__name__ or 'Hyperbola' in type(j.Geometry[k]).__name__\
-                             or 'Ellipse' in type(j.Geometry[k]).__name__): 
+                        # elif (not use_discretize) and (accept_spline) and ('Parabola' in type(j.Geometry[k]).__name__ or 'Hyperbola' in type(j.Geometry[k]).__name__\
+                        #      or 'Ellipse' in type(j.Geometry[k]).__name__): 
+                        elif (not use_discretize) and (accept_spline) and ('Ellipse' in type(j.Geometry[k]).__name__): 
                         ## toBiArcs 
                          # or 'Ellipse' in type(j.Geometry[k]).__name__  ## Elipses are not well approximated by Splines
                             gk = j.Geometry[k]
@@ -18151,6 +18153,24 @@ def getBoardOutline():
                             #    print(str(g))
                             #stop
                             for g in gds:
+                                # s = g.toShape() #needed to fix some issue on sketch geometry building
+                                # outline.append([
+                                #     'arc',
+                                #     g.Radius, 
+                                #     s.Edges[0].Curve.Center.x,
+                                #     s.Edges[0].Curve.Center.y,
+                                #     g.FirstParameter, 
+                                #     g.LastParameter,
+                                #     g.Axis[0],
+                                #     g.Axis[1],
+                                #     g.Axis[2],
+                                #     g,
+                                #     s.Edges[0].Vertexes[0].Point,
+                                #     s.Edges[0].Vertexes[1].Point,
+                                #     s.Edges[0].Orientation,
+                                #     j.Label
+                                # ])                                
+                                # #Part.show(s)
                                 outline.append([
                                     'arc',
                                     g.Radius, 
@@ -18945,6 +18965,7 @@ def export_pcb(fname=None):
                         bbpy=FreeCAD.ActiveDocument.getObject('Pcb').Placement.Base[1]-FreeCAD.ActiveDocument.getObject(skt_name).Placement.Base[1]
                         offset=[bbpx,bbpy]
                     else:
+                        off_x=0;off_y=0
                         offset=[off_x,-off_y]
                     if gof and grid_orig==1:
                         offset=[off_x,-off_y]
