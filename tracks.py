@@ -205,7 +205,6 @@ def addtracks():
         #pcb.setLayer(LvlBotName)
         pcb.setLayer(Bot_lvl)
         pcb.makeCopper(holes=True, minSize=minSizeDrill)
-        
         composed = doc.ActiveObject
         s = composed.Shape
         doc.addObject('Part::Feature','botTracks').Shape=composed.Shape
