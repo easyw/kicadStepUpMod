@@ -24,9 +24,9 @@ import math
 from math import sqrt
 
 import constrainator
-from constrainator import add_constraints
+from constrainator import add_constraints, sanitizeSkBsp
 
-__ksuCMD_version__='1.6.0'
+__ksuCMD_version__='1.6.1'
 
 precision = 0.1 # precision in spline or bezier conversion
 q_deflection = 0.02 # quasi deflection parameter for discretization
@@ -124,14 +124,14 @@ class Ui_CDialog(object):
         self.coincident.setObjectName("coincident")
         self.verticalLayout.addWidget(self.coincident)
         self.Tolerance = QtGui.QGroupBox(CDialog)
-        self.Tolerance.setGeometry(QtCore.QRect(166, 70, 141, 129))
+        self.Tolerance.setGeometry(QtCore.QRect(166, 70, 141, 91))
         self.Tolerance.setToolTip("")
         self.Tolerance.setStatusTip("")
         self.Tolerance.setWhatsThis("")
         self.Tolerance.setTitle("Tolerance")
         self.Tolerance.setObjectName("Tolerance")
         self.verticalLayoutWidget_2 = QtGui.QWidget(self.Tolerance)
-        self.verticalLayoutWidget_2.setGeometry(QtCore.QRect(8, 44, 125, 57))
+        self.verticalLayoutWidget_2.setGeometry(QtCore.QRect(8, 20, 125, 57))
         self.verticalLayoutWidget_2.setObjectName("verticalLayoutWidget_2")
         self.verticalLayout_2 = QtGui.QVBoxLayout(self.verticalLayoutWidget_2)
         self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
@@ -155,10 +155,16 @@ class Ui_CDialog(object):
         self.tolerance.setPlaceholderText("")
         self.tolerance.setObjectName("tolerance")
         self.verticalLayout_2.addWidget(self.tolerance)
+        self.rmvXGeo = QtGui.QCheckBox(CDialog)
+        self.rmvXGeo.setGeometry(QtCore.QRect(170, 180, 141, 20))
+        self.rmvXGeo.setToolTip("remove duplicated geometries")
+        self.rmvXGeo.setStatusTip("")
+        self.rmvXGeo.setText("rmv xtr geo")
+        self.rmvXGeo.setObjectName("rmvXGeo")
 
         #self.retranslateUi(CDialog)
         ###  --------------------------------------------------------
-
+        #self.checkBox.setText("rmv xtr geo")
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("accepted()"), CDialog.accept)
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("rejected()"), CDialog.reject)
         QtCore.QMetaObject.connectSlotsByName(CDialog)
@@ -188,7 +194,7 @@ class Ui_CDialog(object):
 
     def return_strings(self):
     #   Return list of values. It need map with str (self.lineedit.text() will return QString)
-        return map(str, [self.tolerance.text(), self.all_constraints.isChecked()])
+        return map(str, [self.tolerance.text(), self.all_constraints.isChecked(), self.rmvXGeo.isChecked()])
         
     # @staticmethod
     # def get_data(parent=None):
@@ -924,6 +930,13 @@ class ksuToolsConstrainator:
                                 constr = 'all'
                             else:
                                 constr = 'coincident'
+                        if i ==2:
+                            if 'True' in dv:
+                                rmvXG = True
+                            else:
+                                rmvXG = False
+                    if rmvXG:
+                        sanitizeSkBsp(sel[0].Name, tol)
                     add_constraints(sel[0].Name, tol, constr)
             else:
                 reply = QtGui.QMessageBox.information(None,"Warning", "select a Sketch to be Fix & Constrained")
@@ -963,6 +976,9 @@ class ksuToolsDiscretize:
                         shapes.append(Part.Wire(e))
                     #sd=e.copy().discretize(QuasiDeflection=dqd)    
             sk_d=Draft.makeSketch(shapes)
+            max_geo_admitted = 1500 # after this number, no recompute is applied
+            if len (sk_d.Geometry) < max_geo_admitted:
+                FreeCAD.ActiveDocument.recompute()
 
 FreeCADGui.addCommand('ksuToolsDiscretize',ksuToolsDiscretize())
 ##
@@ -1006,6 +1022,7 @@ class ksuTools2D2Sketch:
     def Activated(self):
         # do something here...
         if FreeCADGui.Selection.getSelection():
+            max_geo_admitted = 1500 # after this number, no recompute is applied
             try:
                 edges=sum((obj.Shape.Edges for obj in \
                 FreeCADGui.Selection.getSelection() if hasattr(obj,'Shape')),[])
@@ -1160,10 +1177,14 @@ class ksuTools2D2Sketch:
                         stop
                     sk.Label = "Sketch_converted"
                     sname=FreeCAD.ActiveDocument.ActiveObject.Name
+                    for i,g in enumerate (sk.Geometry):
+                        if 'BSplineCurve object' in str(g):
+                            sk.exposeInternalGeometry(i)
                     using_draft_makeSketch=True
                     for obj in FreeCADGui.Selection.getSelection():
                         FreeCADGui.ActiveDocument.getObject(obj.Name).Visibility=False
-                        
+                    if len (sk.Geometry) < max_geo_admitted:
+                        FreeCAD.ActiveDocument.recompute()
             except Part.OCCError: # Exception: #
                 FreeCAD.Console.PrintError('Error in source %s (%s)' % (faceobj.Name,faceobj.Label)+"\n")
         else:
@@ -1238,6 +1259,7 @@ class ksuToolsSimplifySketck:
             import kicadStepUptools
             if reload_Gui:
                 reload_lib( kicadStepUptools )
+            FreeCAD.Gui.activeDocument().activeView().viewTop()
             kicadStepUptools.simplify_sketch()
         else:
             #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
@@ -1252,12 +1274,12 @@ class ksuToolsBsplineNormalize:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Sketcher_BSplineNormalize.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Normalize Bspline" ,
-                     'ToolTip' : "Normalize Bspline for KiCAD format"}
+                     'MenuText': "ksu Geo to Bspline" ,
+                     'ToolTip' : "Convert Geometry to Bspline for KiCAD format"}
  
     def IsActive(self):
-        #return True
-        return False
+        return True
+        #return False
  
     def Activated(self):
         # do something here...

@@ -92,6 +92,7 @@ from kicadStepUptools import KicadPCB, make_unicode, make_string
 #filename="C:/Cad/Progetti_K/eth-32gpio/eth-32gpio.kicad_pcb"
 def addtracks():
     global start_time, last_pcb_path, min_drill_size
+    import sys
     
     # cfg_read_all() it doesn't work through different files
     # print (min_drill_size)
@@ -160,6 +161,7 @@ def addtracks():
         #}
         #pcb.colors={'board':(1.,1.,1.),'pad':{0:(219/255,188/255,126/255)},'zone':{0:(0.,1.,0.)},'track':{0:(0.,1.,1.)},'copper':{0:(0.,1.,1.)},}  
         pcb.setLayer(Top_lvl)
+        #try:   #doing top tracks layer
         pcb.makeCopper(holes=True, minSize=minSizeDrill)
         doc=FreeCAD.ActiveDocument
         docG=FreeCADGui.ActiveDocument
@@ -194,7 +196,12 @@ def addtracks():
         #stop
         removesubtree(FreeCADGui.Selection.getSelection())
         say_time()
+        #except Exception as e:
+        #    exc_type, exc_obj, exc_tb = sys.exc_info()
+        #    fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        #    FreeCAD.Console.PrintError('error class: '+str(exc_type)+'\nfile name: '+str(fname)+'\nerror @line: '+str(exc_tb.tb_lineno)+'\nerror value: '+str(e.args[0])+'\n')
         
+        #try:    #doing bot tracks layer
         #pcb.setLayer(LvlBotName)
         pcb.setLayer(Bot_lvl)
         pcb.makeCopper(holes=True, minSize=minSizeDrill)
@@ -232,6 +239,10 @@ def addtracks():
         #botTracks.Label="botTracks"
         #botTracks.Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,-1.6),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))    
         #docG.ActiveObject.Transparency=40
+        #except Exception as e:
+        #    exc_type, exc_obj, exc_tb = sys.exc_info()
+        #    fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        #    FreeCAD.Console.PrintError('error class: '+str(exc_type)+'\nfile name: '+str(fname)+'\nerror @line: '+str(exc_tb.tb_lineno)+'\nerror value: '+str(e.args[0])+'\n')
         say_time()
         
         FreeCADGui.SendMsgToActiveView("ViewFit")

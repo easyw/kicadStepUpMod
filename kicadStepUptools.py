@@ -348,6 +348,7 @@
 # spline w control points
 # fixing pushing pcb
 # adding support for double quotes on kicad_pcb and kicad_mod format
+# bsplines allowed for push&pull kicad_pcb
 # most clean code and comments done
 
 ##todo
@@ -460,7 +461,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.3.0.5"
+___ver___ = "8.3.1.0"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -484,11 +485,14 @@ global full_placement, shape_col, align_vrml_step_colors
 global timer_Collisions, last_3d_path, expanded_view, mingui
 global textEdit_dim_base, textEdit_dim_hide #textEdit dimensions for hiding showing text content
 global warning_nbr, original_filename, edge_width, load_sketch, grid_orig, dvm, pt_osx, pt_lnx, dqd, running_time
-global addConstraints, precision, conv_offs, maxRadius, pad_nbr, use_pypro
+global addConstraints, precision, conv_offs, maxRadius, pad_nbr, use_pypro, accept_spline, maxDegree, maxSegments
 
 maxRadius = 500.0 # 500mm maxRadius of arc from bspline
 pad_nbr = 1 #first nbr of fp pads
 use_pypro = False #False #enable/disable timestamp as python property; False=disabled -> use the Label
+accept_spline = True # include spline in PCB_Sketch for KiCAD >= v5.1
+maxDegree = 3 # spline degree for KiCAD integration
+maxSegments = 999 #for splines
 
 conv_offs = 1.0 #conversion offset from decimils to mm pcb version >= 20171114
 original_filename=""
@@ -7208,6 +7212,10 @@ def add_constraints(s_name):
             Part.Circle: [0, 3],  # curve, center
             Part.ArcOfCircle: [1, 2, 3],  # first point, last point, center
             Part.BSplineCurve: [0,1,2,3], # for poles
+            Part.ArcOfEllipse: [0,1,2,3], #
+            Part.Ellipse: [0,1], #
+            Part.ArcOfHyperbola: [0,1,2], #
+            Part.Point: [0], #            
         }
     else:
         g_geom_points = {
@@ -7216,6 +7224,10 @@ def add_constraints(s_name):
             Part.Circle: [0, 3],  # curve, center
             Part.ArcOfCircle: [1, 2, 3],  # first point, last point, center
             Part.BSplineCurve: [0,1,2,3], # for poles
+            Part.ArcOfEllipse: [0,1,2,3], #
+            Part.Ellipse: [0,1], #
+            Part.ArcOfHyperbola: [0,1,2], #
+            Part.Point: [0], #            
         }
     points=[]
     geoms=[]
@@ -7240,6 +7252,11 @@ def add_constraints(s_name):
                 tp = 'Line'
             else:
                 tp = 'Arc'
+            geoms.append([point1[0],point1[1],point2[0],point2[1],tp])
+        elif 'ArcOfEllipse' in type(s.Geometry[geom_index]).__name__:
+            point1 = s.getPoint(geom_index, point_indexes[1])
+            point2 = s.getPoint(geom_index, point_indexes[2])
+            tp = 'Arc'
             geoms.append([point1[0],point1[1],point2[0],point2[1],tp])
 
     #print points
@@ -7355,6 +7372,11 @@ def add_missing_geo(s_name):
             Part.LineSegment: [1, 2],  # first point, last point
             Part.Circle: [0, 3],  # curve, center
             Part.ArcOfCircle: [1, 2, 3],  # first point, last point, center
+            Part.BSplineCurve: [0,1,2,3], # for poles
+            Part.ArcOfEllipse: [0,1,2,3], # 
+            Part.Ellipse: [0,1], #
+            Part.ArcOfHyperbola: [0,1,2], #
+            Part.Point: [0], #
         }
     else:
         g_geom_points = {
@@ -7362,6 +7384,11 @@ def add_missing_geo(s_name):
             Part.Line: [1, 2],  # first point, last point
             Part.Circle: [0, 3],  # curve, center
             Part.ArcOfCircle: [1, 2, 3],  # first point, last point, center
+            Part.BSplineCurve: [0,1,2,3], # for poles
+            Part.ArcOfEllipse: [0,1,2,3], # 
+            Part.Ellipse: [0,1], #
+            Part.ArcOfHyperbola: [0,1,2], #
+            Part.Point: [0], #
         }
     geo_points=[]
     geoms=[]
@@ -7371,7 +7398,6 @@ def add_missing_geo(s_name):
         point_indexes = g_geom_points[type(s.Geometry[geom_index])]
         #sayerr(point_indexes), say (geom_index)
         #if 'Line' in type(PCB_Sketch.Geometry[geom_index]).__name__:
-        
         if 'ArcOfCircle' in type(s.Geometry[geom_index]).__name__\
          or 'Line' in type(s.Geometry[geom_index]).__name__:
             point1 = s.getPoint(geom_index, point_indexes[0])
@@ -7385,6 +7411,15 @@ def add_missing_geo(s_name):
             #points.append([[point1[0],point1[1]],[geom_index]]) #,[1]])
             #geo_points.append([[point1[0],point1[1]],[point2[0],point2[1]],[geom_index]]) #,[2]])
             geoms.append([point1[0],point1[1],point2[0],point2[1]])
+        # elif 'ArcOfEllipse' in type(s.Geometry[geom_index]).__name__\
+        #  or 'ArcOfHyperbola' in type(s.Geometry[geom_index]).__name__:
+        #     point1 = s.getPoint(geom_index, point_indexes[1])
+        #     point2 = s.getPoint(geom_index, point_indexes[2])
+        #     geoms.append([point1[0],point1[1],point2[0],point2[1],tp])
+        # elif 'Ellipse' in type(s.Geometry[geom_index]).__name__:
+        #     pass
+        # elif 'Point' in type(s.Geometry[geom_index]).__name__:
+        #     pass
     sk_add_geo = []
     #say(geoms)
     for i, geo in enumerate(geoms):
@@ -7574,6 +7609,9 @@ def onLoadBoard(file_name=None):
             ##stop utf-8 test
             ini_vars[10] = last_pcb_path
             #cfg_update_all()
+            ## doc=FreeCAD.ActiveDocument
+            ## if doc is None:
+            ##     doc=FreeCAD.newDocument(fname)
             doc=FreeCAD.newDocument(fname)
             pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
             pg.SetString("last_pcb_path", make_string(last_pcb_path)) # py3 .decode("utf-8")
@@ -15672,13 +15710,14 @@ def PushFootprint():
                         ## checking Pads_Poly for ArcOfCircle to be discretized
                         to_discretize=False
                         if 'Pads_Poly' in o.Label: 
-                            for g in o.Geometry:
-                                if 'ArcOfCircle' in str(g):
-                                    FreeCAD.Console.PrintWarning('need to discretize Arcs\n')
-                                    to_discretize=True
-                            if to_discretize:
-                                sk_to_discr.append(o)
-                                FreeCADGui.Selection.removeSelection(o)
+                            if hasattr(o,"Geometry"):
+                                for g in o.Geometry:
+                                    if 'ArcOfCircle' in str(g):
+                                        FreeCAD.Console.PrintWarning('need to discretize Arcs\n')
+                                        to_discretize=True
+                                if to_discretize:
+                                    sk_to_discr.append(o)
+                                    FreeCADGui.Selection.removeSelection(o)
                 else:
                     to_discretize=False
                     if 'Pads_Poly' in sel[0].Label: 
@@ -15766,7 +15805,7 @@ def PushFootprint():
             say_warning(msg)
 ###
 
-def simplify_sketch():
+def simplify_sketch_old():
     ''' simplifying & sanitizing sketches '''
     global maxRadius, edge_tolerance
     
@@ -15857,8 +15896,7 @@ def simplify_sketch():
         ####stop
 
 ###
-
-def normalize_bsplines():
+def simplify_sketch():
     ''' simplifying & sanitizing sketches '''
     global maxRadius, edge_tolerance
     
@@ -15867,12 +15905,22 @@ def normalize_bsplines():
     if len(sel)==1:
         if 'Sketcher' in sel[0].TypeId:
             sanitizeSketch(sel[0].Name)
-        new_edge_list, not_supported, to_discretize, construction_geom = getBoardOutline()
+        # new_edge_list, not_supported, to_discretize, construction_geom = getBoardOutline()
+        to_discretize = []
+        new_edge_list = []
+        for g in sel[0].Geometry:
+            if 'BSplineCurve object' in str(g):
+                to_discretize.append(g)
+            elif 'Ellipse' in str(g) or 'Parabola' in str(g) or 'Hyperbola' in str(g):
+                to_discretize.append(g)
+            else:
+                new_edge_list.append(g)
         ## support for arcs, lines and bsplines in F_Silks
         sel = FreeCADGui.Selection.getSelection()
         sk_name=None
         sk_name=sel[0].Name
         sk_label=sel[0].Label
+        
         if len(to_discretize)>0 and sk_name is not None:
             FreeCADGui.ActiveDocument.getObject(sk_name).Visibility=False # hidden Sketch
             #sel = FreeCADGui.Selection.getSelection()
@@ -15947,6 +15995,78 @@ def normalize_bsplines():
             sayw('nothing to simplify')
         # to do: evaluate sanitize check
         ####stop
+
+###
+
+def normalize_bsplines():
+    ''' simplifying & sanitizing sketches '''
+    global edge_tolerance, maxRadius, maxSegments, precision
+    
+    doc = FreeCAD.ActiveDocument
+    docG = FreeCADGui.ActiveDocument
+    sel = FreeCADGui.Selection.getSelection()
+    if len(sel)==1:
+        if 'Sketcher' in sel[0].TypeId:
+            skGeo = sel[0].Geometry
+            found_to_simplify = False
+            kGeo = []
+            #print(skGeo)
+            maxDegree = 3 #kicad max degree of splines
+            for g in skGeo:
+                #if 'BSplineCurve object' in str(g):
+                #    bs = g
+                #    # Set degree
+                #    #maxDegree = 3 #kicad max degree of splines
+                #    if bs.Degree < maxDegree:
+                #        bs.increaseDegree(maxDegree)
+                #    elif bs.Degree > maxDegree:
+                #        # degree too high. We need to approximate the curve
+                #        bs = bs.approximateBSpline(edge_tolerance,maxSegment,maxDegree) # (tolerance, maxSegments, maxDegree)
+                #        # Generate to a list of bezier curves
+                #  import kicadStepUptools; import importlib; importlib.reload(kicadStepUptools)
+                if 'Ellipse' in str(g) or 'Parabola' in str(g) or 'Hyperbola' in str(g):
+                    # bs = g.approximateBSpline(edge_tolerance,maxSegments,maxDegree) # (tolerance, maxSegments, maxDegree) 
+                    bs = g.toBSpline() # (tolerance, maxSegments, maxDegree)
+                    bs = bs.toBiArcs(precision)
+                    for b in bs:
+                        kGeo.append(b)
+                    found_to_simplify = True
+                    #print(bs)
+                    #stop
+                else: #std geo like line, arcs, circles
+                    bs = g
+                    kGeo.append(bs)
+            if found_to_simplify:
+                doc.addObject('Sketcher::SketchObject','kBspSketch')
+                kbsp = doc.ActiveObject
+                kbsp_name = doc.ActiveObject.Name
+                kbsp.Geometry = kGeo
+                for i,g in enumerate (kGeo):
+                    if 'BSplineCurve object' in str(g):
+                        kbsp.exposeInternalGeometry(i)
+                doc.recompute()
+                docG.getObject(sel[0].Name).Visibility = False
+                        # bezier_list = bs.toBezier()
+                        # # Check the result
+                        # for bc in bezier_list:
+                        #     print("%s (degree : %d / nb poles : %d)"%(bc, bc.Degree, bc.NbPoles))
+                        #     print(bc, bc.Degree, bc.NbPoles)
+                        #     Part.show(bc.toShape())
+                        #     Draft.makeSketch(FreeCAD.ActiveDocument.ActiveObject,autoconstraints=True)
+                            # if not keep_sketch_converted:
+                            #     FreeCAD.ActiveDocument.removeObject(ns)
+                            # else:
+                                #     FreeCAD.ActiveDocument.getObject(ns).Label=sel[0].Label+'_simplified'
+                                # FreeCAD.ActiveDocument.recompute()
+                                    #############  end discretizing
+            else:
+                sayw('nothing to simplify')
+        else:
+            sayw('nothing to simplify')
+        # to do: evaluate sanitize check
+        ####stop
+
+###
 
 ###
 def export_footprint(fname=None):
@@ -16044,7 +16164,7 @@ def export_footprint(fname=None):
                     if (obj.TypeId=="Part::Part2DObjectPython"):
                         FreeCAD.ActiveDocument.removeObject(obj.Name)
                         FreeCAD.ActiveDocument.recompute() 
-                    else:
+                    elif (obj.TypeId=="Sketcher::SketchObject"):
                        sk_to_conv.append(obj.Name)
             keep_sketch_converted=False #False
             for s in sk_to_conv:
@@ -16134,7 +16254,7 @@ def export_footprint(fname=None):
         ## header=u"(module "+fp_name+" (layer F.Cu) (tedit 5A74E519)"+os.linesep
         #header=header+fp_type
         #header=header+"  (descr \""+fp_name+" StepUp generated footprint\")"+os.linesep
-        header="  (descr \""+fp_name+" StepUp generated footprint\")"+os.linesep
+        header="  (descr \""+fp_name.rstrip('-fp')+" StepUp generated footprint\")"+os.linesep
         header=header+"  (fp_text reference \""+reference+u"\" (at "+str(xr)+" "+str(yr)+") (layer F.SilkS)"+os.linesep
         header=header+"  (effects (font (size "+ref_fsize+") (thickness "+ref_fthick+")))"+os.linesep
         header=header+"  )"+os.linesep
@@ -16145,24 +16265,38 @@ def export_footprint(fname=None):
         header=header+"  (fp_text user %R (at "+str(xr)+" "+str(yr)+") (layer F.Fab)"+os.linesep
         header=header+"    (effects (font (size "+ref_fsize+") (thickness "+ref_fthick+")))"+os.linesep
         #header=header+"    (effects (font (size 1 1) (thickness 0.15)))"+os.linesep
+        header=header+"  )"+os.linesep
+        header=header+"  (fp_text user \"EDIT PAD NUMBERS\" (at "+str(xv)+" "+str(yv-1)+") (layer Cmts.User)"+os.linesep
+        header=header+"    (effects (font (size 1 1) (thickness 0.2) italic))"+os.linesep
         header=header+"  )"
+
         ## import kicadStepUptools; reload(kicadStepUptools)
         
         for border in sanitized_edge_list:
             #print (border)
             lyr=border[(len(border)-1):][0]
-            if 'CrtYd' in lyr:
+            lyr_splt = lyr.split('_')
+            if 'CrtYd' in lyr and len(lyr_splt)==3:
                 edge_thick=float(lyr.split('_')[2])
                 lyr=u'F.CrtYd'
             elif 'Silks' in lyr:
-                edge_thick=float(lyr.split('_')[2])
-                lyr=u'F.SilkS'
+                if len(lyr_splt)==3:
+                    edge_thick=float(lyr.split('_')[2])
+                    lyr=u'F.SilkS'
+                else:
+                    lyr='skip'
             elif 'Fab' in lyr:
-                edge_thick=float(lyr.split('_')[2])
-                lyr=u'F.Fab'
+                if len(lyr_splt)==3:
+                    edge_thick=float(lyr.split('_')[2])
+                    lyr=u'F.Fab'
+                else:
+                    lyr='skip'                
             elif 'Cuts' in lyr:
-                edge_thick=float(lyr.split('_')[2])
-                lyr=u'Edge.Cuts'
+                if len(lyr_splt)==3:
+                    edge_thick=float(lyr.split('_')[2])
+                    lyr=u'Edge.Cuts'
+                else:
+                    lyr='skip'
             #elif 'Pads_SMD' in lyr:
             #    edge_thick=0.
             #    lyr=u'Pads_SMD'
@@ -16219,7 +16353,7 @@ def export_footprint(fname=None):
             #if (lyr != 'Pads_SMD' and lyr != 'Pads_TH' and lyr != 'Drills' and lyr != 'NPTH'\
             if ('Pads_SMD' not in lyr and 'Pads_TH' not in lyr and 'Drills' not in lyr and 'NPTH' not in lyr \
                                  and 'Pads_Poly' not in lyr and 'Pads_Round_Rect' not in lyr and 'PadsAll' not in lyr)\
-                                 and 'FZ_' not in lyr and 'Pads_Geom' not in lyr:
+                                 and 'FZ_' not in lyr and 'Pads_Geom' not in lyr and 'skip' not in lyr:
                 #print border, ' BORDER'                                                  #
                 #if len (border)>0:
                 new_border=new_border+os.linesep+createFp(border,offset, lyr, edge_thick)
@@ -16738,6 +16872,13 @@ def export_footprint(fname=None):
         if len (npad)>0:
             newcontent=newcontent+npad+os.linesep
             say('created Geom pads')
+            
+        ## adding 3D model preset
+        newcontent+=u"   (model "+str(fpth)+os.sep+fp_name.rstrip('-fp')+u'.wrl'+os.linesep
+        newcontent+=u"    (at (xyz 0 0 0))"+os.linesep
+        newcontent+=u"    (scale (xyz 1 1 1))"+os.linesep
+        newcontent+=u"    (rotate (xyz 0 0 0))"+os.linesep
+        newcontent+=u"  )"+os.linesep
         ### ---------- wrtiting file --------------------
         newcontent=newcontent+')'+os.linesep+u' '       
         with codecs.open(fpath,'w', encoding='utf-8') as ofile:
@@ -17801,6 +17942,11 @@ def createFpPad(pad,offset,tp, _drills=None):
 ###
 
 def getBoardOutline():
+    global edge_tolerance, maxRadius, maxSegments
+    global dvm, dqd, precision
+    
+    use_discretize = False # discretize or toBiArc method for Ellipses and parabola and Hyperbola
+    
     if not FreeCAD.activeDocument():
         return False
     #
@@ -17826,6 +17972,8 @@ def getBoardOutline():
                     #print j.Geometry
                     for k in range(len(j.Geometry)):
                         #print(type(j.Geometry[k]).__name__)
+                        bezier_list  = []
+                        bezier_list_tmp  = []
                         if hasattr(j.Geometry[k],'Construction'):
                             if j.Geometry[k].Construction:
                                 construction_geom.append(k)
@@ -17926,7 +18074,141 @@ def getBoardOutline():
                             #         i.Axis[2],
                             #         i
                             #     ])
-                        else:
+                        elif (accept_spline) and ('BSplineCurve' in type(j.Geometry[k]).__name__):
+                            bs = j.Geometry[k]
+                            # Set degree
+                            #maxDegree = 3 #kicad max degree of splines
+                            if bs.Degree < maxDegree:
+                                bs.increaseDegree(maxDegree)
+                            elif bs.Degree > maxDegree:
+                                # degree too high. We need to approximate the curve
+                                bs = bs.approximateBSpline(edge_tolerance,maxSegments,maxDegree) # (tolerance, maxSegments, maxDegree)
+                                # Generate to a list of bezier curves
+                            bezier_list.extend(bs.toBezier())  # Generate to a list of bezier curves, these are of 4 poles
+                            for bc in bezier_list:
+                                print("%s (degree : %d / nb poles : %d)"%(bc, bc.Degree, bc.NbPoles))
+                                # poles = bc.getPoles()
+                                # spline=Part.BSplineCurve()
+                                # spline.buildFromPoles(poles, False, 3)
+                                #kicadGeo.append(spline)
+                                #print(poles)
+                                outline.append([
+                                    'spline',
+                                    bc.getPole(1).x,
+                                    bc.getPole(1).y,
+                                    bc.getPole(2).x,
+                                    bc.getPole(2).y,
+                                    bc.getPole(3).x,
+                                    bc.getPole(3).y,
+                                    bc.getPole(4).x,
+                                    bc.getPole(4).y,
+                                    j.Label
+                                ])
+                                #print(outline)
+                        elif (use_discretize) and (accept_spline) and ('Parabola' in type(j.Geometry[k]).__name__ or 'Hyperbola' in type(j.Geometry[k]).__name__\
+                             or 'Ellipse' in type(j.Geometry[k]).__name__): 
+                        ## discretizing
+                         # or 'Ellipse' in type(j.Geometry[k]).__name__  ## Elipses are not well approximated by Splines
+                            gd = j.Geometry[k]
+                            gds = gd.toShape()
+                            pl = gds.discretize(QuasiDeflection=dqd)
+                            #pl = gds.discretize(QuasiDeflection=1.0)
+                            w = Part.makePolygon(pl)
+                            wv = w.Vertexes
+                            for i in range(0,len(wv), 1):
+                            #for v in wv:
+                                if i < len(wv)-1:
+                                    v1x = wv[i].Point.x
+                                    v1y = wv[i].Point.y
+                                    v2x = wv[i+1].Point.x
+                                    v2y = wv[i+1].Point.y
+                                elif 'Arc' not in str(gd):
+                                    v1x = wv[i].Point.x
+                                    v1y = wv[i].Point.y
+                                    v2x = wv[0].Point.x
+                                    v2y = wv[0].Point.y
+                                    #print('last point',v1x,v1y,v2x,v2y)
+                                #i+=2
+                                outline.append([
+                                    'line',
+                                    v1x,
+                                    v1y,
+                                    v2x,
+                                    v2y,
+                                    j.Label()
+                                ])    
+                                #print(v1x,v1y,v2x,v2y,i)
+                        elif (not use_discretize) and (accept_spline) and ('Parabola' in type(j.Geometry[k]).__name__ or 'Hyperbola' in type(j.Geometry[k]).__name__\
+                             or 'Ellipse' in type(j.Geometry[k]).__name__): 
+                        ## toBiArcs 
+                         # or 'Ellipse' in type(j.Geometry[k]).__name__  ## Elipses are not well approximated by Splines
+                            gk = j.Geometry[k]
+                            bs = gk.toBSpline() # (tolerance, maxSegments, maxDegree)
+                            gds = bs.toBiArcs(precision)
+                            # import kicadStepUptools; import importlib; importlib.reload(kicadStepUptools) 
+                            #;kicadStepUptools.open(u"C:/Temp/bspline.kicad_pcb")
+                            #for g in gds:
+                            #    print(str(g))
+                            #stop
+                            for g in gds:
+                                outline.append([
+                                    'arc',
+                                    g.Radius, 
+                                    g.Center.x,
+                                    g.Center.y,
+                                    g.FirstParameter, 
+                                    g.LastParameter,
+                                    g.Axis[0],
+                                    g.Axis[1],
+                                    g.Axis[2],
+                                    g,
+                                    g.StartPoint,
+                                    g.EndPoint,
+                                    'Forward',
+                                    j.Label
+                                ])
+
+                        #elif (accept_spline) and ('Parabola' in type(j.Geometry[k]).__name__ or 'Hyperbola' in type(j.Geometry[k]).__name__): 
+                        # # or 'Ellipse' in type(j.Geometry[k]).__name__  ## Elipses are not well approximated by Splines
+                        #    bs = j.Geometry[k]
+                        #    bs = bs.approximateBSpline(edge_tolerance,maxSegment,maxDegree) # (tolerance, maxSegments, maxDegree) 
+                        #    bezier_list_tmp.extend(bs.toBezier()) 
+                        #    tmpGeo = []
+                        #    for bc in bezier_list_tmp:
+                        #        print("%s (degree : %d / nb poles : %d)"%(bc, bc.Degree, bc.NbPoles))
+                        #        poles = bc.getPoles()
+                        #        spline=Part.BSplineCurve()
+                        #        spline.buildFromPoles(poles, False, 3)
+                        #        tmpGeo.append(spline)
+                        #    print('double rework for Ellipses and Parabola and Hyperbola')
+                        #    bezier_list_tmp = []
+                        #    for g in tmpGeo:
+                        #        if 'BSplineCurve object' in str(g):
+                        #            bs = g
+                        #            if bs.Degree < maxDegree:
+                        #                bs.increaseDegree(maxDegree)
+                        #            elif bs.Degree > maxDegree:
+                        #                # degree too high. We need to approximate the curve
+                        #                bs = bs.approximateBSpline(edge_tolerance,maxSegments,maxDegree) # (tolerance, maxSegments, maxDegree)
+                        #            bezier_list_tmp.extend(bs.toBezier())  # Generate to a list of bezier curves, these are of 4 poles
+                        #    for bc in bezier_list_tmp:
+                        #        print("%s (degree : %d / nb poles : %d)"%(bc, bc.Degree, bc.NbPoles))
+                        #        poles = bc.getPoles()
+                        #        #spline=Part.BSplineCurve()
+                        #        #spline.buildFromPoles(poles, False, 3)
+                        #        outline.append([
+                        #            'spline',
+                        #            bc.getPole(1).x,
+                        #            bc.getPole(1).y,
+                        #            bc.getPole(2).x,
+                        #            bc.getPole(2).y,
+                        #            bc.getPole(3).x,
+                        #            bc.getPole(3).y,
+                        #            bc.getPole(4).x,
+                        #            bc.getPole(4).y,
+                        #            j.Label
+                        #        ])
+                        else:  ## dropped ... it shouldn't arrive here
                             #print j.Geometry[k],'; not supported'
                             to_discretize.append(k)  #to_discretize.append(k, j.Label)
                             str_geom=str(j.Geometry[k])
@@ -17942,8 +18224,12 @@ def getBoardOutline():
                             #continue
                     ##break
                 except Exception as e:
+                    exc_type, exc_obj, exc_tb = sys.exc_info()
+                    fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
                     FreeCAD.Console.PrintWarning('1. ' + str(e) + "\n")
-
+                    FreeCAD.Console.PrintWarning('error class: '+str(exc_type)+'\nfile name: '+str(fname)+'\nerror @line: '+str(exc_tb.tb_lineno)+'\nerror value: '+str(e.args[0])+'\n')
+    # print (to_discretize)
+    # stop
     return outline, not_supported, to_discretize, construction_geom
 ##
 
@@ -18055,6 +18341,11 @@ def createEdge(edg,ofs):
             #.format(
             #            '{0:.10f}'.format(i[1] + abs(self.minX)), '{0:.10f}'.format(i[2] + abs(self.minY)), '{0:.10f}'.format(i[3] + abs(self.minX)), '{0:.10f}'.format(i[4] + abs(self.minY)), i[5], i[6], i[7]))
     #    self.addArc(edg[1:], 'Edge.Cuts', 0.01)
+    elif edg[0] == 'spline':
+        k_edg = "  (gr_curve (pts (xy {0:.3f} {1:.3f}) (xy {2:.3f} {3:.3f}) (xy {4:.3f} {5:.3f}) (xy {6:.3f} {7:.3f})) (layer {9}) (width {8}))"\
+        .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edg[5]+ofs[0], -edg[6]+ofs[1], edg[7]+ofs[0], -edg[8]+ofs[1], edge_width, layer)
+        # (pts (xy 151.983691 88.782809) (xy 152.805595 84.674685) (xy 148.40623 80.726614) (xy 144.40069 81.955321)) (layer Edge.Cuts) (width 0.2))
+        
     return k_edg
 ##
 def createFp(edg,ofs,layer, edge_thick):
@@ -18697,7 +18988,9 @@ def export_pcb(fname=None):
                 k = data.rfind(")")  #removing latest ')'
                 newcontent = data[:k] 
             new_edge_list, not_supported, to_discretize, construction_geom = getBoardOutline()
-                        
+            #print (new_edge_list)
+            #stop
+            
             #geoL=len(App.ActiveDocument.getObject("PCB_Sketch").Geometry)
             if len(to_discretize)>0:
                 sel = FreeCADGui.Selection.getSelection()
