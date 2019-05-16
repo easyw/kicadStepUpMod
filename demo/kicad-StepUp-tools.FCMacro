@@ -349,6 +349,8 @@
 # fixing pushing pcb
 # adding support for double quotes on kicad_pcb and kicad_mod format
 # bsplines allowed for push&pull kicad_pcb
+# fixed freezing issue on AppImages (thread)
+# improved simplify sketch
 # most clean code and comments done
 
 ##todo
@@ -461,7 +463,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.3.1.1"
+___ver___ = "8.3.2.0"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -486,6 +488,9 @@ global timer_Collisions, last_3d_path, expanded_view, mingui
 global textEdit_dim_base, textEdit_dim_hide #textEdit dimensions for hiding showing text content
 global warning_nbr, original_filename, edge_width, load_sketch, grid_orig, dvm, pt_osx, pt_lnx, dqd, running_time
 global addConstraints, precision, conv_offs, maxRadius, pad_nbr, use_pypro, accept_spline, maxDegree, maxSegments
+global zfit
+
+zfit = False
 
 maxRadius = 500.0 # 500mm maxRadius of arc from bspline
 pad_nbr = 1 #first nbr of fp pads
@@ -656,6 +661,12 @@ use_Links=False
 
 global FC_export_min_version
 FC_export_min_version="11670"  #11670 latest JM
+
+def ZoomFitThread():
+    FreeCAD.Console.PrintWarning('thread ViewFitting\n')
+    if FreeCAD.ActiveDocument is not None:
+        FreeCADGui.SendMsgToActiveView("ViewFit")
+    #stop
 
 ##--------------------------------------------------------------------------------------
 py2=False
@@ -2499,6 +2510,8 @@ def open(filename):
     if ext==".kicad_pcb":
         original_filename=filename
         onLoadBoard(filename)
+        # zf= Timer (1.0,ZoomFitThread)
+        # zf.start()
     #elif ext==".emn":
     #    onLoadBoard_idf(filename)
     elif ext==".kicad_mod":
@@ -7121,6 +7134,8 @@ def onLoadFootprint(file_name=None):
         #        paramGetPoM.SetBool("EnableObserver",False)
                     sayw("disabling PoM Observer")
             routineDrawFootPrint(content,name)
+            zf= Timer (0.3,ZoomFitThread)
+            zf.start()
             if disable_VBO:
                 if VBO_status:
                     paramGetV.SetBool("UseVBO",True)
@@ -7554,7 +7569,7 @@ def onLoadBoard(file_name=None):
     global last_fp_path, last_pcb_path, plcmnt, xp, yp, exportFusing
     global ignore_utf8, ignore_utf8_incfg, pcb_path, disable_VBO, use_AppPart, force_oldGroups, use_Links
     global original_filename, edge_width, load_sketch, grid_orig, warning_nbr, running_time, addConstraints
-    global conv_offs
+    global conv_offs, zfit
     
     default_value='/'
     clear_console()
@@ -7757,7 +7772,8 @@ def onLoadBoard(file_name=None):
                 #stop
                 #say_time()
             FreeCAD.ActiveDocument.removeObject("PCB_Sketch_draft")
-            FreeCADGui.SendMsgToActiveView("ViewFit")
+            if (zfit):
+                FreeCADGui.SendMsgToActiveView("ViewFit")
             if 0: # test_face # addConstraints!='none': 
                 say('start adding constraints to pcb sketch')
                 add_constraints(s_name)
@@ -7779,8 +7795,15 @@ def onLoadBoard(file_name=None):
         #FreeCAD.ActiveDocument.getObject("PCB_Sketch").Placement = FreeCAD.Placement(FreeCAD.Vector(board_base_point_x,board_base_point_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
         #FreeCAD.ActiveDocument.getObject("PCB_SketchN").Placement = FreeCAD.Placement(FreeCAD.Vector(board_base_point_x,board_base_point_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
         ## FreeCAD.ActiveDocument.getObject("Pcb").Placement = FreeCAD.Placement(FreeCAD.Vector(-off_x,-off_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
-        FreeCADGui.SendMsgToActiveView("ViewFit")
+        if (zfit):
+            FreeCADGui.SendMsgToActiveView("ViewFit")
         #ImportGui.insert(u"./c0603.step","demo_5D_vrml_from_step")
+        if (not pt_lnx): # and (not pt_osx): issue on AppImages hanging on loading 
+            FreeCADGui.SendMsgToActiveView("ViewFit")
+        else:
+            zf= Timer (0.1,ZoomFitThread)
+            zf.start()
+
         if use_AppPart and not force_oldGroups:
             #sayw("creating hierarchy")
             ## to evaluate to add App::Part hierarchy
@@ -7869,7 +7892,9 @@ def onLoadBoard(file_name=None):
             FreeCADGui.ActiveDocument.getObject("PCB_Sketch").Visibility=False # hidden Sketch
         ##Load 3D models
         #Load_models(pcbThickness,modules)
-        FreeCADGui.SendMsgToActiveView("ViewFit")
+        if (zfit):
+            FreeCADGui.SendMsgToActiveView("ViewFit")
+        #else:        
         Load_models(pcbThickness,modules)
 
         #enable_ReadShapeCompoundMode=False
@@ -7909,6 +7934,8 @@ def onLoadBoard(file_name=None):
                 msg+=""+mod3d[0]+"<br>error: "+mod3d[5]+"<br>"
                 n_rpt=n_rpt+1
         n_rpt_max=10
+        zf= Timer (0.3,ZoomFitThread)
+        zf.start()
         if (show_messages==True) and msg!="":
             msg="""<b>error in model(s)</b><br>"""+msg
             QtGui.QApplication.restoreOverrideCursor()
@@ -7925,7 +7952,8 @@ def onLoadBoard(file_name=None):
         else:
             #say('aliveFalse')
             Display_info(blacklisted_model_elements)
-        FreeCADGui.SendMsgToActiveView("ViewFit")
+        if (zfit):
+            FreeCADGui.SendMsgToActiveView("ViewFit")
         msg="running time: "+str(round(running_time,3))+"sec"    
         say(msg)
         #say_time()
@@ -8148,7 +8176,7 @@ def routineScaleVRML():
 
 ###
 def routineScaleVRML_1():
-    global rot_wrl
+    global rot_wrl, zfit
     say('routine Scale to VRML 1/2.54')
     if "Assembly2Workbench" not in FreeCADGui.activeWorkbench().name():
         if "PartWorkbench" not in FreeCADGui.activeWorkbench().name():
@@ -8192,7 +8220,8 @@ def routineScaleVRML_1():
         shade_val='Shaded'
         #FreeCAD.ActiveDocument.ActiveObject.ViewObject.DisplayMode = 'Shaded'
         FreeCAD.ActiveDocument.ActiveObject.ViewObject.DisplayMode = 1 #Shaded
-        FreeCADGui.SendMsgToActiveView("ViewFit")
+        if (zfit):
+            FreeCADGui.SendMsgToActiveView("ViewFit")
         msg="""<b>export scaled VRML file for kicad!</b>
             <font color='white'>****************************************************************************</font><br>
             <i>3D settings in kicad Module Editor:</i><br>
@@ -10451,7 +10480,7 @@ def createTHPlate(x,y,dx,dy,type):
 
 ###
 def routineDrawFootPrint_old(content,name):  #for FC = 0.15
-    global rot_wrl
+    global rot_wrl, zfit
     #for item in content:
     #    say(item)
 
@@ -10832,7 +10861,8 @@ def routineDrawFootPrint_old(content,name):  #for FC = 0.15
 
     if len(sys.argv)<4:
         #sayerr("view fitting2")
-        FreeCADGui.SendMsgToActiveView("ViewFit")
+        if (zfit):
+            FreeCADGui.SendMsgToActiveView("ViewFit")
     #pads_found=getPadsList(content)
 
 ###
@@ -10949,7 +10979,7 @@ def createPoly(x, y, sx, sy, dcx,dcy,dx,dy,pShape, layer, poly_points):
     
 ###
 def routineDrawFootPrint(content,name):
-    global rot_wrl
+    global rot_wrl, zfit
     #for item in content:
     #    say(item)
 
@@ -11603,7 +11633,8 @@ def routineDrawFootPrint(content,name):
     if len(sys.argv)<4:
         #sayerr("view fitting3")
         #sayerr(sys.argv)
-        FreeCADGui.SendMsgToActiveView("ViewFit")
+        if (zfit):
+            FreeCADGui.SendMsgToActiveView("ViewFit")
     #pads_found=getPadsList(content)
 
 ###
@@ -11758,7 +11789,8 @@ def Process_board_outline(doc,board_outline,drills,board_thickness):
         say_time()
         #say(str(start_time));say('*'+str(end_milli_time)+'start-end')
         FreeCADGui.activeDocument().activeView().viewAxometric()
-        FreeCADGui.SendMsgToActiveView("ViewFit")
+        if (zfit):
+            FreeCADGui.SendMsgToActiveView("ViewFit")
         #doc.Pcb.ViewObject.ShapeColor=(0.0, 0.5, 0.0, 0.0)
     return lines+1
 
@@ -12367,7 +12399,8 @@ def DrawPCB(mypcb):
     global start_time, use_AppPart, force_oldGroups, min_drill_size
     global addVirtual, load_sketch, off_x, off_y, aux_orig, grid_orig
     global running_time, conv_offs, use_Links, apply_edge_tolerance, simplifyComSolid
-
+    global zfit
+    
     def simu_distance(p0, p1):
         return max (abs(p0[0] - p1[0]), abs(p0[1] - p1[1]))
     
@@ -12770,7 +12803,8 @@ def DrawPCB(mypcb):
                 FreeCAD.ActiveDocument.recompute()
             
             #FreeCAD.ActiveDocument.addObject("Part::Face", "Face").Sources = (FreeCAD.ActiveDocument.PCB_Sketch_draft001, )
-            FreeCADGui.SendMsgToActiveView("ViewFit")
+            if (zfit):
+                FreeCADGui.SendMsgToActiveView("ViewFit")
             cut_base = s_PCB_Sketch_draft
         else:
             sayerr('empty sketch; module edge board: creating PCB from Footprint Edge.Cuts')
@@ -13264,11 +13298,13 @@ def DrawPCB(mypcb):
                 diag.setWindowModality(QtCore.Qt.ApplicationModal)
                 diag.exec_()
                 FreeCADGui.activeDocument().activeView().viewTop()
-                FreeCADGui.SendMsgToActiveView("ViewFit")
+                if (zfit):
+                    FreeCADGui.SendMsgToActiveView("ViewFit")
                 stop #maui
             if disable_cutting:
                 FreeCADGui.activeDocument().activeView().viewTop()
-                FreeCADGui.SendMsgToActiveView("ViewFit")
+                if (zfit):
+                    FreeCADGui.SendMsgToActiveView("ViewFit")
                 stop #maui
             #say (PCBs)
             ## doc = FreeCAD.activeDocument()
@@ -13326,7 +13362,8 @@ def DrawPCB(mypcb):
                 diag.setWindowModality(QtCore.Qt.ApplicationModal)
                 diag.exec_()
                 FreeCADGui.activeDocument().activeView().viewTop()
-                FreeCADGui.SendMsgToActiveView("ViewFit")
+                if (zfit):
+                    FreeCADGui.SendMsgToActiveView("ViewFit")
                 stop #maui
             i=0
             for i in range (len(PCBs)):
@@ -13358,7 +13395,8 @@ def DrawPCB(mypcb):
             diag.setWindowModality(QtCore.Qt.ApplicationModal)
             diag.exec_()
             FreeCADGui.activeDocument().activeView().viewTop()
-            FreeCADGui.SendMsgToActiveView("ViewFit")
+            if (zfit):
+                FreeCADGui.SendMsgToActiveView("ViewFit")
             stop #maui
         FreeCAD.ActiveDocument.recompute()
         FreeCADGui.activeDocument().activeView().viewTop()
@@ -13422,7 +13460,8 @@ def DrawPCB(mypcb):
                     FreeCAD.activeDocument().ShapesCompound.Links = shapes_list
                     FreeCAD.ActiveDocument.addObject("Part::Face", "Face_Compound").Sources = (FreeCAD.ActiveDocument.ShapesCompound, )
                 FreeCAD.ActiveDocument.recompute()
-                FreeCADGui.SendMsgToActiveView("ViewFit")
+                if (zfit):
+                    FreeCADGui.SendMsgToActiveView("ViewFit")
                 stop
             #fusion_wire = edges[0]
             #for no, e in enumerate(edges):
@@ -13597,7 +13636,8 @@ def DrawPCB(mypcb):
                 diag.setWindowModality(QtCore.Qt.ApplicationModal)
                 diag.exec_()
                 FreeCADGui.activeDocument().activeView().viewTop()
-                FreeCADGui.SendMsgToActiveView("ViewFit")
+                if (zfit):
+                    FreeCADGui.SendMsgToActiveView("ViewFit")
                 stop #maui                
             #Part.show(cut_base)
             #stop
@@ -13631,7 +13671,8 @@ def DrawPCB(mypcb):
         diag.setWindowModality(QtCore.Qt.ApplicationModal)
         diag.exec_()
         FreeCADGui.activeDocument().activeView().viewTop()
-        FreeCADGui.SendMsgToActiveView("ViewFit")
+        if (zfit):
+            FreeCADGui.SendMsgToActiveView("ViewFit")
         stop #maui                        
     #stop
     try:
@@ -13694,7 +13735,8 @@ def DrawPCB(mypcb):
         
     say_time()
     FreeCADGui.activeDocument().activeView().viewAxometric()
-    FreeCADGui.SendMsgToActiveView("ViewFit")
+    if (zfit):
+        FreeCADGui.SendMsgToActiveView("ViewFit")
     #FreeCADGui.SendMsgToActiveView("ViewFit")
     #pads_found=getPadsList(content)
     return PCB_Models
@@ -14939,7 +14981,12 @@ class Ui_DockWidget(object):
     #             sayerr(msg)
     #             say_warning(msg)
         
+    
+    # def onHelp(self):
+    #     m = Timer (5.0,ZoomFitThread)
+    #     m.start()
         
+    
         
     def onHelp(self):
         global expanded_view
@@ -14949,6 +14996,7 @@ class Ui_DockWidget(object):
         #pm = QtGui.QPixmap()
         #pm.loadFromData(base64.b64decode(dock_left_b64))
         #sayw(expanded_view)
+        
         if expanded_view!=2:
             clear_console()
             cfg_read_all()
@@ -15209,6 +15257,8 @@ def Export3DStepF():
 def Import3DModelF():
     
     global last_3d_path, last_pcb_path
+    global zfit
+    
     say("import3DModel")
     #sayw(doc.Name)
     pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
@@ -15255,7 +15305,8 @@ def Import3DModelF():
                 paramGetVS.SetBool("ReadShapeCompoundMode",True)
                 sayw("enabling ReadShapeCompoundMode")
         
-        FreeCADGui.SendMsgToActiveView("ViewFit")
+        if (zfit):
+            FreeCADGui.SendMsgToActiveView("ViewFit")
         last_3d_path=os.path.dirname(name)
         pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
         pg.SetString("last_3d_path",make_string(last_3d_path))
@@ -15898,7 +15949,7 @@ def simplify_sketch_old():
 ###
 def simplify_sketch():
     ''' simplifying & sanitizing sketches '''
-    global maxRadius, edge_tolerance
+    global maxRadius, edge_tolerance, precision
     
     doc = FreeCAD.ActiveDocument
     sel = FreeCADGui.Selection.getSelection()
@@ -15929,67 +15980,84 @@ def simplify_sketch():
             #        sk_name=s.Name
             #if len (sel)==1:
                 #sk_name=sel[0].Name
-            t_name=cpy_sketch(sk_name)
-            ###t_sk=FreeCAD.ActiveDocument.copyObject(FreeCAD.ActiveDocument.getObject(sk_name))
-            elist, to_dis=check_geom(t_name)
-            #Draft.clone(FreeCAD.ActiveDocument.getObject(sk_name),copy=True)
-            #clone_name=App.ActiveDocument.ActiveObject.Name
-            geoBasic=[]
-            geoBasic=split_basic_geom(t_name, to_dis)
-            #print geoBasic
-            #remove_basic_geom(t_name, to_dis)
-            ## remove_basic_geom(t_name, to_dis)
-            ##remove_basic_geom(t_sk.Name, to_discretize)
-            ##elist, to_dis=check_geom(t_sk.Name)
-            #print elist
-            #stop
-            obj_list_prev=[]
-            for obj in doc.Objects:
-                #print obj.TypeId
-                if (obj.TypeId=="Part::Feature") or (obj.TypeId=="Sketcher::SketchObject"):
-                    obj_list_prev.append(obj.Name)
-            #Draft.draftify(FreeCAD.ActiveDocument.getObject(t_name),delete=True)
-            #Draft.draftify(FreeCAD.ActiveDocument.getObject(t_name),delete=False)
-            b=FreeCAD.ActiveDocument.getObject(t_name)
-            shp1=b.Shape.copy()
-            Part.show(shp1)
-            FreeCAD.ActiveDocument.removeObject(t_name)
-            FreeCAD.ActiveDocument.recompute()
-            #stop
-            obj_list_after=[]
-            for obj in doc.Objects:
-                if (obj.TypeId=="Part::Feature") or (obj.TypeId=="Sketcher::SketchObject")\
-                   or (obj.TypeId=="Part::Part2DObjectPython"):
-                    if obj.Name not in obj_list_prev:
-                        obj_list_after.append(obj.Name)
-            #print obj_list_after #, obj_list_prev
-            sk_to_conv=[]
-            for obj in doc.Objects:
-                if obj.Name in obj_list_after:
-                    if (obj.TypeId=="Part::Part2DObjectPython"):
-                        FreeCAD.ActiveDocument.removeObject(obj.Name)
-                        FreeCAD.ActiveDocument.recompute() 
-                    else:
-                       sk_to_conv.append(obj.Name)
-            keep_sketch_converted=True #False
-            for s in sk_to_conv:
-                #sayerr(s) ## 
-                ns=Discretize(s)
-                for g in geoBasic:
-                    FreeCAD.ActiveDocument.getObject(ns).addGeometry(g)
-                offset1=[-FreeCAD.ActiveDocument.getObject(sk_name).Placement.Base[0],-FreeCAD.ActiveDocument.getObject(sk_name).Placement.Base[1]]
-                elist, to_dis=check_geom(ns,offset1)
-                for e in elist:
-                    #print e[(len(e)-1):][0]
-                    e[(len(e)-1)]=sk_label
-                    #print e[(len(e)-1):][0]
-                #stop
-                new_edge_list=new_edge_list+elist
-                if not keep_sketch_converted:
-                    FreeCAD.ActiveDocument.removeObject(ns)
-                else:
-                    FreeCAD.ActiveDocument.getObject(ns).Label=sel[0].Label+'_simplified'
-                FreeCAD.ActiveDocument.recompute()
+            for g in to_discretize:
+                if 'Ellipse' in str(g) or 'BSpline' in str(g) or 'Hyperbol' in str(g) or 'Parabol' in str(g):
+                    bs = g.toBSpline() # (tolerance, maxSegments, maxDegree)
+                    gds = bs.toBiArcs(precision)
+                    for gd in gds:
+                        new_edge_list.append(gd)
+            if len(new_edge_list) > 0:
+                doc.addObject('Sketcher::SketchObject','sSketch')
+                ssk = doc.ActiveObject
+                ssk_name = doc.ActiveObject.Name
+                ssk.Geometry = new_edge_list
+                for i,g in enumerate (new_edge_list):
+                    if 'BSplineCurve object' in str(g):
+                        ssk.exposeInternalGeometry(i)
+                doc.recompute()
+                ssk.Label = sk_label + u'_simplified'
+            
+            # t_name=cpy_sketch(sk_name)
+            # ###t_sk=FreeCAD.ActiveDocument.copyObject(FreeCAD.ActiveDocument.getObject(sk_name))
+            # elist, to_dis=check_geom(t_name)
+            # #Draft.clone(FreeCAD.ActiveDocument.getObject(sk_name),copy=True)
+            # #clone_name=App.ActiveDocument.ActiveObject.Name
+            # geoBasic=[]
+            # geoBasic=split_basic_geom(t_name, to_dis)
+            # #remove_basic_geom(t_name, to_dis)
+            # ## remove_basic_geom(t_name, to_dis)
+            # ##remove_basic_geom(t_sk.Name, to_discretize)
+            # ##elist, to_dis=check_geom(t_sk.Name)
+            # #print elist
+            # #stop
+            # obj_list_prev=[]
+            # for obj in doc.Objects:
+            #     #print obj.TypeId
+            #     if (obj.TypeId=="Part::Feature") or (obj.TypeId=="Sketcher::SketchObject"):
+            #         obj_list_prev.append(obj.Name)
+            # #Draft.draftify(FreeCAD.ActiveDocument.getObject(t_name),delete=True)
+            # #Draft.draftify(FreeCAD.ActiveDocument.getObject(t_name),delete=False)
+            # b=FreeCAD.ActiveDocument.getObject(t_name)
+            # shp1=b.Shape.copy()
+            # Part.show(shp1)
+            # #stop
+            # FreeCAD.ActiveDocument.removeObject(t_name)
+            # FreeCAD.ActiveDocument.recompute()
+            # #stop
+            # obj_list_after=[]
+            # for obj in doc.Objects:
+            #     if (obj.TypeId=="Part::Feature") or (obj.TypeId=="Sketcher::SketchObject")\
+            #        or (obj.TypeId=="Part::Part2DObjectPython"):
+            #         if obj.Name not in obj_list_prev:
+            #             obj_list_after.append(obj.Name)
+            # #print obj_list_after #, obj_list_prev
+            # sk_to_conv=[]
+            # for obj in doc.Objects:
+            #     if obj.Name in obj_list_after:
+            #         if (obj.TypeId=="Part::Part2DObjectPython"):
+            #             FreeCAD.ActiveDocument.removeObject(obj.Name)
+            #             FreeCAD.ActiveDocument.recompute() 
+            #         else:
+            #            sk_to_conv.append(obj.Name)
+            # keep_sketch_converted=True #False
+            # for s in sk_to_conv:
+            #     #sayerr(s) ## 
+            #     ns=Discretize(s)
+            #     for g in geoBasic:
+            #         FreeCAD.ActiveDocument.getObject(ns).addGeometry(g)
+            #     offset1=[-FreeCAD.ActiveDocument.getObject(sk_name).Placement.Base[0],-FreeCAD.ActiveDocument.getObject(sk_name).Placement.Base[1]]
+            #     elist, to_dis=check_geom(ns,offset1)
+            #     for e in elist:
+            #         #print e[(len(e)-1):][0]
+            #         e[(len(e)-1)]=sk_label
+            #         #print e[(len(e)-1):][0]
+            #     #stop
+            #     new_edge_list=new_edge_list+elist
+            #     if not keep_sketch_converted:
+            #         FreeCAD.ActiveDocument.removeObject(ns)
+            #     else:
+            #         FreeCAD.ActiveDocument.getObject(ns).Label=sel[0].Label+'_simplified'
+            #     FreeCAD.ActiveDocument.recompute()
             #############  end discretizing
         else:
             sayw('nothing to simplify')
@@ -18851,6 +18919,7 @@ def export_pcb(fname=None):
     global pcb_path, use_AppPart, force_oldGroups, use_Links
     global original_filename, aux_orig, grid_orig
     global off_x, off_y, maxRadius
+    global zfit
     
     sayw('exporting new pcb edges')
     doc=FreeCAD.ActiveDocument
@@ -19005,7 +19074,8 @@ def export_pcb(fname=None):
                             
                             #shift_sketch(j.Name,offset)
                 FreeCAD.ActiveDocument.recompute()
-                FreeCADGui.SendMsgToActiveView("ViewFit")
+                if (zfit):
+                    FreeCADGui.SendMsgToActiveView("ViewFit")
                 k = data.rfind(")")  #removing latest ')'
                 newcontent = data[:k] 
             new_edge_list, not_supported, to_discretize, construction_geom = getBoardOutline()
@@ -19454,6 +19524,8 @@ def singleInstance():
 
 if singleInstance():
 
+    from threading import Timer
+    
     KSUWidget = QtGui.QDockWidget()          # create a new dckwidget
     KSUWidget.ui = Ui_DockWidget()           # myWidget_Ui()             # load the Ui script
     KSUWidget.ui.setupUi(KSUWidget) # setup the ui
