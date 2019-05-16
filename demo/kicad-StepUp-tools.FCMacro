@@ -463,7 +463,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.3.2.0"
+___ver___ = "8.3.2.2"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -16942,7 +16942,7 @@ def export_footprint(fname=None):
             say('created Geom pads')
             
         ## adding 3D model preset
-        newcontent+=u"   (model "+str(fpth)+os.sep+fp_name.rstrip('-fp')+u'.wrl'+os.linesep
+        newcontent+=os.linesep+u"   (model "+str(fpth)+os.sep+fp_name.rstrip('-fp')+u'.wrl'+os.linesep
         newcontent+=u"    (at (xyz 0 0 0))"+os.linesep
         newcontent+=u"    (scale (xyz 1 1 1))"+os.linesep
         newcontent+=u"    (rotate (xyz 0 0 0))"+os.linesep
