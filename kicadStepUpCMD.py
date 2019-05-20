@@ -26,7 +26,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-__ksuCMD_version__='1.6.1'
+__ksuCMD_version__='1.6.2'
 
 precision = 0.1 # precision in spline or bezier conversion
 q_deflection = 0.02 # quasi deflection parameter for discretization
@@ -918,6 +918,7 @@ class ksuToolsConstrainator:
                 CDialog.setWindowTitle("Sketch Constrainator")
                 reply=CDialog.exec_()
                 if reply==1:
+                    FreeCAD.ActiveDocument.openTransaction('Constrainator')
                     dialog_values = (ui.return_strings()) # window is value from edit field
                     #print (dialog_values)
                     for i,dv in enumerate (dialog_values): #py3 compatibility
@@ -938,6 +939,7 @@ class ksuToolsConstrainator:
                     if rmvXG:
                         sanitizeSkBsp(sel[0].Name, tol)
                     add_constraints(sel[0].Name, tol, constr)
+                    FreeCAD.ActiveDocument.commitTransaction()
             else:
                 reply = QtGui.QMessageBox.information(None,"Warning", "select a Sketch to be Fix & Constrained")
                 FreeCAD.Console.PrintError('select a Sketch to be Fix & Constrained\n')
