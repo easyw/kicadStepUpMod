@@ -463,7 +463,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.3.2.2"
+___ver___ = "8.3.2.3"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -15129,7 +15129,7 @@ def Export3DStepF():
             #getSaveFileName(self,"saveFlle","Result.txt",filter ="txt (*.txt *.)")
             Filter=""
             name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Export 3D STEP ...",
-                make_unicode(last_3d_path), "*.step")
+                make_unicode(last_3d_path), "*.step *.stp")
             #say(name)
             if name:
                 last_3d_path=os.path.dirname(name)

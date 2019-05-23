@@ -26,7 +26,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-__ksuCMD_version__='1.6.2'
+__ksuCMD_version__='1.6.4'
 
 precision = 0.1 # precision in spline or bezier conversion
 q_deflection = 0.02 # quasi deflection parameter for discretization
@@ -939,6 +939,14 @@ class ksuToolsConstrainator:
                     if rmvXG:
                         sanitizeSkBsp(sel[0].Name, tol)
                     add_constraints(sel[0].Name, tol, constr)
+                    skt = FreeCAD.ActiveDocument.getObject(sel[0].Name)
+                    if hasattr(skt, 'OpenVerices'):
+                        openVtxs = skt.OpenVertices
+                        if len(openVtxs) >0:
+                            FreeCAD.Console.PrintError("Open Vertexes found.\n")
+                            FreeCAD.Console.PrintWarning(str(openVtxs)+'\n')
+                            msg = """Open Vertexes found.<br>"""+str(openVtxs)
+                            reply = QtGui.QMessageBox.information(None,"info", msg)
                     FreeCAD.ActiveDocument.commitTransaction()
             else:
                 reply = QtGui.QMessageBox.information(None,"Warning", "select a Sketch to be Fix & Constrained")
