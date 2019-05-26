@@ -464,7 +464,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.3.2.4"
+___ver___ = "8.3.2.5"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -3019,7 +3019,16 @@ def check_AP():
         #sel[0].Visibility=False
         for obj in FreeCADGui.Selection.getSelection():
             recurse_node(obj,obj.Placement, sc_list)
-        
+        no_shape=True
+        for ob in sc_list:
+            #print(ob.Label,hasattr(ob,'Shape'))
+            if hasattr(ob,'Shape'):
+                no_shape=False
+        if no_shape:
+            msg="Select one or more objects with a Shape!"
+            sayerr(msg)
+            say_warning(msg)
+            stop
         FreeCAD.activeDocument().addObject("Part::Compound",FreeCADGui.Selection.getSelection()[0].Label+"_cp")
         FreeCAD.activeDocument().ActiveObject.Links = sc_list #[FreeCAD.activeDocument().Part__Feature,FreeCAD.activeDocument().Shape,]
         mycompound=FreeCAD.activeDocument().ActiveObject
