@@ -439,6 +439,7 @@ import ImportGui
 from math import sqrt, atan, sin, cos, radians, degrees, pi
 
 import argparse
+from threading import Timer
 
 try:
     import __builtin__ as builtin #py2
@@ -463,7 +464,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.3.2.3"
+___ver___ = "8.3.2.4"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -13807,16 +13808,26 @@ if len(args) >= 3:
             fullfilePath=filePath+os.sep+fname+".kicad_mod"
             #say(fullfilePath)
             if os.path.exists(fullfilePath):
+                fp_loaded= False
+                doc = FreeCAD.ActiveDocument
+                if doc is not None:
+                    for o in doc.Objects:
+                        if hasattr(o, 'Label'):
+                            if o.Label.endswith('_fp'):
+                                fp_loaded= True
                 #say("opening "+ fullfilePath)
                 #cfgParsWrite(configFilePath)
                 #cfg_update_all()
-                onLoadFootprint(fullfilePath)
+                #print(fp_loaded)
+                if not (fp_loaded):
+                    onLoadFootprint(fullfilePath)
             else:
                 sayw("missing "+ fullfilePath)
                 sayw("missing "+ fullFileName)
                 #say("error missing "+ fullfilePath)
-                QtGui.QApplication.restoreOverrideCursor()
-                reply = QtGui.QMessageBox.information(None,"Error ...","... missing \r\n"+ fullfilePath+"\r\n... missing \r\n"+ fullFileName)
+                if 0:
+                    QtGui.QApplication.restoreOverrideCursor()
+                    reply = QtGui.QMessageBox.information(None,"Error ...","... missing \r\n"+ fullfilePath+"\r\n... missing \r\n"+ fullFileName)
         #
 
 ###
