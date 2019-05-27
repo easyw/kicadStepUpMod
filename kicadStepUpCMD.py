@@ -10,13 +10,13 @@
 #*  Kicad STEPUP (TM) is a TradeMark and cannot be freely useable           *
 #*                                                                          *
 
-import FreeCAD,FreeCADGui
 import FreeCAD, FreeCADGui, Part
 from FreeCAD import Base
 import imp, os, sys, tempfile, re
-import FreeCAD, FreeCADGui, Draft, DraftGeomUtils, OpenSCAD2Dgeom
+import Draft, DraftGeomUtils, OpenSCAD2Dgeom
 from PySide import QtGui, QtCore
 from pivy import coin
+from threading import Timer
 
 import ksu_locator
 # from kicadStepUptools import onLoadBoard, onLoadFootprint
@@ -26,7 +26,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-__ksuCMD_version__='1.6.4'
+__ksuCMD_version__='1.6.5'
 
 precision = 0.1 # precision in spline or bezier conversion
 q_deflection = 0.02 # quasi deflection parameter for discretization
@@ -316,17 +316,27 @@ class ksuToolsExportModel:
  
     def Activated(self):
         # do something here...
-        import kicadStepUptools
+        # import kicadStepUptools
         #if not kicadStepUptools.checkInstance():
         #    reload( kicadStepUptools )
-        if reload_Gui:
-            reload_lib( kicadStepUptools )
+        #if reload_Gui:
+        #    reload_lib( kicadStepUptools )
         #from kicadStepUptools import onPushPCB
         #FreeCAD.Console.PrintWarning( 'active :)\n' )
       ##evaluate to read cfg and get materials value???
       ##or made something as in load board
         #ini_content=kicadStepUptools.cfg_read_all()
-        kicadStepUptools.routineScaleVRML()
+        if FreeCAD.ActiveDocument.FileName == "":
+            msg="""<b>please save your job file before exporting</b>"""
+            QtGui.QApplication.restoreOverrideCursor()
+            QtGui.QMessageBox.information(None,"Info ...",msg)
+            FreeCADGui.SendMsgToActiveView("Save")
+        
+        from kicadStepUptools import routineScaleVRML
+        if reload_Gui:
+            reload_lib( kicadStepUptools )
+        routineScaleVRML()
+        ## kicadStepUptools.routineScaleVRML()
         #kicadStepUptools.Ui_DockWidget.onCfg()
         # ppcb=kicadStepUptools.KSUWidget
         # ppcb.onPushPCB()

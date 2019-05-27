@@ -464,7 +464,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.3.2.5"
+___ver___ = "8.4.0.1"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -3668,6 +3668,16 @@ def cfg_read_all():
         default_prefix3d = re.sub("\\\\", "/", default_prefix3d) #default_prefix3d.replace('\\','/')
         #print (default_prefix3d)
     prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+    ## if prefs.GetContents() is not None:
+    ##     for i,p in enumerate (prefs.GetContents()):
+    ##         print (p)
+    ## else:
+    ##     print('preferences null')
+    # print (prefs)
+    # for i,p in enumerate (prefs.GetContents()):
+    #     print (p)
+    # stop
+    
     #if prefs.GetContents() is None:
     #    print('Creating first time ksu preferences')
     #    stop #TBD
@@ -7044,7 +7054,7 @@ def getAuxAxisOrigin():
 def onLoadFootprint(file_name=None):
     #name=QtGui.QFileDialog.getOpenFileName(this,tr("Open Image"), "/home/jana", tr("Image Files (*.png *.jpg *.bmp)"))[0]
     #global module_3D_dir
-    global last_fp_path, test_flag
+    global last_fp_path, test_flag, pt_lnx
     global configParser, configFilePath, start_time
     global ignore_utf8, ignore_utf8_incfg, disable_PoM_Observer
     #self.setGeometry(25, 250, 500, 500)
@@ -7144,8 +7154,13 @@ def onLoadFootprint(file_name=None):
         #        paramGetPoM.SetBool("EnableObserver",False)
                     sayw("disabling PoM Observer")
             routineDrawFootPrint(content,name)
-            zf= Timer (0.3,ZoomFitThread)
-            zf.start()
+            if (not pt_lnx): # and (not pt_osx): issue on AppImages hanging on loading 
+                FreeCADGui.SendMsgToActiveView("ViewFit")
+            else:
+                zf= Timer (0.3,ZoomFitThread)
+                zf.start()
+            #zf= Timer (0.3,ZoomFitThread)
+            #zf.start()
             if disable_VBO:
                 if VBO_status:
                     paramGetV.SetBool("UseVBO",True)
@@ -8117,6 +8132,11 @@ def routineResetPlacement(keepWB=None):
 
 def routineScaleVRML():
     global exportV, exportS, applymaterials
+    if FreeCAD.ActiveDocument.FileName == "":
+        msg="""<b>please save your job file before exporting</b>"""
+        QtGui.QApplication.restoreOverrideCursor()
+        QtGui.QMessageBox.information(None,"Info ...",msg)
+        FreeCADGui.SendMsgToActiveView("Save")
     say('routine Scale to VRML 1/2.54')
     cfg_read_all()
     doc = FreeCAD.ActiveDocument
