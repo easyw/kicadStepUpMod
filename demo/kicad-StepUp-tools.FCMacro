@@ -351,6 +351,7 @@
 # bsplines allowed for push&pull kicad_pcb
 # fixed freezing issue on AppImages (thread)
 # improved simplify sketch
+# workaround force saving before exporting VRML (win freeze bug)
 # most clean code and comments done
 
 ##todo
@@ -464,7 +465,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.4.0.1"
+___ver___ = "8.4.0.2"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -8133,7 +8134,7 @@ def routineResetPlacement(keepWB=None):
 def routineScaleVRML():
     global exportV, exportS, applymaterials
     if FreeCAD.ActiveDocument.FileName == "":
-        msg="""<b>please save your job file before exporting</b>"""
+        msg="""please <b>save</b> your job file before exporting."""
         QtGui.QApplication.restoreOverrideCursor()
         QtGui.QMessageBox.information(None,"Info ...",msg)
         FreeCADGui.SendMsgToActiveView("Save")

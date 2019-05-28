@@ -327,7 +327,7 @@ class ksuToolsExportModel:
       ##or made something as in load board
         #ini_content=kicadStepUptools.cfg_read_all()
         if FreeCAD.ActiveDocument.FileName == "":
-            msg="""<b>please save your job file before exporting</b>"""
+            msg="""please <b>save</b> your job file before exporting."""
             QtGui.QApplication.restoreOverrideCursor()
             QtGui.QMessageBox.information(None,"Info ...",msg)
             FreeCADGui.SendMsgToActiveView("Save")
