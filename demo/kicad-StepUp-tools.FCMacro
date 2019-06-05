@@ -465,7 +465,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.4.0.2"
+___ver___ = "8.4.0.3"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -16006,7 +16006,8 @@ def simplify_sketch():
             elif 'Ellipse' in str(g) or 'Parabola' in str(g) or 'Hyperbola' in str(g):
                 to_discretize.append(g)
             else:
-                new_edge_list.append(g)
+                if not g.Construction: # adding only non construction geo
+                    new_edge_list.append(g)
         ## support for arcs, lines and bsplines in F_Silks
         sel = FreeCADGui.Selection.getSelection()
         sk_name=None
@@ -16032,9 +16033,9 @@ def simplify_sketch():
                 ssk = doc.ActiveObject
                 ssk_name = doc.ActiveObject.Name
                 ssk.Geometry = new_edge_list
-                for i,g in enumerate (new_edge_list):
-                    if 'BSplineCurve object' in str(g):
-                        ssk.exposeInternalGeometry(i)
+                # for i,g in enumerate (new_edge_list):
+                #     if 'BSplineCurve object' in str(g):
+                #         ssk.exposeInternalGeometry(i)
                 doc.recompute()
                 ssk.Label = sk_label + u'_simplified'
             
