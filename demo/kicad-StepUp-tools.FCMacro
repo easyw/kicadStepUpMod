@@ -352,6 +352,7 @@
 # fixed freezing issue on AppImages (thread)
 # improved simplify sketch
 # workaround force saving before exporting VRML (win freeze bug)
+# importing custom Geo also for bottom layer
 # most clean code and comments done
 
 ##todo
@@ -465,7 +466,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.4.0.3"
+___ver___ = "8.4.0.5"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -10907,18 +10908,19 @@ def createGeomC(cx, cy, radius, layer, width):
         thick=0.01
         z_offset=-1.6
     bv = Base.Vector
-    circ = Part.makeCircle(radius+width/2, bv(cx,cy,0))    
+    circ = Part.makeCircle(radius+width/2, bv(cx,cy,z_offset))    
     mw = Part.Wire(circ.Edges)
     myp= Part.Face(mw)
     #Part.show(mypad)
-    circ = Part.makeCircle(radius-width/2, bv(cx,cy,0))    
+    circ = Part.makeCircle(radius-width/2, bv(cx,cy,z_offset))    
     mw2 = Part.Wire(circ.Edges)
     myp2 = Part.Face(mw2)
     mypad=myp.cut(myp2)
     Part.show(mypad)
     FreeCAD.ActiveDocument.ActiveObject.Label="mypad"
     pad_name=FreeCAD.ActiveDocument.ActiveObject.Name
-    #face = Part.Face(mypad)
+    #    face = Part.Face(mypad)
+    #    Part.show(face)
     extr = mypad.extrude(FreeCAD.Vector(0,0,thick))
     #Part.show(extr)
     #FreeCAD.ActiveDocument.ActiveObject.Label="smd_pad"
@@ -11175,7 +11177,8 @@ def routineDrawFootPrint(content,name):
             if bot==True:
                 #mypad=addPadLong(x1, y1, dx, dy, perc, 0, -1.6)
                 mypad2=None; skip = False
-                if pShape=='custom':
+                #if pShape=='custom':
+                if pShape=='custom' and pGeomC is None:
                     #sayw(pnts.groups(0)[0].split('(xy'))
                     try:
                         poly_points=pnts.groups(0)[0].split('(xy')[1:]
@@ -11187,6 +11190,28 @@ def routineDrawFootPrint(content,name):
                     except:
                         sayerr('geometry unsupported')
                         skip = True
+                elif pShape=='custom' and pGeomC is not None:
+                    #sayerr(pGeomC)
+                    #print('pGeomC',(pGeomC))
+                    #print ('x1',x1,'y1',y1)
+                    Gc=pGeomC[0].split(' ')
+                    #Gcx=-float(Gc[1])-x1;Gcy=float(Gc[2])-y1
+                    Gr=pGeomC[1].split(' ')
+                    GRad=abs(float(Gr[1])-float(Gc[1]))
+                    Gcx=x1+float(Gc[1])
+                    Gcy=float(Gc[2])-y1
+                    #print('Gr',Gr,'GR',GRad,'Gc1',Gc[1],'Gc2',Gc[2],'Gcx',Gcx)
+                    Gw=pGeomC[2].split(' ')
+                    Gw=float(Gw[1])
+                    #print (Gcx,Gcy,GRad,Gw)
+                    mypad=createGeomC(Gcx, Gcy, GRad,'bot', Gw)
+                    if anchor is not None:
+                        if anchor[0]=="circle":
+                            perc=100
+                        #print 'anchor ',anchor[0]
+                        mypad2=createPad3(x1, y1, dx, dy, xs,ys,rx,ry,anchor,'bot')
+                        Part.show(mypad2)
+                        #stop
                 else:
                     mypad=createPad3(x1, y1, dx, dy, xs,ys,rx,ry,pShape,'bot',pRratio)
                 ##pad pos x,y; pad size x,y; drillcenter x,y; drill size x,y, layerobj=mypad
