@@ -10,11 +10,11 @@
 #*  Kicad STEPUP (TM) is a TradeMark and cannot be freely useable           *
 #*                                                                          *
 
-ksu_wb_version='v 7.9.2'
+ksu_wb_version='v 8.0.1'
 global myurlKWB, ksuWBpath
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=269 #v7.9.2
+mycommitsKWB=270 #v8.0.1
 
 import FreeCAD, FreeCADGui, Part, os, sys
 import re, time
@@ -46,15 +46,15 @@ help_t = hlp.help_txt
 #    from FreeCADGui import Workbench
 #except ImportError as e:
 #    FreeCAD.Console.PrintWarning("error")
-class CalendarPage:
-    def __init__(self):
-        from PySide import QtGui
-        self.form = QtGui.QCalendarWidget()
-        self.form.setWindowTitle("Calendar")
-    def saveSettings(self):
-        print ("saveSettings")
-    def loadSettings(self):
-        print ("loadSettings")
+# class CalendarPage:
+#     def __init__(self):
+#         from PySide import QtGui
+#         self.form = QtGui.QCalendarWidget()
+#         self.form.setWindowTitle("Calendar")
+#     def saveSettings(self):
+#         print ("saveSettings")
+#     def loadSettings(self):
+#         print ("loadSettings")
 
 class kSU_MainPrefPage:
 
@@ -113,15 +113,15 @@ class kSU_MainPrefPage:
         #        print (p)
         print(FreeCAD.getUserAppDataDir())
 ##
-class ksuWB ( Workbench ):
+class KiCadStepUpWB ( Workbench ):
     global main_ksu_Icon, ksu_wb_version, myurlKWB, mycommitsKWB
     global ksuWB_ui_path, kSU_MainPrefPage, ksuWB_icons_path
     
-    "KiCad StepUp Wb object"
+    "KiCadStepUp WB object"
     Icon = main_ksu_Icon
     #Icon = ":Resources/icons/kicad-StepUp-tools-WB.svg"
-    MenuText = "KiCad StepUp Wb"
-    ToolTip = "kicad StepUp workbench"
+    MenuText = "KiCadStepUp WB"
+    ToolTip = "KiCadStepUp workbench"
  
     def GetClassName(self):
         return "Gui::PythonWorkbench"
@@ -180,7 +180,7 @@ class ksuWB ( Workbench ):
  
     def Activated(self):
                 # do something here if needed...
-        Msg ("ksuWB.Activated("+ksu_wb_version+")\n")
+        Msg ("KiCadStepUpWB.Activated("+ksu_wb_version+")\n")
         from PySide import QtGui
         import time, sys, os, re
         from os.path import expanduser
@@ -432,7 +432,7 @@ class ksuWB ( Workbench ):
  
     def Deactivated(self):
                 # do something here if needed...
-        Msg ("ksuWB.Deactivated()\n")
+        Msg ("KiCadStepUpWB.Deactivated()\n")
     @staticmethod
     def ListDemos():
         import os
@@ -450,14 +450,14 @@ class ksuWB ( Workbench ):
 
 ###
 
-dirs = ksuWB.ListDemos()
+dirs = KiCadStepUpWB.ListDemos()
 #print dirs
 #FreeCADGui.addCommand('ksuWBOpenDemo', ksuOpenDemo())
-#dirs = ksuWB.ListDemos()
+#dirs = KiCadStepUpWB.ListDemos()
 for curFile in dirs:
     FreeCADGui.addCommand(curFile, ksuExcDemo(curFile))
 
 #FreeCADGui.addPreferencePage(kSU_MainPrefPage,"kicadStepUpGui")
 #FreeCADGui.addPreferencePage(CalendarPage, "kicadStepUpGui")
         
-FreeCADGui.addWorkbench(ksuWB)
+FreeCADGui.addWorkbench(KiCadStepUpWB)
