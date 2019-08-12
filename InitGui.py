@@ -10,11 +10,11 @@
 #*  Kicad STEPUP (TM) is a TradeMark and cannot be freely useable           *
 #*                                                                          *
 
-ksu_wb_version='v 8.0.1'
+ksu_wb_version='v 8.0.2'
 global myurlKWB, ksuWBpath
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=270 #v8.0.1
+mycommitsKWB=271 #v8.0.2
 
 import FreeCAD, FreeCADGui, Part, os, sys
 import re, time
@@ -120,7 +120,7 @@ class KiCadStepUpWB ( Workbench ):
     "KiCadStepUp WB object"
     Icon = main_ksu_Icon
     #Icon = ":Resources/icons/kicad-StepUp-tools-WB.svg"
-    MenuText = "KiCadStepUp WB"
+    MenuText = "KiCadStepUp"
     ToolTip = "KiCadStepUp workbench"
  
     def GetClassName(self):
@@ -143,8 +143,11 @@ class KiCadStepUpWB ( Workbench ):
         self.appendToolbar("ksu Tools", ["ksuToolsEditPrefs","ksuTools","ksuToolsOpenBoard","ksuToolsLoadFootprint",\
                            "ksuToolsExportModel","ksuToolsPushPCB","ksuToolsFootprintGen","Separator","ksuToolsAddTracks","ksuToolsAddSilks","Separator",\
                            "ksuToolsCollisions","ksuToolsImport3DStep","ksuToolsExport3DStep","ksuToolsMakeUnion",\
-                           "ksuToolsMakeCompound", "ksuToolsSimpleCopy", "ksuToolsDeepCopy", "ksuToolsCheckSolid", "ksuTools3D2D", "ksuTools2D2Sketch", "ksuTools2DtoFace",\
-                           "ksuToolsMergeSketches","ksuToolsSimplifySketck", "ksuToolsBsplineNormalize", "ksuToolsConstrainator", "ksuToolsDiscretize"])
+                           "ksuToolsMakeCompound", "ksuToolsSimpleCopy", "ksuToolsDeepCopy", "ksuToolsCheckSolid"])
+                           #, "ksuToolsPushMoved","ksuToolsSync3DModels"])
+        self.appendToolbar("ksu Sketching", ["ksuTools3D2D", "ksuTools2D2Sketch", "ksuTools2DtoFace",\
+                           "ksuToolsLoopSelection","ksuToolsEdges2Sketch","ksuToolsMergeSketches",\
+                           "ksuToolsSimplifySketck", "ksuToolsBsplineNormalize", "ksuToolsConstrainator", "ksuToolsDiscretize"])
                            #, "ksuToolsPushMoved","ksuToolsSync3DModels"])
         ksuTB = ["ksuToolsOpenBoard","ksuToolsPushPCB","ksuToolsPushMoved","ksuToolsSync3DModels","ksuAsm2Part",\
                  "Separator","ksuToolsGeneratePositions","ksuToolsComparePositions",\

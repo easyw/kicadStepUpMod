@@ -26,7 +26,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-__ksuCMD_version__='1.6.5'
+__ksuCMD_version__='1.6.6'
 
 precision = 0.1 # precision in spline or bezier conversion
 q_deflection = 0.02 # quasi deflection parameter for discretization
@@ -42,6 +42,12 @@ except:
     # FreeCAD.Console.PrintWarning('A3 not available\n')
     a3 = False
 
+try:
+    from PathScripts.PathUtils import horizontalEdgeLoop
+    from PathScripts.PathUtils import horizontalFaceLoop
+    from PathScripts.PathUtils import loopdetect
+except:
+    FreeCAD.Console.PrintError('Path WB not found\n')
 
 def reload_lib(lib):
     if (sys.version_info > (3, 0)):
@@ -50,12 +56,234 @@ def reload_lib(lib):
     else:
         reload (lib)
 
+use_outerwire = False #False #True
+remove_shapes = True #False #True 
+hide_objects = True #False # True
+use_draft = True #False  # use Draft.makesketch
+attach_sketch = False #True
+create_plane = False# True #False
+
+conv_started = False
+
+def P_Line(prm1,prm2):
+    if hasattr(Part,"LineSegment"):
+        return Part.LineSegment(prm1, prm2)
+    else:
+        return Part.Line(prm1, prm2)
+
+def rmvsubtree(objs):
+    def addsubobjs(obj,toremoveset):
+        toremove.add(obj)
+        if hasattr(obj,'OutList'):
+            for subobj in obj.OutList:
+                addsubobjs(subobj,toremoveset)
+    import FreeCAD
+    toremove=set()
+    for obj in objs:
+        addsubobjs(obj,toremove)
+    checkinlistcomplete =False
+    while not checkinlistcomplete:
+        for obj in toremove:
+            if (obj not in objs) and (frozenset(obj.InList) - toremove):
+                toremove.remove(obj)
+                break
+        else:
+            checkinlistcomplete = True
+    for obj in toremove:
+        try:
+            obj.Document.removeObject(obj.Name)
+        except:
+            pass
+###
+
+
 ksuWBpath = os.path.dirname(ksu_locator.__file__)
 #sys.path.append(ksuWB + '/Gui')
 ksuWB_icons_path =  os.path.join( ksuWBpath, 'Resources', 'icons')
 
 #__dir__ = os.path.dirname(__file__)
 #iconPath = os.path.join( __dir__, 'Resources', 'icons' )
+
+
+def ksu_edges2sketch():
+    global conv_started
+    
+    cp_edges = [];cp_edges_names = []
+    cp_edges_shapes = []; cp_edges_obj = []
+    cp_obj = []; cp_obj_name = []
+    cp_points = []; cp_faces = []
+    wires = []
+    doc=FreeCAD.ActiveDocument
+    docG = FreeCADGui.ActiveDocument
+    en = None
+    selEx=FreeCADGui.Selection.getSelectionEx()
+    if len (selEx) > 0:
+        for selEdge in selEx:
+            if not (conv_started):
+                doc.openTransaction('e2sk')
+                conv_started = True
+            for i,e in enumerate(selEdge.SubObjects):
+                if 'Edge' in selEdge.SubElementNames[i]:
+                    cp_edges.append(e)
+                    #cp_edges_shapes.append(e.toShape())
+                    Part.show(Part.Wire(e))
+                    cp = doc.ActiveObject
+                    cp_edges_obj.append(cp)
+                    #print(cp)
+                    cp_edges_names.append(selEdge.ObjectName+'.'+selEdge.SubElementNames[i])
+                    cp_obj.append(selEdge.Object)
+                    cp_edges_shapes.append(selEdge.Object.Shape)
+                    cp_obj_name.append(selEdge.ObjectName)
+                    if create_plane:
+                        for v in cp.Shape.Vertexes[:3]: #selEdge.Object.Shape.Vertexes[:3]:
+                            if v.Point not in cp_points:
+                                cp_points.append(v.Point)
+                            if len (cp_points) > 2:
+                                    break
+                    #FreeCAD.Console.PrintMessage(selEdge.ObjectName);FreeCAD.Console.PrintMessage('\n')
+                    FreeCAD.Console.PrintMessage(selEdge.ObjectName+'.'+selEdge.SubElementNames[i])
+                    FreeCAD.Console.PrintMessage('\n')
+                    if hide_objects:
+                        docG.getObject(selEdge.ObjectName).Visibility = False
+                    #FreeCAD.Console.PrintMessage(e);FreeCAD.Console.PrintMessage('\n')
+                    #cp_e = Part.show(Part.Wire(e))
+                    wire = Part.Wire(e)
+                    #cp_edges_shapes.append(wire.toShape())
+                    wires.append (wire)
+                elif 'Face'  in selEdge.SubElementNames[i]:
+                    #o.Shape.Faces
+                    cp_faces.append(e)
+                    if use_outerwire:
+                        ow=e.OuterWire
+                        wires.append (ow)
+                        #es = ow.Edges
+                        for _e in ow.Edges:
+                            cp_edges.append(_e)
+                        Part.show(ow)
+                        cp = doc.ActiveObject
+                        cp_edges_obj.append(cp)
+                        if create_plane:
+                            for v in cp.Vertexes[:3]: #selEdge.Object.Shape.Vertexes[:3]:
+                                print('point')
+                                if v.Point not in cp_points:
+                                    cp_points.append(v.Point)
+                                if len (cp_points) > 2:
+                                    break
+                    else:    
+                        ws=e.Wires
+                        wires.append (ws)
+                        #es=e.Edges
+                        if create_plane:
+                            for v in e.Vertexes[:3]: #selEdge.Object.Shape.Vertexes[:3]:
+                                print(v.Point)
+                                if len (cp_points) > 2:
+                                    break
+                                if v.Point not in cp_points:
+                                    cp_points.append(v.Point)
+                        for w in ws:
+                            for _e in w.Edges:
+                                cp_edges.append(_e)
+                            Part.show(w)
+                            cp = doc.ActiveObject
+                            cp_edges_obj.append(cp)
+                    if hide_objects:
+                        docG.getObject(selEdge.ObjectName).Visibility = False
+                    #for ed in es:
+                    #    Part.show(ed)
+                elif 'Vertex'  in selEdge.SubElementNames[i]:
+                    #print(selEdge.SubElementNames[i])
+                    #print(selEdge.Object.Shape.Volume)
+                    if selEdge.Object.Shape.Volume == 0:
+                        print('outline selected')
+                        #for _e in selEdge.Object.Shape.Edges:
+                        #    Part.show(_e.Curve.toShape())
+                        #    cp_edges.append(_e)
+                        #    cp_edges_shapes.append(e.toShape())
+                        #    Part.show(Part.Wire(_e))
+                        #    cp = doc.ActiveObject
+                        #    cp_edges_obj.append(cp)
+                        cp_edges_obj.append(selEdge.Object.Shape.copy())
+                        if hide_objects:
+                            docG.getObject(selEdge.ObjectName).Visibility = False
+                    
+        if len (cp_edges_obj) >0: # (wires) >0:
+            FreeCAD.activeDocument().addObject('Sketcher::SketchObject','Sketch')
+            #FreeCAD.activeDocument().Sketch.MapMode = "ObjectXY"
+            #doc.recompute()
+            sketch = doc.ActiveObject
+            sketch.Label = "Sketch_converted"
+            if len (cp_edges_obj) > 1:
+                doc.addObject("Part::MultiFuse","union")
+                union = doc.ActiveObject
+                doc.union.Shapes = cp_edges_obj #cp_obj # [doc.Shape005,doc.Shape006]
+                doc.recompute()
+            else:
+                union = cp_edges_obj[0]
+            #sketch.MapMode = "ObjectXZ"
+            #sketch.Support = [(doc.Cut,'Face2')]
+            #sketch.MapMode = 'FlatFace'
+            # doc.recompute()
+            #Draft.makeSketch([wire],addTo=sketch)
+            # points = 
+            #print(cp_points)
+            triple = []
+            if len (cp_points) > 2:
+                for p in cp_points:
+                    if p not in triple:
+                        triple.append(p)
+                face= Part.Face(Part.makePolygon([p for p in triple], True))
+            else:
+                for _e in cp_edges:
+                    if _e.isClosed():
+                        face = Part.Face(Part.Wire(_e))
+            #print (triple)
+            #plane = Part.Plane(*[p for p in triple])
+            #print([p for p in triple])
+            if create_plane:
+                doc.addObject('Part::Feature','Face').Shape=face
+                newface = doc.ActiveObject
+            #[App.ActiveDocument.union.Shape.Vertex2.Point, App.ActiveDocument.union.Shape.Vertex5.Point, App.ActiveDocument.union.Shape.Vertex1.Point, ], True))
+            #print(plane)
+            ## _makeSketch(plane,wires,addTo=sketch)
+            #Draft.makeSketch(wires,addTo=sketch)
+            if use_draft:
+                Draft.makeSketch(union,addTo=sketch)
+            else:
+                for _e in union.Shape.Edges:
+                    if isinstance(_e.Curve,Part.Line) or isinstance(_e.Curve,Part.LineSegment):
+                        sketch.addGeometry(P_Line(Base.Vector(_e.firstVertex().Point), Base.Vector(_e.lastVertex().Point)))
+                    #sketch.addGeometry(_e.Curve)
+            sk = doc.ActiveObject
+            if attach_sketch:
+                sketch.Support = [newface, 'Face1']
+                sketch.MapMode = 'FlatFace'
+            
+            #sk.Placement = union.Placement
+            if remove_shapes:
+                rmvsubtree([union])
+                if create_plane:
+                    rmvsubtree([newface])
+            sketch.MapMode = 'Deactivated'
+            # for e in cp_edges:
+            #     sketch.addGeometry(e.Curve, False)
+            #     print ('e added')
+            for i in range(0, len(sketch.Geometry)):
+                try: 
+                    g = str(sketch.Geometry[i])
+                    if 'BSpline' in g or 'Ellipse' in g:
+                        sketch.exposeInternalGeometry(i)
+                except:
+                    #print 'error'
+                    pass
+            docG.getObject(sketch.Name).LineColor = (1.00,1.00,1.00)
+            docG.getObject(sketch.Name).PointColor = (1.00,1.00,1.00)
+            #print(docG.getObject(sketch.Name).PointColor)
+            doc.commitTransaction()
+            conv_started = False
+            doc.recompute()
+    # for ob in FreeCAD.ActiveDocument.Objects:
+    #     FreeCADGui.Selection.removeSelection(ob)
+##
 
 
 # class SMExtrudeCommandClass():
@@ -1003,6 +1231,28 @@ class ksuToolsDiscretize:
 FreeCADGui.addCommand('ksuToolsDiscretize',ksuToolsDiscretize())
 ##
 ##
+class ksuToolsEdges2Sketch:
+    "ksu tools edge to sketch"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Edges2Sketch.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksu Edges to Sketch" ,
+                     'ToolTip' : "Select coplanar edge(s) or Face(s) or \na single Vertex of a coplanar outline \nto get a corrensponding Sketch"}
+ 
+    def IsActive(self):
+        sel = FreeCADGui.Selection.getSelection()
+        if len(sel) == 0:
+            return False
+        else:
+            return True
+ 
+    def Activated(self):
+        # do something here...
+        ksu_edges2sketch()
+        
+FreeCADGui.addCommand('ksuToolsEdges2Sketch',ksuToolsEdges2Sketch())
+##
+
 class ksuToolsResetPlacement:
     "ksu tools Reset Placement"
  
@@ -2194,6 +2444,66 @@ class ksuToolsCaliper:
             import Caliper;reload_lib(Caliper)
 
 FreeCADGui.addCommand('ksuToolsCaliper',ksuToolsCaliper())
+#####
+class ksuToolsLoopSelection:
+    "ksu tools Loop Selection"
+    
+    def GetResources(self):
+        mybtn_tooltip ="ksu tools \'LoopSelection\'"
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Path-SelectLoop.svg') , # the name of a svg file available in the resources
+                     'MenuText': mybtn_tooltip ,
+                     'ToolTip' : mybtn_tooltip}
+ 
+    def __init__(self):
+        self.obj = None
+        self.sub = []
+        self.active = False
+
+    def IsActive(self):
+        if bool(FreeCADGui.Selection.getSelection()) is False:
+            return False
+        return True
+        
+    def Activated(self):
+        sel = FreeCADGui.Selection.getSelectionEx()[0]
+        obj = sel.Object
+        edge1 = sel.SubObjects[0]
+        if 'Face' in sel.SubElementNames[0]:
+            loop = horizontalFaceLoop(sel.Object, sel.SubObjects[0], sel.SubElementNames)
+            if loop:
+                FreeCADGui.Selection.clearSelection()
+                FreeCADGui.Selection.addSelection(sel.Object, loop)
+            loopwire = []
+        elif len(sel.SubObjects) == 1:
+            loopwire = horizontalEdgeLoop(obj, edge1)
+        else:
+            edge2 = sel.SubObjects[1]
+            loopwire = loopdetect(obj, edge1, edge2)
+
+        if loopwire:
+            FreeCADGui.Selection.clearSelection()
+            elist = obj.Shape.Edges
+            for e in elist:
+                for i in loopwire.Edges:
+                    if e.hashCode() == i.hashCode():
+                        FreeCADGui.Selection.addSelection(obj, "Edge"+str(elist.index(e)+1))
+
+    def formsPartOfALoop(self, obj, sub, names):
+        if names[0][0:4] != 'Edge':
+            if names[0][0:4] == 'Face' and horizontalFaceLoop(obj, sub, names):
+                return True
+            return False
+        if len(names) == 1 and horizontalEdgeLoop(obj, sub):
+            return True
+        if len(names) == 1 or names[1][0:4] != 'Edge':
+            return False
+        return True
+
+if FreeCAD.GuiUp:
+    FreeCADGui.addCommand('ksuToolsLoopSelection',ksuToolsLoopSelection())
+##
+
+
 #####
 class ksuToolsMergeSketches:
     "ksu tools Merge Sketches"
