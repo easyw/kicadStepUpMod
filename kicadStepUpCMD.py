@@ -26,7 +26,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-__ksuCMD_version__='1.6.6'
+__ksuCMD_version__='1.6.8'
 
 precision = 0.1 # precision in spline or bezier conversion
 q_deflection = 0.02 # quasi deflection parameter for discretization
@@ -46,6 +46,7 @@ try:
     from PathScripts.PathUtils import horizontalEdgeLoop
     from PathScripts.PathUtils import horizontalFaceLoop
     from PathScripts.PathUtils import loopdetect
+    import PathCommands
 except:
     FreeCAD.Console.PrintError('Path WB not found\n')
 
@@ -257,7 +258,6 @@ def ksu_edges2sketch():
             if attach_sketch:
                 sketch.Support = [newface, 'Face1']
                 sketch.MapMode = 'FlatFace'
-            
             #sk.Placement = union.Placement
             if remove_shapes:
                 rmvsubtree([union])
@@ -278,7 +278,18 @@ def ksu_edges2sketch():
             docG.getObject(sketch.Name).LineColor = (1.00,1.00,1.00)
             docG.getObject(sketch.Name).PointColor = (1.00,1.00,1.00)
             #print(docG.getObject(sketch.Name).PointColor)
-            doc.commitTransaction()
+            lg = len(sketch.Geometry)
+            if lg == 0:
+                doc.removeObject(sketch.Name)
+                docG.getObject(selEdge.ObjectName).Visibility = True
+                QtGui.QApplication.restoreOverrideCursor()
+                reply = QtGui.QMessageBox.information(None,"info", "All Shapes must be co-planar")
+                doc.abortTransaction()
+            else:
+                for s in FreeCADGui.Selection.getSelection():
+                    FreeCADGui.Selection.removeSelection(s)
+                FreeCADGui.Selection.addSelection(sketch)
+                doc.commitTransaction()
             conv_started = False
             doc.recompute()
     # for ob in FreeCAD.ActiveDocument.Objects:
@@ -2449,7 +2460,7 @@ class ksuToolsLoopSelection:
     "ksu tools Loop Selection"
     
     def GetResources(self):
-        mybtn_tooltip ="ksu tools \'LoopSelection\'"
+        mybtn_tooltip ="ksu tools \'LoopSelection\'\nLoop selection on a xy outline"
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Path-SelectLoop.svg') , # the name of a svg file available in the resources
                      'MenuText': mybtn_tooltip ,
                      'ToolTip' : mybtn_tooltip}
@@ -2465,40 +2476,12 @@ class ksuToolsLoopSelection:
         return True
         
     def Activated(self):
-        sel = FreeCADGui.Selection.getSelectionEx()[0]
-        obj = sel.Object
-        edge1 = sel.SubObjects[0]
-        if 'Face' in sel.SubElementNames[0]:
-            loop = horizontalFaceLoop(sel.Object, sel.SubObjects[0], sel.SubElementNames)
-            if loop:
-                FreeCADGui.Selection.clearSelection()
-                FreeCADGui.Selection.addSelection(sel.Object, loop)
-            loopwire = []
-        elif len(sel.SubObjects) == 1:
-            loopwire = horizontalEdgeLoop(obj, edge1)
-        else:
-            edge2 = sel.SubObjects[1]
-            loopwire = loopdetect(obj, edge1, edge2)
-
-        if loopwire:
-            FreeCADGui.Selection.clearSelection()
-            elist = obj.Shape.Edges
-            for e in elist:
-                for i in loopwire.Edges:
-                    if e.hashCode() == i.hashCode():
-                        FreeCADGui.Selection.addSelection(obj, "Edge"+str(elist.index(e)+1))
-
-    def formsPartOfALoop(self, obj, sub, names):
-        if names[0][0:4] != 'Edge':
-            if names[0][0:4] == 'Face' and horizontalFaceLoop(obj, sub, names):
-                return True
-            return False
-        if len(names) == 1 and horizontalEdgeLoop(obj, sub):
-            return True
-        if len(names) == 1 or names[1][0:4] != 'Edge':
-            return False
-        return True
-
+        try:
+            sel = FreeCADGui.Selection.getSelectionEx()[0]
+            PathCommands._CommandSelectLoop.Activated(sel)
+        except:
+            print('Path WB not working')
+            
 if FreeCAD.GuiUp:
     FreeCADGui.addCommand('ksuToolsLoopSelection',ksuToolsLoopSelection())
 ##

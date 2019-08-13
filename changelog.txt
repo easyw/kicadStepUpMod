@@ -313,4 +313,6 @@ Changelog
 - bsplines allowed for push&pull kicad_pcb
 - fixed hanging issue on AppImages (thread)
 - improved simplify sketch
+- fixed wbs ordering
+- added edges2sketch function
 - most clean code and comments done
