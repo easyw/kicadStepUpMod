@@ -26,7 +26,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-__ksuCMD_version__='1.6.8'
+__ksuCMD_version__='1.6.9'
 
 precision = 0.1 # precision in spline or bezier conversion
 q_deflection = 0.02 # quasi deflection parameter for discretization
@@ -65,6 +65,9 @@ attach_sketch = False #True
 create_plane = False# True #False
 
 conv_started = False
+
+global max_geo_admitted
+max_geo_admitted = 1500 # after this number, no recompute is applied
 
 def P_Line(prm1,prm2):
     if hasattr(Part,"LineSegment"):
@@ -107,7 +110,7 @@ ksuWB_icons_path =  os.path.join( ksuWBpath, 'Resources', 'icons')
 
 
 def ksu_edges2sketch():
-    global conv_started
+    global conv_started, max_geo_admitted
     
     cp_edges = [];cp_edges_names = []
     cp_edges_shapes = []; cp_edges_obj = []
@@ -217,7 +220,8 @@ def ksu_edges2sketch():
                 doc.addObject("Part::MultiFuse","union")
                 union = doc.ActiveObject
                 doc.union.Shapes = cp_edges_obj #cp_obj # [doc.Shape005,doc.Shape006]
-                doc.recompute()
+                if len (cp_edges_obj) < max_geo_admitted:
+                    doc.recompute()
             else:
                 union = cp_edges_obj[0]
             #sketch.MapMode = "ObjectXZ"
@@ -291,7 +295,8 @@ def ksu_edges2sketch():
                 FreeCADGui.Selection.addSelection(sketch)
                 doc.commitTransaction()
             conv_started = False
-            doc.recompute()
+            if lg < max_geo_admitted:
+                doc.recompute()
     # for ob in FreeCAD.ActiveDocument.Objects:
     #     FreeCADGui.Selection.removeSelection(ob)
 ##
@@ -1071,8 +1076,14 @@ class ksuTools3D2D:
                 ##    if faces:
                 ##        Draft.makeShape2DView(objs[0],vec,facenumbers=faces)
                 ##        #return
+                new_sks = []
                 for o in objs:
                     Draft.makeShape2DView(o,vec)
+                    new_sks.append(FreeCAD.ActiveDocument.ActiveObject)
+                FreeCAD.ActiveDocument.recompute()
+                for s in new_sks:
+                    FreeCADGui.ActiveDocument.getObject(s.Name).LineColor = (1.00,1.00,1.00)
+                    FreeCADGui.ActiveDocument.getObject(s.Name).PointColor = (1.00,1.00,1.00)
             else:
                 reply = QtGui.QMessageBox.information(None,"Warning", "select something\nto project it to a 2D shape in the document")
                 FreeCAD.Console.PrintError('select something\nto project it to a 2D shape in the document\n')
@@ -1234,10 +1245,14 @@ class ksuToolsDiscretize:
                     else:
                         shapes.append(Part.Wire(e))
                     #sd=e.copy().discretize(QuasiDeflection=dqd)    
-            sk_d=Draft.makeSketch(shapes)
-            max_geo_admitted = 1500 # after this number, no recompute is applied
-            if len (sk_d.Geometry) < max_geo_admitted:
-                FreeCAD.ActiveDocument.recompute()
+            Draft.makeSketch(shapes)
+            sk_d = FreeCAD.ActiveDocument.ActiveObject
+            if sk_d is not None:
+                FeeCADGui.ActiveDocument.getObject(sk_d.Name).LineColor = (1.00,1.00,1.00)
+                FeeCADGui.ActiveDocument.getObject(sk_d.Name).PointColor = (1.00,1.00,1.00)
+                max_geo_admitted = 1500 # after this number, no recompute is applied
+                if len (sk_d.Geometry) < max_geo_admitted:
+                    FreeCAD.ActiveDocument.recompute()
 
 FreeCADGui.addCommand('ksuToolsDiscretize',ksuToolsDiscretize())
 ##
