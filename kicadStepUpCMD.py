@@ -1248,8 +1248,8 @@ class ksuToolsDiscretize:
             Draft.makeSketch(shapes)
             sk_d = FreeCAD.ActiveDocument.ActiveObject
             if sk_d is not None:
-                FeeCADGui.ActiveDocument.getObject(sk_d.Name).LineColor = (1.00,1.00,1.00)
-                FeeCADGui.ActiveDocument.getObject(sk_d.Name).PointColor = (1.00,1.00,1.00)
+                FreeCADGui.ActiveDocument.getObject(sk_d.Name).LineColor = (1.00,1.00,1.00)
+                FreeCADGui.ActiveDocument.getObject(sk_d.Name).PointColor = (1.00,1.00,1.00)
                 max_geo_admitted = 1500 # after this number, no recompute is applied
                 if len (sk_d.Geometry) < max_geo_admitted:
                     FreeCAD.ActiveDocument.recompute()
