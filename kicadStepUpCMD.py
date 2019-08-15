@@ -26,7 +26,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-__ksuCMD_version__='1.6.9'
+__ksuCMD_version__='1.7.0'
 
 precision = 0.1 # precision in spline or bezier conversion
 q_deflection = 0.02 # quasi deflection parameter for discretization
@@ -2947,7 +2947,12 @@ class ksuExcDemo:
             import subprocess, sys
             if sys.platform == "linux" or sys.platform == "linux2":
                 # linux
+                if 'LD_LIBRARY_PATH' in os.environ: # workaround for AppImage
+                    ldlp = os.environ['LD_LIBRARY_PATH']
+                    del os.environ['LD_LIBRARY_PATH']
                 subprocess.call(["xdg-open", fnameDemo])
+                if 'LD_LIBRARY_PATH' in os.environ:
+                    os.environ['LD_LIBRARY_PATH'] = ldlp
             if sys.platform == "darwin":
                 # osx
                 cmd_open = 'open '+fnameDemo
