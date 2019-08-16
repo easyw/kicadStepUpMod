@@ -353,6 +353,9 @@
 # improved simplify sketch
 # workaround force saving before exporting VRML (win freeze bug)
 # importing custom Geo also for bottom layer
+# fixed wbs ordering
+# added edges2sketch function
+# local coordinate system reference added
 # most clean code and comments done
 
 ##todo
@@ -466,7 +469,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.4.0.5"
+___ver___ = "8.4.0.6"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -12866,6 +12869,14 @@ def DrawPCB(mypcb):
             sayerr('empty sketch; module edge board: creating PCB from Footprint Edge.Cuts')
             create_pcb_from_edges = True
     
+    LCS = None
+    try:
+        FreeCAD.ActiveDocument.addObject('PartDesign::CoordinateSystem','Local_CS')
+        LCS = FreeCAD.ActiveDocument.ActiveObject
+        FreeCADGui.ActiveDocument.getObject(LCS.Name).Visibility = False
+    except:
+        sayw('LCS not supported')
+    
     #FreeCADGui.SendMsgToActiveView("ViewFit")
     #stop
     TopPadList=[]
@@ -13779,6 +13790,10 @@ def DrawPCB(mypcb):
         doc.Board.Label = 'Board'
         #FreeCAD.ActiveDocument.getObject("Step_Virtual_Models").addObject(impPart)
         doc.getObject("Board").addObject(doc.Board_Geoms)
+        try:
+            doc.getObject("Board_Geoms").addObject(LCS)
+        except:
+            pass
         #FreeCADGui.activeView().setActiveObject('Board_Geoms', doc.Board_Geoms)
         ## end hierarchy
     else:
@@ -14908,7 +14923,7 @@ class Ui_DockWidget(object):
         if 1:
             #if "ksuWB" not in FreeCADGui.activeWorkbench().name():
             if 'pref_page' not in globals():
-                FreeCADGui.activateWorkbench("ksuWB")
+                FreeCADGui.activateWorkbench("KiCadStepUpWB")
             FreeCADGui.runCommand("Std_DlgPreferences")
         elif expanded_view!=1:
             temporary_undock() #to do ....

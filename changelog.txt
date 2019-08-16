@@ -313,6 +313,9 @@ Changelog
 - bsplines allowed for push&pull kicad_pcb
 - fixed hanging issue on AppImages (thread)
 - improved simplify sketch
+- workaround force saving before exporting VRML (win freeze bug)
+- importing custom Geo also for bottom layer
 - fixed wbs ordering
 - added edges2sketch function
+- local coordinate system reference added
 - most clean code and comments done
