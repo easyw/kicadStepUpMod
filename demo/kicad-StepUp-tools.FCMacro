@@ -353,6 +353,10 @@
 # improved simplify sketch
 # workaround force saving before exporting VRML (win freeze bug)
 # importing custom Geo also for bottom layer
+# fixed wbs ordering
+# added edges2sketch function
+# local coordinate system reference added
+# improved search for 3d models on local path without using KIPRJMOD
 # most clean code and comments done
 
 ##todo
@@ -466,7 +470,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "8.4.0.5"
+___ver___ = "8.4.0.7"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -5430,8 +5434,60 @@ def Load_models(pcbThickness,modules):
             encoded=1
             say('adjusting 2nd Local Path')
             say('step-module-replaced '+step_module)      
+        if (encoded == 0):  #test local 3D path without the use of KIPRJMOD
+            step_module_local = re.sub("\\\\", "/", step_module)
+            #if isinstance(step_module, str):
+            #    step_module = step_module.decode('unicode_escape')
+            last_pcb_path_local = re.sub("\\\\", "/", last_pcb_path)
+            #if isinstance(last_pcb_path, str):
+            #    last_pcb_path = last_pcb_path.decode('unicode_escape')
+            #step_module_local=os.join(last_pcb_path_local, step_module_local)
+            #sm=step_module
+            #step_module=re.sub(r"^\$\{KIPRJMOD\}.*$",last_pcb_path, sm)
+            #step_module=re.sub('\${.KIPRJMOD}/', '', step_module)
+            # print(step_module)
+            # print(step_module_local)
+            step_module_local=step_module_local.replace(u'"', u'')  # name with spaces
+            #print(step_module_local)
+            utf_path_local=os.path.join(make_unicode(last_pcb_path_local),make_unicode(step_module_local))
+            #print(utf_path_local)
+            pos=utf_path_local.rfind('.')
+            #sayw(pos)
+            rel_pos=len(utf_path_local)-pos
+            local_path=utf_path_local[:-rel_pos+1]
+            #print(local_path)
+            #print(os.path.exists(local_path+u'step'))
+            #print(os.path.exists(local_path+u'stp'))
+            #stop
+            if os.path.exists(local_path+u'step'):
+                #step_module=step_module.replace(u'"', u'')  # name with spaces
+                step_module = local_path+u'step'
+                encoded=1
+                say('adjusting Relative Path to pcb file')
+                say('step-module-replaced '+step_module)
+            elif os.path.exists(local_path+u'stp'):
+                #step_module=step_module.replace(u'"', u'')  # name with spaces
+                step_module = local_path+u'stp'
+                encoded=1
+                say('adjusting Relative Path to pcb file')
+                say('step-module-replaced '+step_module)
+            elif os.path.exists(local_path+u'STEP'):
+                #step_module=step_module.replace(u'"', u'')  # name with spaces
+                step_module = local_path+u'STEP'
+                encoded=1
+                say('adjusting Relative Path to pcb file')
+                say('step-module-replaced '+step_module)
+            elif os.path.exists(local_path+u'STP'):
+                #step_module=step_module.replace(u'"', u'')  # name with spaces
+                step_module = local_path+u'STP'
+                encoded=1
+                say('adjusting Relative Path to pcb file')
+                say('step-module-replaced '+step_module)
+            ## to do add igs,iges    
         if step_module != 'no3Dmodel':
             #model_type = step_module.split('.')[1]
+            #if encoded!=1:
+            step_module=step_module.replace(u'"', u'')  # name with spaces
             pos=step_module.rfind('.')
             #sayw(pos)
             rel_pos=len(step_module)-pos
@@ -5442,9 +5498,9 @@ def Load_models(pcbThickness,modules):
             step_module2=step_module[:-4]+u'stp'
             step_module3=step_module[:-4]+u'iges'
             step_module4=step_module[:-4]+u'igs'
-            if encoded!=1:
-                #step_module=step_module.decode("utf-8").replace(u'"', u'')  # name with spaces
-                step_module=step_module.replace(u'"', u'')  # name with spaces
+            #if encoded!=1:
+            #    #step_module=step_module.decode("utf-8").replace(u'"', u'')  # name with spaces
+            #    step_module=step_module.replace(u'"', u'')  # name with spaces
             model_name=step_module[:-5]
             last_slash_pos1=model_name.rfind('/')
             last_slash_pos2=model_name.rfind('\\')
@@ -5466,6 +5522,8 @@ def Load_models(pcbThickness,modules):
                     createScaledObjs=True
                 if not createScaledObjs:
                     module_path='not-found'
+                    step_module=step_module.replace(u'"', u'')  # name with spaces
+                    # sayerr(step_module+' TEST')
                     #step_module=step_module.replace('"', '')  # name with spaces
                     #step_module=step_module.decode("utf-8").replace(u'"', u'')  # name with spaces
                     #step_module=step_module.encode("utf-8")
@@ -6136,7 +6194,8 @@ def Load_models(pcbThickness,modules):
                     say("error missing "+ make_string(models3D_prefix)+make_string(step_module))
                     test = missing_models.find(make_string(step_module))
                     if test is -1:
-                        missing_models += make_string(models3D_prefix)+make_string(step_module)+'\r\n' #matched        
+                        #missing_models += make_string(models3D_prefix)+make_string(step_module)+'\r\n' #matched        
+                        missing_models += make_string(step_module)+'\r\n' #matched        
             ###
         gui_refresh=20
         if int(PySide.QtCore.qVersion().split('.')[0]) > 4 or use_Links:  # Qt5 or Links refresh
@@ -6171,12 +6230,21 @@ def Load_models(pcbThickness,modules):
     FreeCAD.ActiveDocument.recompute()
     say_time()
     if missing_models != '':
+        last_pcb_path_local = re.sub("\\\\", "/", last_pcb_path)
+        last_pcb_path_local_U = make_unicode(last_pcb_path_local)
         say("missing models");say (missing_models)
+        say("searching path");say(models3D_prefix_U);say (models3D_prefix2_U)
+        say(last_pcb_path_local_U)
         missings=[]
         missings=missing_models.split('\r\n')
         n_rpt_max=10
         #if len (missings) > n_rpt_max: #warning_nbr =-1 for skipping the test
         wmsg="""... missing module(s)<br>"""
+        wmsg+="""... searching path:<br>"""
+        wmsg+=models3D_prefix_U+"""<br>"""
+        wmsg+=models3D_prefix2_U+"""<br>"""
+        wmsg+=last_pcb_path_local_U+"""<br>"""
+        wmsg+="""... missing module(s) '.step' or '.stp' or .iges' or '.igs'<br>"""
         for i in range(min(len (missings),n_rpt_max)):
             wmsg=wmsg+missings[i]+'<br>'
         QtGui.QApplication.restoreOverrideCursor()
@@ -12866,6 +12934,14 @@ def DrawPCB(mypcb):
             sayerr('empty sketch; module edge board: creating PCB from Footprint Edge.Cuts')
             create_pcb_from_edges = True
     
+    LCS = None
+    try:
+        FreeCAD.ActiveDocument.addObject('PartDesign::CoordinateSystem','Local_CS')
+        LCS = FreeCAD.ActiveDocument.ActiveObject
+        FreeCADGui.ActiveDocument.getObject(LCS.Name).Visibility = False
+    except:
+        sayw('LCS not supported')
+    
     #FreeCADGui.SendMsgToActiveView("ViewFit")
     #stop
     TopPadList=[]
@@ -13779,6 +13855,10 @@ def DrawPCB(mypcb):
         doc.Board.Label = 'Board'
         #FreeCAD.ActiveDocument.getObject("Step_Virtual_Models").addObject(impPart)
         doc.getObject("Board").addObject(doc.Board_Geoms)
+        try:
+            doc.getObject("Board_Geoms").addObject(LCS)
+        except:
+            pass
         #FreeCADGui.activeView().setActiveObject('Board_Geoms', doc.Board_Geoms)
         ## end hierarchy
     else:
@@ -14908,7 +14988,7 @@ class Ui_DockWidget(object):
         if 1:
             #if "ksuWB" not in FreeCADGui.activeWorkbench().name():
             if 'pref_page' not in globals():
-                FreeCADGui.activateWorkbench("ksuWB")
+                FreeCADGui.activateWorkbench("KiCadStepUpWB")
             FreeCADGui.runCommand("Std_DlgPreferences")
         elif expanded_view!=1:
             temporary_undock() #to do ....
