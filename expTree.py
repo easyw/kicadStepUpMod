@@ -34,3 +34,37 @@ def toggle_Tree():
                 collapse = False  
             toggleAllSel(tree, item, collapse)
 ##
+
+def collS_Tree():        
+    # collapse selected 
+    mw1 = FreeCADGui.getMainWindow()
+    treesSel = mw1.findChildren(QtGui.QTreeWidget)
+    
+    for tree in treesSel:
+        items = tree.selectedItems()
+        for item in items:
+            if item.isExpanded() == True:
+                collapse = True
+                print ("collapsing")
+                tree.collapseItem(item)
+            #else:
+            #    print ("expanding")
+            #    collapse = False  
+##
+
+def expS_Tree():        
+    # expand selected 
+    mw1 = FreeCADGui.getMainWindow()
+    treesSel = mw1.findChildren(QtGui.QTreeWidget)
+    
+    for tree in treesSel:
+        items = tree.selectedItems()
+        for item in items:
+            if item.isExpanded() == False:
+                collapse = False
+                print ("expanding")
+                tree.expandItem(item)
+            #else:
+            #    print ("expanding")
+            #    collapse = False  
+##
