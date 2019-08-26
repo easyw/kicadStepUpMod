@@ -471,7 +471,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.0.2.4"
+___ver___ = "9.0.2.5"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -5429,6 +5429,7 @@ def Load_models(pcbThickness,modules):
     mod_cnt=0
     for i in range(len(modules)):
         step_module=modules[i][0]
+        module_container = step_module
         #print(type(step_module))  #maui test py3
         #sayw('added '+str(i)+' model(s)')
         #say(modules[i]);
@@ -6274,11 +6275,14 @@ def Load_models(pcbThickness,modules):
                     else:                        
                         FreeCAD.ActiveDocument.removeObject(impPart.Name)
                 else:
-                    say("error missing "+ make_string(models3D_prefix)+make_string(step_module))
-                    test = missing_models.find(make_string(step_module))
+                    #say("error missing "+ make_string(models3D_prefix)+make_string(step_module))
+                    say("error missing "+ make_string(module_container))
+                    #test = missing_models.find(make_string(step_module))
+                    test = missing_models.find(make_string(module_container))
                     if test is -1:
                         #missing_models += make_string(models3D_prefix)+make_string(step_module)+'\r\n' #matched        
-                        missing_models += make_string(step_module)+'\r\n' #matched        
+                        # missing_models += make_string(step_module)+'\r\n' #matched  
+                        missing_models += make_string(module_container)+' (.stp or .step)\r\n' #matched 
             ###
         gui_refresh=20
         if int(PySide.QtCore.qVersion().split('.')[0]) > 4 or use_Links:  # Qt5 or Links refresh
