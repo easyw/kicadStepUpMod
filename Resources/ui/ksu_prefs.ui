@@ -844,7 +844,7 @@ Allowing or not Loading Multi Parts objects</string>
           <rect>
            <x>7</x>
            <y>140</y>
-           <width>463</width>
+           <width>246</width>
            <height>20</height>
           </rect>
          </property>
@@ -912,6 +912,31 @@ Allowing or not Loading Multi Parts objects</string>
          </property>
          <property name="prefEntry" stdset="0">
           <cstring>turntable</cstring>
+         </property>
+         <property name="prefPath" stdset="0">
+          <cstring>Mod/kicadStepUpGui</cstring>
+         </property>
+        </widget>
+        <widget class="Gui::PrefCheckBox" name="cb_asm3_links_2">
+         <property name="geometry">
+          <rect>
+           <x>267</x>
+           <y>140</y>
+           <width>246</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string>Assembly3 LinkGroups allowed</string>
+         </property>
+         <property name="text">
+          <string>Assembly3 LinkGroups allowed</string>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
+         </property>
+         <property name="prefEntry" stdset="0">
+          <cstring>asm3_linkGroups</cstring>
          </property>
          <property name="prefPath" stdset="0">
           <cstring>Mod/kicadStepUpGui</cstring>
