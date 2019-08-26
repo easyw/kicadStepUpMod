@@ -471,7 +471,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.0.2.2"
+___ver___ = "9.0.2.3"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -13086,12 +13086,18 @@ def DrawPCB(mypcb):
             create_pcb_from_edges = True
     
     LCS = None
-    try:
-        FreeCAD.ActiveDocument.addObject('PartDesign::CoordinateSystem','Local_CS')
-        LCS = FreeCAD.ActiveDocument.ActiveObject
-        FreeCADGui.ActiveDocument.getObject(LCS.Name).Visibility = False
-    except:
-        sayw('LCS not supported')
+    if aux_orig ==1 or grid_orig ==1: #adding LCS only on aux or grid origin
+        try:
+            FreeCAD.ActiveDocument.addObject('PartDesign::CoordinateSystem','Local_CS')
+            LCS = FreeCAD.ActiveDocument.ActiveObject
+            # FreeCADGui.ActiveDocument.getObject(LCS.Name).Visibility = False
+            FreeCADGui.Selection.clearSelection()
+            #FreeCADGui.Selection.addSelection(LCS)
+            #FreeCADGui.runCommand('Std_HideSelection',0)
+            #FreeCADGui.runCommand('Std_ToggleVisibility',0)
+            #FreeCADGui.Selection.clearSelection()
+        except:
+            sayw('LCS not supported')
     
     #FreeCADGui.SendMsgToActiveView("ViewFit")
     #stop
@@ -14027,8 +14033,15 @@ def DrawPCB(mypcb):
         #grp.addObject(pcb_board)
         #doc.getObject('Pcb').adjustRelativeLinks(doc.getObject('Board_Geoms'))
         doc.getObject('Board_Geoms').ViewObject.dropObject(doc.getObject('Pcb'),None,'',[])
-        LCS.adjustRelativeLinks(doc.getObject('Board_Geoms'))
-        doc.getObject('Board_Geoms').ViewObject.dropObject(LCS,None,'',[])
+        try:
+            #LCS.adjustRelativeLinks(doc.getObject('Board_Geoms'))
+            doc.getObject('Board_Geoms').ViewObject.dropObject(LCS,None,'',[])
+            FreeCADGui.Selection.clearSelection()
+            FreeCADGui.Selection.addSelection(LCS)
+            FreeCADGui.runCommand('Std_ToggleVisibility',0)
+            #stop
+        except:
+            pass
         FreeCADGui.Selection.clearSelection()
         #FreeCADGui.activeView().setActiveObject('Board_Geoms', doc.Board_Geoms)
         ## end hierarchy        

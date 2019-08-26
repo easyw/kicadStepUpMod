@@ -471,7 +471,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.0.1.1"
+___ver___ = "9.0.2.2"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -663,10 +663,44 @@ try:
 except:
     FreeCAD.Console.PrintWarning("PoM not present\n")
 
-global use_AppPart, use_Links
+##
+def say_inline(msg):
+    FreeCAD.Console.PrintMessage(msg+' ')
+
+def say(msg):
+    FreeCAD.Console.PrintMessage(msg)
+    FreeCAD.Console.PrintMessage('\n')
+
+def sayw(msg):
+    FreeCAD.Console.PrintWarning(msg)
+    FreeCAD.Console.PrintWarning('\n')
+    
+def sayerr(msg):
+    FreeCAD.Console.PrintError(msg)
+    FreeCAD.Console.PrintWarning('\n')
+##
+
+global use_AppPart, use_Links, use_LinkGroups
 use_AppPart=False # False
 use_Links=False
 
+use_LinkGroups = False
+if 'LinkView' in dir(FreeCADGui):
+    prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+    if prefs.GetBool('asm3_linkGroups'):
+        use_LinkGroups = True
+        use_Links=True #False
+        sayw('using \'LinkGroups\' and \'Links\'')
+    elif prefs.GetBool('asm3_links'):
+        use_Links=True #False
+        sayw('using \'Part\' container and \'Links\'')
+    else:
+        use_LinkGroups = False
+        sayw('using \'Part\' container')
+else:
+    use_LinkGroups = False
+    sayw('using \'Part\' container')
+#
 global FC_export_min_version
 FC_export_min_version="11670"  #11670 latest JM
 
@@ -1614,10 +1648,11 @@ force_oldGroups=False # False
 
 try:
     from freecad.asm3 import assembly as asm
-    use_Links=True #False
-    FreeCAD.Console.PrintWarning('Links supported\n')
+    #use_Links=True #False
+    FreeCAD.Console.PrintWarning('Asm3 WB present\n')
 except:
-    FreeCAD.Console.PrintWarning('no Links support\n')
+    pass
+    #FreeCAD.Console.PrintWarning('Asm3 WB not present\n')
 
 global export_board_2step
 #export_board_2step=False
@@ -2524,21 +2559,6 @@ def open(filename):
     #    onLoadBoard_idf(filename)
     elif ext==".kicad_mod":
         onLoadFootprint(filename)
-
-def say_inline(msg):
-    FreeCAD.Console.PrintMessage(msg+' ')
-
-def say(msg):
-    FreeCAD.Console.PrintMessage(msg)
-    FreeCAD.Console.PrintMessage('\n')
-
-def sayw(msg):
-    FreeCAD.Console.PrintWarning(msg)
-    FreeCAD.Console.PrintWarning('\n')
-    
-def sayerr(msg):
-    FreeCAD.Console.PrintError(msg)
-    FreeCAD.Console.PrintWarning('\n')
 
 def make_unicode(input):
     if (sys.version_info > (3, 0)):  #py3
@@ -3761,6 +3781,10 @@ def cfg_read_all():
         links_imp_mode = 'links_allowed'
     else:
         links_imp_mode = 'links_not_allowed'
+    if prefs.GetBool('asm3_linkGroups'):
+        use_LinkGroups = True
+    else:
+        use_LinkGroups = False
     aux_orig=0;base_orig=0;base_point=0; grid_orig=0
     #grid_orig -> 0; aux_orig-> 1; base_orig -> 2
     pcb_placement = prefs.GetInt('pcb_placement')
@@ -4798,7 +4822,7 @@ def Display_info(blacklisted_models):
     if animate_result==True and apply_reflex==True:  #(apply_reflex==True):
         doc=FreeCAD.ActiveDocument
         for obj in doc.Objects:
-             if (obj.Label!="Board_Geoms") and (obj.Label!="Step_Models") and (obj.Label!="Step_Virtual_Models")\
+            if (obj.Label!="Board_Geoms") and (obj.Label!="Step_Models") and (obj.Label!="Step_Virtual_Models")\
               and (obj.TypeId != "App::Line") and (obj.TypeId != "App::Plane") and (obj.TypeId != "App::Origin")\
               and (obj.TypeId != "App::Part"):
                 if show_data:
@@ -5243,7 +5267,7 @@ def removesubtree(objs):
 ###
 def create_compound(count,modelnm):  #create compound function when a multipart is loaded
     
-    global allow_compound, compound_found, use_Links
+    global allow_compound, compound_found, use_Links, use_LinkGroups
     
     counter=0
     for ObJ in FreeCAD.activeDocument().Objects:
@@ -5388,7 +5412,7 @@ def Load_models(pcbThickness,modules):
     global off_x, off_y, volume_minimum, height_minimum, bbox_all, bbox_list
     global whitelisted_model_elements, models3D_prefix, models3D_prefix2, last_pcb_path, full_placement
     global allow_compound, compound_found, bklist, force_transparency, warning_nbr, use_AppPart
-    global conv_offs, use_Links, links_imp_mode, use_pypro
+    global conv_offs, use_Links, links_imp_mode, use_pypro, use_LinkGroups
     
     #say (modules)
     missing_models = ''
@@ -6051,14 +6075,22 @@ def Load_models(pcbThickness,modules):
                             # Gui.activeView().setActiveObject('part', App.activeDocument().Part)
                             # App.ActiveDocument.recompute()
                             if isVirtual == 0:
-                                if use_AppPart: #layer Top                                  
+                                if use_AppPart and not use_LinkGroups: #layer Top                                  
                                     FreeCAD.ActiveDocument.getObject("Top").addObject(impPart)
+                                    modelTop_nbr+=1
+                                elif use_LinkGroups:
+                                    #FreeCAD.ActiveDocument.getObject(impPart.Name).adjustRelativeLinks(FreeCAD.ActiveDocument.getObject('Top'))
+                                    FreeCAD.ActiveDocument.getObject('Top').ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),None,'',[])
                                     modelTop_nbr+=1
                                 else:
                                     FreeCAD.ActiveDocument.getObject("Step_Models").addObject(impPart)
                             else:  #virtual
-                                if use_AppPart: #layer Top                                  
+                                if use_AppPart and not use_LinkGroups: #layer Top                                  
                                     FreeCAD.ActiveDocument.getObject("TopV").addObject(impPart)
+                                    virtualTop_nbr+=1
+                                elif use_LinkGroups:
+                                    #FreeCAD.ActiveDocument.getObject(impPart.Name).adjustRelativeLinks(FreeCAD.ActiveDocument.getObject('TopV'))
+                                    FreeCAD.ActiveDocument.getObject('TopV').ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),None,'',[])
                                     virtualTop_nbr+=1
                                 else:
                                     FreeCAD.ActiveDocument.getObject("Step_Virtual_Models").addObject(impPart)
@@ -6108,14 +6140,22 @@ def Load_models(pcbThickness,modules):
                             FreeCADGui.Selection.addSelection(impPart)
                             FreeCAD.ActiveDocument.getObject(impPart.Name)
                             if isVirtual == 0:
-                                if use_AppPart: #layer Top                                  
+                                if use_AppPart and not use_LinkGroups: #layer Top                                  
                                     FreeCAD.ActiveDocument.getObject("Bot").addObject(impPart)
+                                    modelBot_nbr+=1
+                                elif use_LinkGroups:
+                                    #FreeCAD.ActiveDocument.getObject(impPart.Name).adjustRelativeLinks(FreeCAD.ActiveDocument.getObject('Bot'))
+                                    FreeCAD.ActiveDocument.getObject('Bot').ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),None,'',[])
                                     modelBot_nbr+=1
                                 else:
                                     FreeCAD.ActiveDocument.getObject("Step_Models").addObject(impPart)
                             else:  #virtual
-                                if use_AppPart: #layer Top
+                                if use_AppPart and not use_LinkGroups: #layer Top
                                     FreeCAD.ActiveDocument.getObject("BotV").addObject(impPart)
+                                    virtualBot_nbr+=1
+                                elif use_LinkGroups:
+                                    #FreeCAD.ActiveDocument.getObject(impPart.Name).adjustRelativeLinks(FreeCAD.ActiveDocument.getObject('BotV'))
+                                    FreeCAD.ActiveDocument.getObject('BotV').ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),None,'',[])
                                     virtualBot_nbr+=1
                                 else:
                                     FreeCAD.ActiveDocument.getObject("Step_Virtual_Models").addObject(impPart)
@@ -6252,26 +6292,58 @@ def Load_models(pcbThickness,modules):
     #say(loaded_models);
     #sleep
     if virtual_nbr==0:
-        FreeCAD.ActiveDocument.getObject("Step_Virtual_Models").removeObjectsFromDocument()
+        #FreeCAD.ActiveDocument.getObject("Step_Virtual_Models").removeObjectsFromDocument()
         FreeCAD.ActiveDocument.removeObject("Step_Virtual_Models")
+        FreeCAD.ActiveDocument.removeObject("BotV")
+        FreeCAD.ActiveDocument.removeObject("TopV")
     else:
         if use_AppPart:
             if virtualTop_nbr==0:
-                FreeCAD.ActiveDocument.getObject("TopV").removeObjectsFromDocument()
-                FreeCAD.ActiveDocument.removeObject("TopV")    
+                #FreeCAD.ActiveDocument.getObject("TopV").removeObjectsFromDocument()
+                FreeCAD.ActiveDocument.removeObject("TopV")
+                #FreeCAD.ActiveDocument.recompute()
             if virtualBot_nbr==0:
-                FreeCAD.ActiveDocument.getObject("BotV").removeObjectsFromDocument()
-                FreeCAD.ActiveDocument.removeObject("BotV")    
+                #FreeCAD.ActiveDocument.getObject("BotV").removeObjectsFromDocument()
+                FreeCAD.ActiveDocument.removeObject("BotV")
+                #FreeCAD.ActiveDocument.recompute()  
     if use_AppPart:
         if modelTop_nbr==0:
-            FreeCAD.ActiveDocument.getObject("Top").removeObjectsFromDocument()
+            #FreeCAD.ActiveDocument.getObject("Top").removeObjectsFromDocument()
             FreeCAD.ActiveDocument.removeObject("Top")    
         if modelBot_nbr==0:
-            FreeCAD.ActiveDocument.getObject("Bot").removeObjectsFromDocument()
+            #FreeCAD.ActiveDocument.getObject("Bot").removeObjectsFromDocument()
             FreeCAD.ActiveDocument.removeObject("Bot")    
     
     FreeCAD.ActiveDocument.recompute()
     say_time()
+    FreeCADGui.Selection.clearSelection()
+    if 0: #try
+        print('TreeView Test collapsing')
+        FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.Board)
+        import kicadStepUpCMD
+        FreeCADGui.runCommand('ksuToolsToggleTreeView',0)
+        s=FreeCADGui.Selection.getSelection()[0]
+        print(s.Label)
+        FreeCADGui.runCommand('ksuToolsToggleTreeView',0)
+        #kicadStepUpCMD.ksuToolsToggleTreeView.Activated(s)
+        #FreeCADGui.Selection.clearSelection()
+        #FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.Board)
+        #s=FreeCADGui.Selection.getSelection()[0]
+        #print(s.Label)
+        #kicadStepUpCMD.ksuToolsToggleTreeView.Activated(s)
+        FreeCADGui.Selection.clearSelection()
+    elif 0: #except:
+        import expTree; 
+        print('TreeView Test collapsing 2')
+        #import importlib; importlib.reload(expTree);
+        FreeCADGui.Selection.clearSelection()
+        FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.Board)
+        expTree.collS_Tree()
+        FreeCADGui.Selection.clearSelection()
+        print('TreeView Test collapsing 2 step 2')
+    else:
+        pass
+    #stop
     if missing_models != '':
         last_pcb_path_local = re.sub("\\\\", "/", last_pcb_path)
         last_pcb_path_local_U = make_unicode(last_pcb_path_local)
@@ -6303,7 +6375,6 @@ def Load_models(pcbThickness,modules):
     #    FreeCAD.Console.PrintMessage("black-listed module "+ '\n'.join(map(str, blacklisted_models)))
     #    reply = QtGui.QMessageBox.information(None,"Info ...","... black-listed module(s)\n"+ '\n'.join(map(str, blacklisted_models)))
     #    #FreeCAD.Console.PrintMessage("black-listed module "+ '\n'.join(map(str, blacklisted_models)))
-    FreeCADGui.Selection.clearSelection()
     return blacklisted_model_elements
 ###
 
@@ -6312,7 +6383,7 @@ def LoadKicadBoard (board_fname):
     ######################################################################
     #say("FC Version ")
     #say(FreeCAD.Version())
-    global start_time, fusion, FC_export_min_version, use_AppPart, force_oldGroups, use_Links
+    global start_time, fusion, FC_export_min_version, use_AppPart, force_oldGroups, use_Links, use_LinkGroups
     FC_majorV,FC_minorV,FC_git_Nbr=getFCversion()
     #FC_majorV=FreeCAD.Version()[0]
     #FC_minorV=FreeCAD.Version()[1]
@@ -7292,7 +7363,7 @@ def check_requirements():
     ######################################################################
     #say("FC Version ")
     #say(FreeCAD.Version())
-    global start_time, fusion, FC_export_min_version, use_AppPart, force_oldGroups, use_Links
+    global start_time, fusion, FC_export_min_version, use_AppPart, force_oldGroups, use_Links, use_LinkGroups
     FC_majorV,FC_minorV,FC_git_Nbr=getFCversion()
     #FC_majorV=FreeCAD.Version()[0]
     #FC_minorV=FreeCAD.Version()[1]
@@ -7706,7 +7777,7 @@ def onLoadBoard(file_name=None):
     global base_orig, base_point, bbox_all, bbox_list, whitelisted_model_elements
     global fusion, addVirtual, blacklisted_models, exportFusing, min_drill_size
     global last_fp_path, last_pcb_path, plcmnt, xp, yp, exportFusing
-    global ignore_utf8, ignore_utf8_incfg, pcb_path, disable_VBO, use_AppPart, force_oldGroups, use_Links
+    global ignore_utf8, ignore_utf8_incfg, pcb_path, disable_VBO, use_AppPart, force_oldGroups, use_Links, use_LinkGroups
     global original_filename, edge_width, load_sketch, grid_orig, warning_nbr, running_time, addConstraints
     global conv_offs, zfit
     
@@ -7928,7 +7999,18 @@ def onLoadBoard(file_name=None):
                     # say(str(g))
                     FreeCAD.ActiveDocument.PCB_Sketch.exposeInternalGeometry(gi)
                 gi+=1
-            FreeCAD.ActiveDocument.Board_Geoms.addObject(pcb_sk)
+            if use_LinkGroups:
+                FreeCAD.ActiveDocument.getObject('Board_Geoms').ViewObject.dropObject(FreeCAD.ActiveDocument.getObject('PCB_Sketch'),None,'',[])
+                FreeCADGui.Selection.clearSelection()
+                sl = FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.getObject('PCB_Sketch'))
+                #FreeCADGui.runCommand('Std_HideSelection',0)
+                FreeCADGui.runCommand('Std_ToggleVisibility',0)
+                FreeCADGui.Selection.clearSelection()
+                #FreeCADGui.ActiveDocument.PCB_Sketch.Visibility = False
+                #FreeCAD.ActiveDocument.getObject('PCB_Sketch').adjustRelativeLinks(FreeCAD.ActiveDocument.getObject('Board_Geoms'))
+            else:
+                FreeCAD.ActiveDocument.Board_Geoms.addObject(pcb_sk)
+            
         #updating pcb_sketch
 
         #FreeCAD.ActiveDocument.getObject("PCB_Sketch").Placement = FreeCAD.Placement(FreeCAD.Vector(board_base_point_x,board_base_point_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
@@ -7943,7 +8025,7 @@ def onLoadBoard(file_name=None):
             zf= Timer (0.1,ZoomFitThread)
             zf.start()
 
-        if use_AppPart and not force_oldGroups:
+        if use_AppPart and not force_oldGroups and not use_LinkGroups:
             #sayw("creating hierarchy")
             ## to evaluate to add App::Part hierarchy
             doc.Tip = doc.addObject('App::Part','Step_Models')
@@ -7983,6 +8065,32 @@ def onLoadBoard(file_name=None):
             except:
                 pass
             ## end hierarchy
+        elif use_LinkGroups:
+            doc.Tip = doc.addObject('App::LinkGroup','Step_Models')
+            doc.Step_Models.Label = 'Step_Models'
+            doc.Tip = doc.addObject('App::LinkGroup','Step_Virtual_Models')
+            doc.Step_Virtual_Models.Label = 'Step_Virtual_Models'
+            doc.addObject('App::LinkGroup','Top')
+            doc.Top.Label = 'Top'
+            doc.addObject('App::LinkGroup','Bot')
+            doc.Bot.Label = 'Bot'
+            doc.addObject('App::LinkGroup','TopV')
+            doc.TopV.Label = 'TopV'
+            doc.addObject('App::LinkGroup','BotV')
+            doc.BotV.Label = 'BotV'
+            #doc.getObject('Top').adjustRelativeLinks(doc.getObject('Step_Models'))
+            doc.getObject('Step_Models').ViewObject.dropObject(doc.getObject('Top'),None,'',[])
+            #doc.getObject('TopV').adjustRelativeLinks(doc.getObject('Step_Virtual_Models'))
+            doc.getObject('Step_Virtual_Models').ViewObject.dropObject(doc.getObject('TopV'),None,'',[])
+            #doc.getObject('Bot').adjustRelativeLinks(doc.getObject('Step_Models'))
+            doc.getObject('Step_Models').ViewObject.dropObject(doc.getObject('Bot'),None,'',[])
+            #doc.getObject('BotV').adjustRelativeLinks(doc.getObject('Step_Virtual_Models'))
+            doc.getObject('Step_Virtual_Models').ViewObject.dropObject(doc.getObject('BotV'),None,'',[])
+            #doc.getObject('Step_Models').adjustRelativeLinks(doc.getObject('Board'))
+            doc.getObject('Board').ViewObject.dropObject(doc.getObject('Step_Models'),None,'',[])
+            #doc.getObject('Step_Virtual_Models').adjustRelativeLinks(doc.getObject('Board'))
+            doc.getObject('Board').ViewObject.dropObject(doc.getObject('Step_Virtual_Models'),None,'',[])
+            FreeCADGui.Selection.clearSelection()
         else:
             #sayerr("creating flat groups")
             doc.addObject("App::DocumentObjectGroup", "Step_Models")
@@ -8041,7 +8149,6 @@ def onLoadBoard(file_name=None):
             paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
             paramGetVS.SetBool("ReadShapeCompoundMode",ReadShapeCompoundMode_status)
             sayw("enabling ReadShapeCompoundMode")
-
         if disable_VBO:
             if VBO_status:
                 paramGetV.SetBool("UseVBO",True)
@@ -11880,7 +11987,7 @@ def routineDrawIDF(doc,filename):
 def Process_board_outline(doc,board_outline,drills,board_thickness):
     """Process_board_outline(doc,board_outline,drills,board_thickness)-> number proccesed loops
         adds emn geometry from emn file"""
-    global start_time, use_AppPart, force_oldGroups, use_Links
+    global start_time, use_AppPart, force_oldGroups, use_Links, use_LinkGroups
     
     vertex_index=-1; #presume no vertex
     lines=-1 #presume no lines
@@ -12567,7 +12674,7 @@ def DrawPCB(mypcb):
     global start_time, use_AppPart, force_oldGroups, min_drill_size
     global addVirtual, load_sketch, off_x, off_y, aux_orig, grid_orig
     global running_time, conv_offs, use_Links, apply_edge_tolerance, simplifyComSolid
-    global zfit
+    global zfit, use_LinkGroups
     
     def simu_distance(p0, p1):
         return max (abs(p0[0] - p1[0]), abs(p0[1] - p1[1]))
@@ -12979,12 +13086,18 @@ def DrawPCB(mypcb):
             create_pcb_from_edges = True
     
     LCS = None
-    try:
-        FreeCAD.ActiveDocument.addObject('PartDesign::CoordinateSystem','Local_CS')
-        LCS = FreeCAD.ActiveDocument.ActiveObject
-        FreeCADGui.ActiveDocument.getObject(LCS.Name).Visibility = False
-    except:
-        sayw('LCS not supported')
+    if aux_orig ==1 or grid_orig ==1: #adding LCS only on aux or grid origin
+        try:
+            FreeCAD.ActiveDocument.addObject('PartDesign::CoordinateSystem','Local_CS')
+            LCS = FreeCAD.ActiveDocument.ActiveObject
+            # FreeCADGui.ActiveDocument.getObject(LCS.Name).Visibility = False
+            FreeCADGui.Selection.clearSelection()
+            #FreeCADGui.Selection.addSelection(LCS)
+            #FreeCADGui.runCommand('Std_HideSelection',0)
+            #FreeCADGui.runCommand('Std_ToggleVisibility',0)
+            #FreeCADGui.Selection.clearSelection()
+        except:
+            sayw('LCS not supported')
     
     #FreeCADGui.SendMsgToActiveView("ViewFit")
     #stop
@@ -13884,7 +13997,7 @@ def DrawPCB(mypcb):
     #if remove_pcbPad==True:
     #    FreeCAD.activeDocument().removeObject(cut_base_name)
         #FreeCAD.activeDocument().removeObject(Holes_name)
-    if use_AppPart and not force_oldGroups:
+    if use_AppPart and not force_oldGroups and not use_LinkGroups:
         ## to evaluate to add App::Part hierarchy
         #sayw("creating hierarchy")
         doc.Tip = doc.addObject('App::Part','Board_Geoms')
@@ -13903,12 +14016,39 @@ def DrawPCB(mypcb):
             doc.getObject("Board_Geoms").addObject(LCS)
         except:
             pass
+        grp.addObject(pcb_board)
         #FreeCADGui.activeView().setActiveObject('Board_Geoms', doc.Board_Geoms)
         ## end hierarchy
+    elif use_LinkGroups:
+        doc.Tip = doc.addObject('App::LinkGroup','Board_Geoms')
+        doc.Board_Geoms.Label = 'Board_Geoms'
+        grp=doc.Board_Geoms
+        doc.Tip = doc.addObject('App::LinkGroup','Board')
+        doc.Board.Label = 'Board'
+        #FreeCAD.ActiveDocument.getObject("Step_Virtual_Models").addObject(impPart)
+        # doc.getObject("Board").addObject(doc.Board_Geoms)
+        #doc.getObject('Board_Geoms').adjustRelativeLinks(doc.getObject('Board'))
+        doc.getObject('Board').ViewObject.dropObject(doc.getObject('Board_Geoms'),None,'',[])
+        FreeCADGui.Selection.clearSelection()
+        #grp.addObject(pcb_board)
+        #doc.getObject('Pcb').adjustRelativeLinks(doc.getObject('Board_Geoms'))
+        doc.getObject('Board_Geoms').ViewObject.dropObject(doc.getObject('Pcb'),None,'',[])
+        try:
+            #LCS.adjustRelativeLinks(doc.getObject('Board_Geoms'))
+            doc.getObject('Board_Geoms').ViewObject.dropObject(LCS,None,'',[])
+            FreeCADGui.Selection.clearSelection()
+            FreeCADGui.Selection.addSelection(LCS)
+            FreeCADGui.runCommand('Std_ToggleVisibility',0)
+            #stop
+        except:
+            pass
+        FreeCADGui.Selection.clearSelection()
+        #FreeCADGui.activeView().setActiveObject('Board_Geoms', doc.Board_Geoms)
+        ## end hierarchy        
     else:
         #sayw("creating flat groups")
         grp=doc.addObject("App::DocumentObjectGroup", "Board_Geoms")
-    grp.addObject(pcb_board)
+        grp.addObject(pcb_board)
     #pcb_sk=FreeCAD.ActiveDocument.PCB_Sketch
     #grp.addObject(pcb_sk)
     #grp.addObject(doc_outline)      
@@ -15300,7 +15440,7 @@ class Ui_DockWidget(object):
 ## sketch testing button
 
 def Export3DStepF():
-    global last_3d_path, last_pcb_path, stp_exp_mode, use_AppPart, use_Links, links_imp_mode
+    global last_3d_path, last_pcb_path, stp_exp_mode, use_AppPart, use_Links, links_imp_mode, use_LinkGroups
     
     #say("export3DSTEP")
     sel = FreeCADGui.Selection.getSelection()
@@ -15569,7 +15709,7 @@ def Sync3DModel():
     global configParser, configFilePath, last_pcb_path
     global ignore_utf8, ignore_utf8_incfg, disable_PoM_Observer
     global board_base_point_x, board_base_point_y, real_board_pos_x, real_board_pos_y
-    global pcb_path, use_AppPart, force_oldGroups, use_Links
+    global pcb_path, use_AppPart, force_oldGroups, use_Links, use_LinkGroups
     global original_filename, aux_orig, grid_orig
     global off_x, off_y, maxRadius, use_pypro
 
@@ -15729,7 +15869,7 @@ def PushMoved():
     global configParser, configFilePath, last_pcb_path
     global ignore_utf8, ignore_utf8_incfg, disable_PoM_Observer
     global board_base_point_x, board_base_point_y, real_board_pos_x, real_board_pos_y
-    global pcb_path, use_AppPart, force_oldGroups, use_Links
+    global pcb_path, use_AppPart, force_oldGroups, use_Links, use_LinkGroups
     global original_filename, aux_orig, grid_orig
     global off_x, off_y, maxRadius, use_pypro
 
@@ -16333,7 +16473,7 @@ def export_footprint(fname=None):
     global configParser, configFilePath, start_time
     global ignore_utf8, ignore_utf8_incfg, disable_PoM_Observer
     global board_base_point_x, board_base_point_y, real_board_pos_x, real_board_pos_y
-    global pcb_path, use_AppPart, force_oldGroups, use_Links
+    global pcb_path, use_AppPart, force_oldGroups, use_Links, use_LinkGroups
     global original_filename
     global off_x, off_y, maxRadius, pad_nbr
     
@@ -19107,7 +19247,7 @@ def export_pcb(fname=None):
     global configParser, configFilePath, start_time
     global ignore_utf8, ignore_utf8_incfg, disable_PoM_Observer
     global board_base_point_x, board_base_point_y, real_board_pos_x, real_board_pos_y
-    global pcb_path, use_AppPart, force_oldGroups, use_Links
+    global pcb_path, use_AppPart, force_oldGroups, use_Links, use_LinkGroups
     global original_filename, aux_orig, grid_orig
     global off_x, off_y, maxRadius
     global zfit
