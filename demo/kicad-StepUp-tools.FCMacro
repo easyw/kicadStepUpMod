@@ -471,7 +471,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.0.2.2"
+___ver___ = "9.0.2.4"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -12780,12 +12780,21 @@ def DrawPCB(mypcb):
         say('board area '+str(mypcb.general.area))
     #sayerr('aux_axis_origin' + str(mypcb.setup.aux_axis_origin))
     #stop
+    origin = None
     if hasattr(mypcb.setup, 'aux_axis_origin'):
         say('aux_axis_origin' + str(mypcb.setup.aux_axis_origin))
+        origin = 'aux origin'
         #say(mypcb.setup.aux_axis_origin)
         #xp=mypcb.setup.aux_axis_origin[0]; yp=-mypcb.setup.aux_axis_origin[1]
     else:
-        say('aux origin not used')
+        say('aux origin not found')
+    if hasattr(mypcb.setup, 'grid_origin'):
+        say('grid_origin' + str(mypcb.setup.grid_origin))
+        origin = 'grid origin'
+        #say(mypcb.setup.aux_axis_origin)
+        #xp=mypcb.setup.aux_axis_origin[0]; yp=-mypcb.setup.aux_axis_origin[1]
+    else:
+        say('grid origin not found')
     #if hasattr(mypcb.setup, 'aux origin'):
     #    say('aux origin' + str(mypcb.setup.aux_axis_origin))
     #else:
@@ -13086,11 +13095,12 @@ def DrawPCB(mypcb):
             create_pcb_from_edges = True
     
     LCS = None
-    if aux_orig ==1 or grid_orig ==1: #adding LCS only on aux or grid origin
+    #if aux_orig ==1 or grid_orig ==1:
+    if origin is not None: #adding LCS only on aux or grid origin
         try:
             FreeCAD.ActiveDocument.addObject('PartDesign::CoordinateSystem','Local_CS')
             LCS = FreeCAD.ActiveDocument.ActiveObject
-            # FreeCADGui.ActiveDocument.getObject(LCS.Name).Visibility = False
+            FreeCADGui.ActiveDocument.getObject(LCS.Name).Visibility = False
             FreeCADGui.Selection.clearSelection()
             #FreeCADGui.Selection.addSelection(LCS)
             #FreeCADGui.runCommand('Std_HideSelection',0)
