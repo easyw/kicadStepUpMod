@@ -26,7 +26,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-__ksuCMD_version__='1.7.0'
+__ksuCMD_version__='1.7.1'
 
 precision = 0.1 # precision in spline or bezier conversion
 q_deflection = 0.02 # quasi deflection parameter for discretization
@@ -2072,26 +2072,39 @@ class ksuToolsRemoveFromTree:
         if FreeCADGui.Selection.getSelection():
             sel=FreeCADGui.Selection.getSelection()
             doc=FreeCAD.ActiveDocument
-            if "App::Part" in doc.getObject(sel[0].Name).TypeId:
+            #if "App::Part" in doc.getObject(sel[0].Name).TypeId or "App::LinkGroup" in doc.getObject(sel[0].Name).TypeId:
+            if "App::Part" in sel[0].TypeId or "App::LinkGroup" in sel[0].TypeId:
                 base=doc.getObject(sel[0].Name)
                 for o in sel:
                     if o.Name != sel[0].Name:
                         #o_glob_plac = o.getGlobalPlacement()
                         if hasattr(base, "OutList"):
                             if o in base.OutList:
-                                base.removeObject(o)
+                                if "App::Part" in o.TypeId:
+                                    base.removeObject(o)
+                                elif "App::LinkGroup" in o.TypeId:
+                                    base.ViewObject.dragObject(o)
                             else:
                                 for item in base.OutListRecursive:
                                     if hasattr(item, "OutList"):
                                         if o in item.OutList:
-                                            item.removeObject(o)
+                                            if "App::Part" in item.TypeId:
+                                                item.removeObject(o)
+                                            elif "App::LinkGroup" in item.TypeId:
+                                                #print(item.Label,o.Label)
+                                                item.ViewObject.dragObject(o)
                                             o.Placement = item.Placement.multiply(o.Placement)
                         #o.Placement = o_glob_plac
                         o.Placement = base.Placement.multiply(o.Placement)
                         for item in base.InListRecursive:
                             #fcc_prn(item.Label)
-                            if item.TypeId == 'App::Part' or item.TypeId == 'PartDesign::Body':
-                                doc.getObject(item.Name).addObject(doc.getObject(o.Name))                
+                            if item.TypeId == 'App::Part' or item.TypeId == 'PartDesign::Body' or item.TypeId == 'App::LinkGroup':
+                                if "App::Part" in item.TypeId:
+                                    #doc.getObject(item.Name).addObject(doc.getObject(o.Name))
+                                    item.addObject(o)
+                                elif "App::LinkGroup" in item.TypeId:
+                                    #doc.getObject(item.Name).ViewObject.dropObject(doc.getObject(o.Name))
+                                    item.ViewObject.dropObject(o)
             else:
                 #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
                 reply = QtGui.QMessageBox.information(None,"Warning", "Select one Container and some object(s) to be Removed from the Tree.")
@@ -2119,20 +2132,25 @@ class ksuToolsAddToTree:
         if FreeCADGui.Selection.getSelection():
             sel=FreeCADGui.Selection.getSelection()
             doc=FreeCAD.ActiveDocument
-            if "App::Part" in doc.getObject(sel[0].Name).TypeId:
+            #if "App::Part" in doc.getObject(sel[0].Name).TypeId:
+            if "App::Part" in sel[0].TypeId or "App::LinkGroup" in sel[0].TypeId:
                 base=doc.getObject(sel[0].Name)
                 for o in sel:
                     if o.Name != sel[0].Name:
                         if hasattr(base, "OutList"):
                             for item in base.InListRecursive:
-                                if item.TypeId == 'App::Part' or item.TypeId == 'PartDesign::Body':
+                                if item.TypeId == 'App::Part' or item.TypeId == 'PartDesign::Body' or "App::LinkGroup" in item.TypeId:
                                     o.Placement = item.Placement.inverse().multiply(o.Placement)
                                     #s=o.Shape.copy()
                                     #Part.show(s)
                         o.Placement = base.Placement.inverse().multiply(o.Placement)
                         #s1=o.Shape.copy()
                         #Part.show(s1)
-                        doc.getObject(sel[0].Name).addObject(doc.getObject(o.Name))
+                        if "App::Part" in sel[0].TypeId:
+                            sel[0].addObject(o)
+                            #doc.getObject(sel[0].Name).addObject(doc.getObject(o.Name))
+                        elif "App::LinkGroup" in sel[0].TypeId:
+                            sel[0].ViewObject.dropObject(o)
             else:
                 #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
                 reply = QtGui.QMessageBox.information(None,"Warning", "Select one Container and some object(s) to be Added to the Tree.")
