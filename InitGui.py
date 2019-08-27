@@ -10,11 +10,11 @@
 #*  Kicad STEPUP (TM) is a TradeMark and cannot be freely useable           *
 #*                                                                          *
 
-ksu_wb_version='v 9.0.3'
+ksu_wb_version='v 9.0.4'
 global myurlKWB, ksuWBpath
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=285 #v9.0.3
+mycommitsKWB=286 #v9.0.4
 
 import FreeCAD, FreeCADGui, Part, os, sys
 import re, time
@@ -130,6 +130,7 @@ class KiCadStepUpWB ( Workbench ):
         import kicadStepUpCMD, sys
         global pref_page
         pref_page = True # False #True #
+        import FreeCADGui
 
         submenu = ['demo.kicad_pcb','d-pak.kicad_mod', 'demo-sketch.FCStd', 'demo.step',\
                    'footprint-template.FCStd', 'footprint-Edge-template.FCStd', 'footprint-template-roundrect-polylines.FCStd',\
@@ -158,10 +159,13 @@ class KiCadStepUpWB ( Workbench ):
         if 'Manipulator' in combined_path:
             ksuDTB=["ksuToolsAligner","ksuToolsMover","ksuToolsCaliper","Separator","ksuToolsDefeaturingTools"]
             self.appendToolbar("ksu Design Tools", ksuDTB)
-        self.appendToolbar("ksu Helpers", ["ksuToolsToggleTreeView", "ksuToolsTransparencyToggle", "ksuToolsHighlightToggle",\
+        Hlp_TB = ["ksuToolsToggleTreeView", "ksuToolsTransparencyToggle", "ksuToolsHighlightToggle",\
                             "ksuToolsVisibilityToggle", "ksuToolsStepImportModeSTD", "ksuToolsStepImportModeComp",\
-                            "ksuToolsCopyPlacement", "ksuToolsResetPlacement", "ksuToolsAddToTree", "ksuToolsRemoveFromTree", "ksuToolsRemoveSubTree"])
+                            "ksuToolsCopyPlacement", "ksuToolsResetPlacement", "ksuToolsAddToTree", "ksuToolsRemoveFromTree", "ksuToolsRemoveSubTree"]
+        if 'LinkView' in dir(FreeCADGui):
+            Hlp_TB.remove("ksuToolsHighlightToggle")
         self.appendToolbar("ksu Show", ["ksuToolsTurnTable", "ksuToolsExplode"])
+        self.appendToolbar("ksu Helpers", Hlp_TB)
         #self.appendMenu("ksu Tools", ["ksuTools","ksuToolsEdit"])
         self.appendMenu("ksu Tools", ["ksuTools","ksuToolsEditPrefs"])
         self.appendMenu("ksu PushPull", ["ksuToolsOpenBoard","ksuToolsPushPCB","ksuToolsPushMoved","ksuToolsSync3DModels",\

@@ -26,10 +26,13 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-__ksuCMD_version__='1.7.1'
+__ksuCMD_version__='1.7.2'
+
 
 precision = 0.1 # precision in spline or bezier conversion
 q_deflection = 0.02 # quasi deflection parameter for discretization
+
+hide_compound = True
 
 reload_Gui=False#True
 
@@ -2212,7 +2215,7 @@ class ksuToolsTransparencyToggle:
             sel=FreeCADGui.Selection.getSelection()
             doc=FreeCADGui.ActiveDocument
             for obj in sel:
-                if "App::Part" not in obj.TypeId:
+                if "App::Part" not in obj.TypeId and "App::LinkGroup" not in obj.TypeId:
                     if doc.getObject(obj.Name).Transparency == 0:
                         doc.getObject(obj.Name).Transparency = 70
                     else:
@@ -2243,7 +2246,12 @@ class ksuToolsHighlightToggle:
     def Activated(self):
         # do something here...
         if FreeCADGui.Selection.getSelection():
-            toggle_highlight_subtree(FreeCADGui.Selection.getSelection())
+            if 'LinkView' not in dir(FreeCADGui): #pre a3 Link3 merge
+                toggle_highlight_subtree(FreeCADGui.Selection.getSelection())
+        #if FreeCADGui.Selection.getSelection():
+        #    sel=FreeCADGui.Selection.getSelection()
+        #    doc=FreeCADGui.ActiveDocument
+        #    FreeCADGui.runCommand('Std_ToggleVisibility',0)
         else:
             #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
             reply = QtGui.QMessageBox.information(None,"Warning", "Select one or more object(s) to be highlighted!")
@@ -2266,7 +2274,8 @@ class ksuToolsVisibilityToggle:
     def Activated(self):
         # do something here...
         if FreeCADGui.Selection.getSelection():
-            toggle_visibility_subtree(FreeCADGui.Selection.getSelection())
+            #toggle_visibility_subtree(FreeCADGui.Selection.getSelection())
+            FreeCADGui.runCommand('Std_ToggleVisibility',0)
         else:
             #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
             reply = QtGui.QMessageBox.information(None,"Warning", "Select one or more object(s) to toggle visibility!")
@@ -2637,7 +2646,8 @@ class ksuRemoveTimeStamp:
                                             o.Label=o.Label[:o.Label.rfind('_')]
                                     #print (o.Label)
                             for o in o_list:
-                                if ('App::Link' in o.TypeId):
+                                #if ('App::Link' in o.TypeId):
+                                if (o.TypeId == 'App::Link'):
                                     o.Label = o.LinkedObject.Label
                     FreeCAD.Console.PrintWarning('removed Time Stamps\n')
                 elif ret == QtGui.QMessageBox.Cancel:
