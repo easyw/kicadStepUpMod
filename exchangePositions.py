@@ -6,6 +6,8 @@
 # App.Rotation(10,20,30) = Euler Angle 
 ## https://forum.freecadweb.org/viewtopic.php?t=11799
 
+__version_exchPos__ = "1.1.0"
+
 
 import FreeCAD, FreeCADGui,sys, os 
 from FreeCAD import Base
@@ -18,6 +20,8 @@ import ksu_locator
 
 from os.path import expanduser
 import difflib, re, time, datetime
+
+FreeCAD.Console.PrintWarning('MCAD export/check version ='+ str(__version_exchPos__)+'\n')
 
 generateSketch = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui").GetBool('generate_sketch')
 
@@ -218,7 +222,7 @@ def rmvSuffix(doc=None):
     FreeCAD.Console.PrintWarning('removed Suffix \'.stp\', \'.step\' \n')
 ##
   
-def expPos(doc=None):
+def expPos(doc=None):  ## export positions
     if doc is None:
         doc = FreeCAD.ActiveDocument
     # rmvSuffix(doc)
@@ -242,7 +246,8 @@ def expPos(doc=None):
     full_content.append(line+'\n')
     print(line)
     for o in doc.Objects:
-        if hasattr(o, 'Shape') or o.TypeId == 'App::Link':
+        # print(o.Name,o.Label,o.TypeId)
+        if (hasattr(o, 'Shape') or o.TypeId == 'App::Link') and (hasattr(o, 'Placement')) and (o.TypeId != 'App::Line') and (o.TypeId != 'App::Plane'):
             if 'Sketch' not in o.Label and 'Pcb' not in o.Label:
                 #print(o.Placement.Rotation.Q[3])
                 # oPlacement = 'Placement [Pos=('+"{0:.2f}".format(o.Placement.Base.x,3)+','+"{0:.2f}".format(o.Placement.Base.y)+','+"{0:.2f}".format(o.Placement.Base.z)+\
@@ -338,7 +343,7 @@ def expPos(doc=None):
         f.close
 
 ##
-def cmpPos(doc=None):
+def cmpPos(doc=None):  ## compare exported positions with the selected doc
     if doc is None:
         doc = FreeCAD.ActiveDocument
     # rmvSuffix(doc)
@@ -362,7 +367,8 @@ def cmpPos(doc=None):
     full_content.append(line+'\n')
     #print(line)
     for o in doc.Objects:
-        if hasattr(o, 'Shape') or o.TypeId == 'App::Link':
+        # print(o.Name,o.Label,o.TypeId)
+        if (hasattr(o, 'Shape') or o.TypeId == 'App::Link') and (hasattr(o, 'Placement')) and (o.TypeId != 'App::Line') and (o.TypeId != 'App::Plane'):
             if 'Sketch' not in o.Label and 'Pcb' not in o.Label:
                 #oPlacement = 'Placement [Pos=('+"{0:.3f}".format(o.Placement.Base.x)+','+"{0:.3f}".format(o.Placement.Base.y)+','+"{0:.3f}".format(o.Placement.Base.z)+\
                 #'), Yaw-Pitch-Roll=('+"{0:.3f}".format(o.Placement.Rotation.toEuler()[0])+','+"{0:.3f}".format(o.Placement.Rotation.toEuler()[1])+','+"{0:.3f}".format(o.Placement.Rotation.toEuler()[2])+')]'
