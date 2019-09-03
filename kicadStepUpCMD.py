@@ -26,7 +26,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-__ksuCMD_version__='1.7.2'
+__ksuCMD_version__='1.7.3'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -793,7 +793,9 @@ class ksuAsm2Part:
                      'ToolTip' : "Convert an Assembly (A3) to Part hierarchy"}
  
     def IsActive(self):
-        if a3:
+        import FreeCADGui
+        #if a3:
+        if 'LinkView' in dir(FreeCADGui): #pre a3 Link3 merge
             return True
         else:
             return False
@@ -851,7 +853,8 @@ class ksuAsm2Part:
                 copy = doc.addObject('Part::Feature',obj.Name)
                 copy.Label = obj.Label
                 copy.Shape = shape
-                copy.ViewObject.mapShapeColors(obj.Document)
+                if hasattr (copy.ViewObject,"mapShapeColors"):  # available on asm3 branch
+                    copy.ViewObject.mapShapeColors(obj.Document)
                 return copy
         
             part = doc.addObject('App::Part',obj.Name)
@@ -887,6 +890,8 @@ class ksuAsm2Part:
                     FreeCAD.setActiveDocument(doc1_Name)
                 else:
                     Asm2Part()
+                if FreeCAD.ActiveDocument is not None:
+                    FreeCADGui.SendMsgToActiveView("ViewFit")
             else:
                 FreeCAD.Console.PrintWarning("select one Assembly to convert it to Part hierarchy")
                 FreeCAD.Console.PrintWarning('\n')
@@ -3047,3 +3052,70 @@ class ksuExcDemo:
         #ImportCQ.open(os.path.join(exs_dir_path, self.exFile))
 
 ##
+class checkSolidExpSTEP():
+    "ksu tools check Export Step"
+    
+    def GetResources(self):
+        mybtn_tooltip ="Check if the selected part would be\nexported to STEP as a single solid"
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Import-Export-STEP.svg') , # the name of a svg file available in the resources
+                     'MenuText': mybtn_tooltip ,
+                     'ToolTip' : mybtn_tooltip}
+ 
+    def IsActive(self):
+        if len(FreeCADGui.Selection.getSelection()) == 1:
+            return True
+ 
+    def Activated(self):
+        # do something here...
+        from PySide import QtGui, QtCore
+        import tempfile
+    
+        doc=FreeCAD.ActiveDocument
+        docG = FreeCADGui.ActiveDocument
+        if doc is not None:
+            fname = doc.Label #doc.FileName
+            if len(fname) == 0:
+                fname='untitled'
+            tmpdir = tempfile.gettempdir() # get the current temporary directory
+            tempfilepath = os.path.join(tmpdir,fname + u'-exported.step')
+            sel=FreeCADGui.Selection.getSelection()
+            if len (sel) == 1:
+                doc_obj_nbr = len(doc.Objects)
+                __objs__=[]
+                __objs__.append(sel[0])
+                docG.getObject(sel[0].Name).Visibility = False
+                FreeCADGui.Selection.clearSelection()
+                ##ReadShapeCompoundMode
+                paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
+                ReadShapeCompoundMode_status=paramGetVS.GetBool("ReadShapeCompoundMode")
+                #sayerr("checking ReadShapeCompoundMode")
+                print("ReadShapeCompoundMode status "+str(ReadShapeCompoundMode_status))
+                restore_settings = False
+                if ReadShapeCompoundMode_status:
+                    paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
+                    paramGetVS.SetBool("ReadShapeCompoundMode",False)
+                    print("disabling ReadShapeCompoundMode")
+                    restore_settings = True
+                import ImportGui
+                ImportGui.export(__objs__,tempfilepath)
+                del __objs__
+                ImportGui.insert(tempfilepath,doc.Name)
+                if restore_settings:
+                    paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
+                    paramGetVS.SetBool("ReadShapeCompoundMode",True)
+                    print("re-enabling ReadShapeCompoundMode")
+                doc_newobj_nbr = len(doc.Objects)
+                if (doc_newobj_nbr-doc_obj_nbr) >1:
+                    msg='Exporting to STEP would create a multi solids object!\n'
+                    msg1="""Exporting to STEP would create a <b>multi solids object!<b>"""
+                    reply = QtGui.QMessageBox.warning(None,"Warning", msg1)
+                    FreeCAD.Console.PrintError(msg)
+                else:
+                    msg='Exporting to STEP would create a single solids object!\n'
+                    reply = QtGui.QMessageBox.information(None,"Info", msg)
+                    FreeCAD.Console.PrintMessage(msg)
+                FreeCADGui.SendMsgToActiveView("ViewFit")
+                FreeCAD.Console.PrintMessage(tempfilepath+u'\n')
+
+FreeCADGui.addCommand('checkSolidExpSTEP',checkSolidExpSTEP())
+
