@@ -15,6 +15,50 @@ import sys,os
 import time
 global copper_diffuse, silks_diffuse
 
+global use_AppPart, use_Links, use_LinkGroups
+use_AppPart=False # False
+use_Links=False
+
+use_LinkGroups = False
+if 'LinkView' in dir(FreeCADGui):
+    prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+    if prefs.GetBool('asm3_linkGroups'):
+        use_LinkGroups = True
+        use_Links=True #False
+        #print('using \'LinkGroups\' and \'Links\'')
+    elif prefs.GetBool('asm3_links'):
+        use_Links=True #False
+        #print('using \'Part\' container and \'Links\'')
+    else:
+        use_LinkGroups = False
+        #print('using \'Part\' container')
+else:
+    use_LinkGroups = False
+    #print('using \'Part\' container')
+#
+def getFCversion():
+
+    FC_majorV=int(float(FreeCAD.Version()[0]))
+    FC_minorV=int(float(FreeCAD.Version()[1]))
+    try:
+        FC_git_Nbr=int (float(FreeCAD.Version()[2].strip(" (Git)").split(' ')[0])) #+int(FreeCAD.Version()[2].strip(" (Git)").split(' ')[1])
+    except:
+        FC_git_Nbr=0
+    return FC_majorV,FC_minorV,FC_git_Nbr
+
+FC_majorV,FC_minorV,FC_git_Nbr=getFCversion()
+FreeCAD.Console.PrintWarning('FC Version '+str(FC_majorV)+str(FC_minorV)+"-"+str(FC_git_Nbr)+'\n')    
+if FC_majorV == 0 and FC_minorV == 17:
+    if FC_git_Nbr >= int(FC_export_min_version):
+        use_AppPart=True
+#if FreeCAD.Version()[2] == 'Unknown':  #workaround for local building
+#    use_AppPart=True
+if FC_majorV > 0:
+    use_AppPart=True
+if FC_majorV == 0 and FC_minorV > 17:
+    #if FC_git_Nbr >= int(FC_export_min_version):
+    use_AppPart=True
+
 def say(msg):
     FreeCAD.Console.PrintMessage(msg)
     FreeCAD.Console.PrintMessage('\n')
@@ -41,6 +85,8 @@ from kicadStepUptools import make_unicode, make_string
 
 def makeFaceDXF():
     global copper_diffuse, silks_diffuse
+    global use_LinkGroups, use_AppPart
+    
     doc=FreeCAD.ActiveDocument
     if doc is None:
         FreeCAD.newDocument()
@@ -117,7 +163,10 @@ def makeFaceDXF():
                 newShape.Placement = doc.getObjectsByLabel('Pcb')[0].Placement
                 #botTracks.Placement = doc.Pcb.Placement
                 if len (doc.getObjectsByLabel('Board_Geoms')) > 0:
-                    doc.getObject('Board_Geoms').addObject(newShape)
+                    if use_AppPart and not use_LinkGroups:
+                        doc.getObject('Board_Geoms').addObject(newShape)
+                    elif use_LinkGroups:
+                        doc.getObject('Board_Geoms').ViewObject.dropObject(newShape,None,'',[])
                 if hasattr(doc.getObjectsByLabel('Pcb')[0], 'Shape'):
                     botOffset = doc.getObjectsByLabel('Pcb')[0].Shape.BoundBox.ZLength
                 else:

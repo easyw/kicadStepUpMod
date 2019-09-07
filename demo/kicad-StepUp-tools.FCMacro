@@ -471,7 +471,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.0.2.5"
+___ver___ = "9.0.2.6"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -9737,8 +9737,8 @@ def getPadsList(content):
                 else:
                     #print rot
                     rot = float(rot)
-
-                if pType == 'smd' or data is None:
+                #print(pType)
+                if pType == 'smd' or pType == 'connect' or data is None:
                     drill_x = 0.0
                     drill_y = 0.0
                     hType = None

@@ -11,6 +11,50 @@ import sys,os
 import FreeCAD, FreeCADGui
 global start_time, last_pcb_path, min_drill_size
 
+global use_AppPart, use_Links, use_LinkGroups
+use_AppPart=False # False
+use_Links=False
+
+use_LinkGroups = False
+if 'LinkView' in dir(FreeCADGui):
+    prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+    if prefs.GetBool('asm3_linkGroups'):
+        use_LinkGroups = True
+        use_Links=True #False
+        #print('using \'LinkGroups\' and \'Links\'')
+    elif prefs.GetBool('asm3_links'):
+        use_Links=True #False
+        #print('using \'Part\' container and \'Links\'')
+    else:
+        use_LinkGroups = False
+        #print('using \'Part\' container')
+else:
+    use_LinkGroups = False
+    #print('using \'Part\' container')
+#
+def getFCversion():
+
+    FC_majorV=int(float(FreeCAD.Version()[0]))
+    FC_minorV=int(float(FreeCAD.Version()[1]))
+    try:
+        FC_git_Nbr=int (float(FreeCAD.Version()[2].strip(" (Git)").split(' ')[0])) #+int(FreeCAD.Version()[2].strip(" (Git)").split(' ')[1])
+    except:
+        FC_git_Nbr=0
+    return FC_majorV,FC_minorV,FC_git_Nbr
+
+FC_majorV,FC_minorV,FC_git_Nbr=getFCversion()
+FreeCAD.Console.PrintWarning('FC Version '+str(FC_majorV)+str(FC_minorV)+"-"+str(FC_git_Nbr)+'\n')    
+if FC_majorV == 0 and FC_minorV == 17:
+    if FC_git_Nbr >= int(FC_export_min_version):
+        use_AppPart=True
+#if FreeCAD.Version()[2] == 'Unknown':  #workaround for local building
+#    use_AppPart=True
+if FC_majorV > 0:
+    use_AppPart=True
+if FC_majorV == 0 and FC_minorV > 17:
+    #if FC_git_Nbr >= int(FC_export_min_version):
+    use_AppPart=True
+
 current_milli_time = lambda: int(round(time.time() * 1000))
 def say_time():
     end_milli_time = current_milli_time()
@@ -92,6 +136,7 @@ from kicadStepUptools import KicadPCB, make_unicode, make_string
 #filename="C:/Cad/Progetti_K/eth-32gpio/eth-32gpio.kicad_pcb"
 def addtracks():
     global start_time, last_pcb_path, min_drill_size
+    global use_LinkGroups, use_AppPart
     import sys
     
     # cfg_read_all() it doesn't work through different files
@@ -185,8 +230,10 @@ def addtracks():
             topTracks.Placement = doc.getObjectsByLabel('Pcb')[0].Placement
             topTracks.Placement.Base.z+=deltaz
             if len (doc.getObjectsByLabel('Board_Geoms')) > 0:
-                doc.getObject('Board_Geoms').addObject(topTracks)
-        
+                if use_AppPart and not use_LinkGroups:
+                    doc.getObject('Board_Geoms').addObject(topTracks)
+                elif use_LinkGroups:
+                    doc.getObject('Board_Geoms').ViewObject.dropObject(topTracks,None,'',[])
         #topTracks.Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,0.05),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
         ##docG.getObject(topTracks.Name).Transparency=40
         if 0:
@@ -233,7 +280,10 @@ def addtracks():
             #botTracks.Placement = doc.Pcb.Placement
             botTracks.Placement.Base.z-=pcbThickness+deltaz
             if len (doc.getObjectsByLabel('Board_Geoms')) > 0:
-                doc.getObject('Board_Geoms').addObject(botTracks)
+                if use_AppPart and not use_LinkGroups:
+                    doc.getObject('Board_Geoms').addObject(botTracks)
+                elif use_LinkGroups:
+                    doc.getObject('Board_Geoms').ViewObject.dropObject(botTracks,None,'',[])
         #botTracks = FreeCAD.ActiveDocument.ActiveObject
         #botTracks.Label="botTracks"
         #botTracks.Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,-1.6),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))    
