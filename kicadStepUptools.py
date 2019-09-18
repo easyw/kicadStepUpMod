@@ -471,7 +471,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.0.2.6"
+___ver___ = "9.0.2.7"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -709,6 +709,21 @@ def ZoomFitThread():
     if FreeCAD.ActiveDocument is not None:
         FreeCADGui.SendMsgToActiveView("ViewFit")
     #stop
+
+def collaps_Tree():
+    FreeCAD.Console.PrintWarning('thread Collapsing\n')
+    if FreeCAD.ActiveDocument is not None:
+        mw1 = FreeCADGui.getMainWindow()
+        treesSel = mw1.findChildren(QtGui.QTreeWidget)
+        for tree in treesSel:
+            items = tree.selectedItems()
+            for item in items:
+                if item.isExpanded() == True:
+                    collapse = True
+                    print ("collapsing")
+                    tree.collapseItem(item)
+    FreeCADGui.Selection.clearSelection()
+#
 
 ##--------------------------------------------------------------------------------------
 py2=False
@@ -8196,6 +8211,17 @@ def onLoadBoard(file_name=None):
                 reply = QtGui.QMessageBox.information(None,"Info ...",msg[:p_rpt]+'<br><b> . . .</b>')
             else:
                 reply = QtGui.QMessageBox.information(None,"Info ...",msg)
+        
+        if 'LinkView' in dir(FreeCADGui):
+            FreeCADGui.Selection.clearSelection()
+            o=FreeCAD.ActiveDocument.getObject('Board')
+            #FreeCADGui.Selection.addSelection('Board')
+            FreeCADGui.Selection.addSelection(doc.Name,o.Name)
+            #import expTree; #import importlib;importlib.reload(expTree)
+            #print('collapsing selection')
+            #expTree.collS_Tree() #toggle_Tree()
+            clps = Timer (.5,collaps_Tree)
+            clps.start()
         if export_board_2step:
             #say('aliveTrue')
             Export2MCAD(blacklisted_model_elements)
