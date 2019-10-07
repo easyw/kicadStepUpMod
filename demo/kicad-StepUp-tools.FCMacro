@@ -362,6 +362,7 @@
 
 ##todo
 
+## collaps the App::LinkGroups at the end of loading
 ## multi-board compatibility with asm3 A3
 ## check "{:.3f}".format for pushpcb & Pushfootprint
 ## check utf-8 directories and spaces compatibility
@@ -471,7 +472,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.0.2.7"
+___ver___ = "9.0.2.8"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -8212,16 +8213,16 @@ def onLoadBoard(file_name=None):
             else:
                 reply = QtGui.QMessageBox.information(None,"Info ...",msg)
         
-        if 'LinkView' in dir(FreeCADGui):
-            FreeCADGui.Selection.clearSelection()
-            o=FreeCAD.ActiveDocument.getObject('Board')
-            #FreeCADGui.Selection.addSelection('Board')
-            FreeCADGui.Selection.addSelection(doc.Name,o.Name)
-            #import expTree; #import importlib;importlib.reload(expTree)
-            #print('collapsing selection')
-            #expTree.collS_Tree() #toggle_Tree()
-            clps = Timer (.5,collaps_Tree)
-            clps.start()
+        #if 'LinkView' in dir(FreeCADGui):
+        #    FreeCADGui.Selection.clearSelection()
+        #    o=FreeCAD.ActiveDocument.getObject('Board')
+        #    #FreeCADGui.Selection.addSelection('Board')
+        #    FreeCADGui.Selection.addSelection(doc.Name,o.Name)
+        #    #import expTree; #import importlib;importlib.reload(expTree)
+        #    #print('collapsing selection')
+        #    #expTree.collS_Tree() #toggle_Tree()
+        #    clps = Timer (3,collaps_Tree)
+        #    clps.start()
         if export_board_2step:
             #say('aliveTrue')
             Export2MCAD(blacklisted_model_elements)
@@ -8232,6 +8233,24 @@ def onLoadBoard(file_name=None):
             FreeCADGui.SendMsgToActiveView("ViewFit")
         msg="running time: "+str(round(running_time,3))+"sec"    
         say(msg)
+        zf.cancel()
+        # TB reviewed
+        #if 'LinkView' in dir(FreeCADGui):
+        #    FreeCADGui.Selection.clearSelection()
+        #    o=FreeCAD.ActiveDocument.getObject('Board')
+        #    #FreeCADGui.Selection.addSelection('Board')
+        #    FreeCADGui.Selection.addSelection(doc.Name,o.Name)
+        #    #import expTree; #import importlib;importlib.reload(expTree)
+        #    #print('collapsing selection')
+        #    #expTree.collS_Tree() #toggle_Tree()
+        #    clps = Timer (3,collaps_Tree)
+        #    FreeCADGui.Selection.clearSelection()
+        #    o=FreeCAD.ActiveDocument.getObject('Board')
+        #    #FreeCADGui.Selection.addSelection('Board')
+        #    FreeCADGui.Selection.addSelection(doc.Name,o.Name)
+        #    #collaps_Tree()
+        #    clps.start()
+        
         #say_time()
         #stop
 ###
