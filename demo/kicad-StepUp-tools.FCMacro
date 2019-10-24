@@ -472,7 +472,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.0.2.8"
+___ver___ = "9.0.2.9"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -15833,7 +15833,8 @@ def Sync3DModel():
                             pg.SetString("last_pcb_path", make_string(last_pcb_path))
                             mypcb = KicadPCB.load(fpath)
                             reply=False;ref_found=False;input_ref=''
-                            input_ref = QtGui.QInputDialog.getText(None, 'Sync Ref', 'Reference to be synced',QtGui.QLineEdit.Normal,'REF#',reply)
+                            #input_ref = QtGui.QInputDialog.getText(None, 'Sync Ref', 'Reference to be synced',QtGui.QLineEdit.EchoMode.Normal,'REF#',reply)
+                            input_ref = QtGui.QInputDialog.getText(None, 'Sync Ref', 'Reference to be synced',QtGui.QLineEdit.EchoMode.Normal,'REF#') #,reply)
                             #print (reply);print('*');print input_ref
                             if len(input_ref) > 1:
                                 if input_ref[1]:
