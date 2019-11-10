@@ -26,7 +26,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-__ksuCMD_version__='1.7.3'
+__ksuCMD_version__='1.7.4'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -715,12 +715,12 @@ FreeCADGui.addCommand('ksuToolsMakeCompound',ksuToolsMakeCompound())
 ##
 
 class ksuToolsPushPCB:
-    "ksu tools Push/Pull Sketch object"
+    "ksu tools Push Sketch object"
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Sketcher_Rectangle.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Push/Pull Sketch to PCB" ,
-                     'ToolTip' : "Push/Pull Sketch to/from PCB Edge"}
+                     'MenuText': "ksu Push Sketch to PCB" ,
+                     'ToolTip' : "Push Sketch to/from PCB Edge"}
  
     def IsActive(self):
         #if FreeCAD.ActiveDocument == None:
@@ -739,7 +739,7 @@ class ksuToolsPushPCB:
             reload_lib( kicadStepUptools )
         #from kicadStepUptools import onPushPCB
         #FreeCAD.Console.PrintWarning( 'active :)\n' )
-        kicadStepUptools.PushPullPCB()
+        kicadStepUptools.PushPCB()
         # ppcb=kicadStepUptools.KSUWidget
         # ppcb.onPushPCB()
  
@@ -749,14 +749,49 @@ class ksuToolsPushPCB:
 
 FreeCADGui.addCommand('ksuToolsPushPCB',ksuToolsPushPCB())
 ##
+class ksuToolsPullPCB:
+    "ksu tools Pull Sketch object"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Sketcher_Pull.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksu Pull Sketch to PCB" ,
+                     'ToolTip' : "Pull Sketch to/from PCB Edge"}
+ 
+    def IsActive(self):
+        #if FreeCAD.ActiveDocument == None:
+        #    return False
+        #else:
+        #    return True
+        #import kicadStepUptools
+        return True
+ 
+    def Activated(self):
+        # do something here...
+        import kicadStepUptools
+        #if not kicadStepUptools.checkInstance():
+        #    reload( kicadStepUptools )
+        if reload_Gui:
+            reload_lib( kicadStepUptools )
+        #from kicadStepUptools import onPushPCB
+        #FreeCAD.Console.PrintWarning( 'active :)\n' )
+        kicadStepUptools.PullPCB()
+        # ppcb=kicadStepUptools.KSUWidget
+        # ppcb.onPushPCB()
+ 
+        #onPushPCB()
+        #import kicadStepUptools
+
+
+FreeCADGui.addCommand('ksuToolsPullPCB',ksuToolsPullPCB())
+##
 
 class ksuToolsPushMoved:
     "ksu tools Push/Pull 3D moved model"
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'PushMoved.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Push/Pull 3D moved model(s) to PCB" ,
-                     'ToolTip' : "Push/Pull 3D moved model(s) to PCB"}
+                     'MenuText': "ksu Push 3D moved model(s) to PCB" ,
+                     'ToolTip' : "Push 3D moved model(s) to PCB"}
  
     def IsActive(self):
         #if FreeCAD.ActiveDocument == None:
