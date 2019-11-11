@@ -472,7 +472,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.0.3.1"
+___ver___ = "9.0.3.4"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -7819,12 +7819,12 @@ def onLoadBoard(file_name=None,load_models=None):
     if load_models is None:
         load_models = True
     if load_models == False:
-        layer_list = ['Edge.Cuts','Dwgs.User','Eco1.User','Eco2.User']
+        layer_list = ['Edge.Cuts','Dwgs.User','Cmts.User','Eco1.User','Eco2.User','Margin']
         LayerSelectionDlg = QtGui.QDialog()
         ui = Ui_LayerSelection()
         ui.setupUi(LayerSelectionDlg)
         ui.comboBoxLayerSel.addItems(layer_list)
-        ui.label.setText("Select the layer to pull into the Sketch\nDefault \'Edge.Cuts\'")
+        ui.label.setText("Select the layer to pull into the Sketch\nDefault: \'Edge.Cuts\'")
         reply=LayerSelectionDlg.exec_()
         if reply==1: # ok
             SketchLayer=str(ui.comboBoxLayerSel.currentText())
@@ -7959,7 +7959,7 @@ def onLoadBoard(file_name=None,load_models=None):
             yMax=center_y+bb_y/2
             ymin=center_y-bb_y/2
             #off_x=0; off_y=0  #offset of the board & modules
-            if hasattr(mypcb.setup, 'edge_width'):
+            if hasattr(mypcb.setup, 'edge_width'): #maui edge width
                 edge_width=mypcb.setup.edge_width
             #if (grid_orig==1):
             #    #xp=getAuxAxisOrigin()[0]; yp=-getAuxAxisOrigin()[1]  #offset of the board & modules
@@ -8004,8 +8004,10 @@ def onLoadBoard(file_name=None,load_models=None):
                 FreeCAD.ActiveDocument.getObject("Pcb").Placement = FreeCAD.Placement(FreeCAD.Vector(board_base_point_x,board_base_point_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
             #else:
             #    draw.Placement = FreeCAD.Placement(FreeCAD.Vector(board_base_point_x,board_base_point_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
+            newname="PCB_Sketch"
             if load_sketch:
-                newname="PCB_Sketch"
+                if SketchLayer != 'Edge.Cuts' and SketchLayer is not None:
+                    newname = SketchLayer.split('.')[0]+'_Sketch'
                 say_inline('building up pcb time')
                 get_time()
                 say(str(running_time))
@@ -8013,7 +8015,7 @@ def onLoadBoard(file_name=None,load_models=None):
                 #add_constraints("PCB_Sketch_draft")
                 #FreeCAD.ActiveDocument.recompute()
                 if aux_orig==1 or grid_orig ==1:
-                    s_name=cpy_sketch("PCB_Sketch_draft","PCB_Sketch")
+                    s_name=cpy_sketch("PCB_Sketch_draft",newname)
                     FreeCAD.ActiveDocument.recompute()
                     #add_constraints(s_name)
                     #say_time()
@@ -8050,17 +8052,17 @@ def onLoadBoard(file_name=None,load_models=None):
                     say('adding constraints time ' + "{0:.3f}".format(running_time-t1))
     
                 ##FreeCAD.ActiveDocument.recompute()
-                pcb_sk=FreeCAD.ActiveDocument.PCB_Sketch
+                pcb_sk=FreeCAD.ActiveDocument.getObject(newname)
                 gi = 0
                 for g in pcb_sk.Geometry:
                     if 'BSplineCurve object' in str(g):
                         # say(str(g))
-                        FreeCAD.ActiveDocument.PCB_Sketch.exposeInternalGeometry(gi)
+                        FreeCAD.ActiveDocument.getObject(newname).exposeInternalGeometry(gi)
                     gi+=1
                 if use_LinkGroups and SketchLayer == 'Edge.Cuts':
-                    FreeCAD.ActiveDocument.getObject('Board_Geoms').ViewObject.dropObject(FreeCAD.ActiveDocument.getObject('PCB_Sketch'),None,'',[])
+                    FreeCAD.ActiveDocument.getObject('Board_Geoms').ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(newname),None,'',[])
                     FreeCADGui.Selection.clearSelection()
-                    sl = FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.getObject('PCB_Sketch'))
+                    sl = FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.getObject(newname))
                     #FreeCADGui.runCommand('Std_HideSelection',0)
                     FreeCADGui.runCommand('Std_ToggleVisibility',0)
                     FreeCADGui.Selection.clearSelection()
@@ -8196,7 +8198,7 @@ def onLoadBoard(file_name=None,load_models=None):
                     enable_ReadShapeCompoundMode=True
                 
                 if load_sketch:
-                    FreeCADGui.ActiveDocument.getObject("PCB_Sketch").Visibility=False # hidden Sketch
+                    FreeCADGui.ActiveDocument.getObject(newname).Visibility=False # hidden Sketch
                 ##Load 3D models
                 #Load_models(pcbThickness,modules)
                 if (zfit):
@@ -8276,6 +8278,8 @@ def onLoadBoard(file_name=None,load_models=None):
             zf= Timer (0.3,ZoomFitThread)
             zf.start()
             zf.cancel()
+            if SketchLayer != 'Edge.Cuts' and SketchLayer is not None:
+                FreeCADGui.ActiveDocument.ActiveView.viewTop()
             # TB reviewed
             #if 'LinkView' in dir(FreeCADGui):
             #    FreeCADGui.Selection.clearSelection()
@@ -15816,7 +15820,7 @@ def PushPCB():
                 #    last_3d_path=last_pcb_path
                 #    sayw(last_pcb_path)
                 #getSaveFileName(self,"saveFlle","Result.txt",filter ="txt (*.txt *.)")
-                layer_list = ['Edge.Cuts','Dwgs.User','Eco1.User','Eco2.User']
+                layer_list = ['Edge.Cuts','Dwgs.User','Cmts.User','Eco1.User','Eco2.User','Margin']
                 LayerSelectionDlg = QtGui.QDialog()
                 ui = Ui_LayerSelection()
                 ui.setupUi(LayerSelectionDlg)
@@ -19518,7 +19522,12 @@ def export_pcb(fname=None,sklayer=None):
                 doc=FreeCAD.ActiveDocument
                 ksu_found=False;skt_name='';pcb_found=False
                 for obj in doc.Objects:
-                    if ("PCB_Sketch" in obj.Name) or ("PCB_Sketch" in obj.Label):
+                    if ("PCB_Sketch" in obj.Name) or ("PCB_Sketch" in obj.Label) or\
+                       ("Dwgs_Sketch" in obj.Name) or ("Dwgs.User" in obj.Label) or \
+                       ("Eco1_Sketch" in obj.Name) or ("Eco1.User" in obj.Label) or \
+                       ("Eco2_Sketch" in obj.Name) or ("Eco2.User" in obj.Label) or \
+                       ("Cmts_Sketch" in obj.Name) or ("Cmts.User" in obj.Label) or \
+                       ("Margin_Sketch" in obj.Name) or ("Margin" in obj.Label):
                         ksu_found=True
                         skt_name=obj.Name
                     if ("Pcb" in obj.Name):
@@ -19537,7 +19546,15 @@ def export_pcb(fname=None,sklayer=None):
                         offset=[off_x,-off_y]
                     if gof and grid_orig==1:
                         offset=[off_x,-off_y]
+                        offset = (getGridOrigin(data)[0],getGridOrigin(data)[1])
+                    elif gof and aux_orig==1:
+                        offset=[off_x,-off_y]
+                        offset = (getAuxOrigin(data)[0],getAuxOrigin(data)[1])
+                    #if gof and not pcb_found:
+                    #    offset=[0,0]
+                    ## maui to test position
                     #print offset
+                    #say(offset)
                     #stop
                     say('pcb edge exists')
                     sayw('removing old Edge')
@@ -19552,7 +19569,7 @@ def export_pcb(fname=None,sklayer=None):
                     newcontent = repl[:k]
                 else:
                     sayerr('to push a new release of Edge to a kicad board with an existing Edge\nyou need to load the board with StepUp first')
-                    say_warning("""<b>to push a new release of Edge to a kicad board<br>with an existing Edge<br>you need to load the board with StepUp first""")
+                    say_warning("""<b>to push a new release of Edge to a kicad board<br>with an existing Edge<br>you need to load the board with StepUp first<br><br>""")
                     stop
             else:
                 #[148.5, -98.5] center of A4 page
