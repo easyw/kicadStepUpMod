@@ -472,7 +472,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.0.3.4"
+___ver___ = "9.1.0.1"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -7961,6 +7961,8 @@ def onLoadBoard(file_name=None,load_models=None):
             #off_x=0; off_y=0  #offset of the board & modules
             if hasattr(mypcb.setup, 'edge_width'): #maui edge width
                 edge_width=mypcb.setup.edge_width
+            elif hasattr(mypcb.setup, 'edge_cuts_line_width'): #maui edge cuts new width k 5.99
+                edge_width=mypcb.setup.edge_cuts_line_width
             #if (grid_orig==1):
             #    #xp=getAuxAxisOrigin()[0]; yp=-getAuxAxisOrigin()[1]  #offset of the board & modules
             #    if hasattr(mypcb.setup, 'grid_origin'):
@@ -19481,30 +19483,92 @@ def export_pcb(fname=None,sklayer=None):
                 say(msgr)
                 say_info(msg)
         if pcb_push==True:    
-            #stop
             if sklayer is None:
                 ssklayer = 'Edge'
             else:
                 ssklayer = sklayer.split('.')[0]
-                print (sklayer)
+                print (ssklayer)
             edge_pcb_exists=False
-            if len(re.findall('\s\(gr_line(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_line(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_line(.+?)'+ssklayer+'(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
-                edge_pcb_exists=True
-            if len(re.findall('\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0: # spline
-                edge_pcb_exists=True
-            if not edge_pcb_exists and len(re.findall('\s\(gr_arc(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_arc(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_arc(.+?)'+ssklayer+'(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
-                edge_pcb_exists=True
-            if not edge_pcb_exists and len(re.findall('\s\(gr_circle(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_circle(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_circle(.+?)'+ssklayer+'(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
-                edge_pcb_exists=True
-            if len(re.findall('\s\(fp_line(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(fp_line(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(fp_line(.+?)'+ssklayer+'(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
-                edge_pcb_exists=True
-            if not edge_pcb_exists and len(re.findall('\s\(fp_arc(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(fp_arc(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(fp_arc(.+?)'+ssklayer+'(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
-                edge_pcb_exists=True
-            if not edge_pcb_exists and len(re.findall('\s\(fp_circle(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(fp_circle(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(fp_circle(.+?)'+ssklayer+'(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
-                edge_pcb_exists=True
-            if not edge_pcb_exists and len(re.findall('\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
-                edge_pcb_exists=True
-  
+            if 0:
+                if len(re.findall('\s\(gr_line(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_line(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_line(.+?)'+ssklayer+'(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
+                    edge_pcb_exists=True
+                if len(re.findall('\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0: # spline
+                    edge_pcb_exists=True
+                if not edge_pcb_exists and len(re.findall('\s\(gr_arc(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_arc(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_arc(.+?)'+ssklayer+'(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
+                    edge_pcb_exists=True
+                if not edge_pcb_exists and len(re.findall('\s\(gr_circle(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_circle(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_circle(.+?)'+ssklayer+'(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
+                    edge_pcb_exists=True
+                if len(re.findall('\s\(fp_line(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(fp_line(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(fp_line(.+?)'+ssklayer+'(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
+                    edge_pcb_exists=True
+                if not edge_pcb_exists and len(re.findall('\s\(fp_arc(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(fp_arc(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(fp_arc(.+?)'+ssklayer+'(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
+                    edge_pcb_exists=True
+                if not edge_pcb_exists and len(re.findall('\s\(fp_circle(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(fp_circle(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(fp_circle(.+?)'+ssklayer+'(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
+                    edge_pcb_exists=True
+                if not edge_pcb_exists and len(re.findall('\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
+                    edge_pcb_exists=True
+            elif 0:
+                if (re.search('\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL)): # spline
+                    edge_pcb_exists=True
+                if not edge_pcb_exists:
+                    if (re.search('\s\(gr_arc(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_arc(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_arc(.+?)'+ssklayer+'(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL)):
+                        edge_pcb_exists=True
+                if not edge_pcb_exists:
+                    if (re.search('\s\(gr_circle(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_circle(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_circle(.+?)'+ssklayer+'(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL)):
+                        edge_pcb_exists=True
+                if not edge_pcb_exists:
+                    if (re.search('\s\(fp_line(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(fp_line(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(fp_line(.+?)'+ssklayer+'(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL)):
+                        edge_pcb_exists=True
+                if not edge_pcb_exists:
+                    if (re.search('\s\(fp_arc(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(fp_arc(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(fp_arc(.+?)'+ssklayer+'(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL)):
+                        edge_pcb_exists=True
+                if not edge_pcb_exists:
+                    if (re.search('\s\(fp_circle(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(fp_circle(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(fp_circle(.+?)'+ssklayer+'(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL)):
+                        edge_pcb_exists=True
+                if not edge_pcb_exists:
+                    if (re.search('\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL)):
+                        edge_pcb_exists=True
+            else:
+                mypcb = KicadPCB.load(fpath)
+                sayw('parsing')
+                edg_segms = 0
+                for ln in mypcb.gr_line:
+                    if ssklayer in ln.layer:
+                        #say(ln.layer)
+                        edg_segms+=1
+                        break
+                if edg_segms == 0:
+                    for ar in mypcb.gr_arc:
+                        if ssklayer in ar.layer:
+                            #say(ln.layer)
+                            edg_segms+=1
+                            break
+                if edg_segms == 0:
+                    for lp in mypcb.gr_poly:
+                        #print(lp)
+                        #print(lp.layer)
+                        #print(lp.pts)
+                        if ssklayer in lp.layer:
+                            #sayerr(lp.layer)
+                            for p in lp.pts.xy:
+                                edg_segms+=1
+                                break
+                                #sayerr(p)
+                        #stop
+                        #edg_segms+=1
+                if edg_segms == 0:
+                    for bs in mypcb.gr_curve:
+                        if ssklayer in bs.layer:
+                            #sayerr(bs.layer)
+                            for p in bs.pts.xy:
+                                edg_segms+=1
+                                break
+                            #edg_segms+=1
+                #sayw(str(edg_segms)+' '+ssklayer+' segments')
+                if (edg_segms)>0:
+                    edge_pcb_exists=True
+                    sayw('found '+ssklayer+' element(s)')
+            #stop
+            
             oft=None
             if aux_orig == 1:
                 oft=getAuxOrigin(data)
@@ -19523,6 +19587,7 @@ def export_pcb(fname=None,sklayer=None):
                 ksu_found=False;skt_name='';pcb_found=False
                 for obj in doc.Objects:
                     if ("PCB_Sketch" in obj.Name) or ("PCB_Sketch" in obj.Label) or\
+                       ("Edge_Sketch" in obj.Name) or ("Edge.Cuts" in obj.Label) or \
                        ("Dwgs_Sketch" in obj.Name) or ("Dwgs.User" in obj.Label) or \
                        ("Eco1_Sketch" in obj.Name) or ("Eco1.User" in obj.Label) or \
                        ("Eco2_Sketch" in obj.Name) or ("Eco2.User" in obj.Label) or \
