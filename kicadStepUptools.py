@@ -16218,6 +16218,324 @@ def PushMoved():
             sayerr(msg)
             say_warning(msg)
 
+###
+def getModelsData(mypcb):
+    """ mypcb = KicadPCB.load(file_pcb) """
+    ## NB use always float() to guarantee number not string!!!
+    warn=""
+    PCB_Models = []
+    Edge_Cuts_lvl=44
+    Top_lvl=0
+    conv_offs=25.4
+    if hasattr(mypcb, 'host'):
+        print(mypcb.host)
+    if hasattr(mypcb, 'version'):
+        version = float(mypcb.version)
+        if version <= 3:
+            QtGui.QApplication.restoreOverrideCursor()
+            reply = QtGui.QMessageBox.information(None,"Error ...","... KICAD pcb version "+ str(version)+" not supported \r\n"+"\r\nplease open and save your board with the latest kicad version")
+            stop
+        if version>=4:
+            Edge_Cuts_lvl=44
+            Top_lvl=0
+        conv_offs=1.0
+        if version >= 20171114:
+            conv_offs=25.4
+    
+    for lynbr in mypcb.layers: #getting layers name
+        if float(lynbr) == Top_lvl:
+            LvlTopName=(mypcb.layers['{0}'.format(str(lynbr))][0])
+        if float(lynbr) == Edge_Cuts_lvl:
+            LvlEdgeName=(mypcb.layers['{0}'.format(str(lynbr))][0])
+
+    for m in mypcb.module:  #parsing modules  #check top/bottom for placing 3D models
+        #print(m.tstamp);print(m.fp_text[0][1])
+        #stop
+        if len(m.at)==2:
+            m_angle=0
+        else:
+            m_angle=m.at[2]
+        m_at=[m.at[0],-m.at[1]] #y reversed
+        virtual=0
+        if hasattr(m, 'attr'):
+            if 'virtual' in m.attr:
+                #say('virtual module')
+                virtual=1
+        else:
+            virtual=0
+        m_x = float(m.at[0])
+        m_y = float(m.at[1]) * (-1)
+        m_rot = float(m_angle)
+        #sayw(m.layer);sayerr(LvlTopName)
+        if m.layer == LvlTopName:  # top
+            side = "Top"
+            #sayw('top ' + m.layer)
+        else:
+            side = "Bottom"
+            m_rot *= -1 ##bottom 3d model rotation
+            #sayw('bot ' + m.layer)
+        n_md=1
+        for md in m.model:
+            #say (md[0]) #model name
+            #say(md.at.xyz)
+            #say(md.scale.xyz)
+            #say(md.rotate.xyz)
+            error_scale_module=False
+            #say('scale ');sayw(scale_vrml)#;
+            #error_scale_module=False
+            xsc_vrml_val=md.scale.xyz[0]
+            ysc_vrml_val=md.scale.xyz[1]
+            zsc_vrml_val=md.scale.xyz[2]        
+            # if scale_vrml!='1 1 1':
+            if float(xsc_vrml_val)!=1 or float(ysc_vrml_val)!=1 or float(zsc_vrml_val)!=1:
+                if "box_mcad" not in md[0] and "cylV_mcad" not in md[0] and "cylH_mcad" not in md[0]:
+                    sayw('wrong scale!!! set scale to (1 1 1)')
+                error_scale_module=True
+            #model_list.append(mdl_name[0])
+            #model=model_list[j]+'.wrl'
+            #if py2:
+            if sys.version_info[0] == 2: #py2
+                model=md[0].decode("utf-8")
+                #stop
+            else: #py3
+                model=md[0] # py3 .decode("utf-8")
+            #print (model, ' MODEL', type(model)) #maui test py3
+            if (virtual==1 and addVirtual==0):
+                model_name='no3Dmodel'
+                side='noLayer'
+                if model:
+                    sayw("virtual model "+model+" skipped") #virtual found warning
+            else:
+                if model:
+                    model_name=model
+                    #sayw(model_name)
+                    warn=""
+                    if "box_mcad" not in model_name and "cylV_mcad" not in model_name and "cylH_mcad" not in model_name:
+                        if error_scale_module:
+                            sayw('wrong scale!!! for '+model_name+' Set scale to (1 1 1)')
+                            msg="""<b>Error in '.kicad_pcb' model footprint</b><br>"""
+                            msg+="<br>reset values of<br><b>"+model_name+"</b><br> to:<br>"
+                            msg+="(scale (xyz 1 1 1))<br>"
+                            #warn+=("reset values of scale to (xyz 1 1 1)")
+                            warn=("reset values of scale to (xyz 1 1 1)")
+                            ##reply = QtGui.QMessageBox.information(None,"info", msg)
+                            #stop
+                    #model_name=model_name[1:]
+                    #say(model_name)
+                    #sayw("here")
+                else:
+                    model_name='no3Dmodel'  #to do how to manage no3Dmodel
+                    side='noLayer'
+                    sayerr('no3Dmodel')
+                mdl_name=model_name # re.findall(r'(.+?)\.wrl',params)
+                #if virtual == 1:
+                #    sayerr("virtual model(s)");sayw(mdl_name)
+                # sayw(mdl_name)
+                # sayerr(params)
+                if len(mdl_name) > 0:
+                    # model_name, rot_comb, warn, pos_vrml, rotz_vrml, scale_vrml = get3DParams(mdl_name,params, rot, virtual)
+                    #sayerr(md.at.xyz)
+                    if conv_offs != 1: #pcb version >= 20171114 (offset wrl in mm)
+                        if hasattr(md,'at'):
+                            ofs=[md.at.xyz[0]/conv_offs,md.at.xyz[1]/conv_offs,md.at.xyz[2]/conv_offs]
+                        if hasattr(md,'offset'):
+                            ofs=[md.offset.xyz[0]/conv_offs,md.offset.xyz[1]/conv_offs,md.offset.xyz[2]/conv_offs]
+                    else:
+                        ofs=md.at.xyz
+                    line = []
+                    line.append(model_name)
+                    line.append(m_x)
+                    line.append(m_y)
+                    line.append(m_rot-md.rotate.xyz[2])
+                    line.append(side)
+                    line.append(warn)
+                    line.append(ofs) #(md.at.xyz) #pos_vrml)
+                    line.append(md.rotate.xyz) #rotz_vrml)
+                    #sayerr(rotz_vrml)
+                    line.append(md.scale.xyz) #scale_vrml)
+                    line.append(virtual)
+                    if hasattr(m,'tstamp'):
+                        line.append(m.tstamp) # fp tstamp
+                    else:
+                        sayw('missing \'TimeStamp\'')
+                        line.append('null')
+                    line.append(m.fp_text[0][1]) #fp reference
+                    line.append(n_md) #number of models in module
+                    PCB_Models.append(line)
+                    n_md+=1
+    return PCB_Models
+###
+
+def PullMoved():
+    global last_3d_path, start_time
+    global last_fp_path, test_flag
+    global configParser, configFilePath, last_pcb_path
+    global ignore_utf8, ignore_utf8_incfg, disable_PoM_Observer
+    global board_base_point_x, board_base_point_y, real_board_pos_x, real_board_pos_y
+    global pcb_path, use_AppPart, force_oldGroups, use_Links, use_LinkGroups
+    global original_filename, aux_orig, grid_orig
+    global off_x, off_y, maxRadius, use_pypro
+
+    ## to export to STEP an object and its links with a different placement and label
+    ## two options must be set: 1) disable 'Reduce number of objects'; 2) disable 'Ignore instance names'
+    ## NB the second one is not good for collaboration with different cads
+    
+    #say("export3DSTEP")
+    if load_sketch==False:
+        msg="""<b>Board editing NOT supported on FC0.15!</b><br>please upgrade your FC release"""
+        say_warning(msg)
+        msg="Board editing NOT supported on FC0.15!"
+        sayerr(msg)            
+    else:
+        check_ok=False
+        sel = FreeCADGui.Selection.getSelection()
+        if len (sel) >= 1:
+            if sel[0].Label.rfind('_') < sel[0].Label.rfind('['):
+                ts = sel[0].Label[sel[0].Label.rfind('_')+1:sel[0].Label.rfind('[')]
+            else:
+                ts = sel[0].Label[sel[0].Label.rfind('_')+1:]
+            if len (ts) == 8:
+                #print(ts);stop
+                check_ok=True
+            #else:
+            #    msg="""select only 3D model(s) moved to be updated/pushed to kicad board!<br><b>a TimeSTamp is required!</b>"""
+            #    sayerr(msg)
+            #    say_warning(msg)
+        if check_ok:
+            cfg_read_all()
+            #pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+            #pg.GetString("last_3d_path")
+            if len(last_pcb_path) == 0:
+                last_pcb_path=u''
+                #sayw(last_pcb_path)
+            #getSaveFileName(self,"saveFlle","Result.txt",filter ="txt (*.txt *.)")
+            testing=False #True
+            if not testing:
+                Filter=""
+                fname, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Open File...",
+                    make_unicode(last_pcb_path), "*.kicad_pcb")
+            else:
+                fname='c:/Temp/demo/test-rot.kicad_pcb'
+            if fname:
+                if os.path.exists(fname):
+                    last_3d_path=os.path.dirname(fname)
+                    pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+                    pg.SetString("last_3d_path",make_string(last_3d_path))
+                    start_time=current_milli_time()
+                    doc=FreeCAD.ActiveDocument
+                    #filePath=last_pcb_path
+                    #fpath=filePath+os.sep+doc.Label+'.kicad_pcb'
+                    #sayerr('to '+fpath)
+                    #print fname
+                    if fname is None:
+                        fpath=original_filename
+                    else:
+                        fpath=fname
+                    sayerr('loading from '+fpath)
+                    #stop
+                    if len(fpath) > 0:
+                        #new_edge_list=getBoardOutline()
+                        #say (new_edge_list)
+                        cfg_read_all()
+                        path, fname = os.path.split(fpath)
+                        name=os.path.splitext(fname)[0]
+                        ext=os.path.splitext(fname)[1]
+                        fpth = os.path.dirname(os.path.abspath(fpath))
+                        #filePath = os.path.split(os.path.realpath(__file__))[0]
+                        say ('my file path '+fpth)
+                        # stop
+                        if fpth == "":
+                            fpth = "."
+                        last_pcb_path = fpth
+                        last_pcb_path = re.sub("\\\\", "/", last_pcb_path)
+                        ini_vars[10] = last_pcb_path
+                        #cfg_update_all()
+                        pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+                        pg.SetString("last_pcb_path", make_string(last_pcb_path))
+                        #sayerr(name+':'+ext)
+                        mypcb = KicadPCB.load(fpath)
+                        mymodels = getModelsData(mypcb)
+                        print(mymodels)
+                        stop
+                        with codecs.open(fpath,'r', encoding='utf-8') as txtFile:
+                            content = txtFile.readlines() # problems?
+                        content.append(u" ")
+                        txtFile.close()
+                        data=u''.join(content)
+                        oft=None
+                        if aux_orig == 1:
+                            oft=getAuxOrigin(data)
+                        if grid_orig == 1:
+                            oft=getGridOrigin(data)
+                        #print oft
+                        gof=False
+                        if oft is not None:
+                            off_x=oft[0];off_y=-oft[1]
+                            offset = oft
+                            gof=True
+                            pcb_pull=True
+                        else:
+                            pcb_pull=False
+                        testing=False #True
+                    if pcb_pull:
+                        for s in sel:
+                            #sayw(doc.Name)
+                            if use_pypro:
+                                if hasattr(s,"TimeStamp"):
+                                    ts=s.TimeStamp
+                                    content = push3D2pcb(s,content,ts)
+                                else:
+                                    msg="""select only 3D model(s) moved to be updated/pushed to kicad board!"""
+                                    sayerr(msg)
+                                    say_warning(msg)
+                            else:
+                                if s.Label.rfind('_') < s.Label.rfind('['):
+                                    ts = s.Label[s.Label.rfind('_')+1:s.Label.rfind('[')]
+                                else:
+                                    ts = s.Label[s.Label.rfind('_')+1:]
+                                if len (ts) == 8:
+                                    #print(ts);stop
+                                    content = push3D2pcb(s,content,ts)
+                                else:
+                                    msg="""select only 3D model(s) moved to be updated/pushed to kicad board!<br><b>a TimeSTamp is required!</b>"""
+                                    sayerr(msg)
+                                    say_warning(msg)
+                        newcontent=u''.join(content)
+                        pcbTracks=re.findall('\s\(tracks(\s.+?)\)',data, re.MULTILINE|re.DOTALL)
+                        found_tracks=False
+                        if len(pcbTracks)>0:
+                            if (float(pcbTracks[0])) > 0:
+                                found_tracks=True
+                        say_time()
+                        msg="""<b>3D model new position pushed to kicad board!</b><br><br>"""
+                        if found_tracks:
+                            msg+="<font color='red'><b>tracks found!<br></b>you will need to fix your routing!</font><br><br>"
+                        msg+="<b>file saved to<br>"+fpath+"</b><br><br>"
+                        msg+="<i>backup file saved to<br>"+foname+"</i><br>"
+                        msgr="3D model new position pushed to kicad board!\n"
+                        msgr+="file saved to "+fpath+"\n"
+                        msgr+="backup file saved to "+foname
+                        say(msgr)
+                        say_info(msg)
+                    else:
+                        msg="""To update 3D model Position(s) in <b>an EXISTING KiCad pcb file</b><br>the board must have assigned \'Grid Origin\' or<br>\'Aux Origin\' (Drill and Place offset)!"""
+                        say_warning(msg)
+                        msg="To update 3D model Position(s) in an EXISTING KiCad pcb file\nthe board must have assigned \'Grid Origin\' or \'Aux Origin\' (Drill and Place offset)!"
+                        sayerr(msg)
+                else:
+                    msg="""Save to <b>an EXISTING KiCad pcb file</b> to update your 3D model position!"""
+                    say_warning(msg)
+                    msg="Save to an EXISTING KiCad pcb file to update your 3D model position!"
+                    sayerr(msg)
+            else:
+                msg="""Operation aborted!"""
+                sayerr(msg)
+                say_info(msg)
+        else:
+            msg="""select only 3D model(s) to be updated/pulled from kicad board!<br><b>a Time Stamp is required!</b>"""
+            sayerr(msg)
+            say_warning(msg)
+
 ##
 
 def PushFootprint():
