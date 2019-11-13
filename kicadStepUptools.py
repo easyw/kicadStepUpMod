@@ -472,7 +472,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.1.0.2"
+___ver___ = "9.1.0.3"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -16485,7 +16485,7 @@ def PullMoved():
                                     ts=s.TimeStamp
                                     content = push3D2pcb(s,content,ts)
                                 else:
-                                    msg="""select only 3D model(s) moved to be updated/pushed to kicad board!"""
+                                    msg="""select only 3D model(s) to be updated/pulled from kicad board!"""
                                     sayerr(msg)
                                     say_warning(msg)
                             else:
@@ -16497,7 +16497,7 @@ def PullMoved():
                                     #print(ts);stop
                                     content = push3D2pcb(s,content,ts)
                                 else:
-                                    msg="""select only 3D model(s) moved to be updated/pushed to kicad board!<br><b>a TimeSTamp is required!</b>"""
+                                    msg="""select only 3D model(s) to be updated/pulled from kicad board!<br><b>a TimeSTamp is required!</b>"""
                                     sayerr(msg)
                                     say_warning(msg)
                         newcontent=u''.join(content)
@@ -16507,25 +16507,20 @@ def PullMoved():
                             if (float(pcbTracks[0])) > 0:
                                 found_tracks=True
                         say_time()
-                        msg="""<b>3D model new position pushed to kicad board!</b><br><br>"""
-                        if found_tracks:
-                            msg+="<font color='red'><b>tracks found!<br></b>you will need to fix your routing!</font><br><br>"
-                        msg+="<b>file saved to<br>"+fpath+"</b><br><br>"
-                        msg+="<i>backup file saved to<br>"+foname+"</i><br>"
-                        msgr="3D model new position pushed to kicad board!\n"
-                        msgr+="file saved to "+fpath+"\n"
-                        msgr+="backup file saved to "+foname
+                        msg="""<b>3D model new position pulled from kicad board!</b><br><br>"""
+                        msg+="<b>file loaded from<br>"+fpath+"</b><br><br>"
+                        msgr="3D model new position pulled from kicad board!\n"
                         say(msgr)
                         say_info(msg)
                     else:
-                        msg="""To update 3D model Position(s) in <b>an EXISTING KiCad pcb file</b><br>the board must have assigned \'Grid Origin\' or<br>\'Aux Origin\' (Drill and Place offset)!"""
+                        msg="""To update 3D model Position(s) from <b>an EXISTING KiCad pcb file</b><br>the board must have assigned \'Grid Origin\' or<br>\'Aux Origin\' (Drill and Place offset)!"""
                         say_warning(msg)
-                        msg="To update 3D model Position(s) in an EXISTING KiCad pcb file\nthe board must have assigned \'Grid Origin\' or \'Aux Origin\' (Drill and Place offset)!"
+                        msg="To update 3D model Position(s) from an EXISTING KiCad pcb file\nthe board must have assigned \'Grid Origin\' or \'Aux Origin\' (Drill and Place offset)!"
                         sayerr(msg)
                 else:
-                    msg="""Save to <b>an EXISTING KiCad pcb file</b> to update your 3D model position!"""
+                    msg="""Load from <b>an EXISTING KiCad pcb file</b> to update your 3D model position!"""
                     say_warning(msg)
-                    msg="Save to an EXISTING KiCad pcb file to update your 3D model position!"
+                    msg="Load from an EXISTING KiCad pcb file to update your 3D model position!"
                     sayerr(msg)
             else:
                 msg="""Operation aborted!"""
