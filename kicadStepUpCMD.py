@@ -26,7 +26,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-__ksuCMD_version__='1.7.4'
+__ksuCMD_version__='1.7.5'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -786,7 +786,7 @@ FreeCADGui.addCommand('ksuToolsPullPCB',ksuToolsPullPCB())
 ##
 
 class ksuToolsPushMoved:
-    "ksu tools Push/Pull 3D moved model"
+    "ksu tools Push 3D moved model"
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'PushMoved.svg') , # the name of a svg file available in the resources
@@ -818,6 +818,40 @@ class ksuToolsPushMoved:
         #import kicadStepUptools
 
 FreeCADGui.addCommand('ksuToolsPushMoved',ksuToolsPushMoved())
+##
+class ksuToolsPullMoved:
+    "ksu tools Pull 3D model placement from PCB"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'PullMoved.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksu Pull 3D model(s) placement from PCB" ,
+                     'ToolTip' : "Pull 3D model(s) placement from PCB"}
+ 
+    def IsActive(self):
+        #if FreeCAD.ActiveDocument == None:
+        #    return False
+        #else:
+        #    return True
+        #import kicadStepUptools
+        return True
+ 
+    def Activated(self):
+        # do something here...
+        import kicadStepUptools
+        #if not kicadStepUptools.checkInstance():
+        #    reload( kicadStepUptools )
+        if reload_Gui:
+            reload_lib( kicadStepUptools )
+        #from kicadStepUptools import onPushPCB
+        #FreeCAD.Console.PrintWarning( 'active :)\n' )
+        kicadStepUptools.PullMoved()
+        # ppcb=kicadStepUptools.KSUWidget
+        # ppcb.onPushPCB()
+
+        #onPushPCB()
+        #import kicadStepUptools
+
+FreeCADGui.addCommand('ksuToolsPullMoved',ksuToolsPullMoved())
 ##
 class ksuAsm2Part:
     "ksu tools Push/Pull 3D moved model"
