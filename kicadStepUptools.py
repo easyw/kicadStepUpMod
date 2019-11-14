@@ -20111,7 +20111,20 @@ def pull3D2dsn(s,mdls,tsp,gof):
     for i,mdl in enumerate (mdls):
         if tsp in mdl[10]:
             idxF=i
-            print(mdl)
+            FLayer=1
+            print(mdl[4])
+            if 'Top' not in mdl[4]:
+                FLayer=-1.
+            if FLayer==1.:
+                ang = float(mdl[3])
+                FreeCAD.ActiveDocument.getObject(s.Name).Placement.Rotation=FreeCAD.Rotation(FreeCAD.Vector(0,0,1),ang)
+                #bbpa=degrees(FreeCAD.ActiveDocument.getObject(s.Name).Placement.Rotation.Angle)
+                #print(bbpa);#stop
+                #if FreeCAD.ActiveDocument.getObject(s.Name).Placement.Rotation.Axis.z == -1:
+                #    bbpa=-bbpa
+                #new_angle=bbpa+z_rot
+            #else:
+            #    bbpa=round(FreeCAD.ActiveDocument.getObject(s.Name).Placement.Rotation.toEuler()[0],1)            
 #
 ##
 def push3D2pcb(s,cnt,tsp):
