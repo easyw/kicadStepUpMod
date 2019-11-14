@@ -1,4 +1,4 @@
-import kicadStepUptools; import importlib; importlib.reload(kicadStepUptools)
+import kicadStepUptools; import importlib; importlib.reload(kicadStepUptools);FreeCADGui.activateWorkbench("KiCadStepUpWB")
 
 import kicadStepUptools; reload(kicadStepUptools)
 

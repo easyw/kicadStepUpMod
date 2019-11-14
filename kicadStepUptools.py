@@ -16455,19 +16455,37 @@ def PullMoved():
                         #sayerr(name+':'+ext)
                         mypcb = KicadPCB.load(fpath)
                         mymodels = getModelsData(mypcb)
-                        print(mymodels)
-                        stop
-                        with codecs.open(fpath,'r', encoding='utf-8') as txtFile:
-                            content = txtFile.readlines() # problems?
-                        content.append(u" ")
-                        txtFile.close()
-                        data=u''.join(content)
+                        #print(mymodels)
+                        #stop
+                        #with codecs.open(fpath,'r', encoding='utf-8') as txtFile:
+                        #    content = txtFile.readlines() # problems?
+                        #content.append(u" ")
+                        #txtFile.close()
+                        #data=u''.join(content)
+                        #oft=None
+                        #if aux_orig == 1:
+                        #    oft=getAuxOrigin(data)
+                        #if grid_orig == 1:
+                        #    oft=getGridOrigin(data)
+                        #print oft
+                        #gof=False
+                        #if oft is not None:
+                        #    off_x=oft[0];off_y=-oft[1]
+                        #    offset = oft
+                        #    gof=True
+                        #    pcb_pull=True
+                        #else:
+                        #    pcb_pull=False
                         oft=None
                         if aux_orig == 1:
-                            oft=getAuxOrigin(data)
+                            if hasattr(mypcb.setup, 'aux_axis_origin'):
+                                oft = mypcb.setup.aux_axis_origin 
+                                #oft=getAuxOrigin(data)
                         if grid_orig == 1:
-                            oft=getGridOrigin(data)
-                        #print oft
+                            if hasattr(mypcb.setup, 'grid_origin'):
+                                oft=mypcb.setup.grid_origin
+                                #oft=getGridOrigin(data)
+                        print ('oft ',oft)
                         gof=False
                         if oft is not None:
                             off_x=oft[0];off_y=-oft[1]
@@ -16476,11 +16494,12 @@ def PullMoved():
                             pcb_pull=True
                         else:
                             pcb_pull=False
+                        print ('ofx,ofy reviewed ',off_x,' ',off_y)
                         testing=False #True
                     if pcb_pull:
                         for s in sel:
                             #sayw(doc.Name)
-                            if use_pypro:
+                            if 0: # use_pypro:
                                 if hasattr(s,"TimeStamp"):
                                     ts=s.TimeStamp
                                     content = push3D2pcb(s,content,ts)
@@ -16495,17 +16514,11 @@ def PullMoved():
                                     ts = s.Label[s.Label.rfind('_')+1:]
                                 if len (ts) == 8:
                                     #print(ts);stop
-                                    content = push3D2pcb(s,content,ts)
+                                    content = pull3D2dsn(s,mymodels,ts,gof)
                                 else:
                                     msg="""select only 3D model(s) to be updated/pulled from kicad board!<br><b>a TimeSTamp is required!</b>"""
                                     sayerr(msg)
                                     say_warning(msg)
-                        newcontent=u''.join(content)
-                        pcbTracks=re.findall('\s\(tracks(\s.+?)\)',data, re.MULTILINE|re.DOTALL)
-                        found_tracks=False
-                        if len(pcbTracks)>0:
-                            if (float(pcbTracks[0])) > 0:
-                                found_tracks=True
                         say_time()
                         msg="""<b>3D model new position pulled from kicad board!</b><br><br>"""
                         msg+="<b>file loaded from<br>"+fpath+"</b><br><br>"
@@ -20073,6 +20086,33 @@ def export_pcb(fname=None,sklayer=None):
     #def precision(self, value):
     #    return "%.2f" % float(value)
     
+##
+def pull3D2dsn(s,mdls,tsp,gof):
+    global start_time, aux_orig, grid_orig
+    global board_base_point_x, board_base_point_y, real_board_pos_x, real_board_pos_y
+    global off_x, off_y, maxRadius
+    
+    sayw('pulling 3D model placement from pcb')
+    doc=FreeCAD.ActiveDocument
+    if gof and grid_orig==1:
+        offset=[off_x,-off_y]
+    #print(offset)
+    model_3d_name = s.Label[s.Label.find('_')+1:s.Label.rfind('_')]
+    model_3d_name = model_3d_name.replace('.','')
+    #print (model_3d_name);stop
+    if s.Label.rfind('_') < s.Label.rfind('['):
+        #ts = s.Label[s.Label.rfind('_')+1:s.Label.rfind('[')]
+        nbrModel = s.Label[s.Label.rfind('['):]
+        nMd = int(nbrModel.replace('[','').replace(']',''))-1
+    else:
+        #ts = s.Label[s.Label.rfind('_')+1:]
+        nMd = 0
+    idxF=-1
+    for i,mdl in enumerate (mdls):
+        if tsp in mdl[10]:
+            idxF=i
+            print(mdl)
+#
 ##
 def push3D2pcb(s,cnt,tsp):
     #global last_fp_path, test_flag, start_time
