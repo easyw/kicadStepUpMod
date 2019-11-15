@@ -472,7 +472,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.1.0.4"
+___ver___ = "9.1.0.5"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -16390,13 +16390,16 @@ def PullMoved():
         check_ok=False
         sel = FreeCADGui.Selection.getSelection()
         if len (sel) >= 1:
-            if sel[0].Label.rfind('_') < sel[0].Label.rfind('['):
-                ts = sel[0].Label[sel[0].Label.rfind('_')+1:sel[0].Label.rfind('[')]
-            else:
-                ts = sel[0].Label[sel[0].Label.rfind('_')+1:]
-            if len (ts) == 8:
-                #print(ts);stop
-                check_ok=True
+            for s in sel:
+                if s.Label.rfind('_') < s.Label.rfind('['):
+                    ts = s.Label[s.Label.rfind('_')+1:s.Label.rfind('[')]
+                else:
+                    ts = s.Label[s.Label.rfind('_')+1:]
+                if len (ts) == 8:
+                    #print(ts);stop
+                    check_ok=True
+                    #stop
+                    break
             #else:
             #    msg="""select only 3D model(s) moved to be updated/pushed to kicad board!<br><b>a TimeSTamp is required!</b>"""
             #    sayerr(msg)
@@ -16486,7 +16489,7 @@ def PullMoved():
                             if hasattr(mypcb.setup, 'grid_origin'):
                                 oft=mypcb.setup.grid_origin
                                 #oft=getGridOrigin(data)
-                        print ('oft ',oft)
+                        #print ('oft ',oft)
                         gof=False
                         if oft is not None:
                             off_x=oft[0];off_y=-oft[1]
@@ -16495,7 +16498,7 @@ def PullMoved():
                             pcb_pull=True
                         else:
                             pcb_pull=False
-                        print ('ofx,ofy reviewed ',off_x,' ',off_y)
+                        #print ('ofx,ofy reviewed ',off_x,' ',off_y)
                         testing=False #True
                     if pcb_pull:
                         for s in sel:
@@ -16514,12 +16517,23 @@ def PullMoved():
                                 else:
                                     ts = s.Label[s.Label.rfind('_')+1:]
                                 if len (ts) == 8:
+                                    #print (s.Label) #;stop
+                                    nbrModel = None
+                                    if s.Label.rfind('_') < s.Label.rfind('['):
+                                        #ts = s.Label[s.Label.rfind('_')+1:s.Label.rfind('[')]
+                                        nbrModel = s.Label[s.Label.rfind('['):]
+                                        #print(nbrModel)
+                                        nMd = int(nbrModel.replace('[','').replace(']',''))-1
+                                    else:
+                                        #ts = s.Label[s.Label.rfind('_')+1:]
+                                        nMd = 0
+                                        #print('nbrModel = 0')
                                     #print(ts);stop
-                                    content = pull3D2dsn(s,mymodels,ts,gof,pcbThickness)
-                                else:
-                                    msg="""select only 3D model(s) to be updated/pulled from kicad board!<br><b>a TimeSTamp is required!</b>"""
-                                    sayerr(msg)
-                                    say_warning(msg)
+                                    content = pull3D2dsn(s,mymodels,ts,nMd,gof,pcbThickness)
+                                #else:
+                                #    msg="""select only 3D model(s) to be updated/pulled from kicad board!<br><b>a TimeSTamp is required!</b>"""
+                                #    sayerr(msg)
+                                #    say_warning(msg)
                         say_time()
                         msg="""<b>3D model new position pulled from kicad board!</b><br><br>"""
                         msg+="<b>file loaded from<br>"+fpath+"</b><br><br>"
@@ -20088,29 +20102,36 @@ def export_pcb(fname=None,sklayer=None):
     #    return "%.2f" % float(value)
     
 ##
-def pull3D2dsn(s,mdls,tsp,gof,pcbThickness):
+def pull3D2dsn(s,mdls,tsp,nMd,gof,pcbThickness):
     global start_time, aux_orig, grid_orig
     global board_base_point_x, board_base_point_y, real_board_pos_x, real_board_pos_y
     global off_x, off_y, maxRadius
     
-    sayw('pulling 3D model placement from pcb')
+    #sayw('pulling 3D model placement from pcb')
     doc=FreeCAD.ActiveDocument
     if gof and grid_orig==1:
         offset=[off_x,-off_y]
     #print(offset)
-    model_3d_name = s.Label[s.Label.find('_')+1:s.Label.rfind('_')]
-    model_3d_name = model_3d_name.replace('.','')
-    #print (model_3d_name);stop
-    if s.Label.rfind('_') < s.Label.rfind('['):
-        #ts = s.Label[s.Label.rfind('_')+1:s.Label.rfind('[')]
-        nbrModel = s.Label[s.Label.rfind('['):]
-        nMd = int(nbrModel.replace('[','').replace(']',''))-1
-    else:
-        #ts = s.Label[s.Label.rfind('_')+1:]
-        nMd = 0
+    if 0:
+        model_3d_name = s.Label[s.Label.find('_')+1:s.Label.rfind('_')]
+        model_3d_name = model_3d_name.replace('.','')
+        #print (model_3d_name);stop
+        nbrModel = None
+        if s.Label.rfind('_') < s.Label.rfind('['):
+            #ts = s.Label[s.Label.rfind('_')+1:s.Label.rfind('[')]
+            nbrModel = s.Label[s.Label.rfind('['):]
+            #print(nbrModel)
+            nMd = int(nbrModel.replace('[','').replace(']',''))-1
+        else:
+            #ts = s.Label[s.Label.rfind('_')+1:]
+            nMd = 0
+            #print('nbrModel = 0')
     idxF=-1
     for i,mdl in enumerate (mdls):
-        if tsp in mdl[10]:
+        #print(mdl[10],':', mdl[12]-1,':',nMd)
+        if tsp in mdl[10] and mdl[12]-1 == nMd:
+            #print('FOUND',mdl[10],':', mdl[12],':',nMd)
+            #if nMd == mdl[12]:
             idxF=i
             FLayer=1.
             #print(mdl[4])
@@ -20120,8 +20141,12 @@ def pull3D2dsn(s,mdls,tsp,gof,pcbThickness):
             mdl_layer=mdl[4]
             wrl_pos=mdl[6]
             wrl_rot=mdl[7]
+            #print(mdl[10])
+            #print(mdl[12])
+            #print(wrl_pos)
+            #print(wrl_rot)
             dummyshape = Part.Shape()
-            
+            print(s.Label,': model found! Placing it!')
             if 'Top' not in mdl_layer:
                 FLayer=-1.
             if FLayer==1.:
@@ -20142,7 +20167,8 @@ def pull3D2dsn(s,mdls,tsp,gof,pcbThickness):
                 dummyshape.rotate((pos_x,pos_y,0),(0,0,1),180+rot+float(wrl_rot[2]))
                 dummyshape.rotate((pos_x,pos_y,0),(0,1,0),180)
                 FreeCAD.ActiveDocument.getObject(s.Name).Placement=dummyshape.Placement
-            #   bbpa=round(FreeCAD.ActiveDocument.getObject(s.Name).Placement.Rotation.toEuler()[0],1)            
+            #   bbpa=round(FreeCAD.ActiveDocument.getObject(s.Name).Placement.Rotation.toEuler()[0],1)
+            break
 #
 ##
 def push3D2pcb(s,cnt,tsp):
