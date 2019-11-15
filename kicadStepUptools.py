@@ -472,7 +472,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.0.2.9"
+___ver___ = "9.1.0.5"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -7784,9 +7784,22 @@ def shift_sketch(sname, ofs, nname):
     #FreeCAD.ActiveDocument.recompute()
     return FreeCAD.ActiveDocument.ActiveObject.Name
 ## 
-    
-###
-def onLoadBoard(file_name=None):
+def PullPCB(file_name=None):
+    onLoadBoard(None,False)
+   #layer_list = ['Edge.Cuts','Dwgs.User','Eco1.User','Eco2.User']
+   #LayerSelectionDlg = QtGui.QDialog()
+   #ui = Ui_LayerSelection()
+   #ui.setupUi(LayerSelectionDlg)
+   #ui.comboBoxLayerSel.addItems(layer_list)
+   #ui.label.setText("Select the layer to pull into the Sketch\nDefault \'Edge.Cuts\'")
+   #reply=LayerSelectionDlg.exec_()
+   #if reply==1: # ok
+   #    SketchLayer=str(ui.comboBoxLayerSel.currentText())
+   #    print(SketchLayer)
+   #else:
+   #    print('Cancel')
+##
+def onLoadBoard(file_name=None,load_models=None):
     #name=QtGui.QFileDialog.getOpenFileName(this,tr("Open Image"), "/home/jana", tr("Image Files (*.png *.jpg *.bmp)"))[0]
     #global module_3D_dir
     global test_flag, last_pcb_path, configParser, configFilePath, start_time
@@ -7801,458 +7814,493 @@ def onLoadBoard(file_name=None):
     global original_filename, edge_width, load_sketch, grid_orig, warning_nbr, running_time, addConstraints
     global conv_offs, zfit
     
-    default_value='/'
-    clear_console()
-    #lastPcb_dir='C:/Cad/Progetti_K/ksu-test'
-    #say(lastPcb_dir+' last Pcb dir')
-    #print(make_string(last_pcb_path))
-    #print (make_unicode(last_pcb_path))
-    if not os.path.isdir(make_unicode(last_pcb_path)):
-        last_pcb_path=u"./"
-    #say(last_pcb_path)
-    if file_name is not None:
-        #export_board_2step=True #for cmd line force exporting to STEP
-        name=file_name
-    elif test_flag==False:
-        Filter=""
-        #minimize main window
-        #self.setWindowState(QtCore.Qt.WindowMinimized)
-        #infoDialog('ciao')
-        #reply = QtGui.QInputDialog.getText(None, "Hello","Enter your thoughts for the day:")
-        #if reply[1]:
-        #        # user clicked OK
-        #        replyText = reply[0]
-        #else:
-        #        # user clicked Cancel
-        #        replyText = reply[0] # which will be "" if they clicked Cancel
-        #restore main window
-        #self.setWindowState(QtCore.Qt.WindowActive)
-        name, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Open kicad PCB File...",
-             make_unicode(last_pcb_path), "*.kicad_pcb")
-    else:
-        name="C:/Cad/Progetti_K/ksu-test/multidrill.kicad_pcb"
-    if len(name) > 0:
-        if os.path.isfile(name):
-            original_filename=name
-            say('opening '+name)
-            path, fname = os.path.split(name)
-            fname=os.path.splitext(fname)[0]
-            #fpth = os.path.dirname(os.path.abspath(__file__))
-            fpth = os.path.dirname(os.path.abspath(name))
-            #filePath = os.path.split(os.path.realpath(__file__))[0]
-            say ('my file path '+fpth)
-            if fpth == "":
-                fpth = u"."
-            last_pcb_path = fpth
-            #last_pcb_path=path
-            pcb_path=fpth
-            # update existing value
-            #say(default_ksu_msg)
-            #stop
-            last_pcb_path = re.sub("\\\\", "/", last_pcb_path)
-            #    configParser.write(configfile)
-            ##stop utf-8 test
-            ini_vars[10] = last_pcb_path
-            #cfg_update_all()
-            ## doc=FreeCAD.ActiveDocument
-            ## if doc is None:
-            ##     doc=FreeCAD.newDocument(fname)
-            doc=FreeCAD.newDocument(fname)
-            pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
-            pg.SetString("last_pcb_path", make_string(last_pcb_path)) # py3 .decode("utf-8")
-            #pg.SetString("last_pcb_path", last_pcb_path.decode("utf-8"))
-            modules=[]
-            start_time=current_milli_time()
-            #filename="C:/Cad/Progetti_K/D-can-term/can-term-test-fcad.kicad_pcb"
-            #filename="c:\\Temp\\backpanel3.kicad_pcb"
-            mypcb = KicadPCB.load(name) #test parser
-            off_x=0; off_y=0  #offset of the board & modules
-            if (grid_orig==1):
-                #xp=getAuxAxisOrigin()[0]; yp=-getAuxAxisOrigin()[1]  #offset of the board & modules
-                if hasattr(mypcb.setup, 'grid_origin'):
-                    #say('aux_axis_origin' + str(mypcb.setup.aux_axis_origin))
-                    xp=-mypcb.setup.grid_origin[0]; yp=mypcb.setup.grid_origin[1]
-                    sayw('grid origin found @ ('+str(xp)+', '+str(yp)+')') 
-                else:
-                    say('grid origin not found\nplacing at center of an A4')
-                    xp=-148.5;yp=98.5
-                ##off_x=-xp+xmin+(xMax-xmin)/2; off_y=-yp-(ymin+(yMax-ymin)/2)  #offset of the board & modules
-                #off_x=-xp+center_x;off_y=-yp+center_y
-                off_x=-xp;off_y=-yp
-            if (aux_orig==1):
-                #xp=getAuxAxisOrigin()[0]; yp=-getAuxAxisOrigin()[1]  #offset of the board & modules
-                if hasattr(mypcb.setup, 'aux_axis_origin'):
-                    #say('aux_axis_origin' + str(mypcb.setup.aux_axis_origin))
-                    sayw('aux origin used: '+str(mypcb.setup.aux_axis_origin)) 
-                    xp=-mypcb.setup.aux_axis_origin[0]; yp=mypcb.setup.aux_axis_origin[1]
-                else:
-                    say('aux origin not used') 
-                    xp=-148.5;yp=98.5
-                ##off_x=-xp+xmin+(xMax-xmin)/2; off_y=-yp-(ymin+(yMax-ymin)/2)  #offset of the board & modules
-                #off_x=-xp+center_x;off_y=-yp+center_y
-                off_x=-xp;off_y=-yp
-            #if (aux_orig==1):
-            #    #xp=getAuxAxisOrigin()[0]; yp=-getAuxAxisOrigin()[1]  #offset of the board & modules
-            #    if hasattr(mypcb.setup, 'aux_axis_origin'):
-            #        #say('aux_axis_origin' + str(mypcb.setup.aux_axis_origin))
-            #        xp=mypcb.setup.aux_axis_origin[0]; yp=-mypcb.setup.aux_axis_origin[1]
-            #    else:
-            #        say('aux origin not used') 
-            #    ##off_x=-xp+xmin+(xMax-xmin)/2; off_y=-yp-(ymin+(yMax-ymin)/2)  #offset of the board & modules
-            #    off_x=-xp+center_x;off_y=-yp+center_y
-            #    #off_x=-xp;off_y=-yp
-            modules=DrawPCB(mypcb)
-            pcbThickness=float(mypcb.general.thickness)
-            ## stop  #test parser
-            check_requirements()
-            #stop
-            #pcbThickness,modules,board_elab,mod_lines,mod_arcs,mod_circles=LoadKicadBoard(name)
-            #say(modules)
-            #routineDrawPCB(pcbThickness,board_elab,mod_lines,mod_arcs,mod_circles)
+    pull_sketch = False
+    SketchLayer = 'Edge.Cuts' #None
+    if load_models is None:
+        load_models = True
+    if load_models == False:
+        layer_list = ['Edge.Cuts','Dwgs.User','Cmts.User','Eco1.User','Eco2.User','Margin']
+        LayerSelectionDlg = QtGui.QDialog()
+        ui = Ui_LayerSelection()
+        ui.setupUi(LayerSelectionDlg)
+        ui.comboBoxLayerSel.addItems(layer_list)
+        ui.label.setText("Select the layer to pull into the Sketch\nDefault: \'Edge.Cuts\'")
+        reply=LayerSelectionDlg.exec_()
+        if reply==1: # ok
+            SketchLayer=str(ui.comboBoxLayerSel.currentText())
+            print(SketchLayer)
+            pull_sketch = True
         else:
-            say(name+' missing\r')
-            stop
-        ##Placing board at configured position
-        # pos objs x,-y
-        # pos board xm+(xM-xm)/2
-        # pos board -(ym+(yM-ym)/2)        
-        center_x, center_y, bb_x, bb_y = findPcbCenter("Pcb")
-        ## using PcbCenter
-        xMax=center_x+bb_x/2
-        xmin=center_x-bb_x/2
-        yMax=center_y+bb_y/2
-        ymin=center_y-bb_y/2
-        #off_x=0; off_y=0  #offset of the board & modules
-        if hasattr(mypcb.setup, 'edge_width'):
-            edge_width=mypcb.setup.edge_width
-        #if (grid_orig==1):
-        #    #xp=getAuxAxisOrigin()[0]; yp=-getAuxAxisOrigin()[1]  #offset of the board & modules
-        #    if hasattr(mypcb.setup, 'grid_origin'):
-        #        #say('aux_axis_origin' + str(mypcb.setup.aux_axis_origin))
-        #        xp=-mypcb.setup.grid_origin[0]; yp=mypcb.setup.grid_origin[1]
-        #    else:
-        #        say('grid origin not found\nplacing at center of an A4')
-        #        xp=-148.5;yp=98.5
-        #    ##off_x=-xp+xmin+(xMax-xmin)/2; off_y=-yp-(ymin+(yMax-ymin)/2)  #offset of the board & modules
-        #    #off_x=-xp+center_x;off_y=-yp+center_y
-        #    off_x=-xp;off_y=-yp
-        if (base_orig==1):
-            ##off_x=xmin+(xMax-xmin)/2; off_y=-(ymin+(yMax-ymin)/2)  #offset of the board & modules
-            off_x=center_x;off_y=center_y
-        #sayw(base_point);sayw(" base point")
-        if (base_point==1):
-            ##off_x=-xp+xmin+(xMax-xmin)/2; off_y=-yp-(ymin+(yMax-ymin)/2)  #offset of the board & modules
-            #off_x=-xp+center_x;off_y=-yp+center_y
-            off_x=-xp+center_x;off_y=-yp+center_y
-            #sayw(off_x)
-        ## test maui board_base_point_x=(xMax-xmin)/2-off_x
-        ## test maui board_base_point_y=-((yMax-ymin)/2)-off_y
-        #real_board_pos_x=xmin+(xMax-xmin)/2
-        #real_board_pos_y=-(ymin+(yMax-ymin)/2)
-        ## using PcbCenter
-        real_board_pos_x=center_x
-        real_board_pos_y=center_y
-        # doc = FreeCAD.ActiveDocument
-        if idf_to_origin == True:
-            board_base_point_x=-off_x
-            board_base_point_y=-off_y
+            print('Cancel')
+    if pull_sketch or load_models:
+        default_value='/'
+        clear_console()
+        #lastPcb_dir='C:/Cad/Progetti_K/ksu-test'
+        #say(lastPcb_dir+' last Pcb dir')
+        #print(make_string(last_pcb_path))
+        #print (make_unicode(last_pcb_path))
+        if not os.path.isdir(make_unicode(last_pcb_path)):
+            last_pcb_path=u"./"
+        #say(last_pcb_path)
+        if file_name is not None:
+            #export_board_2step=True #for cmd line force exporting to STEP
+            name=file_name
+        elif test_flag==False:
+            Filter=""
+            #minimize main window
+            #self.setWindowState(QtCore.Qt.WindowMinimized)
+            #infoDialog('ciao')
+            #reply = QtGui.QInputDialog.getText(None, "Hello","Enter your thoughts for the day:")
+            #if reply[1]:
+            #        # user clicked OK
+            #        replyText = reply[0]
+            #else:
+            #        # user clicked Cancel
+            #        replyText = reply[0] # which will be "" if they clicked Cancel
+            #restore main window
+            #self.setWindowState(QtCore.Qt.WindowActive)
+            name, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Open kicad PCB File...",
+                make_unicode(last_pcb_path), "*.kicad_pcb")
         else:
-        ## using PcbCenter
-            say ('using PcbCenter')
-            #board_base_point_x=xmin+(xMax-xmin)/2-off_x
-            #board_base_point_y=-(ymin+(yMax-ymin)/2)-off_y
-            board_base_point_x=center_x-off_x
-            board_base_point_y=center_y-off_y
-        sayw('placing board @ '+str(board_base_point_x)+','+str(board_base_point_y))
-        FreeCAD.ActiveDocument.getObject("Pcb").Placement = FreeCAD.Placement(FreeCAD.Vector(board_base_point_x,board_base_point_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
-        
-        if load_sketch:
-            newname="PCB_Sketch"
-            say_inline('building up pcb time')
-            get_time()
-            say(str(running_time))
-            t1=(running_time)
-            #add_constraints("PCB_Sketch_draft")
-            #FreeCAD.ActiveDocument.recompute()
-            if aux_orig==1 or grid_orig ==1:
-                s_name=cpy_sketch("PCB_Sketch_draft","PCB_Sketch")
-                FreeCAD.ActiveDocument.recompute()
-                #add_constraints(s_name)
-                #say_time()
-            #stop
-            elif (base_point==1):
-                s_name=shift_sketch("PCB_Sketch_draft", [-center_x,center_y],newname)
+            name="C:/Cad/Progetti_K/ksu-test/multidrill.kicad_pcb"
+        if len(name) > 0:
+            if os.path.isfile(name):
+                original_filename=name
+                say('opening '+name)
+                path, fname = os.path.split(name)
+                fname=os.path.splitext(fname)[0]
+                #fpth = os.path.dirname(os.path.abspath(__file__))
+                fpth = os.path.dirname(os.path.abspath(name))
+                #filePath = os.path.split(os.path.realpath(__file__))[0]
+                say ('my file path '+fpth)
+                if fpth == "":
+                    fpth = u"."
+                last_pcb_path = fpth
+                #last_pcb_path=path
+                pcb_path=fpth
+                # update existing value
+                #say(default_ksu_msg)
                 #stop
-                #add_constraints(s_name)
-                FreeCAD.ActiveDocument.getObject(s_name).Placement = FreeCAD.Placement(FreeCAD.Vector(xp,yp,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
-                #say_time()            
-            elif (base_orig==1):
-                s_name=shift_sketch("PCB_Sketch_draft", [-center_x,center_y],newname)
+                last_pcb_path = re.sub("\\\\", "/", last_pcb_path)
+                #    configParser.write(configfile)
+                ##stop utf-8 test
+                ini_vars[10] = last_pcb_path
+                #cfg_update_all()
+                ## doc=FreeCAD.ActiveDocument
+                ## if doc is None:
+                ##     doc=FreeCAD.newDocument(fname)
+                doc=FreeCAD.newDocument(fname)
+                pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+                pg.SetString("last_pcb_path", make_string(last_pcb_path)) # py3 .decode("utf-8")
+                #pg.SetString("last_pcb_path", last_pcb_path.decode("utf-8"))
+                modules=[]
+                start_time=current_milli_time()
+                #filename="C:/Cad/Progetti_K/D-can-term/can-term-test-fcad.kicad_pcb"
+                #filename="c:\\Temp\\backpanel3.kicad_pcb"
+                mypcb = KicadPCB.load(name) #test parser
+                off_x=0; off_y=0  #offset of the board & modules
+                if (grid_orig==1):
+                    #xp=getAuxAxisOrigin()[0]; yp=-getAuxAxisOrigin()[1]  #offset of the board & modules
+                    if hasattr(mypcb.setup, 'grid_origin'):
+                        #say('aux_axis_origin' + str(mypcb.setup.aux_axis_origin))
+                        xp=-mypcb.setup.grid_origin[0]; yp=mypcb.setup.grid_origin[1]
+                        sayw('grid origin found @ ('+str(xp)+', '+str(yp)+')') 
+                    else:
+                        say('grid origin not found\nplacing at center of an A4')
+                        xp=-148.5;yp=98.5
+                    ##off_x=-xp+xmin+(xMax-xmin)/2; off_y=-yp-(ymin+(yMax-ymin)/2)  #offset of the board & modules
+                    #off_x=-xp+center_x;off_y=-yp+center_y
+                    off_x=-xp;off_y=-yp
+                if (aux_orig==1):
+                    #xp=getAuxAxisOrigin()[0]; yp=-getAuxAxisOrigin()[1]  #offset of the board & modules
+                    if hasattr(mypcb.setup, 'aux_axis_origin'):
+                        #say('aux_axis_origin' + str(mypcb.setup.aux_axis_origin))
+                        sayw('aux origin used: '+str(mypcb.setup.aux_axis_origin)) 
+                        xp=-mypcb.setup.aux_axis_origin[0]; yp=mypcb.setup.aux_axis_origin[1]
+                    else:
+                        say('aux origin not used') 
+                        xp=-148.5;yp=98.5
+                    ##off_x=-xp+xmin+(xMax-xmin)/2; off_y=-yp-(ymin+(yMax-ymin)/2)  #offset of the board & modules
+                    #off_x=-xp+center_x;off_y=-yp+center_y
+                    off_x=-xp;off_y=-yp
+                #if (aux_orig==1):
+                #    #xp=getAuxAxisOrigin()[0]; yp=-getAuxAxisOrigin()[1]  #offset of the board & modules
+                #    if hasattr(mypcb.setup, 'aux_axis_origin'):
+                #        #say('aux_axis_origin' + str(mypcb.setup.aux_axis_origin))
+                #        xp=mypcb.setup.aux_axis_origin[0]; yp=-mypcb.setup.aux_axis_origin[1]
+                #    else:
+                #        say('aux origin not used') 
+                #    ##off_x=-xp+xmin+(xMax-xmin)/2; off_y=-yp-(ymin+(yMax-ymin)/2)  #offset of the board & modules
+                #    off_x=-xp+center_x;off_y=-yp+center_y
+                #    #off_x=-xp;off_y=-yp
+                modules=DrawPCB(mypcb,SketchLayer)
+                pcbThickness=float(mypcb.general.thickness)
+                ## stop  #test parser
+                check_requirements()
                 #stop
-                #add_constraints(s_name)
-                FreeCAD.ActiveDocument.getObject(s_name).Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
-                #say_time()            
+                #pcbThickness,modules,board_elab,mod_lines,mod_arcs,mod_circles=LoadKicadBoard(name)
+                #say(modules)
+                #routineDrawPCB(pcbThickness,board_elab,mod_lines,mod_arcs,mod_circles)
             else:
-                s_name=shift_sketch("PCB_Sketch_draft", [-center_x,center_y],newname)
+                say(name+' missing\r')
+                stop
+            ##Placing board at configured position
+            # pos objs x,-y
+            # pos board xm+(xM-xm)/2
+            # pos board -(ym+(yM-ym)/2)        
+            if SketchLayer == 'Edge.Cuts':
+                center_x, center_y, bb_x, bb_y = findPcbCenter("Pcb")
+            else:
+                draw=FreeCAD.ActiveDocument.PCB_Sketch_draft
+                center_x, center_y, bb_x, bb_y = findPcbCenter(draw.Name)
+            ## using PcbCenter
+            xMax=center_x+bb_x/2
+            xmin=center_x-bb_x/2
+            yMax=center_y+bb_y/2
+            ymin=center_y-bb_y/2
+            #off_x=0; off_y=0  #offset of the board & modules
+            if hasattr(mypcb.setup, 'edge_width'): #maui edge width
+                edge_width=mypcb.setup.edge_width
+            elif hasattr(mypcb.setup, 'edge_cuts_line_width'): #maui edge cuts new width k 5.99
+                edge_width=mypcb.setup.edge_cuts_line_width
+            #if (grid_orig==1):
+            #    #xp=getAuxAxisOrigin()[0]; yp=-getAuxAxisOrigin()[1]  #offset of the board & modules
+            #    if hasattr(mypcb.setup, 'grid_origin'):
+            #        #say('aux_axis_origin' + str(mypcb.setup.aux_axis_origin))
+            #        xp=-mypcb.setup.grid_origin[0]; yp=mypcb.setup.grid_origin[1]
+            #    else:
+            #        say('grid origin not found\nplacing at center of an A4')
+            #        xp=-148.5;yp=98.5
+            #    ##off_x=-xp+xmin+(xMax-xmin)/2; off_y=-yp-(ymin+(yMax-ymin)/2)  #offset of the board & modules
+            #    #off_x=-xp+center_x;off_y=-yp+center_y
+            #    off_x=-xp;off_y=-yp
+            if (base_orig==1):
+                ##off_x=xmin+(xMax-xmin)/2; off_y=-(ymin+(yMax-ymin)/2)  #offset of the board & modules
+                off_x=center_x;off_y=center_y
+            #sayw(base_point);sayw(" base point")
+            if (base_point==1):
+                ##off_x=-xp+xmin+(xMax-xmin)/2; off_y=-yp-(ymin+(yMax-ymin)/2)  #offset of the board & modules
+                #off_x=-xp+center_x;off_y=-yp+center_y
+                off_x=-xp+center_x;off_y=-yp+center_y
+                #sayw(off_x)
+            ## test maui board_base_point_x=(xMax-xmin)/2-off_x
+            ## test maui board_base_point_y=-((yMax-ymin)/2)-off_y
+            #real_board_pos_x=xmin+(xMax-xmin)/2
+            #real_board_pos_y=-(ymin+(yMax-ymin)/2)
+            ## using PcbCenter
+            real_board_pos_x=center_x
+            real_board_pos_y=center_y
+            # doc = FreeCAD.ActiveDocument
+            if idf_to_origin == True:
+                board_base_point_x=-off_x
+                board_base_point_y=-off_y
+            else:
+            ## using PcbCenter
+                say ('using PcbCenter')
+                #board_base_point_x=xmin+(xMax-xmin)/2-off_x
+                #board_base_point_y=-(ymin+(yMax-ymin)/2)-off_y
+                board_base_point_x=center_x-off_x
+                board_base_point_y=center_y-off_y
+            sayw('placing board @ '+str(board_base_point_x)+','+str(board_base_point_y))
+            if SketchLayer == 'Edge.Cuts':
+                FreeCAD.ActiveDocument.getObject("Pcb").Placement = FreeCAD.Placement(FreeCAD.Vector(board_base_point_x,board_base_point_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
+            #else:
+            #    draw.Placement = FreeCAD.Placement(FreeCAD.Vector(board_base_point_x,board_base_point_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
+            newname="PCB_Sketch"
+            if load_sketch:
+                if SketchLayer != 'Edge.Cuts' and SketchLayer is not None:
+                    newname = SketchLayer.split('.')[0]+'_Sketch'
+                say_inline('building up pcb time')
+                get_time()
+                say(str(running_time))
+                t1=(running_time)
+                #add_constraints("PCB_Sketch_draft")
+                #FreeCAD.ActiveDocument.recompute()
+                if aux_orig==1 or grid_orig ==1:
+                    s_name=cpy_sketch("PCB_Sketch_draft",newname)
+                    FreeCAD.ActiveDocument.recompute()
+                    #add_constraints(s_name)
+                    #say_time()
                 #stop
-                #add_constraints(s_name)
-                #sayerr('usebasepoint')
-                #sayerr('usedefault')
-                FreeCAD.ActiveDocument.getObject(s_name).Placement = FreeCAD.Placement(FreeCAD.Vector(center_x,center_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
-                #stop
-                #say_time()
-            FreeCAD.ActiveDocument.removeObject("PCB_Sketch_draft")
+                elif (base_point==1):
+                    s_name=shift_sketch("PCB_Sketch_draft", [-center_x,center_y],newname)
+                    #stop
+                    #add_constraints(s_name)
+                    FreeCAD.ActiveDocument.getObject(s_name).Placement = FreeCAD.Placement(FreeCAD.Vector(xp,yp,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
+                    #say_time()            
+                elif (base_orig==1):
+                    s_name=shift_sketch("PCB_Sketch_draft", [-center_x,center_y],newname)
+                    #stop
+                    #add_constraints(s_name)
+                    FreeCAD.ActiveDocument.getObject(s_name).Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
+                    #say_time()            
+                else:
+                    s_name=shift_sketch("PCB_Sketch_draft", [-center_x,center_y],newname)
+                    #stop
+                    #add_constraints(s_name)
+                    #sayerr('usebasepoint')
+                    #sayerr('usedefault')
+                    FreeCAD.ActiveDocument.getObject(s_name).Placement = FreeCAD.Placement(FreeCAD.Vector(center_x,center_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
+                    #stop
+                    #say_time()
+                FreeCAD.ActiveDocument.removeObject("PCB_Sketch_draft")
+                if (zfit):
+                    FreeCADGui.SendMsgToActiveView("ViewFit")
+                if 0: # test_face # addConstraints!='none': 
+                    say('start adding constraints to pcb sketch')
+                    add_constraints(s_name)
+                    get_time()
+                    #say('adding constraints time ' +str(running_time-t1))
+                    say('adding constraints time ' + "{0:.3f}".format(running_time-t1))
+    
+                ##FreeCAD.ActiveDocument.recompute()
+                pcb_sk=FreeCAD.ActiveDocument.getObject(newname)
+                gi = 0
+                for g in pcb_sk.Geometry:
+                    if 'BSplineCurve object' in str(g):
+                        # say(str(g))
+                        FreeCAD.ActiveDocument.getObject(newname).exposeInternalGeometry(gi)
+                    gi+=1
+                if use_LinkGroups and SketchLayer == 'Edge.Cuts':
+                    FreeCAD.ActiveDocument.getObject('Board_Geoms').ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(newname),None,'',[])
+                    FreeCADGui.Selection.clearSelection()
+                    sl = FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.getObject(newname))
+                    #FreeCADGui.runCommand('Std_HideSelection',0)
+                    FreeCADGui.runCommand('Std_ToggleVisibility',0)
+                    FreeCADGui.Selection.clearSelection()
+                    #FreeCADGui.ActiveDocument.PCB_Sketch.Visibility = False
+                    #FreeCAD.ActiveDocument.getObject('PCB_Sketch').adjustRelativeLinks(FreeCAD.ActiveDocument.getObject('Board_Geoms'))
+                elif SketchLayer == 'Edge.Cuts':
+                    FreeCAD.ActiveDocument.Board_Geoms.addObject(pcb_sk)
+                
+            #updating pcb_sketch
+            if SketchLayer != 'Edge.Cuts' and SketchLayer is not None:
+                pcb_sk.Label = SketchLayer
+            #FreeCAD.ActiveDocument.getObject("PCB_Sketch").Placement = FreeCAD.Placement(FreeCAD.Vector(board_base_point_x,board_base_point_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
+            #FreeCAD.ActiveDocument.getObject("PCB_SketchN").Placement = FreeCAD.Placement(FreeCAD.Vector(board_base_point_x,board_base_point_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
+            ## FreeCAD.ActiveDocument.getObject("Pcb").Placement = FreeCAD.Placement(FreeCAD.Vector(-off_x,-off_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
             if (zfit):
                 FreeCADGui.SendMsgToActiveView("ViewFit")
-            if 0: # test_face # addConstraints!='none': 
-                say('start adding constraints to pcb sketch')
-                add_constraints(s_name)
-                get_time()
-                #say('adding constraints time ' +str(running_time-t1))
-                say('adding constraints time ' + "{0:.3f}".format(running_time-t1))
-
-            ##FreeCAD.ActiveDocument.recompute()
-            pcb_sk=FreeCAD.ActiveDocument.PCB_Sketch
-            gi = 0
-            for g in pcb_sk.Geometry:
-                if 'BSplineCurve object' in str(g):
-                    # say(str(g))
-                    FreeCAD.ActiveDocument.PCB_Sketch.exposeInternalGeometry(gi)
-                gi+=1
-            if use_LinkGroups:
-                FreeCAD.ActiveDocument.getObject('Board_Geoms').ViewObject.dropObject(FreeCAD.ActiveDocument.getObject('PCB_Sketch'),None,'',[])
-                FreeCADGui.Selection.clearSelection()
-                sl = FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.getObject('PCB_Sketch'))
-                #FreeCADGui.runCommand('Std_HideSelection',0)
-                FreeCADGui.runCommand('Std_ToggleVisibility',0)
-                FreeCADGui.Selection.clearSelection()
-                #FreeCADGui.ActiveDocument.PCB_Sketch.Visibility = False
-                #FreeCAD.ActiveDocument.getObject('PCB_Sketch').adjustRelativeLinks(FreeCAD.ActiveDocument.getObject('Board_Geoms'))
+            #ImportGui.insert(u"./c0603.step","demo_5D_vrml_from_step")
+            if (not pt_lnx): # and (not pt_osx): issue on AppImages hanging on loading 
+                FreeCADGui.SendMsgToActiveView("ViewFit")
             else:
-                FreeCAD.ActiveDocument.Board_Geoms.addObject(pcb_sk)
-            
-        #updating pcb_sketch
+                zf= Timer (0.1,ZoomFitThread)
+                zf.start()
 
-        #FreeCAD.ActiveDocument.getObject("PCB_Sketch").Placement = FreeCAD.Placement(FreeCAD.Vector(board_base_point_x,board_base_point_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
-        #FreeCAD.ActiveDocument.getObject("PCB_SketchN").Placement = FreeCAD.Placement(FreeCAD.Vector(board_base_point_x,board_base_point_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
-        ## FreeCAD.ActiveDocument.getObject("Pcb").Placement = FreeCAD.Placement(FreeCAD.Vector(-off_x,-off_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
-        if (zfit):
-            FreeCADGui.SendMsgToActiveView("ViewFit")
-        #ImportGui.insert(u"./c0603.step","demo_5D_vrml_from_step")
-        if (not pt_lnx): # and (not pt_osx): issue on AppImages hanging on loading 
-            FreeCADGui.SendMsgToActiveView("ViewFit")
-        else:
-            zf= Timer (0.1,ZoomFitThread)
+            if not pull_sketch or load_models:
+                if use_AppPart and not force_oldGroups and not use_LinkGroups:
+                    #sayw("creating hierarchy")
+                    ## to evaluate to add App::Part hierarchy
+                    doc.Tip = doc.addObject('App::Part','Step_Models')
+                    doc.Step_Models.Label = 'Step_Models'
+                    doc.Tip = doc.addObject('App::Part','Top')
+                    doc.Top.Label = 'Top'
+                    doc.Tip = doc.addObject('App::Part','Bot')
+                    doc.Bot.Label = 'Bot'
+                    doc.getObject("Step_Models").addObject(doc.Top)
+                    doc.getObject("Step_Models").addObject(doc.Bot)            
+                    try:
+                        doc.Step_Models.License = ''
+                        doc.Step_Models.LicenseURL = ''
+                    except:
+                        pass
+                    #FreeCADGui.activeView().setActiveObject('Step_Models', doc.Step_Models)
+                    doc.getObject("Board").addObject(doc.Step_Models)
+                    doc.Tip = doc.addObject('App::Part','Step_Virtual_Models')
+                    doc.Step_Virtual_Models.Label = 'Step_Virtual_Models'
+                    doc.Tip = doc.addObject('App::Part','TopV')
+                    doc.TopV.Label = 'TopV'
+                    doc.Tip = doc.addObject('App::Part','BotV')
+                    doc.BotV.Label = 'BotV'
+                    doc.getObject("Step_Virtual_Models").addObject(doc.TopV)
+                    doc.getObject("Step_Virtual_Models").addObject(doc.BotV)            
+                    try:
+                        doc.Step_Virtual_Models.License = ''
+                        doc.Step_Virtual_Models.LicenseURL = ''
+                    except:
+                        pass
+                    FreeCADGui.activeView().setActiveObject('Step_Virtual_Models', doc.Step_Virtual_Models)
+                    doc.getObject("Board").addObject(doc.Step_Virtual_Models)
+                    doc.getObject("Board").Label=fname
+                    try:
+                        doc.getObject("Board").License=''
+                        doc.getObject("Board").LicenseURL=''
+                    except:
+                        pass
+                    ## end hierarchy
+                elif use_LinkGroups:
+                    doc.Tip = doc.addObject('App::LinkGroup','Step_Models')
+                    doc.Step_Models.Label = 'Step_Models'
+                    doc.Tip = doc.addObject('App::LinkGroup','Step_Virtual_Models')
+                    doc.Step_Virtual_Models.Label = 'Step_Virtual_Models'
+                    doc.addObject('App::LinkGroup','Top')
+                    doc.Top.Label = 'Top'
+                    doc.addObject('App::LinkGroup','Bot')
+                    doc.Bot.Label = 'Bot'
+                    doc.addObject('App::LinkGroup','TopV')
+                    doc.TopV.Label = 'TopV'
+                    doc.addObject('App::LinkGroup','BotV')
+                    doc.BotV.Label = 'BotV'
+                    #doc.getObject('Top').adjustRelativeLinks(doc.getObject('Step_Models'))
+                    doc.getObject('Step_Models').ViewObject.dropObject(doc.getObject('Top'),None,'',[])
+                    #doc.getObject('TopV').adjustRelativeLinks(doc.getObject('Step_Virtual_Models'))
+                    doc.getObject('Step_Virtual_Models').ViewObject.dropObject(doc.getObject('TopV'),None,'',[])
+                    #doc.getObject('Bot').adjustRelativeLinks(doc.getObject('Step_Models'))
+                    doc.getObject('Step_Models').ViewObject.dropObject(doc.getObject('Bot'),None,'',[])
+                    #doc.getObject('BotV').adjustRelativeLinks(doc.getObject('Step_Virtual_Models'))
+                    doc.getObject('Step_Virtual_Models').ViewObject.dropObject(doc.getObject('BotV'),None,'',[])
+                    #doc.getObject('Step_Models').adjustRelativeLinks(doc.getObject('Board'))
+                    doc.getObject('Board').ViewObject.dropObject(doc.getObject('Step_Models'),None,'',[])
+                    #doc.getObject('Step_Virtual_Models').adjustRelativeLinks(doc.getObject('Board'))
+                    doc.getObject('Board').ViewObject.dropObject(doc.getObject('Step_Virtual_Models'),None,'',[])
+                    FreeCADGui.Selection.clearSelection()
+                else:
+                    #sayerr("creating flat groups")
+                    doc.addObject("App::DocumentObjectGroup", "Step_Models")
+                    doc.addObject("App::DocumentObjectGroup", "Step_Virtual_Models")
+                doc.recompute()
+                say_time()
+                if disable_VBO:
+                    paramGetV = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/View")
+                    VBO_status=paramGetV.GetBool("UseVBO")
+                    #sayerr("checking VBO")
+                    say("VBO status "+str(VBO_status))
+                    if VBO_status:
+                        paramGetV.SetBool("UseVBO",False)
+                        sayw("disabling VBO")
+                    #stop
+                #stop   
+                if disable_PoM_Observer:
+                    #paramGetPoM = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/PartOMagic")
+                    #PoMObs_status=paramGetPoM.GetBool("EnableObserver")
+                    PoMObs_status = False
+                    if Observer.isRunning():
+                        PoMObs_status=True
+                    #if PoMObs_status:
+                        Observer.stop()
+                #    paramGetPoM.SetBool("EnableObserver",False)
+                        sayw("disabling PoM Observer")
+        
+                ##ReadShapeCompoundMode
+                paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
+                ReadShapeCompoundMode_status=paramGetVS.GetBool("ReadShapeCompoundMode")
+                #sayerr("checking ReadShapeCompoundMode")
+                sayw("ReadShapeCompoundMode status "+str(ReadShapeCompoundMode_status))
+                enable_ReadShapeCompoundMode=False
+                if ReadShapeCompoundMode_status and allow_compound=='True':
+                    paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
+                    paramGetVS.SetBool("ReadShapeCompoundMode",False)
+                    sayw("disabling ReadShapeCompoundMode")
+                    enable_ReadShapeCompoundMode=True
+                if not ReadShapeCompoundMode_status and allow_compound=='Simplified':
+                    paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
+                    paramGetVS.SetBool("ReadShapeCompoundMode",True)
+                    sayw("enabling ReadShapeCompoundMode -> Simplified Mode")
+                    enable_ReadShapeCompoundMode=True
+                
+                if load_sketch:
+                    FreeCADGui.ActiveDocument.getObject(newname).Visibility=False # hidden Sketch
+                ##Load 3D models
+                #Load_models(pcbThickness,modules)
+                if (zfit):
+                    FreeCADGui.SendMsgToActiveView("ViewFit")
+                #else:        
+                Load_models(pcbThickness,modules)
+        
+                #enable_ReadShapeCompoundMode=False
+                if enable_ReadShapeCompoundMode:
+                    paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
+                    paramGetVS.SetBool("ReadShapeCompoundMode",ReadShapeCompoundMode_status)
+                    sayw("enabling ReadShapeCompoundMode")
+                if disable_VBO:
+                    if VBO_status:
+                        paramGetV.SetBool("UseVBO",True)
+                        sayw("enabling VBO")
+                if disable_PoM_Observer:
+                    if PoMObs_status:
+                        Observer.start()
+                #    paramGetPoM.SetBool("EnableObserver",True)
+                        sayw("enabling PoM Observer")
+                
+                def find_nth(haystack, needle, n):
+                    start = haystack.find(needle)
+                    while start >= 0 and n > 1:
+                        start = haystack.find(needle, start+len(needle))
+                        n -= 1
+                    return start
+                
+                msg=""
+                n_rpt=0
+                for mod3d in modules:
+                    #say(mod3d)
+                    #for e in mod3d:
+                    #    print e #.decode("utf-8")
+                    #if mod3d[5] is not None:
+                    if mod3d[5] is not "":
+                        say(mod3d[0]);sayw(" error: reset"+mod3d[5])
+                        #stop 
+                        #msg+=""+mod3d[0].decode("utf-8")+" error: "+mod3d[5]+"<br>"
+                        msg+=""+mod3d[0]+"<br>error: "+mod3d[5]+"<br>"
+                        n_rpt=n_rpt+1
+                n_rpt_max=10
+                zf= Timer (0.3,ZoomFitThread)
+                zf.start()
+                if (show_messages==True) and msg!="":
+                    msg="""<b>error in model(s)</b><br>"""+msg
+                    QtGui.QApplication.restoreOverrideCursor()
+                    #print n_rpt,'-',p_rpt
+                    if n_rpt >  n_rpt_max:
+                        p_rpt=find_nth(msg, '<br>', n_rpt_max)
+                        #print n_rpt,'-',p_rpt
+                        reply = QtGui.QMessageBox.information(None,"Info ...",msg[:p_rpt]+'<br><b> . . .</b>')
+                    else:
+                        reply = QtGui.QMessageBox.information(None,"Info ...",msg)
+                
+                #if 'LinkView' in dir(FreeCADGui):
+                #    FreeCADGui.Selection.clearSelection()
+                #    o=FreeCAD.ActiveDocument.getObject('Board')
+                #    #FreeCADGui.Selection.addSelection('Board')
+                #    FreeCADGui.Selection.addSelection(doc.Name,o.Name)
+                #    #import expTree; #import importlib;importlib.reload(expTree)
+                #    #print('collapsing selection')
+                #    #expTree.collS_Tree() #toggle_Tree()
+                #    clps = Timer (3,collaps_Tree)
+                #    clps.start()
+                if export_board_2step:
+                    #say('aliveTrue')
+                    Export2MCAD(blacklisted_model_elements)
+                else:
+                    #say('aliveFalse')
+                    Display_info(blacklisted_model_elements)
+                if (zfit):
+                    FreeCADGui.SendMsgToActiveView("ViewFit")
+            msg="running time: "+str(round(running_time,3))+"sec"    
+            say(msg)
+            zf= Timer (0.3,ZoomFitThread)
             zf.start()
-
-        if use_AppPart and not force_oldGroups and not use_LinkGroups:
-            #sayw("creating hierarchy")
-            ## to evaluate to add App::Part hierarchy
-            doc.Tip = doc.addObject('App::Part','Step_Models')
-            doc.Step_Models.Label = 'Step_Models'
-            doc.Tip = doc.addObject('App::Part','Top')
-            doc.Top.Label = 'Top'
-            doc.Tip = doc.addObject('App::Part','Bot')
-            doc.Bot.Label = 'Bot'
-            doc.getObject("Step_Models").addObject(doc.Top)
-            doc.getObject("Step_Models").addObject(doc.Bot)            
-            try:
-                doc.Step_Models.License = ''
-                doc.Step_Models.LicenseURL = ''
-            except:
-                pass
-            #FreeCADGui.activeView().setActiveObject('Step_Models', doc.Step_Models)
-            doc.getObject("Board").addObject(doc.Step_Models)
-            doc.Tip = doc.addObject('App::Part','Step_Virtual_Models')
-            doc.Step_Virtual_Models.Label = 'Step_Virtual_Models'
-            doc.Tip = doc.addObject('App::Part','TopV')
-            doc.TopV.Label = 'TopV'
-            doc.Tip = doc.addObject('App::Part','BotV')
-            doc.BotV.Label = 'BotV'
-            doc.getObject("Step_Virtual_Models").addObject(doc.TopV)
-            doc.getObject("Step_Virtual_Models").addObject(doc.BotV)            
-            try:
-                doc.Step_Virtual_Models.License = ''
-                doc.Step_Virtual_Models.LicenseURL = ''
-            except:
-                pass
-            FreeCADGui.activeView().setActiveObject('Step_Virtual_Models', doc.Step_Virtual_Models)
-            doc.getObject("Board").addObject(doc.Step_Virtual_Models)
-            doc.getObject("Board").Label=fname
-            try:
-                doc.getObject("Board").License=''
-                doc.getObject("Board").LicenseURL=''
-            except:
-                pass
-            ## end hierarchy
-        elif use_LinkGroups:
-            doc.Tip = doc.addObject('App::LinkGroup','Step_Models')
-            doc.Step_Models.Label = 'Step_Models'
-            doc.Tip = doc.addObject('App::LinkGroup','Step_Virtual_Models')
-            doc.Step_Virtual_Models.Label = 'Step_Virtual_Models'
-            doc.addObject('App::LinkGroup','Top')
-            doc.Top.Label = 'Top'
-            doc.addObject('App::LinkGroup','Bot')
-            doc.Bot.Label = 'Bot'
-            doc.addObject('App::LinkGroup','TopV')
-            doc.TopV.Label = 'TopV'
-            doc.addObject('App::LinkGroup','BotV')
-            doc.BotV.Label = 'BotV'
-            #doc.getObject('Top').adjustRelativeLinks(doc.getObject('Step_Models'))
-            doc.getObject('Step_Models').ViewObject.dropObject(doc.getObject('Top'),None,'',[])
-            #doc.getObject('TopV').adjustRelativeLinks(doc.getObject('Step_Virtual_Models'))
-            doc.getObject('Step_Virtual_Models').ViewObject.dropObject(doc.getObject('TopV'),None,'',[])
-            #doc.getObject('Bot').adjustRelativeLinks(doc.getObject('Step_Models'))
-            doc.getObject('Step_Models').ViewObject.dropObject(doc.getObject('Bot'),None,'',[])
-            #doc.getObject('BotV').adjustRelativeLinks(doc.getObject('Step_Virtual_Models'))
-            doc.getObject('Step_Virtual_Models').ViewObject.dropObject(doc.getObject('BotV'),None,'',[])
-            #doc.getObject('Step_Models').adjustRelativeLinks(doc.getObject('Board'))
-            doc.getObject('Board').ViewObject.dropObject(doc.getObject('Step_Models'),None,'',[])
-            #doc.getObject('Step_Virtual_Models').adjustRelativeLinks(doc.getObject('Board'))
-            doc.getObject('Board').ViewObject.dropObject(doc.getObject('Step_Virtual_Models'),None,'',[])
-            FreeCADGui.Selection.clearSelection()
-        else:
-            #sayerr("creating flat groups")
-            doc.addObject("App::DocumentObjectGroup", "Step_Models")
-            doc.addObject("App::DocumentObjectGroup", "Step_Virtual_Models")
-        doc.recompute()
-        say_time()
-        if disable_VBO:
-            paramGetV = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/View")
-            VBO_status=paramGetV.GetBool("UseVBO")
-            #sayerr("checking VBO")
-            say("VBO status "+str(VBO_status))
-            if VBO_status:
-                paramGetV.SetBool("UseVBO",False)
-                sayw("disabling VBO")
+            zf.cancel()
+            if SketchLayer != 'Edge.Cuts' and SketchLayer is not None:
+                FreeCADGui.ActiveDocument.ActiveView.viewTop()
+            # TB reviewed
+            #if 'LinkView' in dir(FreeCADGui):
+            #    FreeCADGui.Selection.clearSelection()
+            #    o=FreeCAD.ActiveDocument.getObject('Board')
+            #    #FreeCADGui.Selection.addSelection('Board')
+            #    FreeCADGui.Selection.addSelection(doc.Name,o.Name)
+            #    #import expTree; #import importlib;importlib.reload(expTree)
+            #    #print('collapsing selection')
+            #    #expTree.collS_Tree() #toggle_Tree()
+            #    clps = Timer (3,collaps_Tree)
+            #    FreeCADGui.Selection.clearSelection()
+            #    o=FreeCAD.ActiveDocument.getObject('Board')
+            #    #FreeCADGui.Selection.addSelection('Board')
+            #    FreeCADGui.Selection.addSelection(doc.Name,o.Name)
+            #    #collaps_Tree()
+            #    clps.start()
+            
+            #say_time()
             #stop
-        #stop   
-        if disable_PoM_Observer:
-            #paramGetPoM = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/PartOMagic")
-            #PoMObs_status=paramGetPoM.GetBool("EnableObserver")
-            PoMObs_status = False
-            if Observer.isRunning():
-                PoMObs_status=True
-            #if PoMObs_status:
-                Observer.stop()
-        #    paramGetPoM.SetBool("EnableObserver",False)
-                sayw("disabling PoM Observer")
-
-        ##ReadShapeCompoundMode
-        paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
-        ReadShapeCompoundMode_status=paramGetVS.GetBool("ReadShapeCompoundMode")
-        #sayerr("checking ReadShapeCompoundMode")
-        sayw("ReadShapeCompoundMode status "+str(ReadShapeCompoundMode_status))
-        enable_ReadShapeCompoundMode=False
-        if ReadShapeCompoundMode_status and allow_compound=='True':
-            paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
-            paramGetVS.SetBool("ReadShapeCompoundMode",False)
-            sayw("disabling ReadShapeCompoundMode")
-            enable_ReadShapeCompoundMode=True
-        if not ReadShapeCompoundMode_status and allow_compound=='Simplified':
-            paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
-            paramGetVS.SetBool("ReadShapeCompoundMode",True)
-            sayw("enabling ReadShapeCompoundMode -> Simplified Mode")
-            enable_ReadShapeCompoundMode=True
-        
-        if load_sketch:
-            FreeCADGui.ActiveDocument.getObject("PCB_Sketch").Visibility=False # hidden Sketch
-        ##Load 3D models
-        #Load_models(pcbThickness,modules)
-        if (zfit):
-            FreeCADGui.SendMsgToActiveView("ViewFit")
-        #else:        
-        Load_models(pcbThickness,modules)
-
-        #enable_ReadShapeCompoundMode=False
-        if enable_ReadShapeCompoundMode:
-            paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
-            paramGetVS.SetBool("ReadShapeCompoundMode",ReadShapeCompoundMode_status)
-            sayw("enabling ReadShapeCompoundMode")
-        if disable_VBO:
-            if VBO_status:
-                paramGetV.SetBool("UseVBO",True)
-                sayw("enabling VBO")
-        if disable_PoM_Observer:
-            if PoMObs_status:
-                Observer.start()
-        #    paramGetPoM.SetBool("EnableObserver",True)
-                sayw("enabling PoM Observer")
-        
-        def find_nth(haystack, needle, n):
-            start = haystack.find(needle)
-            while start >= 0 and n > 1:
-                start = haystack.find(needle, start+len(needle))
-                n -= 1
-            return start
-        
-        msg=""
-        n_rpt=0
-        for mod3d in modules:
-            #say(mod3d)
-            #for e in mod3d:
-            #    print e #.decode("utf-8")
-            #if mod3d[5] is not None:
-            if mod3d[5] is not "":
-                say(mod3d[0]);sayw(" error: reset"+mod3d[5])
-                #stop 
-                #msg+=""+mod3d[0].decode("utf-8")+" error: "+mod3d[5]+"<br>"
-                msg+=""+mod3d[0]+"<br>error: "+mod3d[5]+"<br>"
-                n_rpt=n_rpt+1
-        n_rpt_max=10
-        zf= Timer (0.3,ZoomFitThread)
-        zf.start()
-        if (show_messages==True) and msg!="":
-            msg="""<b>error in model(s)</b><br>"""+msg
-            QtGui.QApplication.restoreOverrideCursor()
-            #print n_rpt,'-',p_rpt
-            if n_rpt >  n_rpt_max:
-                p_rpt=find_nth(msg, '<br>', n_rpt_max)
-                #print n_rpt,'-',p_rpt
-                reply = QtGui.QMessageBox.information(None,"Info ...",msg[:p_rpt]+'<br><b> . . .</b>')
-            else:
-                reply = QtGui.QMessageBox.information(None,"Info ...",msg)
-        
-        #if 'LinkView' in dir(FreeCADGui):
-        #    FreeCADGui.Selection.clearSelection()
-        #    o=FreeCAD.ActiveDocument.getObject('Board')
-        #    #FreeCADGui.Selection.addSelection('Board')
-        #    FreeCADGui.Selection.addSelection(doc.Name,o.Name)
-        #    #import expTree; #import importlib;importlib.reload(expTree)
-        #    #print('collapsing selection')
-        #    #expTree.collS_Tree() #toggle_Tree()
-        #    clps = Timer (3,collaps_Tree)
-        #    clps.start()
-        if export_board_2step:
-            #say('aliveTrue')
-            Export2MCAD(blacklisted_model_elements)
-        else:
-            #say('aliveFalse')
-            Display_info(blacklisted_model_elements)
-        if (zfit):
-            FreeCADGui.SendMsgToActiveView("ViewFit")
-        msg="running time: "+str(round(running_time,3))+"sec"    
-        say(msg)
-        zf.cancel()
-        # TB reviewed
-        #if 'LinkView' in dir(FreeCADGui):
-        #    FreeCADGui.Selection.clearSelection()
-        #    o=FreeCAD.ActiveDocument.getObject('Board')
-        #    #FreeCADGui.Selection.addSelection('Board')
-        #    FreeCADGui.Selection.addSelection(doc.Name,o.Name)
-        #    #import expTree; #import importlib;importlib.reload(expTree)
-        #    #print('collapsing selection')
-        #    #expTree.collS_Tree() #toggle_Tree()
-        #    clps = Timer (3,collaps_Tree)
-        #    FreeCADGui.Selection.clearSelection()
-        #    o=FreeCAD.ActiveDocument.getObject('Board')
-        #    #FreeCADGui.Selection.addSelection('Board')
-        #    FreeCADGui.Selection.addSelection(doc.Name,o.Name)
-        #    #collaps_Tree()
-        #    clps.start()
-        
-        #say_time()
-        #stop
 ###
 
 def routineR_XYZ(axe,alpha):
@@ -12719,7 +12767,7 @@ def OSCD2Dg_edgestofaces(edges,algo=3,eps=0.001):
 #
 
 ###
-def DrawPCB(mypcb):
+def DrawPCB(mypcb,lyr=None):
     global start_time, use_AppPart, force_oldGroups, min_drill_size
     global addVirtual, load_sketch, off_x, off_y, aux_orig, grid_orig
     global running_time, conv_offs, use_Links, apply_edge_tolerance, simplifyComSolid
@@ -12736,6 +12784,8 @@ def DrawPCB(mypcb):
     ## NB use always float() to guarantee number not string!!!
     max_edges_admitted = 1500 # after this number, no sketcher would be created
     
+    if lyr is None:
+        lyr = 'Edge.Cuts'
     #load_sketch=True
     get_time()
     t0=(running_time)
@@ -12779,18 +12829,18 @@ def DrawPCB(mypcb):
     edg_segms = 0
     sayw('parsing')
     for ln in mypcb.gr_line:
-        if 'Edge.Cuts' in ln.layer:
+        if lyr in ln.layer:
             #say(ln.layer)
             edg_segms+=1
     for ar in mypcb.gr_arc:
-        if 'Edge.Cuts' in ar.layer:
+        if lyr in ar.layer:
             #say(ln.layer)
             edg_segms+=1
     for lp in mypcb.gr_poly:
         #print(lp)
         #print(lp.layer)
         #print(lp.pts)
-        if 'Edge.Cuts' in lp.layer:
+        if lyr in lp.layer:
             #sayerr(lp.layer)
             for p in lp.pts.xy:
                 edg_segms+=1
@@ -12798,7 +12848,7 @@ def DrawPCB(mypcb):
             #stop
             #edg_segms+=1
     for bs in mypcb.gr_curve:
-        if 'Edge.Cuts' in bs.layer:
+        if lyr in bs.layer:
             #sayerr(bs.layer)
             for p in bs.pts.xy:
                 edg_segms+=1
@@ -12852,7 +12902,7 @@ def DrawPCB(mypcb):
        
     for l in mypcb.gr_line: #pcb lines
         #if l.layer != 'Edge.Cuts':
-        if 'Edge.Cuts' not in l.layer:
+        if lyr not in l.layer:
             continue
         #edges.append(Part.makeLine(makeVect(l.start),makeVect(l.end)))
         #say(l.start);say(l.end)
@@ -12872,7 +12922,7 @@ def DrawPCB(mypcb):
             if show_border:
                 Part.show(line1)
     for lp in mypcb.gr_poly: #pcb polylines
-        if 'Edge.Cuts' not in lp.layer:
+        if lyr not in lp.layer:
         # if lp.layer != 'Edge.Cuts':
             continue
         ind = 0
@@ -12904,7 +12954,7 @@ def DrawPCB(mypcb):
     #bsplines
     for bs in mypcb.gr_curve:
         # if bs.layer != 'Edge.Cuts':
-        if 'Edge.Cuts' not in bs.layer:
+        if lyr not in bs.layer:
             continue
         ind = 0
         #sayerr(bs.layer)
@@ -12951,7 +13001,7 @@ def DrawPCB(mypcb):
     ## NB use always float() to guarantee number not string!!!
     for a in mypcb.gr_arc: #pcb arcs
         # if a.layer != 'Edge.Cuts':
-        if 'Edge.Cuts' not in a.layer:
+        if lyr not in a.layer:
             continue
         # for gr_arc, 'start' is actual the center, and 'end' is the start
         #edges.append(makeArc(makeVect(l.start),makeVect(l.end),l.angle))
@@ -12999,7 +13049,7 @@ def DrawPCB(mypcb):
     ## NB use always float() to guarantee number not string!!!
     for c in mypcb.gr_circle: #pcb circles
         # if c.layer != 'Edge.Cuts':
-        if 'Edge.Cuts' not in c.layer:
+        if lyr not in c.layer:
             continue
         [xs, ys] = c.center
         [x1, y1] = c.end
@@ -13073,75 +13123,75 @@ def DrawPCB(mypcb):
         #get_time()
         #say('adding Geo time ' +str(running_time-t0))
         #FreeCAD.ActiveDocument.addObject("Part::Face", "Face").Sources = (FreeCAD.ActiveDocument.getObject(new_skt.Name), )
-    
-    if make_face:
-        if len(FreeCAD.ActiveDocument.PCB_Sketch_draft.Geometry)>0:
-            if addConstraints!='none' and not dont_use_constraints:
-                say('start adding constraints to pcb sketch')
-                get_time()
-                t0=(running_time)
-                if hasattr (FreeCAD.ActiveDocument.getObject("PCB_Sketch_draft"), "autoconstraint"):
-                    if addConstraints=='full':
-                        FreeCAD.ActiveDocument.getObject("PCB_Sketch_draft").autoconstraint(edge_tolerance*5,0.01)
+    if lyr == 'Edge.Cuts':
+        if make_face:
+            if len(FreeCAD.ActiveDocument.PCB_Sketch_draft.Geometry)>0:
+                if addConstraints!='none' and not dont_use_constraints:
+                    say('start adding constraints to pcb sketch')
+                    get_time()
+                    t0=(running_time)
+                    if hasattr (FreeCAD.ActiveDocument.getObject("PCB_Sketch_draft"), "autoconstraint"):
+                        if addConstraints=='full':
+                            FreeCAD.ActiveDocument.getObject("PCB_Sketch_draft").autoconstraint(edge_tolerance*5,0.01)
+                        else:
+                            add_constraints("PCB_Sketch_draft")
                     else:
                         add_constraints("PCB_Sketch_draft")
+                    get_time()
+                    #say('adding constraints time ' +str(running_time-t0))
+                    say('adding constraints time ' + "{0:.3f}".format(running_time-t0))
+                if 0: #dont_use_constraints:
+                    sayw('adding missing geometry')
+                    add_missing_geo("PCB_Sketch_draft")
+                    #stop
+                    
+                make_face_mode = 1
+                FreeCAD.ActiveDocument.recompute()
+                if make_face_mode == 1:  ## face creation method
+                    shsk = FreeCAD.ActiveDocument.PCB_Sketch_draft.Shape.copy()
+                    #Part.show(shsk)
+                    edgs = shsk.Edges
+                    #print(edgs)
+                    if len(edgs)== 0:
+                        sayerr('No edges found for pcb!!!')
+                        stop
+                    if 1:
+                        s_PCB_Sketch_draft = OSCD2Dg_edgestofaces(edgs,3 , edge_tolerance)
+                    if 0:
+                        import OpenSCAD2Dgeom
+                        s_PCB_Sketch_draft = OpenSCAD2Dgeom.edgestofaces(Part.__sortEdges__(edgs))
+                    Part.show(s_PCB_Sketch_draft)
+                    Face_PCB_Sketch_draft = FreeCAD.ActiveDocument.ActiveObject
+                    s_PCB_Sketch_draft = Face_PCB_Sketch_draft.Shape.copy()
+                    ## OpenSCAD2Dgeom.edgestofaces(edgs)
+                    
                 else:
-                    add_constraints("PCB_Sketch_draft")
-                get_time()
-                #say('adding constraints time ' +str(running_time-t0))
-                say('adding constraints time ' + "{0:.3f}".format(running_time-t0))
-            if 0: #dont_use_constraints:
-                sayw('adding missing geometry')
-                add_missing_geo("PCB_Sketch_draft")
-                #stop
+                    FreeCAD.ActiveDocument.addObject("Part::Face", "Face_PCB_Sketch_draft").Sources = (FreeCAD.ActiveDocument.PCB_Sketch_draft, )
+                    FreeCAD.ActiveDocument.recompute()
+                    s_PCB_Sketch_draft = FreeCAD.ActiveDocument.getObject("Face_PCB_Sketch_draft").Shape.copy()
+                    
+                #s_PCB_Sketch_draft = s.copy()
+                sayw ('created PCB face w/ edge tolerance -> '+str(edge_tolerance)+' mm')
+                if aux_orig ==1 or grid_orig ==1:
+                    s_PCB_Sketch_draft.translate((off_x, off_y,0))
+                #else:
+                #    s_PCB_Sketch_draft.translate(xs, ys,0)
+                #if use_Links:
+                #Part.show(s_PCB_Sketch_draft)
+                if make_face_mode == 1:  ## face creation method
+                    FreeCAD.ActiveDocument.removeObject(Face_PCB_Sketch_draft.Name)
+                    FreeCAD.ActiveDocument.recompute()
+                else:
+                    FreeCAD.ActiveDocument.removeObject("Face_PCB_Sketch_draft")
+                    FreeCAD.ActiveDocument.recompute()
                 
-            make_face_mode = 1
-            FreeCAD.ActiveDocument.recompute()
-            if make_face_mode == 1:  ## face creation method
-                shsk = FreeCAD.ActiveDocument.PCB_Sketch_draft.Shape.copy()
-                #Part.show(shsk)
-                edgs = shsk.Edges
-                #print(edgs)
-                if len(edgs)== 0:
-                    sayerr('No edges found for pcb!!!')
-                    stop
-                if 1:
-                    s_PCB_Sketch_draft = OSCD2Dg_edgestofaces(edgs,3 , edge_tolerance)
-                if 0:
-                    import OpenSCAD2Dgeom
-                    s_PCB_Sketch_draft = OpenSCAD2Dgeom.edgestofaces(Part.__sortEdges__(edgs))
-                Part.show(s_PCB_Sketch_draft)
-                Face_PCB_Sketch_draft = FreeCAD.ActiveDocument.ActiveObject
-                s_PCB_Sketch_draft = Face_PCB_Sketch_draft.Shape.copy()
-                ## OpenSCAD2Dgeom.edgestofaces(edgs)
-                
+                #FreeCAD.ActiveDocument.addObject("Part::Face", "Face").Sources = (FreeCAD.ActiveDocument.PCB_Sketch_draft001, )
+                if (zfit):
+                    FreeCADGui.SendMsgToActiveView("ViewFit")
+                cut_base = s_PCB_Sketch_draft
             else:
-                FreeCAD.ActiveDocument.addObject("Part::Face", "Face_PCB_Sketch_draft").Sources = (FreeCAD.ActiveDocument.PCB_Sketch_draft, )
-                FreeCAD.ActiveDocument.recompute()
-                s_PCB_Sketch_draft = FreeCAD.ActiveDocument.getObject("Face_PCB_Sketch_draft").Shape.copy()
-                
-            #s_PCB_Sketch_draft = s.copy()
-            sayw ('created PCB face w/ edge tolerance -> '+str(edge_tolerance)+' mm')
-            if aux_orig ==1 or grid_orig ==1:
-                s_PCB_Sketch_draft.translate((off_x, off_y,0))
-            #else:
-            #    s_PCB_Sketch_draft.translate(xs, ys,0)
-            #if use_Links:
-            #Part.show(s_PCB_Sketch_draft)
-            if make_face_mode == 1:  ## face creation method
-                FreeCAD.ActiveDocument.removeObject(Face_PCB_Sketch_draft.Name)
-                FreeCAD.ActiveDocument.recompute()
-            else:
-                FreeCAD.ActiveDocument.removeObject("Face_PCB_Sketch_draft")
-                FreeCAD.ActiveDocument.recompute()
-            
-            #FreeCAD.ActiveDocument.addObject("Part::Face", "Face").Sources = (FreeCAD.ActiveDocument.PCB_Sketch_draft001, )
-            if (zfit):
-                FreeCADGui.SendMsgToActiveView("ViewFit")
-            cut_base = s_PCB_Sketch_draft
-        else:
-            sayerr('empty sketch; module edge board: creating PCB from Footprint Edge.Cuts')
-            create_pcb_from_edges = True
+                sayerr('empty sketch; module edge board: creating PCB from Footprint Edge.Cuts')
+                create_pcb_from_edges = True
     
     LCS = None
     #if aux_orig ==1 or grid_orig ==1:
@@ -13160,549 +13210,583 @@ def DrawPCB(mypcb):
     
     #FreeCADGui.SendMsgToActiveView("ViewFit")
     #stop
-    TopPadList=[]
-    BotPadList=[]
-    HoleList=[]
-    THPList=[]
-    ## NB use always float() to guarantee number not string!!!
-    warn=""
-    PCB_Models = []
-    for m in mypcb.module:  #parsing modules  #check top/bottom for placing 3D models
-        #print(m.tstamp);print(m.fp_text[0][1])
-        #stop
-        if len(m.at)==2:
-            m_angle=0
-        else:
-            m_angle=m.at[2]
-        m_at=[m.at[0],-m.at[1]] #y reversed
-        #say(m.layer);stop
-        #HoleList = getPads(board_elab,pcbThickness)
-        # pad
-        virtual=0
-        if hasattr(m, 'attr'):
-            if 'virtual' in m.attr:
-                #say('virtual module')
-                virtual=1
-        else:
+    if lyr == 'Edge.Cuts':
+        TopPadList=[]
+        BotPadList=[]
+        HoleList=[]
+        THPList=[]
+        ## NB use always float() to guarantee number not string!!!
+        warn=""
+        PCB_Models = []
+        for m in mypcb.module:  #parsing modules  #check top/bottom for placing 3D models
+            #print(m.tstamp);print(m.fp_text[0][1])
+            #stop
+            if len(m.at)==2:
+                m_angle=0
+            else:
+                m_angle=m.at[2]
+            m_at=[m.at[0],-m.at[1]] #y reversed
+            #say(m.layer);stop
+            #HoleList = getPads(board_elab,pcbThickness)
+            # pad
             virtual=0
-        m_x = float(m.at[0])
-        m_y = float(m.at[1]) * (-1)
-        m_rot = float(m_angle)
-        
-        #sayw(m.layer);sayerr(LvlTopName)
-        if m.layer == LvlTopName:  # top
-            side = "Top"
-            #sayw('top ' + m.layer)
-        else:
-            side = "Bottom"
-            m_rot *= -1 ##bottom 3d model rotation
-            #sayw('bot ' + m.layer)
-
-        n_md=1
-        for md in m.model:
-            #say (md[0]) #model name
-            #say(md.at.xyz)
-            #say(md.scale.xyz)
-            #say(md.rotate.xyz)
-            error_scale_module=False
-            #say('scale ');sayw(scale_vrml)#;
-            #error_scale_module=False
-            xsc_vrml_val=md.scale.xyz[0]
-            ysc_vrml_val=md.scale.xyz[1]
-            zsc_vrml_val=md.scale.xyz[2]        
-            # if scale_vrml!='1 1 1':
-            if float(xsc_vrml_val)!=1 or float(ysc_vrml_val)!=1 or float(zsc_vrml_val)!=1:
-                if "box_mcad" not in md[0] and "cylV_mcad" not in md[0] and "cylH_mcad" not in md[0]:
-                    sayw('wrong scale!!! set scale to (1 1 1)')
-                error_scale_module=True
-            #model_list.append(mdl_name[0])
-            #model=model_list[j]+'.wrl'
-            #if py2:
-            if sys.version_info[0] == 2: #py2
-                model=md[0].decode("utf-8")
-                #stop
-            else: #py3
-                model=md[0] # py3 .decode("utf-8")
-            #print (model, ' MODEL', type(model)) #maui test py3
-            if (virtual==1 and addVirtual==0):
-                model_name='no3Dmodel'
-                side='noLayer'
-                if model:
-                    sayw("virtual model "+model+" skipped") #virtual found warning
+            if hasattr(m, 'attr'):
+                if 'virtual' in m.attr:
+                    #say('virtual module')
+                    virtual=1
             else:
-                if model:
-                    model_name=model
-                    #sayw(model_name)
-                    warn=""
-                    if "box_mcad" not in model_name and "cylV_mcad" not in model_name and "cylH_mcad" not in model_name:
-                        if error_scale_module:
-                            sayw('wrong scale!!! for '+model_name+' Set scale to (1 1 1)')
-                            msg="""<b>Error in '.kicad_pcb' model footprint</b><br>"""
-                            msg+="<br>reset values of<br><b>"+model_name+"</b><br> to:<br>"
-                            msg+="(scale (xyz 1 1 1))<br>"
-                            #warn+=("reset values of scale to (xyz 1 1 1)")
-                            warn=("reset values of scale to (xyz 1 1 1)")
-                            ##reply = QtGui.QMessageBox.information(None,"info", msg)
-                            #stop
-                    #model_name=model_name[1:]
-                    #say(model_name)
-                    #sayw("here")
-                else:
-                    model_name='no3Dmodel'  #to do how to manage no3Dmodel
+                virtual=0
+            m_x = float(m.at[0])
+            m_y = float(m.at[1]) * (-1)
+            m_rot = float(m_angle)
+            
+            #sayw(m.layer);sayerr(LvlTopName)
+            if m.layer == LvlTopName:  # top
+                side = "Top"
+                #sayw('top ' + m.layer)
+            else:
+                side = "Bottom"
+                m_rot *= -1 ##bottom 3d model rotation
+                #sayw('bot ' + m.layer)
+    
+            n_md=1
+            for md in m.model:
+                #say (md[0]) #model name
+                #say(md.at.xyz)
+                #say(md.scale.xyz)
+                #say(md.rotate.xyz)
+                error_scale_module=False
+                #say('scale ');sayw(scale_vrml)#;
+                #error_scale_module=False
+                xsc_vrml_val=md.scale.xyz[0]
+                ysc_vrml_val=md.scale.xyz[1]
+                zsc_vrml_val=md.scale.xyz[2]        
+                # if scale_vrml!='1 1 1':
+                if float(xsc_vrml_val)!=1 or float(ysc_vrml_val)!=1 or float(zsc_vrml_val)!=1:
+                    if "box_mcad" not in md[0] and "cylV_mcad" not in md[0] and "cylH_mcad" not in md[0]:
+                        sayw('wrong scale!!! set scale to (1 1 1)')
+                    error_scale_module=True
+                #model_list.append(mdl_name[0])
+                #model=model_list[j]+'.wrl'
+                #if py2:
+                if sys.version_info[0] == 2: #py2
+                    model=md[0].decode("utf-8")
+                    #stop
+                else: #py3
+                    model=md[0] # py3 .decode("utf-8")
+                #print (model, ' MODEL', type(model)) #maui test py3
+                if (virtual==1 and addVirtual==0):
+                    model_name='no3Dmodel'
                     side='noLayer'
-                    sayerr('no3Dmodel')
-                mdl_name=model_name # re.findall(r'(.+?)\.wrl',params)
-                #if virtual == 1:
-                #    sayerr("virtual model(s)");sayw(mdl_name)
-                # sayw(mdl_name)
-                # sayerr(params)
-                if len(mdl_name) > 0:
-                    # model_name, rot_comb, warn, pos_vrml, rotz_vrml, scale_vrml = get3DParams(mdl_name,params, rot, virtual)
-                    #sayerr(md.at.xyz)
-                    if conv_offs != 1: #pcb version >= 20171114 (offset wrl in mm)
-                        if hasattr(md,'at'):
-                            ofs=[md.at.xyz[0]/conv_offs,md.at.xyz[1]/conv_offs,md.at.xyz[2]/conv_offs]
-                        if hasattr(md,'offset'):
-                            ofs=[md.offset.xyz[0]/conv_offs,md.offset.xyz[1]/conv_offs,md.offset.xyz[2]/conv_offs]
+                    if model:
+                        sayw("virtual model "+model+" skipped") #virtual found warning
+                else:
+                    if model:
+                        model_name=model
+                        #sayw(model_name)
+                        warn=""
+                        if "box_mcad" not in model_name and "cylV_mcad" not in model_name and "cylH_mcad" not in model_name:
+                            if error_scale_module:
+                                sayw('wrong scale!!! for '+model_name+' Set scale to (1 1 1)')
+                                msg="""<b>Error in '.kicad_pcb' model footprint</b><br>"""
+                                msg+="<br>reset values of<br><b>"+model_name+"</b><br> to:<br>"
+                                msg+="(scale (xyz 1 1 1))<br>"
+                                #warn+=("reset values of scale to (xyz 1 1 1)")
+                                warn=("reset values of scale to (xyz 1 1 1)")
+                                ##reply = QtGui.QMessageBox.information(None,"info", msg)
+                                #stop
+                        #model_name=model_name[1:]
+                        #say(model_name)
+                        #sayw("here")
                     else:
-                        ofs=md.at.xyz
-                    line = []
-                    line.append(model_name)
-                    line.append(m_x)
-                    line.append(m_y)
-                    line.append(m_rot-md.rotate.xyz[2])
-                    line.append(side)
-                    line.append(warn)
-                    line.append(ofs) #(md.at.xyz) #pos_vrml)
-                    line.append(md.rotate.xyz) #rotz_vrml)
-                    #sayerr(rotz_vrml)
-                    line.append(md.scale.xyz) #scale_vrml)
-                    line.append(virtual)
-                    if hasattr(m,'tstamp'):
-                        line.append(m.tstamp) # fp tstamp
-                    else:
-                        sayw('missing \'TimeStamp\'')
-                        line.append('null')
-                    line.append(m.fp_text[0][1]) #fp reference
-                    line.append(n_md) #number of models in module
-                    PCB_Models.append(line)
-                    n_md+=1
-       
-        pads = []
-        for p in m.pad:
-            if 'drill' not in p:
-                continue                    
-            #say('drill present')
-            #say (p.at)
-            if len(p.at)>2:
-                #say ('angle '+str(p.at[2]))
-                p_angle=p.at[2]
-            else:
-                p_angle=0.0
-            #say('drill');say(p.drill)
-            #say('drill size');
-            drill_present=False
-            try:
-                tmp=p.drill[0]
-                drill_present=True
-            except:
-                sayerr('drill size missing');
-            #print p.drill.oval
-            #if p.drill.oval:
-            #    if p.drill[0] < min_drill_size and p.drill[1] < min_drill_size:
-            #        continue   
-            #else:
-            #    if p.drill[0] < min_drill_size:
-            #        continue
-            if 'offset' in p.drill:
-                #say('offset');say(p.drill.offset)
-                offset=p.drill.offset
-            else:
-                #say('offset not present')
-                offset=[0,0]
-            #say ( p)
-            #if 'circle' in p[2]:
-            ## NB use always float() to guarantee number not string!!!
-            if drill_present:
-                #sayerr(p.drill);
-                #sayw(p.drill.oval)
-                #if p.drill.oval is not None
-                #if len(p.drill)>1:
-                #    if p.drill[1] == 'oval':
-                #        drill_oval=True
-                # drill_oval=False
-                # myidx=0
-                # for dct in p.drill:
-                #     #print(dct,' ',myidx)
-                #     if dct == 'oval' and myidx == 0:
-                #         drill_oval=True
-                #     myidx+=1
-                # if drill_oval:
-                #print (p.drill);print(p.drill.oval);print(str(p.drill).split(',')[0])
-                #if p.drill.oval is not None:
-                if 'oval' in str(p.drill).split(',')[0]:  #py3 dict workaround
-                #if p.drill.oval:  #maui temp workaround errorchecking
-                    #sayw(str(p.drill.oval))
-                    #sayw('drill oval')
-                    if p.drill[0] >= min_drill_size or p.drill[1] >= min_drill_size:
+                        model_name='no3Dmodel'  #to do how to manage no3Dmodel
+                        side='noLayer'
+                        sayerr('no3Dmodel')
+                    mdl_name=model_name # re.findall(r'(.+?)\.wrl',params)
+                    #if virtual == 1:
+                    #    sayerr("virtual model(s)");sayw(mdl_name)
+                    # sayw(mdl_name)
+                    # sayerr(params)
+                    if len(mdl_name) > 0:
+                        # model_name, rot_comb, warn, pos_vrml, rotz_vrml, scale_vrml = get3DParams(mdl_name,params, rot, virtual)
+                        #sayerr(md.at.xyz)
+                        if conv_offs != 1: #pcb version >= 20171114 (offset wrl in mm)
+                            if hasattr(md,'at'):
+                                ofs=[md.at.xyz[0]/conv_offs,md.at.xyz[1]/conv_offs,md.at.xyz[2]/conv_offs]
+                            if hasattr(md,'offset'):
+                                ofs=[md.offset.xyz[0]/conv_offs,md.offset.xyz[1]/conv_offs,md.offset.xyz[2]/conv_offs]
+                        else:
+                            ofs=md.at.xyz
+                        line = []
+                        line.append(model_name)
+                        line.append(m_x)
+                        line.append(m_y)
+                        line.append(m_rot-md.rotate.xyz[2])
+                        line.append(side)
+                        line.append(warn)
+                        line.append(ofs) #(md.at.xyz) #pos_vrml)
+                        line.append(md.rotate.xyz) #rotz_vrml)
+                        #sayerr(rotz_vrml)
+                        line.append(md.scale.xyz) #scale_vrml)
+                        line.append(virtual)
+                        if hasattr(m,'tstamp'):
+                            line.append(m.tstamp) # fp tstamp
+                        else:
+                            sayw('missing \'TimeStamp\'')
+                            line.append('null')
+                        line.append(m.fp_text[0][1]) #fp reference
+                        line.append(n_md) #number of models in module
+                        PCB_Models.append(line)
+                        n_md+=1
+        
+            pads = []
+            for p in m.pad:
+                if 'drill' not in p:
+                    continue                    
+                #say('drill present')
+                #say (p.at)
+                if len(p.at)>2:
+                    #say ('angle '+str(p.at[2]))
+                    p_angle=p.at[2]
+                else:
+                    p_angle=0.0
+                #say('drill');say(p.drill)
+                #say('drill size');
+                drill_present=False
+                try:
+                    tmp=p.drill[0]
+                    drill_present=True
+                except:
+                    sayerr('drill size missing');
+                #print p.drill.oval
+                #if p.drill.oval:
+                #    if p.drill[0] < min_drill_size and p.drill[1] < min_drill_size:
+                #        continue   
+                #else:
+                #    if p.drill[0] < min_drill_size:
+                #        continue
+                if 'offset' in p.drill:
+                    #say('offset');say(p.drill.offset)
+                    offset=p.drill.offset
+                else:
+                    #say('offset not present')
+                    offset=[0,0]
+                #say ( p)
+                #if 'circle' in p[2]:
+                ## NB use always float() to guarantee number not string!!!
+                if drill_present:
+                    #sayerr(p.drill);
+                    #sayw(p.drill.oval)
+                    #if p.drill.oval is not None
+                    #if len(p.drill)>1:
+                    #    if p.drill[1] == 'oval':
+                    #        drill_oval=True
+                    # drill_oval=False
+                    # myidx=0
+                    # for dct in p.drill:
+                    #     #print(dct,' ',myidx)
+                    #     if dct == 'oval' and myidx == 0:
+                    #         drill_oval=True
+                    #     myidx+=1
+                    # if drill_oval:
+                    #print (p.drill);print(p.drill.oval);print(str(p.drill).split(',')[0])
+                    #if p.drill.oval is not None:
+                    if 'oval' in str(p.drill).split(',')[0]:  #py3 dict workaround
+                    #if p.drill.oval:  #maui temp workaround errorchecking
+                        #sayw(str(p.drill.oval))
+                        #sayw('drill oval')
+                        if p.drill[0] >= min_drill_size or p.drill[1] >= min_drill_size:
+                            xs=p.at[0]+m.at[0];ys=-p.at[1]-m.at[1]
+                            #x1=mc.end[0]+m.at[0];y1=-mc.end[1]-m.at[1]
+                            #radius = float(p.drill[0])/2 #sqrt((xs - x1) ** 2 + (ys - y1) ** 2)
+                            rx=float(p.drill[0])
+                            #print (p.drill)
+                            if len(p.drill)>2:
+                                try:
+                                    #print (p.drill[1])
+                                    #stop
+                                    ry=float(p.drill[1])
+                                except:
+                                    ry=rx
+                            else:
+                                ry=rx
+                            #print(p.at[0],p.at[1], p.drill[0])
+                            [x1, y1] = rotPoint2([xs, ys], [m.at[0], -m.at[1]], m_angle)
+                            # sayw('holes solid '+str(holes_solid))
+                            if holes_solid:
+                                obj=createHole3(x1,y1,rx,ry,"oval",totalHeight) #need to be separated instructions   
+                            else:
+                                obj=createHole4(x1,y1,rx,ry,"oval") #need to be separated instructions   
+                            if p_angle!=0:
+                                rotateObj(obj, [x1, y1, p_angle])
+                            HoleList.append(obj)
+                    #elif p.drill[0]!=0: #circle drill hole
+                    elif p.drill[0] >= min_drill_size:
+                        #xs=p.at[0]+offset[0]+m.at[0];ys=-p.at[1]-offset[1]-m.at[1]
                         xs=p.at[0]+m.at[0];ys=-p.at[1]-m.at[1]
                         #x1=mc.end[0]+m.at[0];y1=-mc.end[1]-m.at[1]
-                        #radius = float(p.drill[0])/2 #sqrt((xs - x1) ** 2 + (ys - y1) ** 2)
-                        rx=float(p.drill[0])
-                        #print (p.drill)
-                        if len(p.drill)>2:
-                            try:
-                                #print (p.drill[1])
-                                #stop
-                                ry=float(p.drill[1])
-                            except:
-                                ry=rx
-                        else:
-                            ry=rx
+                        radius = float(p.drill[0])#/2 #sqrt((xs - x1) ** 2 + (ys - y1) ** 2)
+                        rx=radius;ry=radius
                         #print(p.at[0],p.at[1], p.drill[0])
                         [x1, y1] = rotPoint2([xs, ys], [m.at[0], -m.at[1]], m_angle)
-                        # sayw('holes solid '+str(holes_solid))
                         if holes_solid:
-                            obj=createHole3(x1,y1,rx,ry,"oval",totalHeight) #need to be separated instructions   
+                            obj=createHole3(x1,y1,rx,ry,"oval",totalHeight) #need to be separated instructions
                         else:
-                            obj=createHole4(x1,y1,rx,ry,"oval") #need to be separated instructions   
-                        if p_angle!=0:
-                            rotateObj(obj, [x1, y1, p_angle])
-                        HoleList.append(obj)
-                #elif p.drill[0]!=0: #circle drill hole
-                elif p.drill[0] >= min_drill_size:
-                    #xs=p.at[0]+offset[0]+m.at[0];ys=-p.at[1]-offset[1]-m.at[1]
-                    xs=p.at[0]+m.at[0];ys=-p.at[1]-m.at[1]
-                    #x1=mc.end[0]+m.at[0];y1=-mc.end[1]-m.at[1]
-                    radius = float(p.drill[0])#/2 #sqrt((xs - x1) ** 2 + (ys - y1) ** 2)
-                    rx=radius;ry=radius
-                    #print(p.at[0],p.at[1], p.drill[0])
-                    [x1, y1] = rotPoint2([xs, ys], [m.at[0], -m.at[1]], m_angle)
-                    if holes_solid:
-                        obj=createHole3(x1,y1,rx,ry,"oval",totalHeight) #need to be separated instructions
-                    else:
-                        obj=createHole4(x1,y1,rx,ry,"oval") #need to be separated instructions
-                    #say(HoleList)
-                    #if p_angle!=0:
-                    #    rotateObj(obj, [x1, y1, p_angle])
-                    #rotateObj(obj, [m.at[0], m.at[1], m_angle])
-                    HoleList.append(obj)   
-                ##pads.append({'x': x, 'y': y, 'rot': rot, 'padType': pType, 'padShape': pShape, 'rx': drill_x, 'ry': drill_y, 'dx': dx, 'dy': dy, 'holeType': hType, 'xOF': xOF, 'yOF': yOF, 'layers': layers})        
-                #stop
-        for ml in m.fp_line:
-            # if ml.layer != 'Edge.Cuts':
-            if 'Edge.Cuts' not in ml.layer:
-                continue
-            #print ml.start,ml.end
-            x1=ml.start[0]+m.at[0];y1=-ml.start[1]-m.at[1]
-            x2=ml.end[0]+m.at[0];y2=-ml.end[1]-m.at[1]
-            [x1, y1] = rotPoint2([x1,y1], [m.at[0], -m.at[1]], m_angle)
-            [x2, y2] = rotPoint2([x2,y2], [m.at[0], -m.at[1]], m_angle)            
-            if (Base.Vector(x1,y1,0)) != (Base.Vector(x2,y2,0)): #non coincident points
-                line1=Part.Edge(PLine(Base.Vector(x1,y1,0), Base.Vector(x2,y2,0)))
-                edges.append(line1);
-                EdgeCuts.append(line1)
-                PCB.append(['Line', x1, y1, x2, y2])
+                            obj=createHole4(x1,y1,rx,ry,"oval") #need to be separated instructions
+                        #say(HoleList)
+                        #if p_angle!=0:
+                        #    rotateObj(obj, [x1, y1, p_angle])
+                        #rotateObj(obj, [m.at[0], m.at[1], m_angle])
+                        HoleList.append(obj)   
+                    ##pads.append({'x': x, 'y': y, 'rot': rot, 'padType': pType, 'padShape': pShape, 'rx': drill_x, 'ry': drill_y, 'dx': dx, 'dy': dy, 'holeType': hType, 'xOF': xOF, 'yOF': yOF, 'layers': layers})        
+                    #stop
+            for ml in m.fp_line:
+                # if ml.layer != 'Edge.Cuts':
+                if lyr not in ml.layer:
+                    continue
+                #print ml.start,ml.end
+                x1=ml.start[0]+m.at[0];y1=-ml.start[1]-m.at[1]
+                x2=ml.end[0]+m.at[0];y2=-ml.end[1]-m.at[1]
+                [x1, y1] = rotPoint2([x1,y1], [m.at[0], -m.at[1]], m_angle)
+                [x2, y2] = rotPoint2([x2,y2], [m.at[0], -m.at[1]], m_angle)            
+                if (Base.Vector(x1,y1,0)) != (Base.Vector(x2,y2,0)): #non coincident points
+                    line1=Part.Edge(PLine(Base.Vector(x1,y1,0), Base.Vector(x2,y2,0)))
+                    edges.append(line1);
+                    EdgeCuts.append(line1)
+                    PCB.append(['Line', x1, y1, x2, y2])
+                    if show_border:
+                        Part.show(line1)
+            for mc in m.fp_circle:
+                # if mc.layer != 'Edge.Cuts':
+                if lyr not in mc.layer:
+                    continue
+                #print mc.center,mc.end
+                xs=mc.center[0]+m.at[0];ys=-mc.center[1]-m.at[1]
+                x1=mc.end[0]+m.at[0];y1=-mc.end[1]-m.at[1]
+                radius = sqrt((xs - x1) ** 2 + (ys - y1) ** 2)
+                [x1, y1] = rotPoint2([xs, ys], [m.at[0], -m.at[1]], m_angle)
+                circle1=Part.Edge(Part.Circle(Base.Vector(x1, y1,0), Base.Vector(0, 0, 1), radius))
+                circle2=circle1
                 if show_border:
-                    Part.show(line1)
-        for mc in m.fp_circle:
-            # if mc.layer != 'Edge.Cuts':
-            if 'Edge.Cuts' not in mc.layer:
-                continue
-            #print mc.center,mc.end
-            xs=mc.center[0]+m.at[0];ys=-mc.center[1]-m.at[1]
-            x1=mc.end[0]+m.at[0];y1=-mc.end[1]-m.at[1]
-            radius = sqrt((xs - x1) ** 2 + (ys - y1) ** 2)
-            [x1, y1] = rotPoint2([xs, ys], [m.at[0], -m.at[1]], m_angle)
-            circle1=Part.Edge(Part.Circle(Base.Vector(x1, y1,0), Base.Vector(0, 0, 1), radius))
-            circle2=circle1
-            if show_border:
-                Part.show(circle1)
-            circle1=Part.Wire(circle1)
-            circle1=Part.Face(circle1)
-            if show_shapes:
-                Part.show(circle1)
-            say('2d circle closed path')
-            PCBs.append(circle1)
-            EdgeCuts.append(circle2)
-            PCB.append(['Circle', x1, y1, radius])
-            #mod_circles.append (['Circle', x1, y1, e[2]])
-            #PCB.append(['Circle', x1, y1, radius])
-        for ma in m.fp_arc:
-            # if ma.layer != 'Edge.Cuts':
-            if 'Edge.Cuts' not in ma.layer:
-                continue
-            #print ma.start, ma.end, ma.angle           
-            #xs=ma.start[0]+m.at[0];ys=-ma.start[1]-m.at[1]
-            #x1=ma.end[0]+m.at[0];y1=-ma.end[1]-m.at[1]
-            xs=ma.start[0];ys=ma.start[1]
-            x1=ma.end[0];y1=ma.end[1]
-            curve = ma.angle
-            [x2, y2] = rotPoint2([x1, y1], [xs, ys], curve)
-            y1=-y1-m.at[1]; y2=-y2-m.at[1]
-            x1+=m.at[0];x2+=m.at[0]
-            [x1, y1] = rotPoint2([x1, y1], [m.at[0], -m.at[1]], m_angle)
-            [x2, y2] = rotPoint2([x2, y2], [m.at[0], -m.at[1]], m_angle)
-            arc1=Part.Edge(Part.Arc(Base.Vector(x2,y2,0),mid_point(Base.Vector(x2,y2,0),Base.Vector(x1,y1,0),curve),Base.Vector(x1,y1,0)))
-            edges.append(arc1)
-            EdgeCuts.append(arc1)
-            if show_border:
-                Part.show(arc1)
-            PCB.append(['Arc', x1, y1, x2, y2, curve])         
-
-    if len(EdgeCuts) >0 and not create_pcb_from_edges:
-        try:
-            s_PCB_Cuts = OSCD2Dg_edgestofaces(EdgeCuts,3 , edge_tolerance)
-            HoleList.append(s_PCB_Cuts)
-        except:
-            sayerr('error in making footprint Edge Cuts')
-    elif len(EdgeCuts) > 0:
-        try:
-            s_PCB_Cuts = OSCD2Dg_edgestofaces(EdgeCuts,3 , edge_tolerance)
-            #Part.show(s_PCB_Cuts)
-        except:
-            sayerr('error in making PCB from footprint Edge Cuts')
-    
-    if 0:
-        Part.show(s_PCB_Cuts)
-        fc_PCB_Cuts = FreeCAD.ActiveDocument.ActiveObject
-        face_PCB_Cuts = fc_PCB_Cuts.Shape.copy()
-        if aux_orig ==1 or grid_orig ==1:
-            face_PCB_Cuts.translate((-off_x, -off_y,0))
-        Part.show(face_PCB_Cuts)
-    #obj = FreeCAD.ActiveDocument.ActiveObject
-    #stop
-    #HoleList.append(face_PCB_Cuts)
-    #stop PCB_Cuts
-    #sayw(len(HoleList))
-    #say (PCB_Models)
-    #stop
-    
-    #g = App.ActiveDocument.PCB_Sketch.Geometry
-    #g = App.ActiveDocument.PCB_Sketch
-    # For each sketch geometry type, map a list of points to move.
-
-        
-        # Direct access to sketch.Geometry[index] does not work. This would,
-        # however prevent repeated recompute.
-        #for point_index in point_indexes:
-        #    point = PCB_Sketch.getPoint(geom_index, point_index)
-        #    sayerr (point)
-        #    sayw(point[0]);sayw(point[1])
-        #    ## ckeck point coincidence for sketch constrains
-        #    #sketch.movePoint(geom_index, point_index, point)
-        #    
-        #for i, pidx in enumerate(point_indexes):
-        #    for pidx2 in point_indexes[(i + 1):]:
-        #        point = PCB_Sketch.getPoint(geom_index, pidx)
-        #        point2 = PCB_Sketch.getPoint(geom_index, pidx2)
-        #        sayerr(pidx);sayw(pidx2)
-        #        sayerr('points')
-        #        sayw(point[0]);sayw(point[1]);sayw(point2[0]);sayw(point2[1])
-        #        if point[0] == point2[0]:
-        #            say('found 00')
-        #            PCB_Sketch.addConstraint(Sketcher.Constraint('Coincident',idx,1,idx2,1)) 
-        #        if point[1] == point2[0]:
-        #            say('found 10')
-        #            PCB_Sketch.addConstraint(Sketcher.Constraint('Coincident',idx,2,idx2,1)) 
-        #        if point[0] == point2[1]:
-        #            say('found 01')
-        #            PCB_Sketch.addConstraint(Sketcher.Constraint('Coincident',idx,1,idx2,2)) 
-        #        if point[1] == point2[1]:
-        #            say('found 11')
-        #            PCB_Sketch.addConstraint(Sketcher.Constraint('Coincident',idx,2,idx2,2)) 
-        #        
-
-    FreeCAD.ActiveDocument.recompute()
-    
-    #add_constraints(PCB_Sketch_draft.Name)    
-    #t_name=cpy_sketch(PCB_Sketch_draft.Name)
-    ##s_name=shift_sketch(PCB_Sketch_draft.Name, [-100,-100])
-    ##add_constraints(s_name)   
-    ##FreeCADGui.SendMsgToActiveView("ViewFit")
-    ##stop
-    #stop
-    #Sketch.addConstraint(Sketcher.Constraint('Coincident',LineFixed,PointOfLineFixed,LineMoving,PointOfLineMoving))     
-    
-    #for geom in PCB_Sketch.Geometry:
-    #    #if isinstance(geom, Part.Line):
-    #    #    bbox.enlarge_line(geom)
-    #    if isinstance(geom, Part.Circle):
-    #        say("Circle")
-    #    elif isinstance(geom, Part.ArcOfCircle):
-    #        say("Arc")
-        
-    #for i, e1 in enumerate(g):
-    #    for e2 in g[(i + 1):]:
-    #        sayw(e2.SubObjects[0].Curve)
-
-    #sort edges to form a single closed 2D shape
-    loopcounter = 0
-    #sayw((edges))
-    #stop
-    # for f in PCBs:
-    #     Part.show(f)
-    # stop
-    if create_pcb_from_edges: 
-    #if not test_face:
-        #sayerr('doing')
-        if (len(edges)==0) and (len(PCBs)==0):
-            sayw("no PCBs found")
-        else:
-            sayerr('creating pcb from edges instead of sketch')
-            newEdges = [];
-            if (len(edges)>0):
-                newEdges.append(edges.pop(0))
-                #say(newEdges[0])
-                #print [newEdges[0].Vertexes[0].Point]
-                #print [newEdges[0].Vertexes[-1].Point]
-                #say(str(len(newEdges[0].Vertexes)))
-                nextCoordinate = newEdges[0].Vertexes[0].Point
-                firstCoordinate = newEdges[0].Vertexes[-1].Point
-            #nextCoordinate = newEdges[0].Curve.EndPoint
-            #firstCoordinate = newEdges[0].Curve.StartPoint
-            if apply_edge_tolerance:
-                for e in edges:
-                    for v in e.Vertexes: v.setTolerance(edge_tolerance)  #adding tolerance to vertex
-            if show_data:
-                # print findWires(edges)
-                sayw(len(edges))
-                for e in edges:
-                    sayw(e.Vertexes[0].Point);sayw(e.Vertexes[-1].Point)
-                for e in edges:
-                    sayw("geomType")
-                    say(DraftGeomUtils.geomType(e)) 
-            #if show_data:
-            #    sayw(enumerate(edges));
-            while(len(edges)>0 and loopcounter < 2):
-                loopcounter = loopcounter + 1
-                #print "nextCoordinate: ", nextCoordinate
-                #if len(newEdges[0].Vertexes) > 1: # not circle
-                for j, edge in enumerate(edges):
-                #for j in range (len(edges)):
-                    #print "compare to: ", edges[j].Curve.StartPoint, "/" , edges[j].Curve.EndPoint
-                    #if edges[j].Curve.StartPoint == nextCoordinate:
-                    if show_data:
-                        say(distance(edges[j].Vertexes[-1].Point, nextCoordinate))
-                        say(distance(edges[j].Vertexes[0].Point, nextCoordinate))
-                    #if edges[j].Vertexes[-1].Point == nextCoordinate:
-                    # sayw(distance(edges[j].Vertexes[-1].Point, nextCoordinate))
-                    # sayw(distance(edges[j].Vertexes[0].Point, nextCoordinate))             
-                    if distance(edges[j].Vertexes[-1].Point, nextCoordinate)<=edge_tolerance:
-                        #if edges[j].Vertexes[-1].Point != nextCoordinate:
-                        if distance(edges[j].Vertexes[-1].Point, nextCoordinate)>edge_tolerance_warning:
-                            sayerr('non coincident edges:\n'+str(nextCoordinate)+';'+str(edges[j].Vertexes[-1].Point))
-                        nextCoordinate = edges[j].Vertexes[0].Point
-                        newEdges.append(edges.pop(j))
-                        loopcounter = 0
-                        break
-                    #elif edges[j].Vertexes[0].Point == nextCoordinate:
-                    elif distance(edges[j].Vertexes[0].Point, nextCoordinate)<=edge_tolerance:
-                        #if edges[j].Vertexes[0].Point != nextCoordinate:
-                        if distance(edges[j].Vertexes[0].Point, nextCoordinate)>edge_tolerance_warning:
-                            sayerr('non coincident edges:\n'+str(nextCoordinate)+';'+str(edges[j].Vertexes[0].Point))
-                        nextCoordinate = edges[j].Vertexes[-1].Point
-                        newEdges.append(edges.pop(j))
-                        loopcounter = 0
-                        break
-                if show_data:
-                    say ("first c" + str(firstCoordinate)); say(' '); say ("last c" + str(nextCoordinate))
-                #if nextCoordinate == firstCoordinate:
-                if distance(firstCoordinate, nextCoordinate)<=edge_tolerance:
-                    say('2d closed path')
-                    try: # maui
-                        #say('\ntrying wire & face')
-                        #newEdges_old=newEdges
-                        ## newEdges = Part.Wire(newEdges)
-                        #say('trying face')
-                        ## newEdges = Part.Face(newEdges)
-                        #newEdges = OpenSCAD2DgeomMau.edgestofaces(newEdges)
-                        newEdges = OSCD2Dg_edgestofaces(newEdges,3 , edge_tolerance)
-                        newEdges.check() # reports errors
-                        newEdges.fix(0,0,0)
-                        #say('done')
-                        #newEdges.translate(Base.Vector(0,0,-totalHeight))
-                        if show_shapes:
-                            Part.show(newEdges)
-                        #newEdges = newEdges.extrude(Base.Vector(0,0,totalHeight))
-                        PCBs.append(newEdges)
-                        if (len(edges)>0):
-                            newEdges = [];
-                            newEdges.append(edges.pop(0))
-                            nextCoordinate = newEdges[0].Vertexes[0].Point
-                            firstCoordinate = newEdges[0].Vertexes[-1].Point
-                    except Part.OCCError: # Exception: #
-                        say("error in creating PCB")
-                        stop
-                        
-            if loopcounter == 2:
-                say("*** omitting PCBs because there was a not closed loop in your edge lines ***")
-                say("*** have a look at position x=" + str(nextCoordinate.x) + "mm, y=" + str(nextCoordinate.y) + "mm ***")
-                say('pcb edge not closed')
-                QtGui.QApplication.restoreOverrideCursor()
-                diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
-                                        'Error in creating Board Edge                                                                ."+"\r\n"',
-                                        """<b>pcb edge not closed<br>review your Board Edges in Kicad!<br>position x=""" + str(nextCoordinate.x) + 'mm, y=' + str(-nextCoordinate.y) + 'mm')
-                diag.setWindowModality(QtCore.Qt.ApplicationModal)
-                diag.exec_()
-                FreeCADGui.activeDocument().activeView().viewTop()
-                if (zfit):
-                    FreeCADGui.SendMsgToActiveView("ViewFit")
-                stop #maui
-            if disable_cutting:
-                FreeCADGui.activeDocument().activeView().viewTop()
-                if (zfit):
-                    FreeCADGui.SendMsgToActiveView("ViewFit")
-                stop #maui
-            #say (PCBs)
-            ## doc = FreeCAD.activeDocument()
-            ## #outline = []
-            ## for f in PCBs:
-            ##     Part.show(f)
-            ## PCB_Sketch= FreeCAD.activeDocument().addObject('Sketcher::SketchObject','Sketch')
-            ## FreeCAD.activeDocument().Sketch.Placement = App.Placement(App.Vector(0.000000,0.000000,0.000000),App.Rotation(0.000000,0.000000,0.000000,1.000000))            
-            ## for s in doc.Objects:
-            ## #for f in PCBs:
-            ##     if 'Part' in s.TypeId: #Part.show(s)
-            ##         wires,_faces = Draft.downgrade(s,delete=False)
-            ##         #Draft.downgrade(FreeCADGui.Selection.getSelection(),delete=True)
-            ##         #sketch = Draft.makeSketch(wires[0:1])
-            ##         #sketch.Label = "Sketch_pcb"
-            ##         for wire in wires[0:1]:
-            ##             Draft.makeSketch([wire],addTo=PCB_Sketch)
-            ##         for wire in wires:
-            ##             FreeCAD.ActiveDocument.removeObject(wire.Name)             
-            ## FreeCAD.ActiveDocument.recompute()
-            #for f in PCBs:
-            #    Part.hide(f)
-            ##FreeCADGui.SendMsgToActiveView("ViewFit")        
-            ##stop
-            
-            maxLenght=0
-            idx=0
-            external_idx=idx
-            for extruded in PCBs:
-                #search for orientation of each pcb in 3d space, save it (no transformation yet!)
-                angle = 0;
-                axis = Base.Vector(0,0,1)
-                position = Base.Vector(0,0,0)
+                    Part.show(circle1)
+                circle1=Part.Wire(circle1)
+                circle1=Part.Face(circle1)
                 if show_shapes:
-                    Part.show(extruded)
-                #extrude_XLenght=FreeCAD.ActiveDocument.ActiveObject.Shape.BoundBox.XLength
-                # extrude_XLenght=extruded.Length #perimeter
-                extrude_XLenght=extruded.BoundBox.XLength
-                #extrude_XLenght=FreeCAD.ActiveDocument.ActiveObject.Shape.Edges.Length
-                if maxLenght < extrude_XLenght:
-                    maxLenght = extrude_XLenght
-                    external_idx=idx
-                #say('XLenght='+str(extrude_XLenght))
-                idx=idx+1
-            say('max Length='+str(maxLenght)+' index='+str(external_idx))
+                    Part.show(circle1)
+                say('2d circle closed path')
+                PCBs.append(circle1)
+                EdgeCuts.append(circle2)
+                PCB.append(['Circle', x1, y1, radius])
+                #mod_circles.append (['Circle', x1, y1, e[2]])
+                #PCB.append(['Circle', x1, y1, radius])
+            for ma in m.fp_arc:
+                # if ma.layer != 'Edge.Cuts':
+                if lyr not in ma.layer:
+                    continue
+                #print ma.start, ma.end, ma.angle           
+                #xs=ma.start[0]+m.at[0];ys=-ma.start[1]-m.at[1]
+                #x1=ma.end[0]+m.at[0];y1=-ma.end[1]-m.at[1]
+                xs=ma.start[0];ys=ma.start[1]
+                x1=ma.end[0];y1=ma.end[1]
+                curve = ma.angle
+                [x2, y2] = rotPoint2([x1, y1], [xs, ys], curve)
+                y1=-y1-m.at[1]; y2=-y2-m.at[1]
+                x1+=m.at[0];x2+=m.at[0]
+                [x1, y1] = rotPoint2([x1, y1], [m.at[0], -m.at[1]], m_angle)
+                [x2, y2] = rotPoint2([x2, y2], [m.at[0], -m.at[1]], m_angle)
+                arc1=Part.Edge(Part.Arc(Base.Vector(x2,y2,0),mid_point(Base.Vector(x2,y2,0),Base.Vector(x1,y1,0),curve),Base.Vector(x1,y1,0)))
+                edges.append(arc1)
+                EdgeCuts.append(arc1)
+                if show_border:
+                    Part.show(arc1)
+                PCB.append(['Arc', x1, y1, x2, y2, curve])         
+
+        if len(EdgeCuts) >0 and not create_pcb_from_edges:
             try:
-                cut_base=PCBs[external_idx]
+                s_PCB_Cuts = OSCD2Dg_edgestofaces(EdgeCuts,3 , edge_tolerance)
+                HoleList.append(s_PCB_Cuts)
             except:
-                say("*** omitting PCBs because there was a not closed loop in your edge lines ***")
-                say('pcb edge not closed')
+                sayerr('error in making footprint Edge Cuts')
+        elif len(EdgeCuts) > 0:
+            try:
+                s_PCB_Cuts = OSCD2Dg_edgestofaces(EdgeCuts,3 , edge_tolerance)
+                #Part.show(s_PCB_Cuts)
+            except:
+                sayerr('error in making PCB from footprint Edge Cuts')
+        
+        if 0:
+            Part.show(s_PCB_Cuts)
+            fc_PCB_Cuts = FreeCAD.ActiveDocument.ActiveObject
+            face_PCB_Cuts = fc_PCB_Cuts.Shape.copy()
+            if aux_orig ==1 or grid_orig ==1:
+                face_PCB_Cuts.translate((-off_x, -off_y,0))
+            Part.show(face_PCB_Cuts)
+        #obj = FreeCAD.ActiveDocument.ActiveObject
+        #stop
+        #HoleList.append(face_PCB_Cuts)
+        #stop PCB_Cuts
+        #sayw(len(HoleList))
+        #say (PCB_Models)
+        #stop
+        
+        #g = App.ActiveDocument.PCB_Sketch.Geometry
+        #g = App.ActiveDocument.PCB_Sketch
+        # For each sketch geometry type, map a list of points to move.
+    
+            
+            # Direct access to sketch.Geometry[index] does not work. This would,
+            # however prevent repeated recompute.
+            #for point_index in point_indexes:
+            #    point = PCB_Sketch.getPoint(geom_index, point_index)
+            #    sayerr (point)
+            #    sayw(point[0]);sayw(point[1])
+            #    ## ckeck point coincidence for sketch constrains
+            #    #sketch.movePoint(geom_index, point_index, point)
+            #    
+            #for i, pidx in enumerate(point_indexes):
+            #    for pidx2 in point_indexes[(i + 1):]:
+            #        point = PCB_Sketch.getPoint(geom_index, pidx)
+            #        point2 = PCB_Sketch.getPoint(geom_index, pidx2)
+            #        sayerr(pidx);sayw(pidx2)
+            #        sayerr('points')
+            #        sayw(point[0]);sayw(point[1]);sayw(point2[0]);sayw(point2[1])
+            #        if point[0] == point2[0]:
+            #            say('found 00')
+            #            PCB_Sketch.addConstraint(Sketcher.Constraint('Coincident',idx,1,idx2,1)) 
+            #        if point[1] == point2[0]:
+            #            say('found 10')
+            #            PCB_Sketch.addConstraint(Sketcher.Constraint('Coincident',idx,2,idx2,1)) 
+            #        if point[0] == point2[1]:
+            #            say('found 01')
+            #            PCB_Sketch.addConstraint(Sketcher.Constraint('Coincident',idx,1,idx2,2)) 
+            #        if point[1] == point2[1]:
+            #            say('found 11')
+            #            PCB_Sketch.addConstraint(Sketcher.Constraint('Coincident',idx,2,idx2,2)) 
+            #        
+    
+        FreeCAD.ActiveDocument.recompute()
+        
+        #add_constraints(PCB_Sketch_draft.Name)    
+        #t_name=cpy_sketch(PCB_Sketch_draft.Name)
+        ##s_name=shift_sketch(PCB_Sketch_draft.Name, [-100,-100])
+        ##add_constraints(s_name)   
+        ##FreeCADGui.SendMsgToActiveView("ViewFit")
+        ##stop
+        #stop
+        #Sketch.addConstraint(Sketcher.Constraint('Coincident',LineFixed,PointOfLineFixed,LineMoving,PointOfLineMoving))     
+        
+        #for geom in PCB_Sketch.Geometry:
+        #    #if isinstance(geom, Part.Line):
+        #    #    bbox.enlarge_line(geom)
+        #    if isinstance(geom, Part.Circle):
+        #        say("Circle")
+        #    elif isinstance(geom, Part.ArcOfCircle):
+        #        say("Arc")
+            
+        #for i, e1 in enumerate(g):
+        #    for e2 in g[(i + 1):]:
+        #        sayw(e2.SubObjects[0].Curve)
+    
+        #sort edges to form a single closed 2D shape
+        loopcounter = 0
+        #sayw((edges))
+        #stop
+        # for f in PCBs:
+        #     Part.show(f)
+        # stop
+        if create_pcb_from_edges: 
+        #if not test_face:
+            #sayerr('doing')
+            if (len(edges)==0) and (len(PCBs)==0):
+                sayw("no PCBs found")
+            else:
+                sayerr('creating pcb from edges instead of sketch')
+                newEdges = [];
+                if (len(edges)>0):
+                    newEdges.append(edges.pop(0))
+                    #say(newEdges[0])
+                    #print [newEdges[0].Vertexes[0].Point]
+                    #print [newEdges[0].Vertexes[-1].Point]
+                    #say(str(len(newEdges[0].Vertexes)))
+                    nextCoordinate = newEdges[0].Vertexes[0].Point
+                    firstCoordinate = newEdges[0].Vertexes[-1].Point
+                #nextCoordinate = newEdges[0].Curve.EndPoint
+                #firstCoordinate = newEdges[0].Curve.StartPoint
+                if apply_edge_tolerance:
+                    for e in edges:
+                        for v in e.Vertexes: v.setTolerance(edge_tolerance)  #adding tolerance to vertex
+                if show_data:
+                    # print findWires(edges)
+                    sayw(len(edges))
+                    for e in edges:
+                        sayw(e.Vertexes[0].Point);sayw(e.Vertexes[-1].Point)
+                    for e in edges:
+                        sayw("geomType")
+                        say(DraftGeomUtils.geomType(e)) 
+                #if show_data:
+                #    sayw(enumerate(edges));
+                while(len(edges)>0 and loopcounter < 2):
+                    loopcounter = loopcounter + 1
+                    #print "nextCoordinate: ", nextCoordinate
+                    #if len(newEdges[0].Vertexes) > 1: # not circle
+                    for j, edge in enumerate(edges):
+                    #for j in range (len(edges)):
+                        #print "compare to: ", edges[j].Curve.StartPoint, "/" , edges[j].Curve.EndPoint
+                        #if edges[j].Curve.StartPoint == nextCoordinate:
+                        if show_data:
+                            say(distance(edges[j].Vertexes[-1].Point, nextCoordinate))
+                            say(distance(edges[j].Vertexes[0].Point, nextCoordinate))
+                        #if edges[j].Vertexes[-1].Point == nextCoordinate:
+                        # sayw(distance(edges[j].Vertexes[-1].Point, nextCoordinate))
+                        # sayw(distance(edges[j].Vertexes[0].Point, nextCoordinate))             
+                        if distance(edges[j].Vertexes[-1].Point, nextCoordinate)<=edge_tolerance:
+                            #if edges[j].Vertexes[-1].Point != nextCoordinate:
+                            if distance(edges[j].Vertexes[-1].Point, nextCoordinate)>edge_tolerance_warning:
+                                sayerr('non coincident edges:\n'+str(nextCoordinate)+';'+str(edges[j].Vertexes[-1].Point))
+                            nextCoordinate = edges[j].Vertexes[0].Point
+                            newEdges.append(edges.pop(j))
+                            loopcounter = 0
+                            break
+                        #elif edges[j].Vertexes[0].Point == nextCoordinate:
+                        elif distance(edges[j].Vertexes[0].Point, nextCoordinate)<=edge_tolerance:
+                            #if edges[j].Vertexes[0].Point != nextCoordinate:
+                            if distance(edges[j].Vertexes[0].Point, nextCoordinate)>edge_tolerance_warning:
+                                sayerr('non coincident edges:\n'+str(nextCoordinate)+';'+str(edges[j].Vertexes[0].Point))
+                            nextCoordinate = edges[j].Vertexes[-1].Point
+                            newEdges.append(edges.pop(j))
+                            loopcounter = 0
+                            break
+                    if show_data:
+                        say ("first c" + str(firstCoordinate)); say(' '); say ("last c" + str(nextCoordinate))
+                    #if nextCoordinate == firstCoordinate:
+                    if distance(firstCoordinate, nextCoordinate)<=edge_tolerance:
+                        say('2d closed path')
+                        try: # maui
+                            #say('\ntrying wire & face')
+                            #newEdges_old=newEdges
+                            ## newEdges = Part.Wire(newEdges)
+                            #say('trying face')
+                            ## newEdges = Part.Face(newEdges)
+                            #newEdges = OpenSCAD2DgeomMau.edgestofaces(newEdges)
+                            newEdges = OSCD2Dg_edgestofaces(newEdges,3 , edge_tolerance)
+                            newEdges.check() # reports errors
+                            newEdges.fix(0,0,0)
+                            #say('done')
+                            #newEdges.translate(Base.Vector(0,0,-totalHeight))
+                            if show_shapes:
+                                Part.show(newEdges)
+                            #newEdges = newEdges.extrude(Base.Vector(0,0,totalHeight))
+                            PCBs.append(newEdges)
+                            if (len(edges)>0):
+                                newEdges = [];
+                                newEdges.append(edges.pop(0))
+                                nextCoordinate = newEdges[0].Vertexes[0].Point
+                                firstCoordinate = newEdges[0].Vertexes[-1].Point
+                        except Part.OCCError: # Exception: #
+                            say("error in creating PCB")
+                            stop
+                            
+                if loopcounter == 2:
+                    say("*** omitting PCBs because there was a not closed loop in your edge lines ***")
+                    say("*** have a look at position x=" + str(nextCoordinate.x) + "mm, y=" + str(nextCoordinate.y) + "mm ***")
+                    say('pcb edge not closed')
+                    QtGui.QApplication.restoreOverrideCursor()
+                    diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
+                                            'Error in creating Board Edge                                                                ."+"\r\n"',
+                                            """<b>pcb edge not closed<br>review your Board Edges in Kicad!<br>position x=""" + str(nextCoordinate.x) + 'mm, y=' + str(-nextCoordinate.y) + 'mm')
+                    diag.setWindowModality(QtCore.Qt.ApplicationModal)
+                    diag.exec_()
+                    FreeCADGui.activeDocument().activeView().viewTop()
+                    if (zfit):
+                        FreeCADGui.SendMsgToActiveView("ViewFit")
+                    stop #maui
+                if disable_cutting:
+                    FreeCADGui.activeDocument().activeView().viewTop()
+                    if (zfit):
+                        FreeCADGui.SendMsgToActiveView("ViewFit")
+                    stop #maui
+                #say (PCBs)
+                ## doc = FreeCAD.activeDocument()
+                ## #outline = []
+                ## for f in PCBs:
+                ##     Part.show(f)
+                ## PCB_Sketch= FreeCAD.activeDocument().addObject('Sketcher::SketchObject','Sketch')
+                ## FreeCAD.activeDocument().Sketch.Placement = App.Placement(App.Vector(0.000000,0.000000,0.000000),App.Rotation(0.000000,0.000000,0.000000,1.000000))            
+                ## for s in doc.Objects:
+                ## #for f in PCBs:
+                ##     if 'Part' in s.TypeId: #Part.show(s)
+                ##         wires,_faces = Draft.downgrade(s,delete=False)
+                ##         #Draft.downgrade(FreeCADGui.Selection.getSelection(),delete=True)
+                ##         #sketch = Draft.makeSketch(wires[0:1])
+                ##         #sketch.Label = "Sketch_pcb"
+                ##         for wire in wires[0:1]:
+                ##             Draft.makeSketch([wire],addTo=PCB_Sketch)
+                ##         for wire in wires:
+                ##             FreeCAD.ActiveDocument.removeObject(wire.Name)             
+                ## FreeCAD.ActiveDocument.recompute()
+                #for f in PCBs:
+                #    Part.hide(f)
+                ##FreeCADGui.SendMsgToActiveView("ViewFit")        
+                ##stop
+                
+                maxLenght=0
+                idx=0
+                external_idx=idx
+                for extruded in PCBs:
+                    #search for orientation of each pcb in 3d space, save it (no transformation yet!)
+                    angle = 0;
+                    axis = Base.Vector(0,0,1)
+                    position = Base.Vector(0,0,0)
+                    if show_shapes:
+                        Part.show(extruded)
+                    #extrude_XLenght=FreeCAD.ActiveDocument.ActiveObject.Shape.BoundBox.XLength
+                    # extrude_XLenght=extruded.Length #perimeter
+                    extrude_XLenght=extruded.BoundBox.XLength
+                    #extrude_XLenght=FreeCAD.ActiveDocument.ActiveObject.Shape.Edges.Length
+                    if maxLenght < extrude_XLenght:
+                        maxLenght = extrude_XLenght
+                        external_idx=idx
+                    #say('XLenght='+str(extrude_XLenght))
+                    idx=idx+1
+                say('max Length='+str(maxLenght)+' index='+str(external_idx))
+                try:
+                    cut_base=PCBs[external_idx]
+                except:
+                    say("*** omitting PCBs because there was a not closed loop in your edge lines ***")
+                    say('pcb edge not closed')
+                    QtGui.QApplication.restoreOverrideCursor()
+                    diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
+                                            'Error in creating Board Edge                                                                ."+"\r\n"',
+                                            """<b>pcb edge not closed<br>review your Board Edges in Kicad!<br>""")
+                    diag.setWindowModality(QtCore.Qt.ApplicationModal)
+                    diag.exec_()
+                    FreeCADGui.activeDocument().activeView().viewTop()
+                    if (zfit):
+                        FreeCADGui.SendMsgToActiveView("ViewFit")
+                    stop #maui
+                i=0
+                for i in range (len(PCBs)):
+                    if i!=external_idx:
+                        cutter=PCBs[i]
+                        cut_base=cut_base.cut(cutter)
+                if test_extrude:
+                    cut_base = cut_base.extrude(Base.Vector(0,0,totalHeight))
+                if show_shapes:
+                    Part.show(cut_base)
+                #cut_base_name=FreeCAD.ActiveDocument.ActiveObject.Name
+                #say('Alive1')
+            if len(PCBs)==1:
+                cut_base = PCBs[0]
+                if test_extrude:
+                    cut_base = cut_base.extrude(Base.Vector(0,0,totalHeight))
+                if show_shapes:
+                    Part.show(cut_base)
+                if show_shapes:
+                    FreeCAD.activeDocument().removeObject("Shape")
+                ###FreeCAD.ActiveDocument.recompute()
+            
+            if len(PCBs)==0:
+                say('pcb edge not found')
                 QtGui.QApplication.restoreOverrideCursor()
                 diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
                                         'Error in creating Board Edge                                                                ."+"\r\n"',
@@ -13713,405 +13797,372 @@ def DrawPCB(mypcb):
                 if (zfit):
                     FreeCADGui.SendMsgToActiveView("ViewFit")
                 stop #maui
-            i=0
-            for i in range (len(PCBs)):
-                if i!=external_idx:
-                    cutter=PCBs[i]
-                    cut_base=cut_base.cut(cutter)
-            if test_extrude:
-                cut_base = cut_base.extrude(Base.Vector(0,0,totalHeight))
-            if show_shapes:
-                Part.show(cut_base)
-            #cut_base_name=FreeCAD.ActiveDocument.ActiveObject.Name
-            #say('Alive1')
-        if len(PCBs)==1:
-            cut_base = PCBs[0]
-            if test_extrude:
-                cut_base = cut_base.extrude(Base.Vector(0,0,totalHeight))
-            if show_shapes:
-                Part.show(cut_base)
-            if show_shapes:
-                FreeCAD.activeDocument().removeObject("Shape")
-            ###FreeCAD.ActiveDocument.recompute()
-        
-        if len(PCBs)==0:
-            say('pcb edge not found')
-            QtGui.QApplication.restoreOverrideCursor()
-            diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
-                                    'Error in creating Board Edge                                                                ."+"\r\n"',
-                                    """<b>pcb edge not closed<br>review your Board Edges in Kicad!<br>""")
-            diag.setWindowModality(QtCore.Qt.ApplicationModal)
-            diag.exec_()
+            FreeCAD.ActiveDocument.recompute()
             FreeCADGui.activeDocument().activeView().viewTop()
-            if (zfit):
-                FreeCADGui.SendMsgToActiveView("ViewFit")
-            stop #maui
-        FreeCAD.ActiveDocument.recompute()
-        FreeCADGui.activeDocument().activeView().viewTop()
-    ##FreeCADGui.SendMsgToActiveView("ViewFit")
-    if create_pcb_basic:
-        ## experimental technique for getting the pcb edge in case of large quantity of segments
-        ## To be completed
-        if (len(edges)==0) and (len(PCBs)==0):
-            sayw("no PCBs found")
-            stop
-        else:
-            sayw('creating pcb from edges without constraints') 
-            #N_edges = []
-            #for s in edges:
-            #    N_edges.extend(s.Edges)
-            #if len(edges) > (100):
-            #    FreeCAD.Console.PrintMessage(str(len(edges))+" edges to join\n")
-            #    if FreeCAD.GuiUp:
-            #        from PySide import QtGui
-            #        d = QtGui.QMessageBox()
-            #        d.setText("Warning: High number of entities to join (>100)")
-            #        d.setInformativeText("This might take a long time or even freeze your computer. Are you sure? You can also disable the \"join geometry\" setting in DXF import preferences")
-            #        d.setStandardButtons(QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel)
-            #        d.setDefaultButton(QtGui.QMessageBox.Cancel)
-            #        res = d.exec_()
-            #        if res == QtGui.QMessageBox.Cancel:
-            #            FreeCAD.Console.PrintMessage("Aborted\n")
-            #            return
-            
-            if 0:
-                newEdges = OSCD2Dg_edgestofaces(edges,3 , edge_tolerance)
-                Part.show(newEdges)
+        ##FreeCADGui.SendMsgToActiveView("ViewFit")
+        if create_pcb_basic:
+            ## experimental technique for getting the pcb edge in case of large quantity of segments
+            ## To be completed
+            if (len(edges)==0) and (len(PCBs)==0):
+                sayw("no PCBs found")
                 stop
-            if 0:
-                ## from importDXF
-                shapes = DraftGeomUtils.findWires(edges) #N_edges)
-                def addObject(shape,name="Shape",layer=None):
-                    "adds a new object to the document with passed arguments"
-                    if isinstance(shape,Part.Shape):
-                        #say(doc.Name)
-                        #stop
-                        newob=doc.addObject("Part::Feature",name)
-                        newob.Shape = shape
-                    else:
-                        newob = shape
-                    #if layer:
-                    #    lay=locateLayer(layer)
-                    #    lay.addObject(newob)
-                    #formatObject(newob)
-                    return newob
-                shapes_list=[]
-                for s in shapes:
-                    newob = addObject(s)
-                    shapes_list.append(newob)
+            else:
+                sayw('creating pcb from edges without constraints') 
+                #N_edges = []
+                #for s in edges:
+                #    N_edges.extend(s.Edges)
+                #if len(edges) > (100):
+                #    FreeCAD.Console.PrintMessage(str(len(edges))+" edges to join\n")
+                #    if FreeCAD.GuiUp:
+                #        from PySide import QtGui
+                #        d = QtGui.QMessageBox()
+                #        d.setText("Warning: High number of entities to join (>100)")
+                #        d.setInformativeText("This might take a long time or even freeze your computer. Are you sure? You can also disable the \"join geometry\" setting in DXF import preferences")
+                #        d.setStandardButtons(QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel)
+                #        d.setDefaultButton(QtGui.QMessageBox.Cancel)
+                #        res = d.exec_()
+                #        if res == QtGui.QMessageBox.Cancel:
+                #            FreeCAD.Console.PrintMessage("Aborted\n")
+                #            return
                 
-                WireSketch = FreeCAD.activeDocument().addObject('Sketcher::SketchObject','WireSketch')
-                shapes = Draft.makeSketch(shapes,autoconstraints=True,addTo=WireSketch)
-                FreeCAD.ActiveDocument.addObject("Part::Face", "Face_WireSketch").Sources = (FreeCAD.ActiveDocument.WireSketch, )
                 if 0:
-                    FreeCAD.activeDocument().addObject("Part::Compound","ShapesCompound")
-                    FreeCAD.activeDocument().ShapesCompound.Links = shapes_list
-                    FreeCAD.ActiveDocument.addObject("Part::Face", "Face_Compound").Sources = (FreeCAD.ActiveDocument.ShapesCompound, )
-                FreeCAD.ActiveDocument.recompute()
-                if (zfit):
-                    FreeCADGui.SendMsgToActiveView("ViewFit")
+                    newEdges = OSCD2Dg_edgestofaces(edges,3 , edge_tolerance)
+                    Part.show(newEdges)
+                    stop
+                if 0:
+                    ## from importDXF
+                    shapes = DraftGeomUtils.findWires(edges) #N_edges)
+                    def addObject(shape,name="Shape",layer=None):
+                        "adds a new object to the document with passed arguments"
+                        if isinstance(shape,Part.Shape):
+                            #say(doc.Name)
+                            #stop
+                            newob=doc.addObject("Part::Feature",name)
+                            newob.Shape = shape
+                        else:
+                            newob = shape
+                        #if layer:
+                        #    lay=locateLayer(layer)
+                        #    lay.addObject(newob)
+                        #formatObject(newob)
+                        return newob
+                    shapes_list=[]
+                    for s in shapes:
+                        newob = addObject(s)
+                        shapes_list.append(newob)
+                    
+                    WireSketch = FreeCAD.activeDocument().addObject('Sketcher::SketchObject','WireSketch')
+                    shapes = Draft.makeSketch(shapes,autoconstraints=True,addTo=WireSketch)
+                    FreeCAD.ActiveDocument.addObject("Part::Face", "Face_WireSketch").Sources = (FreeCAD.ActiveDocument.WireSketch, )
+                    if 0:
+                        FreeCAD.activeDocument().addObject("Part::Compound","ShapesCompound")
+                        FreeCAD.activeDocument().ShapesCompound.Links = shapes_list
+                        FreeCAD.ActiveDocument.addObject("Part::Face", "Face_Compound").Sources = (FreeCAD.ActiveDocument.ShapesCompound, )
+                    FreeCAD.ActiveDocument.recompute()
+                    if (zfit):
+                        FreeCADGui.SendMsgToActiveView("ViewFit")
+                    stop
+                #fusion_wire = edges[0]
+                #for no, e in enumerate(edges):
+                #    no += 1
+                #    if no > 1:
+                #        fusion_wire = fusion_wire.fuse(e)
+                # Part.show(fusion_wire)
+                
+                for e in edges:
+                    Part.show(e)
                 stop
-            #fusion_wire = edges[0]
-            #for no, e in enumerate(edges):
-            #    no += 1
-            #    if no > 1:
-            #        fusion_wire = fusion_wire.fuse(e)
-            # Part.show(fusion_wire)
-            
-            for e in edges:
-                Part.show(e)
-            stop
-            #w_pcb = Part.Wire(edges)
-            #Part.show(w_pcb)
-            
-    say_time()
-    #stop
-    
-    #cut_base = cut_base.extrude(Base.Vector(0,0,totalHeight)) # test_face
-    #Part.show(cut_base) #test Sketch
-    #stop
-    #PCB_Sketch= FreeCAD.activeDocument().addObject('Sketcher::SketchObject','PCB_Sketch')
-    #FreeCAD.activeDocument().PCB_Sketch.Placement = App.Placement(App.Vector(0.000000,0.000000,0.000000),App.Rotation(0.000000,0.000000,0.000000,1.000000))            
-    doc = FreeCAD.activeDocument()
-    #wires,_faces = Draft.downgrade(cut_base,delete=False)
-    #edges=[]
-    #for f in cut_base.Faces:
-    #    #print f.Edges
-    #    edges.append(f.Edges)
-    #for e in edges:
-    #    print e
-    #    print e.Vertexes.Point[0]
-    #    print e.Vertexes.Point[-1]
-    ##for w in cut_base.Wires:
-    ##    print w
-    ##    Draft.makeSketch([w], autoconstraints = True, addTo=PCB_Sketch)
-    ##    PCB_Sketch.touch()
-    #Part.Wire (edges)
-    #print edges
-    #for wire in wires:
-    #    sayw(wire.Label)
-    #    Draft.makeSketch([wire], autoconstraints = True, addTo=PCB_Sketch)
-    #    #Draft.makeSketch([wire], autoconstraints = False, addTo=PCB_Sketch)
-    #    PCB_Sketch.touch()
-    if 0: #old Sketch method
-        FreeCAD.ActiveDocument.recompute()
-        wires,_faces = Draft.downgrade(FreeCAD.ActiveDocument.Shape,delete=False)
-        FreeCAD.ActiveDocument.recompute()
-        for wire in wires:
-            Draft.makeSketch([wire],autoconstraints=True, addTo=PCB_Sketch)
-            #makeSketch_FC_016([wire],autoconstraints=True, addTo=PCB_Sketch)
-            PCB_Sketch.touch()
+                #w_pcb = Part.Wire(edges)
+                #Part.show(w_pcb)
+                
+        say_time()
         #stop
-        for wire in wires:
-            FreeCAD.ActiveDocument.removeObject(wire.Name)             
-            
-        #Draft.makeSketch(FreeCAD.ActiveDocument.Wire,autoconstraints=False, addTo=PCB_Sketch)
-        #FreeCAD.ActiveDocument.recompute()
-        #FreeCAD.ActiveDocument.removeObject(FreeCAD.ActiveDocument.Wire.Name)
-        FreeCAD.ActiveDocument.recompute()
-    
-    #s_name=shift_sketch(PCB_Sketch_draft.Name, [-100,-100])
-    #add_constraints(s_name)   
-    #stop
-    #for s in doc.Objects:
-    ##for f in PCBs:
-    #    if 'Part' in s.TypeId: 
-    #    #if cut_base.Name in s.Name: 
-    #        #Part.show(s)
-    #        wires,_faces = Draft.downgrade(s,delete=False)
-    #        #wires,_faces = Draft.downgrade(s,delete=True)
-    #        #Draft.downgrade(FreeCADGui.Selection.getSelection(),delete=True)
-    #        #sketch = Draft.makeSketch(wires[0:1])
-    #        #sketch.Label = "Sketch_pcb"
-    #        #for f in _faces:
-    #        #    print f.Edges
-    #        for f in s.Faces:
-    #            print f.Edges
-    #            
-    #        for wire in wires:
-    #            #sayw(wire.Label)
-    #            Draft.makeSketch([wire], autoconstraints = True, addTo=PCB_Sketch)
-    #            #Draft.makeSketch([wire], autoconstraints = False, addTo=PCB_Sketch)
-    #            PCB_Sketch.touch()
-    #        stop
-    #        for wire in wires:
-    #            FreeCAD.ActiveDocument.removeObject(wire.Name)             
-    # FreeCAD.ActiveDocument.recompute()
-    #Part.show(cut_base)
-    #stop #maui      
-    ## to check to load models inside loop modules
-    #if m.layer == 'F.Cu':  # top
-    #    side = "Top"
-    #else:
-    #    side = "Bottom"
-    #    m_angle *= -1 ##bottom 3d model rotation
-    #    say(m_angle)    
-    say("start cutting")
-    get_time()
-    t1=(running_time)
-    if not use_AppPart:  #old method slower for FC016,015
-        if holes_solid:
-            #HoleList = getPads(board_elab,pcbThickness)
-            say('generating solid holes')
-        else:
-            say('generating flat holes')
-            ##HoleList = getPads_flat(board_elab)
-        #say('alive-getting holes')
+        
+        #cut_base = cut_base.extrude(Base.Vector(0,0,totalHeight)) # test_face
+        #Part.show(cut_base) #test Sketch
         #stop
-        if len(HoleList)>0:
-            #cut_base = FreeCAD.ActiveDocument.getObject(cut_base_name).Shape
-            #cut_base_name=FreeCAD.ActiveDocument.ActiveObject
-            #cut_base_name=FreeCAD.ActiveDocument.ActiveObject.Name
-            #say(cut_base)
-            for drill in HoleList:
-                #say("Cutting hole inside outline")
-                #Part.show(drill)
-                #say(drill)
-                if holes_solid:
-                    drill = Part.makeSolid(drill)
-                if show_shapes:
-                    Part.show(drill)
-                cut_base=cut_base.cut(drill)
-        else:
-            #face = cut_base
-            cut_base = cut_base
-    else:    
-        sayw('using hierarchy container')
-        if len(HoleList)>0:
+        #PCB_Sketch= FreeCAD.activeDocument().addObject('Sketcher::SketchObject','PCB_Sketch')
+        #FreeCAD.activeDocument().PCB_Sketch.Placement = App.Placement(App.Vector(0.000000,0.000000,0.000000),App.Rotation(0.000000,0.000000,0.000000,1.000000))            
+        doc = FreeCAD.activeDocument()
+        #wires,_faces = Draft.downgrade(cut_base,delete=False)
+        #edges=[]
+        #for f in cut_base.Faces:
+        #    #print f.Edges
+        #    edges.append(f.Edges)
+        #for e in edges:
+        #    print e
+        #    print e.Vertexes.Point[0]
+        #    print e.Vertexes.Point[-1]
+        ##for w in cut_base.Wires:
+        ##    print w
+        ##    Draft.makeSketch([w], autoconstraints = True, addTo=PCB_Sketch)
+        ##    PCB_Sketch.touch()
+        #Part.Wire (edges)
+        #print edges
+        #for wire in wires:
+        #    sayw(wire.Label)
+        #    Draft.makeSketch([wire], autoconstraints = True, addTo=PCB_Sketch)
+        #    #Draft.makeSketch([wire], autoconstraints = False, addTo=PCB_Sketch)
+        #    PCB_Sketch.touch()
+        if 0: #old Sketch method
+            FreeCAD.ActiveDocument.recompute()
+            wires,_faces = Draft.downgrade(FreeCAD.ActiveDocument.Shape,delete=False)
+            FreeCAD.ActiveDocument.recompute()
+            for wire in wires:
+                Draft.makeSketch([wire],autoconstraints=True, addTo=PCB_Sketch)
+                #makeSketch_FC_016([wire],autoconstraints=True, addTo=PCB_Sketch)
+                PCB_Sketch.touch()
+            #stop
+            for wire in wires:
+                FreeCAD.ActiveDocument.removeObject(wire.Name)             
+                
+            #Draft.makeSketch(FreeCAD.ActiveDocument.Wire,autoconstraints=False, addTo=PCB_Sketch)
+            #FreeCAD.ActiveDocument.recompute()
+            #FreeCAD.ActiveDocument.removeObject(FreeCAD.ActiveDocument.Wire.Name)
+            FreeCAD.ActiveDocument.recompute()
+        
+        #s_name=shift_sketch(PCB_Sketch_draft.Name, [-100,-100])
+        #add_constraints(s_name)   
+        #stop
+        #for s in doc.Objects:
+        ##for f in PCBs:
+        #    if 'Part' in s.TypeId: 
+        #    #if cut_base.Name in s.Name: 
+        #        #Part.show(s)
+        #        wires,_faces = Draft.downgrade(s,delete=False)
+        #        #wires,_faces = Draft.downgrade(s,delete=True)
+        #        #Draft.downgrade(FreeCADGui.Selection.getSelection(),delete=True)
+        #        #sketch = Draft.makeSketch(wires[0:1])
+        #        #sketch.Label = "Sketch_pcb"
+        #        #for f in _faces:
+        #        #    print f.Edges
+        #        for f in s.Faces:
+        #            print f.Edges
+        #            
+        #        for wire in wires:
+        #            #sayw(wire.Label)
+        #            Draft.makeSketch([wire], autoconstraints = True, addTo=PCB_Sketch)
+        #            #Draft.makeSketch([wire], autoconstraints = False, addTo=PCB_Sketch)
+        #            PCB_Sketch.touch()
+        #        stop
+        #        for wire in wires:
+        #            FreeCAD.ActiveDocument.removeObject(wire.Name)             
+        # FreeCAD.ActiveDocument.recompute()
+        #Part.show(cut_base)
+        #stop #maui      
+        ## to check to load models inside loop modules
+        #if m.layer == 'F.Cu':  # top
+        #    side = "Top"
+        #else:
+        #    side = "Bottom"
+        #    m_angle *= -1 ##bottom 3d model rotation
+        #    say(m_angle)    
+        say("start cutting")
+        get_time()
+        t1=(running_time)
+        if not use_AppPart:  #old method slower for FC016,015
             if holes_solid:
                 #HoleList = getPads(board_elab,pcbThickness)
                 say('generating solid holes')
             else:
                 say('generating flat holes')
-            dlo=[]
-            shapes=[];s_names=[]
-            #for drill in HoleList:
-            #    if holes_solid:
-            #        drill = Part.makeSolid(drill)
-                #Part.show(drill)
-                #dlo.append(drill)
-            #shapes=[];s_names=[]
-            ##for o in FreeCAD.ActiveDocument.Objects:
-            ##    if 'Shape' in o.Name:
-            ##        dlo.append(FreeCAD.ActiveDocument.getObject(o.Name))
-            ##        shapes.append(o.Shape)
-            ##        s_names.append(o.Name)
-            shapes=HoleList
+                ##HoleList = getPads_flat(board_elab)
+            #say('alive-getting holes')
             #stop
-            ##https://forum.freecadweb.org/viewtopic.php?t=18179&start=30
-            #multifuse
-            shape_base=shapes[0]
-            shapes=shapes[1:]
-            #fc_016=True
-            if len(HoleList)>1:  #more than one drill
-                shape = shape_base.fuse(shapes)
-            else:   #one drill ONLY
-                shape = shape_base
-            test_face_gen = False
-            if test_face_gen:
-                Part.show(cut_base) #test_face
-                Part.show(shape) #test_face
-                stop
-            try:
-                cut_base = cut_base.cut(shape)
-            except:
-                say("*** omitting PCBs because there was a not closed loop in your edge lines ***")
-                say('pcb edge not closed')
-                QtGui.QApplication.restoreOverrideCursor()
-                diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
-                                        'Error in creating Board Edge                                                                ."+"\r\n"',
-                                        """<b>pcb edge not closed<br>review your Board Edges in Kicad!<br>or try to fix it with Constrainator""")
-                diag.setWindowModality(QtCore.Qt.ApplicationModal)
-                diag.exec_()
-                FreeCADGui.activeDocument().activeView().viewTop()
-                if (zfit):
-                    FreeCADGui.SendMsgToActiveView("ViewFit")
-                stop #maui                
-            #Part.show(cut_base)
-            #stop
-            for s in s_names:
-                #Part.show(s)
-                FreeCAD.ActiveDocument.removeObject(s) #test_face
-            FreeCAD.ActiveDocument.recompute()
-            #stop
-            #say_time()
-        else:
-            #face = cut_base
-            cut_base = cut_base
-    #    ##if len(HoleList)>0:
-    #    ##    #face = cut_base.cut(Part.makeCompound(HoleList))
-    #    ##    cut_base = cut_base.cut(Part.makeCompound(HoleList))   ###VERY fast but failing when overlapping of pads
-    get_time()
-    say('cutting time ' +str(round(running_time-t1,3)))
-    
-    doc_outline=doc.addObject("Part::Feature","Pcb")
-    doc_outline.Shape=cut_base 
-    try:
-        doc_outline.Shape=cut_base.extrude(Base.Vector(0,0,-totalHeight))
-    except:
-        doc.removeObject("Pcb")
-        say("*** omitting PCBs because there was a not closed loop in your edge lines ***")
-        say('pcb edge not closed')
-        QtGui.QApplication.restoreOverrideCursor()
-        diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
-                                'Error in creating Board Edge                                                                ."+"\r\n"',
-                                """<b>pcb edge not closed<br>review your Board Edges in Kicad!<br>or try to fix it with Constrainator""")
-        diag.setWindowModality(QtCore.Qt.ApplicationModal)
-        diag.exec_()
-        FreeCADGui.activeDocument().activeView().viewTop()
-        if (zfit):
-            FreeCADGui.SendMsgToActiveView("ViewFit")
-        stop #maui                        
-    #stop
-    try:
-        FreeCAD.activeDocument().removeObject('Shape') #removing base shape
-    except:
-        sayw('Shape already removed')
-    #cut_base=cut_base.extrude(Base.Vector(0,0,-pcbThickness))
-    #Part.show(cut_base)
-    pcb_name=FreeCAD.ActiveDocument.ActiveObject.Name
-    pcb_board=FreeCAD.ActiveDocument.ActiveObject
-    if simplifyComSolid:
-        faces=[]
-        for f in pcb_board.Shape.Faces:
-            faces.append(f) 
-        try:
-            _ = Part.Shell(faces)
-            _=Part.Solid(_)
-            FreeCAD.ActiveDocument.removeObject(pcb_name)
-            doc.addObject('Part::Feature','Pcb').Shape=_
-            pcb_name=FreeCAD.ActiveDocument.ActiveObject.Name
-            pcb_board=FreeCAD.ActiveDocument.ActiveObject
-        except:
-            sayerr('error in simplifying compsolid')
-    
-    # simple_pcb=doc.addObject("Part::Feature","simple_Pcb")
-    # simple_pcb.Shape=pcb_board.Shape
-    # spcb=pcb_board.Shape
-    # Part.show(spcb)
-    
-    #FreeCAD.ActiveDocument.ActiveObject.Label ="Pcb"
-    FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (colr,colg,colb)
-    #FreeCADGui.ActiveDocument.ActiveObject.Transparency = 20
-    #if remove_pcbPad==True:
-    #    FreeCAD.activeDocument().removeObject(cut_base_name)
-        #FreeCAD.activeDocument().removeObject(Holes_name)
-    if use_AppPart and not force_oldGroups and not use_LinkGroups:
-        ## to evaluate to add App::Part hierarchy
-        #sayw("creating hierarchy")
-        doc.Tip = doc.addObject('App::Part','Board_Geoms')
-        doc.Board_Geoms.Label = 'Board_Geoms'
-        try:
-            doc.Board_Geoms.License = ''
-            doc.Board_Geoms.LicenseURL = ''
-        except:
-            pass
-        grp=doc.Board_Geoms
-        doc.Tip = doc.addObject('App::Part','Board')
-        doc.Board.Label = 'Board'
-        #FreeCAD.ActiveDocument.getObject("Step_Virtual_Models").addObject(impPart)
-        doc.getObject("Board").addObject(doc.Board_Geoms)
-        try:
-            doc.getObject("Board_Geoms").addObject(LCS)
-        except:
-            pass
-        grp.addObject(pcb_board)
-        #FreeCADGui.activeView().setActiveObject('Board_Geoms', doc.Board_Geoms)
-        ## end hierarchy
-    elif use_LinkGroups:
-        doc.Tip = doc.addObject('App::LinkGroup','Board_Geoms')
-        doc.Board_Geoms.Label = 'Board_Geoms'
-        grp=doc.Board_Geoms
-        doc.Tip = doc.addObject('App::LinkGroup','Board')
-        doc.Board.Label = 'Board'
-        #FreeCAD.ActiveDocument.getObject("Step_Virtual_Models").addObject(impPart)
-        # doc.getObject("Board").addObject(doc.Board_Geoms)
-        #doc.getObject('Board_Geoms').adjustRelativeLinks(doc.getObject('Board'))
-        doc.getObject('Board').ViewObject.dropObject(doc.getObject('Board_Geoms'),None,'',[])
-        FreeCADGui.Selection.clearSelection()
-        #grp.addObject(pcb_board)
-        #doc.getObject('Pcb').adjustRelativeLinks(doc.getObject('Board_Geoms'))
-        doc.getObject('Board_Geoms').ViewObject.dropObject(doc.getObject('Pcb'),None,'',[])
-        try:
-            #LCS.adjustRelativeLinks(doc.getObject('Board_Geoms'))
-            doc.getObject('Board_Geoms').ViewObject.dropObject(LCS,None,'',[])
-            FreeCADGui.Selection.clearSelection()
-            FreeCADGui.Selection.addSelection(LCS)
-            FreeCADGui.runCommand('Std_ToggleVisibility',0)
-            #stop
-        except:
-            pass
-        FreeCADGui.Selection.clearSelection()
-        #FreeCADGui.activeView().setActiveObject('Board_Geoms', doc.Board_Geoms)
-        ## end hierarchy        
-    else:
-        #sayw("creating flat groups")
-        grp=doc.addObject("App::DocumentObjectGroup", "Board_Geoms")
-        grp.addObject(pcb_board)
-    #pcb_sk=FreeCAD.ActiveDocument.PCB_Sketch
-    #grp.addObject(pcb_sk)
-    #grp.addObject(doc_outline)      
+            if len(HoleList)>0:
+                #cut_base = FreeCAD.ActiveDocument.getObject(cut_base_name).Shape
+                #cut_base_name=FreeCAD.ActiveDocument.ActiveObject
+                #cut_base_name=FreeCAD.ActiveDocument.ActiveObject.Name
+                #say(cut_base)
+                for drill in HoleList:
+                    #say("Cutting hole inside outline")
+                    #Part.show(drill)
+                    #say(drill)
+                    if holes_solid:
+                        drill = Part.makeSolid(drill)
+                    if show_shapes:
+                        Part.show(drill)
+                    cut_base=cut_base.cut(drill)
+            else:
+                #face = cut_base
+                cut_base = cut_base
+        else:    
+            sayw('using hierarchy container')
+            if len(HoleList)>0:
+                if holes_solid:
+                    #HoleList = getPads(board_elab,pcbThickness)
+                    say('generating solid holes')
+                else:
+                    say('generating flat holes')
+                dlo=[]
+                shapes=[];s_names=[]
+                #for drill in HoleList:
+                #    if holes_solid:
+                #        drill = Part.makeSolid(drill)
+                    #Part.show(drill)
+                    #dlo.append(drill)
+                #shapes=[];s_names=[]
+                ##for o in FreeCAD.ActiveDocument.Objects:
+                ##    if 'Shape' in o.Name:
+                ##        dlo.append(FreeCAD.ActiveDocument.getObject(o.Name))
+                ##        shapes.append(o.Shape)
+                ##        s_names.append(o.Name)
+                shapes=HoleList
+                #stop
+                ##https://forum.freecadweb.org/viewtopic.php?t=18179&start=30
+                #multifuse
+                shape_base=shapes[0]
+                shapes=shapes[1:]
+                #fc_016=True
+                if len(HoleList)>1:  #more than one drill
+                    shape = shape_base.fuse(shapes)
+                else:   #one drill ONLY
+                    shape = shape_base
+                test_face_gen = False
+                if test_face_gen:
+                    Part.show(cut_base) #test_face
+                    Part.show(shape) #test_face
+                    stop
+                try:
+                    cut_base = cut_base.cut(shape)
+                except:
+                    say("*** omitting PCBs because there was a not closed loop in your edge lines ***")
+                    say('pcb edge not closed')
+                    QtGui.QApplication.restoreOverrideCursor()
+                    diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
+                                            'Error in creating Board Edge                                                                ."+"\r\n"',
+                                            """<b>pcb edge not closed<br>review your Board Edges in Kicad!<br>or try to fix it with Constrainator""")
+                    diag.setWindowModality(QtCore.Qt.ApplicationModal)
+                    diag.exec_()
+                    FreeCADGui.activeDocument().activeView().viewTop()
+                    if (zfit):
+                        FreeCADGui.SendMsgToActiveView("ViewFit")
+                    stop #maui                
+                #Part.show(cut_base)
+                #stop
+                for s in s_names:
+                    #Part.show(s)
+                    FreeCAD.ActiveDocument.removeObject(s) #test_face
+                FreeCAD.ActiveDocument.recompute()
+                #stop
+                #say_time()
+            else:
+                #face = cut_base
+                cut_base = cut_base
+        #    ##if len(HoleList)>0:
+        #    ##    #face = cut_base.cut(Part.makeCompound(HoleList))
+        #    ##    cut_base = cut_base.cut(Part.makeCompound(HoleList))   ###VERY fast but failing when overlapping of pads
+        get_time()
+        say('cutting time ' +str(round(running_time-t1,3)))
         
+        doc_outline=doc.addObject("Part::Feature","Pcb")
+        doc_outline.Shape=cut_base 
+        try:
+            doc_outline.Shape=cut_base.extrude(Base.Vector(0,0,-totalHeight))
+        except:
+            doc.removeObject("Pcb")
+            say("*** omitting PCBs because there was a not closed loop in your edge lines ***")
+            say('pcb edge not closed')
+            QtGui.QApplication.restoreOverrideCursor()
+            diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
+                                    'Error in creating Board Edge                                                                ."+"\r\n"',
+                                    """<b>pcb edge not closed<br>review your Board Edges in Kicad!<br>or try to fix it with Constrainator""")
+            diag.setWindowModality(QtCore.Qt.ApplicationModal)
+            diag.exec_()
+            FreeCADGui.activeDocument().activeView().viewTop()
+            if (zfit):
+                FreeCADGui.SendMsgToActiveView("ViewFit")
+            stop #maui                        
+        #stop
+        try:
+            FreeCAD.activeDocument().removeObject('Shape') #removing base shape
+        except:
+            sayw('Shape already removed')
+        #cut_base=cut_base.extrude(Base.Vector(0,0,-pcbThickness))
+        #Part.show(cut_base)
+        pcb_name=FreeCAD.ActiveDocument.ActiveObject.Name
+        pcb_board=FreeCAD.ActiveDocument.ActiveObject
+        if simplifyComSolid:
+            faces=[]
+            for f in pcb_board.Shape.Faces:
+                faces.append(f) 
+            try:
+                _ = Part.Shell(faces)
+                _=Part.Solid(_)
+                FreeCAD.ActiveDocument.removeObject(pcb_name)
+                doc.addObject('Part::Feature','Pcb').Shape=_
+                pcb_name=FreeCAD.ActiveDocument.ActiveObject.Name
+                pcb_board=FreeCAD.ActiveDocument.ActiveObject
+            except:
+                sayerr('error in simplifying compsolid')
+        
+        # simple_pcb=doc.addObject("Part::Feature","simple_Pcb")
+        # simple_pcb.Shape=pcb_board.Shape
+        # spcb=pcb_board.Shape
+        # Part.show(spcb)
+        
+        #FreeCAD.ActiveDocument.ActiveObject.Label ="Pcb"
+        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (colr,colg,colb)
+        #FreeCADGui.ActiveDocument.ActiveObject.Transparency = 20
+        #if remove_pcbPad==True:
+        #    FreeCAD.activeDocument().removeObject(cut_base_name)
+            #FreeCAD.activeDocument().removeObject(Holes_name)
+        if use_AppPart and not force_oldGroups and not use_LinkGroups:
+            ## to evaluate to add App::Part hierarchy
+            #sayw("creating hierarchy")
+            doc.Tip = doc.addObject('App::Part','Board_Geoms')
+            doc.Board_Geoms.Label = 'Board_Geoms'
+            try:
+                doc.Board_Geoms.License = ''
+                doc.Board_Geoms.LicenseURL = ''
+            except:
+                pass
+            grp=doc.Board_Geoms
+            doc.Tip = doc.addObject('App::Part','Board')
+            doc.Board.Label = 'Board'
+            #FreeCAD.ActiveDocument.getObject("Step_Virtual_Models").addObject(impPart)
+            doc.getObject("Board").addObject(doc.Board_Geoms)
+            try:
+                doc.getObject("Board_Geoms").addObject(LCS)
+            except:
+                pass
+            grp.addObject(pcb_board)
+            #FreeCADGui.activeView().setActiveObject('Board_Geoms', doc.Board_Geoms)
+            ## end hierarchy
+        elif use_LinkGroups:
+            doc.Tip = doc.addObject('App::LinkGroup','Board_Geoms')
+            doc.Board_Geoms.Label = 'Board_Geoms'
+            grp=doc.Board_Geoms
+            doc.Tip = doc.addObject('App::LinkGroup','Board')
+            doc.Board.Label = 'Board'
+            #FreeCAD.ActiveDocument.getObject("Step_Virtual_Models").addObject(impPart)
+            # doc.getObject("Board").addObject(doc.Board_Geoms)
+            #doc.getObject('Board_Geoms').adjustRelativeLinks(doc.getObject('Board'))
+            doc.getObject('Board').ViewObject.dropObject(doc.getObject('Board_Geoms'),None,'',[])
+            FreeCADGui.Selection.clearSelection()
+            #grp.addObject(pcb_board)
+            #doc.getObject('Pcb').adjustRelativeLinks(doc.getObject('Board_Geoms'))
+            doc.getObject('Board_Geoms').ViewObject.dropObject(doc.getObject('Pcb'),None,'',[])
+            try:
+                #LCS.adjustRelativeLinks(doc.getObject('Board_Geoms'))
+                doc.getObject('Board_Geoms').ViewObject.dropObject(LCS,None,'',[])
+                FreeCADGui.Selection.clearSelection()
+                FreeCADGui.Selection.addSelection(LCS)
+                FreeCADGui.runCommand('Std_ToggleVisibility',0)
+                #stop
+            except:
+                pass
+            FreeCADGui.Selection.clearSelection()
+            #FreeCADGui.activeView().setActiveObject('Board_Geoms', doc.Board_Geoms)
+            ## end hierarchy        
+        else:
+            #sayw("creating flat groups")
+            grp=doc.addObject("App::DocumentObjectGroup", "Board_Geoms")
+            grp.addObject(pcb_board)
+        #pcb_sk=FreeCAD.ActiveDocument.PCB_Sketch
+        #grp.addObject(pcb_sk)
+        #grp.addObject(doc_outline)      
+            
     say_time()
     FreeCADGui.activeDocument().activeView().viewAxometric()
     if (zfit):
@@ -15314,7 +15365,7 @@ class Ui_DockWidget(object):
 
 ##
     def onPushPCB(self):
-        PushPullPCB()
+        PushPCB()
     # #def onExport3DStep(self):
     #     global last_3d_path, start_time, load_sketch
     #     #say("export3DSTEP")
@@ -15701,9 +15752,49 @@ def Import3DModelF():
         pg.SetString("last_3d_path",make_string(last_3d_path))
     
 ##
+#import PySide
+#from PySide import QtCore, QtGui #, QtWidgets
+##from PyQt5 import QtCore, QtGui, QtWidgets
+QtWidgets = QtGui
 
+class Ui_LayerSelection(object):
+    def setupUi(self, LayerSelection):
+        LayerSelection.setObjectName("LayerSelection")
+        LayerSelection.resize(294, 151)
+        LayerSelection.setWindowTitle("LayerSelection")
+        LayerSelection.setToolTip("")
+        self.buttonBoxLayer = QtWidgets.QDialogButtonBox(LayerSelection)
+        self.buttonBoxLayer.setGeometry(QtCore.QRect(10, 110, 271, 32))
+        self.buttonBoxLayer.setOrientation(QtCore.Qt.Horizontal)
+        self.buttonBoxLayer.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
+        self.buttonBoxLayer.setObjectName("buttonBoxLayer")
+        self.verticalLayoutWidget = QtWidgets.QWidget(LayerSelection)
+        self.verticalLayoutWidget.setGeometry(QtCore.QRect(10, 10, 271, 80))
+        self.verticalLayoutWidget.setObjectName("verticalLayoutWidget")
+        self.verticalLayout = QtWidgets.QVBoxLayout(self.verticalLayoutWidget)
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout.setObjectName("verticalLayout")
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
+        self.label = QtWidgets.QLabel(self.verticalLayoutWidget)
+        self.label.setText("Select the layer to push the Sketch\n"
+"Default \'Edge.Cuts\'")
+        self.label.setObjectName("label")
+        self.verticalLayout_2.addWidget(self.label)
+        self.verticalLayout.addLayout(self.verticalLayout_2)
+        self.comboBoxLayerSel = QtWidgets.QComboBox(self.verticalLayoutWidget)
+        self.comboBoxLayerSel.setObjectName("comboBoxLayerSel")
+        self.verticalLayout.addWidget(self.comboBoxLayerSel)
+
+        self.retranslateUi(LayerSelection)
+        self.buttonBoxLayer.accepted.connect(LayerSelection.accept)
+        self.buttonBoxLayer.rejected.connect(LayerSelection.reject)
+        QtCore.QMetaObject.connectSlotsByName(LayerSelection)
+
+    def retranslateUi(self, LayerSelection):
+        pass
 ##
-def PushPullPCB():
+def PushPCB():
 #def onExport3DStep(self):
     global last_3d_path, start_time, load_sketch, last_pcb_path
     #say("export3DSTEP")
@@ -15731,27 +15822,42 @@ def PushPullPCB():
                 #    last_3d_path=last_pcb_path
                 #    sayw(last_pcb_path)
                 #getSaveFileName(self,"saveFlle","Result.txt",filter ="txt (*.txt *.)")
-                testing=False
-                if not testing:
-                    Filter=""
-                    name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Push Sketch PCB Edge to KiCad board ...",
-                        make_unicode(last_pcb_path), "*.kicad_pcb")
-                else:
-                    name='d:/Temp/e2.kicad_pcb'
-                #say(name)
-                if name:
-                    if os.path.exists(name):
-                        last_pcb_path=os.path.dirname(name)
-                        pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
-                        pg.SetString("last_pcb_path",make_string(last_pcb_path))
-                        start_time=current_milli_time()
-                        export_pcb(name)
+                layer_list = ['Edge.Cuts','Dwgs.User','Cmts.User','Eco1.User','Eco2.User','Margin']
+                LayerSelectionDlg = QtGui.QDialog()
+                ui = Ui_LayerSelection()
+                ui.setupUi(LayerSelectionDlg)
+                ui.comboBoxLayerSel.addItems(layer_list)
+                reply=LayerSelectionDlg.exec_()
+                if reply==1: # ok
+                    SketchLayer=str(ui.comboBoxLayerSel.currentText())
+                    print(SketchLayer)
+                #else:  #canel
+                #    print('Cancel')
+                #    stop
+                #    pass
+                    testing=False
+                    if not testing:
+                        Filter=""
+                        name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Push Sketch PCB Edge to KiCad board ...",
+                            make_unicode(last_pcb_path), "*.kicad_pcb")
                     else:
-                        msg="""Save to <b>an EXISTING KiCad pcb file</b> to update your Edge!"""
-                        say_warning(msg)
-                        msg="Save to an EXISTING KiCad pcb file to update your Edge!"
-                        sayerr(msg)
-                    
+                        name='d:/Temp/e2.kicad_pcb'
+                    #say(name)
+                    if name:
+                        if os.path.exists(name):
+                            last_pcb_path=os.path.dirname(name)
+                            pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+                            pg.SetString("last_pcb_path",make_string(last_pcb_path))
+                            start_time=current_milli_time()
+                            export_pcb(name,SketchLayer)
+                        else:
+                            msg="""Save to <b>an EXISTING KiCad pcb file</b> to update your Edge!"""
+                            say_warning(msg)
+                            msg="Save to an EXISTING KiCad pcb file to update your Edge!"
+                            sayerr(msg)
+                else:  #cancel
+                    print('Cancel')
+                    pass    
             else:
                 msg="""select one Sketch to be pushed to kicad board!"""
                 sayerr(msg)
@@ -16109,6 +16215,347 @@ def PushMoved():
                 say_info(msg)
         else:
             msg="""select only 3D model(s) moved to be updated/pushed to kicad board!<br><b>a Time Stamp is required!</b>"""
+            sayerr(msg)
+            say_warning(msg)
+
+###
+def getModelsData(mypcb):
+    """ mypcb = KicadPCB.load(file_pcb) """
+    ## NB use always float() to guarantee number not string!!!
+    warn=""
+    PCB_Models = []
+    Edge_Cuts_lvl=44
+    Top_lvl=0
+    conv_offs=25.4
+    if hasattr(mypcb, 'host'):
+        print(mypcb.host)
+    if hasattr(mypcb, 'version'):
+        version = float(mypcb.version)
+        if version <= 3:
+            QtGui.QApplication.restoreOverrideCursor()
+            reply = QtGui.QMessageBox.information(None,"Error ...","... KICAD pcb version "+ str(version)+" not supported \r\n"+"\r\nplease open and save your board with the latest kicad version")
+            stop
+        if version>=4:
+            Edge_Cuts_lvl=44
+            Top_lvl=0
+        conv_offs=1.0
+        if version >= 20171114:
+            conv_offs=25.4
+    
+    for lynbr in mypcb.layers: #getting layers name
+        if float(lynbr) == Top_lvl:
+            LvlTopName=(mypcb.layers['{0}'.format(str(lynbr))][0])
+        if float(lynbr) == Edge_Cuts_lvl:
+            LvlEdgeName=(mypcb.layers['{0}'.format(str(lynbr))][0])
+
+    for m in mypcb.module:  #parsing modules  #check top/bottom for placing 3D models
+        #print(m.tstamp);print(m.fp_text[0][1])
+        #stop
+        if len(m.at)==2:
+            m_angle=0
+        else:
+            m_angle=m.at[2]
+        m_at=[m.at[0],-m.at[1]] #y reversed
+        virtual=0
+        if hasattr(m, 'attr'):
+            if 'virtual' in m.attr:
+                #say('virtual module')
+                virtual=1
+        else:
+            virtual=0
+        m_x = float(m.at[0])
+        m_y = float(m.at[1]) * (-1)
+        m_rot = float(m_angle)
+        #sayw(m.layer);sayerr(LvlTopName)
+        if m.layer == LvlTopName:  # top
+            side = "Top"
+            #sayw('top ' + m.layer)
+        else:
+            side = "Bottom"
+            m_rot *= -1 ##bottom 3d model rotation
+            #sayw('bot ' + m.layer)
+        n_md=1
+        for md in m.model:
+            #say (md[0]) #model name
+            #say(md.at.xyz)
+            #say(md.scale.xyz)
+            #say(md.rotate.xyz)
+            error_scale_module=False
+            #say('scale ');sayw(scale_vrml)#;
+            #error_scale_module=False
+            xsc_vrml_val=md.scale.xyz[0]
+            ysc_vrml_val=md.scale.xyz[1]
+            zsc_vrml_val=md.scale.xyz[2]        
+            # if scale_vrml!='1 1 1':
+            if float(xsc_vrml_val)!=1 or float(ysc_vrml_val)!=1 or float(zsc_vrml_val)!=1:
+                if "box_mcad" not in md[0] and "cylV_mcad" not in md[0] and "cylH_mcad" not in md[0]:
+                    sayw('wrong scale!!! set scale to (1 1 1)')
+                error_scale_module=True
+            #model_list.append(mdl_name[0])
+            #model=model_list[j]+'.wrl'
+            #if py2:
+            if sys.version_info[0] == 2: #py2
+                model=md[0].decode("utf-8")
+                #stop
+            else: #py3
+                model=md[0] # py3 .decode("utf-8")
+            #print (model, ' MODEL', type(model)) #maui test py3
+            if (virtual==1 and addVirtual==0):
+                model_name='no3Dmodel'
+                side='noLayer'
+                if model:
+                    sayw("virtual model "+model+" skipped") #virtual found warning
+            else:
+                if model:
+                    model_name=model
+                    #sayw(model_name)
+                    warn=""
+                    if "box_mcad" not in model_name and "cylV_mcad" not in model_name and "cylH_mcad" not in model_name:
+                        if error_scale_module:
+                            sayw('wrong scale!!! for '+model_name+' Set scale to (1 1 1)')
+                            msg="""<b>Error in '.kicad_pcb' model footprint</b><br>"""
+                            msg+="<br>reset values of<br><b>"+model_name+"</b><br> to:<br>"
+                            msg+="(scale (xyz 1 1 1))<br>"
+                            #warn+=("reset values of scale to (xyz 1 1 1)")
+                            warn=("reset values of scale to (xyz 1 1 1)")
+                            ##reply = QtGui.QMessageBox.information(None,"info", msg)
+                            #stop
+                    #model_name=model_name[1:]
+                    #say(model_name)
+                    #sayw("here")
+                else:
+                    model_name='no3Dmodel'  #to do how to manage no3Dmodel
+                    side='noLayer'
+                    sayerr('no3Dmodel')
+                mdl_name=model_name # re.findall(r'(.+?)\.wrl',params)
+                #if virtual == 1:
+                #    sayerr("virtual model(s)");sayw(mdl_name)
+                # sayw(mdl_name)
+                # sayerr(params)
+                if len(mdl_name) > 0:
+                    # model_name, rot_comb, warn, pos_vrml, rotz_vrml, scale_vrml = get3DParams(mdl_name,params, rot, virtual)
+                    #sayerr(md.at.xyz)
+                    if conv_offs != 1: #pcb version >= 20171114 (offset wrl in mm)
+                        if hasattr(md,'at'):
+                            ofs=[md.at.xyz[0]/conv_offs,md.at.xyz[1]/conv_offs,md.at.xyz[2]/conv_offs]
+                        if hasattr(md,'offset'):
+                            ofs=[md.offset.xyz[0]/conv_offs,md.offset.xyz[1]/conv_offs,md.offset.xyz[2]/conv_offs]
+                    else:
+                        ofs=md.at.xyz
+                    line = []
+                    line.append(model_name)
+                    line.append(m_x)
+                    line.append(m_y)
+                    line.append(m_rot-md.rotate.xyz[2])
+                    line.append(side)
+                    line.append(warn)
+                    line.append(ofs) #(md.at.xyz) #pos_vrml)
+                    line.append(md.rotate.xyz) #rotz_vrml)
+                    #sayerr(rotz_vrml)
+                    line.append(md.scale.xyz) #scale_vrml)
+                    line.append(virtual)
+                    if hasattr(m,'tstamp'):
+                        line.append(m.tstamp) # fp tstamp
+                    else:
+                        sayw('missing \'TimeStamp\'')
+                        line.append('null')
+                    line.append(m.fp_text[0][1]) #fp reference
+                    line.append(n_md) #number of models in module
+                    PCB_Models.append(line)
+                    n_md+=1
+    return PCB_Models
+###
+
+def PullMoved():
+    global last_3d_path, start_time
+    global last_fp_path, test_flag
+    global configParser, configFilePath, last_pcb_path
+    global ignore_utf8, ignore_utf8_incfg, disable_PoM_Observer
+    global board_base_point_x, board_base_point_y, real_board_pos_x, real_board_pos_y
+    global pcb_path, use_AppPart, force_oldGroups, use_Links, use_LinkGroups
+    global original_filename, aux_orig, grid_orig
+    global off_x, off_y, maxRadius, use_pypro
+
+    ## to export to STEP an object and its links with a different placement and label
+    ## two options must be set: 1) disable 'Reduce number of objects'; 2) disable 'Ignore instance names'
+    ## NB the second one is not good for collaboration with different cads
+    
+    #say("export3DSTEP")
+    if load_sketch==False:
+        msg="""<b>Board editing NOT supported on FC0.15!</b><br>please upgrade your FC release"""
+        say_warning(msg)
+        msg="Board editing NOT supported on FC0.15!"
+        sayerr(msg)            
+    else:
+        check_ok=False
+        sel = FreeCADGui.Selection.getSelection()
+        if len (sel) >= 1:
+            for s in sel:
+                if s.Label.rfind('_') < s.Label.rfind('['):
+                    ts = s.Label[s.Label.rfind('_')+1:s.Label.rfind('[')]
+                else:
+                    ts = s.Label[s.Label.rfind('_')+1:]
+                if len (ts) == 8:
+                    #print(ts);stop
+                    check_ok=True
+                    #stop
+                    break
+            #else:
+            #    msg="""select only 3D model(s) moved to be updated/pushed to kicad board!<br><b>a TimeSTamp is required!</b>"""
+            #    sayerr(msg)
+            #    say_warning(msg)
+        if check_ok:
+            cfg_read_all()
+            #pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+            #pg.GetString("last_3d_path")
+            if len(last_pcb_path) == 0:
+                last_pcb_path=u''
+                #sayw(last_pcb_path)
+            #getSaveFileName(self,"saveFlle","Result.txt",filter ="txt (*.txt *.)")
+            testing=False #True
+            if not testing:
+                Filter=""
+                fname, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Open File...",
+                    make_unicode(last_pcb_path), "*.kicad_pcb")
+            else:
+                fname='c:/Temp/demo/test-rot.kicad_pcb'
+            if fname:
+                if os.path.exists(fname):
+                    last_3d_path=os.path.dirname(fname)
+                    pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+                    pg.SetString("last_3d_path",make_string(last_3d_path))
+                    start_time=current_milli_time()
+                    doc=FreeCAD.ActiveDocument
+                    #filePath=last_pcb_path
+                    #fpath=filePath+os.sep+doc.Label+'.kicad_pcb'
+                    #sayerr('to '+fpath)
+                    #print fname
+                    if fname is None:
+                        fpath=original_filename
+                    else:
+                        fpath=fname
+                    sayerr('loading from '+fpath)
+                    #stop
+                    if len(fpath) > 0:
+                        #new_edge_list=getBoardOutline()
+                        #say (new_edge_list)
+                        cfg_read_all()
+                        path, fname = os.path.split(fpath)
+                        name=os.path.splitext(fname)[0]
+                        ext=os.path.splitext(fname)[1]
+                        fpth = os.path.dirname(os.path.abspath(fpath))
+                        #filePath = os.path.split(os.path.realpath(__file__))[0]
+                        say ('my file path '+fpth)
+                        # stop
+                        if fpth == "":
+                            fpth = "."
+                        last_pcb_path = fpth
+                        last_pcb_path = re.sub("\\\\", "/", last_pcb_path)
+                        ini_vars[10] = last_pcb_path
+                        #cfg_update_all()
+                        pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+                        pg.SetString("last_pcb_path", make_string(last_pcb_path))
+                        #sayerr(name+':'+ext)
+                        mypcb = KicadPCB.load(fpath)
+                        mymodels = getModelsData(mypcb)
+                        pcbThickness=float(mypcb.general.thickness)
+                        #print(mymodels)
+                        #stop
+                        #with codecs.open(fpath,'r', encoding='utf-8') as txtFile:
+                        #    content = txtFile.readlines() # problems?
+                        #content.append(u" ")
+                        #txtFile.close()
+                        #data=u''.join(content)
+                        #oft=None
+                        #if aux_orig == 1:
+                        #    oft=getAuxOrigin(data)
+                        #if grid_orig == 1:
+                        #    oft=getGridOrigin(data)
+                        #print oft
+                        #gof=False
+                        #if oft is not None:
+                        #    off_x=oft[0];off_y=-oft[1]
+                        #    offset = oft
+                        #    gof=True
+                        #    pcb_pull=True
+                        #else:
+                        #    pcb_pull=False
+                        oft=None
+                        if aux_orig == 1:
+                            if hasattr(mypcb.setup, 'aux_axis_origin'):
+                                oft = mypcb.setup.aux_axis_origin 
+                                #oft=getAuxOrigin(data)
+                        if grid_orig == 1:
+                            if hasattr(mypcb.setup, 'grid_origin'):
+                                oft=mypcb.setup.grid_origin
+                                #oft=getGridOrigin(data)
+                        #print ('oft ',oft)
+                        gof=False
+                        if oft is not None:
+                            off_x=oft[0];off_y=-oft[1]
+                            offset = oft
+                            gof=True
+                            pcb_pull=True
+                        else:
+                            pcb_pull=False
+                        #print ('ofx,ofy reviewed ',off_x,' ',off_y)
+                        testing=False #True
+                    if pcb_pull:
+                        for s in sel:
+                            #sayw(doc.Name)
+                            if 0: # use_pypro:
+                                if hasattr(s,"TimeStamp"):
+                                    ts=s.TimeStamp
+                                    content = push3D2pcb(s,content,ts,pcbThickness)
+                                else:
+                                    msg="""select only 3D model(s) to be updated/pulled from kicad board!"""
+                                    sayerr(msg)
+                                    say_warning(msg)
+                            else:
+                                if s.Label.rfind('_') < s.Label.rfind('['):
+                                    ts = s.Label[s.Label.rfind('_')+1:s.Label.rfind('[')]
+                                else:
+                                    ts = s.Label[s.Label.rfind('_')+1:]
+                                if len (ts) == 8:
+                                    #print (s.Label) #;stop
+                                    nbrModel = None
+                                    if s.Label.rfind('_') < s.Label.rfind('['):
+                                        #ts = s.Label[s.Label.rfind('_')+1:s.Label.rfind('[')]
+                                        nbrModel = s.Label[s.Label.rfind('['):]
+                                        #print(nbrModel)
+                                        nMd = int(nbrModel.replace('[','').replace(']',''))-1
+                                    else:
+                                        #ts = s.Label[s.Label.rfind('_')+1:]
+                                        nMd = 0
+                                        #print('nbrModel = 0')
+                                    #print(ts);stop
+                                    content = pull3D2dsn(s,mymodels,ts,nMd,gof,pcbThickness)
+                                #else:
+                                #    msg="""select only 3D model(s) to be updated/pulled from kicad board!<br><b>a TimeSTamp is required!</b>"""
+                                #    sayerr(msg)
+                                #    say_warning(msg)
+                        say_time()
+                        msg="""<b>3D model new position pulled from kicad board!</b><br><br>"""
+                        msg+="<b>file loaded from<br>"+fpath+"</b><br><br>"
+                        msgr="3D model new position pulled from kicad board!\n"
+                        say(msgr)
+                        say_info(msg)
+                    else:
+                        msg="""To update 3D model Position(s) from <b>an EXISTING KiCad pcb file</b><br>the board must have assigned \'Grid Origin\' or<br>\'Aux Origin\' (Drill and Place offset)!"""
+                        say_warning(msg)
+                        msg="To update 3D model Position(s) from an EXISTING KiCad pcb file\nthe board must have assigned \'Grid Origin\' or \'Aux Origin\' (Drill and Place offset)!"
+                        sayerr(msg)
+                else:
+                    msg="""Load from <b>an EXISTING KiCad pcb file</b> to update your 3D model position!"""
+                    say_warning(msg)
+                    msg="Load from an EXISTING KiCad pcb file to update your 3D model position!"
+                    sayerr(msg)
+            else:
+                msg="""Operation aborted!"""
+                sayerr(msg)
+                say_info(msg)
+        else:
+            msg="""select only 3D model(s) to be updated/pulled from kicad board!<br><b>a Time Stamp is required!</b>"""
             sayerr(msg)
             say_warning(msg)
 
@@ -18713,7 +19160,7 @@ def getBoardOutline():
 ##
 
 
-def createEdge(edg,ofs):
+def createEdge(edg,ofs,sklayer=None):
     global edge_width, maxRadius
     
     #print edg
@@ -18728,7 +19175,10 @@ def createEdge(edg,ofs):
     #    if y < self.minY:
     #        self.minY = y
 
-    layer='Edge.Cuts'
+    if sklayer is None:
+        layer='Edge.Cuts'
+    else:
+        layer = sklayer
     if edg[0] == 'line':
         if 0: #abs(edg[1]+ofs[0])>500 or abs(edg[2]+ofs[1])>500: "{0:.3f}".
             #print edg
@@ -19302,7 +19752,7 @@ def getAuxOrigin(dt):
     else:
         return None
 ##
-def export_pcb(fname=None):
+def export_pcb(fname=None,sklayer=None):
     global last_fp_path, test_flag, start_time
     global configParser, configFilePath, start_time
     global ignore_utf8, ignore_utf8_incfg, disable_PoM_Observer
@@ -19374,25 +19824,53 @@ def export_pcb(fname=None):
                 say(msgr)
                 say_info(msg)
         if pcb_push==True:    
-            #stop
+            if sklayer is None:
+                ssklayer = 'Edge'
+            else:
+                ssklayer = sklayer.split('.')[0]
+                print (ssklayer)
             edge_pcb_exists=False
-            if len(re.findall('\s\(gr_line(.+?)Edge(.+?)\)\)\r\n|\s\(gr_line(.+?)Edge(.+?)\)\)\r|\s\(gr_line(.+?)Edge(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
+            mypcb = KicadPCB.load(fpath)
+            sayw('parsing')
+            edg_segms = 0
+            for ln in mypcb.gr_line:
+                if ssklayer in ln.layer:
+                    #say(ln.layer)
+                    edg_segms+=1
+                    break
+            if edg_segms == 0:
+                for ar in mypcb.gr_arc:
+                    if ssklayer in ar.layer:
+                        #say(ln.layer)
+                        edg_segms+=1
+                        break
+            if edg_segms == 0:
+                for lp in mypcb.gr_poly:
+                    #print(lp)
+                    #print(lp.layer)
+                    #print(lp.pts)
+                    if ssklayer in lp.layer:
+                        #sayerr(lp.layer)
+                        for p in lp.pts.xy:
+                            edg_segms+=1
+                            break
+                            #sayerr(p)
+                    #stop
+                    #edg_segms+=1
+            if edg_segms == 0:
+                for bs in mypcb.gr_curve:
+                    if ssklayer in bs.layer:
+                        #sayerr(bs.layer)
+                        for p in bs.pts.xy:
+                            edg_segms+=1
+                            break
+                        #edg_segms+=1
+            #sayw(str(edg_segms)+' '+ssklayer+' segments')
+            if (edg_segms)>0:
                 edge_pcb_exists=True
-            if len(re.findall('\s\(gr_curve(.+?)Edge(.+?)\)\)\r\n|\s\(gr_curve(.+?)Edge(.+?)\)\)\r|\s\(gr_curve(.+?)Edge(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0: # spline
-                edge_pcb_exists=True
-            if not edge_pcb_exists and len(re.findall('\s\(gr_arc(.+?)Edge(.+?)\)\)\r\n|\s\(gr_arc(.+?)Edge(.+?)\)\)\r|\s\(gr_arc(.+?)Edge(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
-                edge_pcb_exists=True
-            if not edge_pcb_exists and len(re.findall('\s\(gr_circle(.+?)Edge(.+?)\)\)\r\n|\s\(gr_circle(.+?)Edge(.+?)\)\)\r|\s\(gr_circle(.+?)Edge(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
-                edge_pcb_exists=True
-            if len(re.findall('\s\(fp_line(.+?)Edge(.+?)\)\)\r\n|\s\(fp_line(.+?)Edge(.+?)\)\)\r|\s\(fp_line(.+?)Edge(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
-                edge_pcb_exists=True
-            if not edge_pcb_exists and len(re.findall('\s\(fp_arc(.+?)Edge(.+?)\)\)\r\n|\s\(fp_arc(.+?)Edge(.+?)\)\)\r|\s\(fp_arc(.+?)Edge(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
-                edge_pcb_exists=True
-            if not edge_pcb_exists and len(re.findall('\s\(fp_circle(.+?)Edge(.+?)\)\)\r\n|\s\(fp_circle(.+?)Edge(.+?)\)\)\r|\s\(fp_circle(.+?)Edge(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
-                edge_pcb_exists=True
-            if not edge_pcb_exists and len(re.findall('\s\(gr_poly(.+?)Edge(.+?)\)\)\r\n|\s\(gr_poly(.+?)Edge(.+?)\)\)\r|\s\(gr_poly(.+?)Edge(.+?)\)\)\n',data, re.MULTILINE|re.DOTALL))>0:
-                edge_pcb_exists=True
-  
+                sayw('found '+ssklayer+' element(s)')
+            #stop
+            
             oft=None
             if aux_orig == 1:
                 oft=getAuxOrigin(data)
@@ -19410,7 +19888,13 @@ def export_pcb(fname=None):
                 doc=FreeCAD.ActiveDocument
                 ksu_found=False;skt_name='';pcb_found=False
                 for obj in doc.Objects:
-                    if ("PCB_Sketch" in obj.Name) or ("PCB_Sketch" in obj.Label):
+                    if ("PCB_Sketch" in obj.Name) or ("PCB_Sketch" in obj.Label) or\
+                       ("Edge_Sketch" in obj.Name) or ("Edge.Cuts" in obj.Label) or \
+                       ("Dwgs_Sketch" in obj.Name) or ("Dwgs.User" in obj.Label) or \
+                       ("Eco1_Sketch" in obj.Name) or ("Eco1.User" in obj.Label) or \
+                       ("Eco2_Sketch" in obj.Name) or ("Eco2.User" in obj.Label) or \
+                       ("Cmts_Sketch" in obj.Name) or ("Cmts.User" in obj.Label) or \
+                       ("Margin_Sketch" in obj.Name) or ("Margin" in obj.Label):
                         ksu_found=True
                         skt_name=obj.Name
                     if ("Pcb" in obj.Name):
@@ -19429,22 +19913,30 @@ def export_pcb(fname=None):
                         offset=[off_x,-off_y]
                     if gof and grid_orig==1:
                         offset=[off_x,-off_y]
+                        offset = (getGridOrigin(data)[0],getGridOrigin(data)[1])
+                    elif gof and aux_orig==1:
+                        offset=[off_x,-off_y]
+                        offset = (getAuxOrigin(data)[0],getAuxOrigin(data)[1])
+                    #if gof and not pcb_found:
+                    #    offset=[0,0]
+                    ## maui to test position
                     #print offset
+                    #say(offset)
                     #stop
                     say('pcb edge exists')
                     sayw('removing old Edge')
                     ## removing old Edge
-                    repl = re.sub('\s\(gr_line(.+?)Edge(.+?)\)\)\r\n|\s\(gr_line(.+?)Edge(.+?)\)\)\r|\s\(gr_line(.+?)Edge(.+?)\)\)\n','',data, flags=re.MULTILINE)
-                    repl = re.sub('\s\(gr_curve(.+?)Edge(.+?)\)\)\r\n|\s\(gr_curve(.+?)Edge(.+?)\)\)\r|\s\(gr_curve(.+?)Edge(.+?)\)\)\n','',repl, flags=re.MULTILINE)
-                    repl = re.sub('\s\(gr_arc(.+?)Edge(.+?)\)\)\r\n|\s\(gr_arc(.+?)Edge(.+?)\)\)\r|\s\(gr_arc(.+?)Edge(.+?)\)\)\n','',repl, flags=re.MULTILINE)
-                    repl = re.sub('\s\(gr_circle(.+?)Edge(.+?)\)\)\r\n|\s\(gr_circle(.+?)Edge(.+?)\)\)\r|\s\(gr_circle(.+?)Edge(.+?)\)\)\n','',repl, flags=re.MULTILINE)
-                    repl = re.sub('\s\(gr_poly(.+?)Edge(.+?)\)\)\r\n|\s\(gr_poly(.+?)Edge(.+?)\)\)\r|\s\(gr_poly(.+?)Edge(.+?)\)\)\n','',repl, flags=re.MULTILINE)
+                    repl = re.sub('\s\(gr_line(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_line(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_line(.+?)'+ssklayer+'(.+?)\)\)\n','',data, flags=re.MULTILINE)
+                    repl = re.sub('\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE)
+                    repl = re.sub('\s\(gr_arc(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_arc(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_arc(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE)
+                    repl = re.sub('\s\(gr_circle(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_circle(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_circle(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE)
+                    repl = re.sub('\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE)
                     #sayerr(replace)
                     k = repl.rfind(")")  #removing latest ')'
                     newcontent = repl[:k]
                 else:
                     sayerr('to push a new release of Edge to a kicad board with an existing Edge\nyou need to load the board with StepUp first')
-                    say_warning("""<b>to push a new release of Edge to a kicad board<br>with an existing Edge<br>you need to load the board with StepUp first""")
+                    say_warning("""<b>to push a new release of Edge to a kicad board<br>with an existing Edge<br>you need to load the board with StepUp first<br><br>""")
                     stop
             else:
                 #[148.5, -98.5] center of A4 page
@@ -19571,7 +20063,7 @@ def export_pcb(fname=None):
             #stop
             #for border in new_edge_list:
             for border in sanitized_edge_list:
-                new_border=new_border+os.linesep+createEdge(border,offset)
+                new_border=new_border+os.linesep+createEdge(border,offset,sklayer)
                 #sayw(createEdge(border))
             #stop
             new_edge=new_border+os.linesep+')'+os.linesep
@@ -19609,6 +20101,75 @@ def export_pcb(fname=None):
     #def precision(self, value):
     #    return "%.2f" % float(value)
     
+##
+def pull3D2dsn(s,mdls,tsp,nMd,gof,pcbThickness):
+    global start_time, aux_orig, grid_orig
+    global board_base_point_x, board_base_point_y, real_board_pos_x, real_board_pos_y
+    global off_x, off_y, maxRadius
+    
+    #sayw('pulling 3D model placement from pcb')
+    doc=FreeCAD.ActiveDocument
+    if gof and grid_orig==1:
+        offset=[off_x,-off_y]
+    #print(offset)
+    if 0:
+        model_3d_name = s.Label[s.Label.find('_')+1:s.Label.rfind('_')]
+        model_3d_name = model_3d_name.replace('.','')
+        #print (model_3d_name);stop
+        nbrModel = None
+        if s.Label.rfind('_') < s.Label.rfind('['):
+            #ts = s.Label[s.Label.rfind('_')+1:s.Label.rfind('[')]
+            nbrModel = s.Label[s.Label.rfind('['):]
+            #print(nbrModel)
+            nMd = int(nbrModel.replace('[','').replace(']',''))-1
+        else:
+            #ts = s.Label[s.Label.rfind('_')+1:]
+            nMd = 0
+            #print('nbrModel = 0')
+    idxF=-1
+    for i,mdl in enumerate (mdls):
+        #print(mdl[10],':', mdl[12]-1,':',nMd)
+        if tsp in mdl[10] and mdl[12]-1 == nMd:
+            #print('FOUND',mdl[10],':', mdl[12],':',nMd)
+            #if nMd == mdl[12]:
+            idxF=i
+            FLayer=1.
+            #print(mdl[4])
+            pos_x=mdl[1]-off_x
+            pos_y=mdl[2]-off_y
+            rot=mdl[3]
+            mdl_layer=mdl[4]
+            wrl_pos=mdl[6]
+            wrl_rot=mdl[7]
+            #print(mdl[10])
+            #print(mdl[12])
+            #print(wrl_pos)
+            #print(wrl_rot)
+            dummyshape = Part.Shape()
+            print(s.Label,': model found! Placing it!')
+            if 'Top' not in mdl_layer:
+                FLayer=-1.
+            if FLayer==1.:
+                #ang = float(rot)
+                #dummyshape.Placement = FreeCAD.Placement(FreeCAD.Vector(pos_x,pos_y,-pcbThickness),FreeCAD.Rotation(FreeCAD.Vector(0,1,0),180))
+                ##FreeCAD.ActiveDocument.getObject(s.Name).Placement.Rotation=FreeCAD.Rotation(FreeCAD.Vector(0,0,1),ang)
+                dummyshape.Placement=FreeCAD.Placement(FreeCAD.Vector(pos_x+float(wrl_pos[0])*25.4,pos_y+float(wrl_pos[1])*25.4,0+float(wrl_pos[2])*25.4),FreeCAD.Rotation(-float(wrl_rot[2]),-float(wrl_rot[1]),-float(wrl_rot[0]))) #rot is already rot fp -rot wrl
+                dummyshape.rotate((pos_x,pos_y,0),(0,0,1),rot+float(wrl_rot[2]))
+                FreeCAD.ActiveDocument.getObject(s.Name).Placement=dummyshape.Placement
+                #bbpa=degrees(FreeCAD.ActiveDocument.getObject(s.Name).Placement.Rotation.Angle)
+                #print(bbpa);#stop
+                #if FreeCAD.ActiveDocument.getObject(s.Name).Placement.Rotation.Axis.z == -1:
+                #    bbpa=-bbpa
+                #new_angle=bbpa+z_rot
+            else:
+                #print('bottom')
+                dummyshape.Placement=FreeCAD.Placement(FreeCAD.Vector(pos_x+float(wrl_pos[0])*25.4,pos_y+float(wrl_pos[1])*25.4,+pcbThickness+float(wrl_pos[2])*25.4),FreeCAD.Rotation(-float(wrl_rot[2]),-float(wrl_rot[1]),-float(wrl_rot[0]))) #rot is already rot fp -rot wrl
+                dummyshape.rotate((pos_x,pos_y,0),(0,0,1),180+rot+float(wrl_rot[2]))
+                dummyshape.rotate((pos_x,pos_y,0),(0,1,0),180)
+                FreeCAD.ActiveDocument.getObject(s.Name).Placement=dummyshape.Placement
+            #   bbpa=round(FreeCAD.ActiveDocument.getObject(s.Name).Placement.Rotation.toEuler()[0],1)
+            break
+#
 ##
 def push3D2pcb(s,cnt,tsp):
     #global last_fp_path, test_flag, start_time

@@ -10,11 +10,11 @@
 #*  Kicad STEPUP (TM) is a TradeMark and cannot be freely useable           *
 #*                                                                          *
 
-ksu_wb_version='v 9.0.7'
+ksu_wb_version='v 10.0.1'
 global myurlKWB, ksuWBpath
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=292 #v9.0.7
+mycommitsKWB=294 #v10.0.1
 
 import FreeCAD, FreeCADGui, Part, os, sys
 import re, time
@@ -150,7 +150,7 @@ class KiCadStepUpWB ( Workbench ):
                            "ksuToolsLoopSelection","ksuToolsEdges2Sketch","ksuToolsMergeSketches",\
                            "ksuToolsSimplifySketck", "ksuToolsBsplineNormalize", "ksuToolsConstrainator", "ksuToolsDiscretize"])
                            #, "ksuToolsPushMoved","ksuToolsSync3DModels"])
-        ksuTB = ["ksuToolsOpenBoard","ksuToolsPushPCB","ksuToolsPushMoved","ksuToolsSync3DModels","ksuAsm2Part",\
+        ksuTB = ["ksuToolsOpenBoard","ksuToolsPushPCB","ksuToolsPushMoved","ksuToolsSync3DModels","ksuToolsPullPCB","ksuToolsPullMoved","ksuAsm2Part",\
                  "Separator","ksuToolsGeneratePositions","ksuToolsComparePositions",\
                  "Separator","ksuToolsToggleTreeView","Separator","ksuRemoveTimeStamp","ksuRemoveSuffix","Separator","ksuToolsLoadFootprint","ksuToolsFootprintGen"]
         #ksuTB.extend(["Separator","ksuToolsAligner","ksuToolsMover","ksuToolsCaliper"])
@@ -169,7 +169,7 @@ class KiCadStepUpWB ( Workbench ):
         self.appendToolbar("ksu Helpers", Hlp_TB)
         #self.appendMenu("ksu Tools", ["ksuTools","ksuToolsEdit"])
         self.appendMenu("ksu Tools", ["ksuTools","ksuToolsEditPrefs"])
-        self.appendMenu("ksu PushPull", ["ksuToolsOpenBoard","ksuToolsPushPCB","ksuToolsPushMoved","ksuToolsSync3DModels",\
+        self.appendMenu("ksu PushPull", ["ksuToolsOpenBoard","ksuToolsPushPCB","ksuToolsPushMoved","ksuToolsSync3DModels","ksuToolsPullPCB","ksuToolsPullMoved",\
                         "Separator","ksuToolsGeneratePositions","ksuToolsComparePositions",\
                         "Separator","ksuRemoveTimeStamp","ksuRemoveSuffix",\
                         "Separator","ksuToolsLoadFootprint","ksuToolsFootprintGen"])

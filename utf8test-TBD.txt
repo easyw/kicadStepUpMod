@@ -1,4 +1,4 @@
-import kicadStepUptools; import importlib; importlib.reload(kicadStepUptools)
+import kicadStepUptools; import importlib; importlib.reload(kicadStepUptools);FreeCADGui.activateWorkbench("KiCadStepUpWB")
 
 import kicadStepUptools; reload(kicadStepUptools)
 
@@ -20,3 +20,7 @@ File "C:\Users\mau\AppData\Roaming\FreeCAD\Mod\kicadStepUpMod\kicadStepUptools.p
     utf_path=os.path.join(models3D_prefix_U,step_module)
   File "D:\FreeCAD_0.18\bin\lib\ntpath.py", line 85, in join
     result_path = result_path + p_path
+    
+    
+kicadStepUptools.KicadPCB.load('C:\\Users\\userC\\AppData\\Roaming\\FreeCAD\\Mod\\kicadStepUpMod\\demo\\demo.kicad_pcb')
+kicadStepUptools.KicadPCB.load('C:\\Temp\\demo-v5.kicad_pcb')
