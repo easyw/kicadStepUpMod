@@ -472,7 +472,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.1.0.3"
+___ver___ = "9.1.0.4"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -16455,6 +16455,7 @@ def PullMoved():
                         #sayerr(name+':'+ext)
                         mypcb = KicadPCB.load(fpath)
                         mymodels = getModelsData(mypcb)
+                        pcbThickness=float(mypcb.general.thickness)
                         #print(mymodels)
                         #stop
                         #with codecs.open(fpath,'r', encoding='utf-8') as txtFile:
@@ -16502,7 +16503,7 @@ def PullMoved():
                             if 0: # use_pypro:
                                 if hasattr(s,"TimeStamp"):
                                     ts=s.TimeStamp
-                                    content = push3D2pcb(s,content,ts)
+                                    content = push3D2pcb(s,content,ts,pcbThickness)
                                 else:
                                     msg="""select only 3D model(s) to be updated/pulled from kicad board!"""
                                     sayerr(msg)
@@ -16514,7 +16515,7 @@ def PullMoved():
                                     ts = s.Label[s.Label.rfind('_')+1:]
                                 if len (ts) == 8:
                                     #print(ts);stop
-                                    content = pull3D2dsn(s,mymodels,ts,gof)
+                                    content = pull3D2dsn(s,mymodels,ts,gof,pcbThickness)
                                 else:
                                     msg="""select only 3D model(s) to be updated/pulled from kicad board!<br><b>a TimeSTamp is required!</b>"""
                                     sayerr(msg)
@@ -20087,7 +20088,7 @@ def export_pcb(fname=None,sklayer=None):
     #    return "%.2f" % float(value)
     
 ##
-def pull3D2dsn(s,mdls,tsp,gof):
+def pull3D2dsn(s,mdls,tsp,gof,pcbThickness):
     global start_time, aux_orig, grid_orig
     global board_base_point_x, board_base_point_y, real_board_pos_x, real_board_pos_y
     global off_x, off_y, maxRadius
@@ -20111,20 +20112,37 @@ def pull3D2dsn(s,mdls,tsp,gof):
     for i,mdl in enumerate (mdls):
         if tsp in mdl[10]:
             idxF=i
-            FLayer=1
-            print(mdl[4])
-            if 'Top' not in mdl[4]:
+            FLayer=1.
+            #print(mdl[4])
+            pos_x=mdl[1]-off_x
+            pos_y=mdl[2]-off_y
+            rot=mdl[3]
+            mdl_layer=mdl[4]
+            wrl_pos=mdl[6]
+            wrl_rot=mdl[7]
+            dummyshape = Part.Shape()
+            
+            if 'Top' not in mdl_layer:
                 FLayer=-1.
             if FLayer==1.:
-                ang = float(mdl[3])
-                FreeCAD.ActiveDocument.getObject(s.Name).Placement.Rotation=FreeCAD.Rotation(FreeCAD.Vector(0,0,1),ang)
+                #ang = float(rot)
+                #dummyshape.Placement = FreeCAD.Placement(FreeCAD.Vector(pos_x,pos_y,-pcbThickness),FreeCAD.Rotation(FreeCAD.Vector(0,1,0),180))
+                ##FreeCAD.ActiveDocument.getObject(s.Name).Placement.Rotation=FreeCAD.Rotation(FreeCAD.Vector(0,0,1),ang)
+                dummyshape.Placement=FreeCAD.Placement(FreeCAD.Vector(pos_x+float(wrl_pos[0])*25.4,pos_y+float(wrl_pos[1])*25.4,0+float(wrl_pos[2])*25.4),FreeCAD.Rotation(-float(wrl_rot[2]),-float(wrl_rot[1]),-float(wrl_rot[0]))) #rot is already rot fp -rot wrl
+                dummyshape.rotate((pos_x,pos_y,0),(0,0,1),rot+float(wrl_rot[2]))
+                FreeCAD.ActiveDocument.getObject(s.Name).Placement=dummyshape.Placement
                 #bbpa=degrees(FreeCAD.ActiveDocument.getObject(s.Name).Placement.Rotation.Angle)
                 #print(bbpa);#stop
                 #if FreeCAD.ActiveDocument.getObject(s.Name).Placement.Rotation.Axis.z == -1:
                 #    bbpa=-bbpa
                 #new_angle=bbpa+z_rot
-            #else:
-            #    bbpa=round(FreeCAD.ActiveDocument.getObject(s.Name).Placement.Rotation.toEuler()[0],1)            
+            else:
+                #print('bottom')
+                dummyshape.Placement=FreeCAD.Placement(FreeCAD.Vector(pos_x+float(wrl_pos[0])*25.4,pos_y+float(wrl_pos[1])*25.4,+pcbThickness+float(wrl_pos[2])*25.4),FreeCAD.Rotation(-float(wrl_rot[2]),-float(wrl_rot[1]),-float(wrl_rot[0]))) #rot is already rot fp -rot wrl
+                dummyshape.rotate((pos_x,pos_y,0),(0,0,1),180+rot+float(wrl_rot[2]))
+                dummyshape.rotate((pos_x,pos_y,0),(0,1,0),180)
+                FreeCAD.ActiveDocument.getObject(s.Name).Placement=dummyshape.Placement
+            #   bbpa=round(FreeCAD.ActiveDocument.getObject(s.Name).Placement.Rotation.toEuler()[0],1)            
 #
 ##
 def push3D2pcb(s,cnt,tsp):
