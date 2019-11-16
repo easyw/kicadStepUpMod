@@ -811,7 +811,7 @@ class ksuToolsPushPCB:
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Sketcher_Rectangle.svg') , # the name of a svg file available in the resources
                      'MenuText': "ksu Push Sketch to PCB" ,
-                     'ToolTip' : "Push Sketch to/from PCB Edge"}
+                     'ToolTip' : "Push Sketch to PCB Edge"}
  
     def IsActive(self):
         #if FreeCAD.ActiveDocument == None:
@@ -845,8 +845,8 @@ class ksuToolsPullPCB:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Sketcher_Pull.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Pull Sketch to PCB" ,
-                     'ToolTip' : "Pull Sketch to/from PCB Edge"}
+                     'MenuText': "ksu Pull Sketch from PCB" ,
+                     'ToolTip' : "Pull Sketch from PCB Edge"}
  
     def IsActive(self):
         #if FreeCAD.ActiveDocument == None:
