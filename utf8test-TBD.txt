@@ -2,6 +2,10 @@ import kicadStepUptools; import importlib; importlib.reload(kicadStepUptools);Fr
 
 import kicadStepUptools; reload(kicadStepUptools)
 
+
+import kicadStepUpCMD; import importlib; importlib.reload(kicadStepUpCMD)
+
+
 import utf8test; import importlib; importlib.reload(utf8test)
 import utf8test; reload(utf8test)
 

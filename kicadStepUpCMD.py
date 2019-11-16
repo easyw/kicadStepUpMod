@@ -15,6 +15,8 @@ from FreeCAD import Base
 import imp, os, sys, tempfile, re
 import Draft, DraftGeomUtils, OpenSCAD2Dgeom
 from PySide import QtGui, QtCore
+QtWidgets = QtGui
+
 from pivy import coin
 from threading import Timer
 
@@ -26,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-__ksuCMD_version__='1.7.5'
+__ksuCMD_version__='1.7.6'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -303,8 +305,53 @@ def ksu_edges2sketch():
     # for ob in FreeCAD.ActiveDocument.Objects:
     #     FreeCADGui.Selection.removeSelection(ob)
 ##
+class Ui_Offset_value(object):
+    def setupUi(self, Offset_value):
+        Offset_value.setObjectName("Offset_value")
+        Offset_value.resize(292, 177)
+        Offset_value.setWindowTitle("Offset value")
+        Offset_value.setToolTip("")
+        self.buttonBoxLayer = QtWidgets.QDialogButtonBox(Offset_value)
+        self.buttonBoxLayer.setGeometry(QtCore.QRect(10, 130, 271, 32))
+        self.buttonBoxLayer.setOrientation(QtCore.Qt.Horizontal)
+        self.buttonBoxLayer.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
+        self.buttonBoxLayer.setObjectName("buttonBoxLayer")
+        self.gridLayoutWidget = QtWidgets.QWidget(Offset_value)
+        self.gridLayoutWidget.setGeometry(QtCore.QRect(10, 10, 271, 101))
+        self.gridLayoutWidget.setObjectName("gridLayoutWidget")
+        self.gridLayout = QtWidgets.QGridLayout(self.gridLayoutWidget)
+        self.gridLayout.setContentsMargins(0, 0, 0, 0)
+        self.gridLayout.setObjectName("gridLayout")
+        self.offset_label = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.offset_label.setMinimumSize(QtCore.QSize(0, 0))
+        self.offset_label.setToolTip("")
+        self.offset_label.setText("Offset [+/- mm]:")
+        self.offset_label.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.offset_label.setObjectName("offset_label")
+        self.gridLayout.addWidget(self.offset_label, 0, 0, 1, 1)
+        self.lineEdit_offset = QtWidgets.QLineEdit(self.gridLayoutWidget)
+        self.lineEdit_offset.setToolTip("Offset value [+/- mm]")
+        self.lineEdit_offset.setText("0.16")
+        self.lineEdit_offset.setObjectName("lineEdit_offset")
+        self.gridLayout.addWidget(self.lineEdit_offset, 0, 1, 1, 1)
+        self.checkBox = QtWidgets.QCheckBox(self.gridLayoutWidget)
+        self.checkBox.setToolTip("Arc or Intersection Offset method")
+        self.checkBox.setLayoutDirection(QtCore.Qt.RightToLeft)
+        self.checkBox.setText("Arc")
+        self.checkBox.setChecked(True)
+        self.checkBox.setObjectName("checkBox")
+        self.gridLayout.addWidget(self.checkBox, 1, 0, 1, 1)
 
+        self.retranslateUi(Offset_value)
+        self.buttonBoxLayer.accepted.connect(Offset_value.accept)
+        self.buttonBoxLayer.rejected.connect(Offset_value.reject)
+        QtCore.QMetaObject.connectSlotsByName(Offset_value)
 
+    def retranslateUi(self, Offset_value):
+        pass
+
+##
+#
 # class SMExtrudeCommandClass():
 #   """Extrude face"""
 # 
@@ -479,7 +526,51 @@ class ksuTools:
  
 FreeCADGui.addCommand('ksuTools',ksuTools())
 ##
+class ksuToolsOffset2D:
+    "ksu tools Offset2D"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Offset2D.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksu Offset 2D" ,
+                     'ToolTip' : "Offset 2D object"}
+ 
+    def IsActive(self):
+        sel = FreeCADGui.Selection.getSelection()
+        if len(sel) == 0:
+            return False
+        else:
+            return True
 
+    def Activated(self):
+        # do something here...
+        sel=FreeCADGui.Selection.getSelection()
+        if len (sel) == 1:
+            doc = FreeCAD.ActiveDocument
+            offsetDlg = QtGui.QDialog()
+            ui = Ui_Offset_value()
+            ui.setupUi(offsetDlg)
+            ui.lineEdit_offset.setText("-1.0")
+            reply=offsetDlg.exec_()
+            if reply==1: # ok
+                offset=float(ui.lineEdit_offset.text().replace(',','.'))
+                if ui.checkBox.isChecked:
+                    offset_method = 'Arc'
+                else:
+                    offset_method = 'Intersection'
+                doc.openTransaction('off2D')
+                f = doc.addObject("Part::Offset2D", "Offset2D")
+                f.Source = sel[0] #some object
+                f.Value = offset
+                f.Join=offset_method
+                doc.commitTransaction()
+                doc.recompute([f])
+            else:
+                print('Cancel')
+            #doc.recompute(None,True,True)
+            #doc.abortTransaction()
+
+FreeCADGui.addCommand('ksuToolsOffset2D',ksuToolsOffset2D())    
+##
 class ksuToolsOpenBoard:
     "ksu tools Open Board object"
  
