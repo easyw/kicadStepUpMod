@@ -472,7 +472,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.1.0.5"
+___ver___ = "9.1.0.6"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -15794,9 +15794,67 @@ class Ui_LayerSelection(object):
     def retranslateUi(self, LayerSelection):
         pass
 ##
+class Ui_LayerSelectionOut(object):
+    def setupUi(self, LayerSelectionOut):
+        LayerSelectionOut.setObjectName("LayerSelectionOut")
+        LayerSelectionOut.resize(293, 249)
+        LayerSelectionOut.setWindowTitle("LayerSelection")
+        LayerSelectionOut.setToolTip("")
+        self.buttonBoxLayer = QtWidgets.QDialogButtonBox(LayerSelectionOut)
+        self.buttonBoxLayer.setGeometry(QtCore.QRect(10, 200, 271, 32))
+        self.buttonBoxLayer.setOrientation(QtCore.Qt.Horizontal)
+        self.buttonBoxLayer.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
+        self.buttonBoxLayer.setObjectName("buttonBoxLayer")
+        self.verticalLayoutWidget = QtWidgets.QWidget(LayerSelectionOut)
+        self.verticalLayoutWidget.setGeometry(QtCore.QRect(10, 10, 271, 80))
+        self.verticalLayoutWidget.setObjectName("verticalLayoutWidget")
+        self.verticalLayout = QtWidgets.QVBoxLayout(self.verticalLayoutWidget)
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout.setObjectName("verticalLayout")
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
+        self.label = QtWidgets.QLabel(self.verticalLayoutWidget)
+        self.label.setText("Select the layer to push the Sketch\nDefault \'Edge.Cuts\'")
+        self.label.setObjectName("label")
+        self.verticalLayout_2.addWidget(self.label)
+        self.verticalLayout.addLayout(self.verticalLayout_2)
+        self.comboBoxLayerSel = QtWidgets.QComboBox(self.verticalLayoutWidget)
+        self.comboBoxLayerSel.setObjectName("comboBoxLayerSel")
+        self.verticalLayout.addWidget(self.comboBoxLayerSel)
+        self.verticalLayoutWidget_2 = QtWidgets.QWidget(LayerSelectionOut)
+        self.verticalLayoutWidget_2.setGeometry(QtCore.QRect(10, 90, 271, 99))
+        self.verticalLayoutWidget_2.setObjectName("verticalLayoutWidget_2")
+        self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.verticalLayoutWidget_2)
+        self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_3.setObjectName("verticalLayout_3")
+        self.horizontalLayout = QtWidgets.QHBoxLayout()
+        self.horizontalLayout.setObjectName("horizontalLayout")
+        self.width_label = QtWidgets.QLabel(self.verticalLayoutWidget_2)
+        self.width_label.setMinimumSize(QtCore.QSize(150, 0))
+        self.width_label.setToolTip("")
+        self.width_label.setText("Line Width:")
+        self.width_label.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.width_label.setObjectName("width_label")
+        self.horizontalLayout.addWidget(self.width_label)
+        self.lineEdit_width = QtWidgets.QLineEdit(self.verticalLayoutWidget_2)
+        self.lineEdit_width.setToolTip("Line width for drawings")
+        self.lineEdit_width.setText("0.16")
+        self.lineEdit_width.setObjectName("lineEdit_width")
+        self.horizontalLayout.addWidget(self.lineEdit_width)
+        self.verticalLayout_3.addLayout(self.horizontalLayout)
+
+        self.retranslateUi(LayerSelectionOut)
+        self.buttonBoxLayer.accepted.connect(LayerSelectionOut.accept)
+        self.buttonBoxLayer.rejected.connect(LayerSelectionOut.reject)
+        QtCore.QMetaObject.connectSlotsByName(LayerSelectionOut)
+
+    def retranslateUi(self, LayerSelectionOut):
+        pass
+##
+
 def PushPCB():
 #def onExport3DStep(self):
-    global last_3d_path, start_time, load_sketch, last_pcb_path
+    global last_3d_path, start_time, load_sketch, last_pcb_path, edge_width
     #say("export3DSTEP")
     if load_sketch==False:
         msg="""<b>Edge editing NOT supported on FC0.15!</b><br>please upgrade your FC release"""
@@ -15824,12 +15882,14 @@ def PushPCB():
                 #getSaveFileName(self,"saveFlle","Result.txt",filter ="txt (*.txt *.)")
                 layer_list = ['Edge.Cuts','Dwgs.User','Cmts.User','Eco1.User','Eco2.User','Margin']
                 LayerSelectionDlg = QtGui.QDialog()
-                ui = Ui_LayerSelection()
+                ui = Ui_LayerSelectionOut()
                 ui.setupUi(LayerSelectionDlg)
                 ui.comboBoxLayerSel.addItems(layer_list)
                 reply=LayerSelectionDlg.exec_()
                 if reply==1: # ok
                     SketchLayer=str(ui.comboBoxLayerSel.currentText())
+                    if 'Edge' not in SketchLayer:
+                        edge_width=float(ui.lineEdit_width.text().replace(',','.'))
                     print(SketchLayer)
                 #else:  #canel
                 #    print('Cancel')
@@ -19760,7 +19820,7 @@ def export_pcb(fname=None,sklayer=None):
     global pcb_path, use_AppPart, force_oldGroups, use_Links, use_LinkGroups
     global original_filename, aux_orig, grid_orig
     global off_x, off_y, maxRadius
-    global zfit
+    global zfit, edge_width
     
     sayw('exporting new pcb edges')
     doc=FreeCAD.ActiveDocument
@@ -19870,7 +19930,13 @@ def export_pcb(fname=None,sklayer=None):
                 edge_pcb_exists=True
                 sayw('found '+ssklayer+' element(s)')
             #stop
-            
+            if ssklayer == 'Edge':
+                if hasattr(mypcb.setup, 'edge_width'): #maui edge width
+                    edge_width=mypcb.setup.edge_width
+                elif hasattr(mypcb.setup, 'edge_cuts_line_width'): #maui edge cuts new width k 5.99
+                    edge_width=mypcb.setup.edge_cuts_line_width
+                #else:
+                #    edge_width=0.16
             oft=None
             if aux_orig == 1:
                 oft=getAuxOrigin(data)
