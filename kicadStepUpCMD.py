@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-__ksuCMD_version__='1.7.6'
+__ksuCMD_version__='1.7.7'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -2182,7 +2182,7 @@ def toggle_highlight_subtree(objs):
     obj_tree=objs[1:len(objs)]
     for obj in totoggle:
         if 'Compound' not in FreeCADGui.ActiveDocument.getObject(obj.Name).TypeId: # and 'App::Part' not in Gui.ActiveDocument.getObject(obj.Name).TypeId:
-            if 'Part' in obj.TypeId:
+            if 'Part' in obj.TypeId or 'App::Link' in obj.TypeId:
                 if obj not in obj_tree:
                     FreeCADGui.Selection.addSelection(obj)
                 else:
@@ -2411,8 +2411,8 @@ class ksuToolsHighlightToggle:
     def Activated(self):
         # do something here...
         if FreeCADGui.Selection.getSelection():
-            if 'LinkView' not in dir(FreeCADGui): #pre a3 Link3 merge
-                toggle_highlight_subtree(FreeCADGui.Selection.getSelection())
+            #if 'LinkView' not in dir(FreeCADGui): #pre a3 Link3 merge
+            toggle_highlight_subtree(FreeCADGui.Selection.getSelection())
         #if FreeCADGui.Selection.getSelection():
         #    sel=FreeCADGui.Selection.getSelection()
         #    doc=FreeCADGui.ActiveDocument

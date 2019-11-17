@@ -10,11 +10,11 @@
 #*  Kicad STEPUP (TM) is a TradeMark and cannot be freely useable           *
 #*                                                                          *
 
-ksu_wb_version='v 10.0.2'
+ksu_wb_version='v 10.0.3'
 global myurlKWB, ksuWBpath
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=310 #v10.0.1
+mycommitsKWB=311 #v10.0.1
 
 import FreeCAD, FreeCADGui, Part, os, sys
 import re, time
@@ -163,8 +163,8 @@ class KiCadStepUpWB ( Workbench ):
                             "ksuToolsVisibilityToggle", "ksuToolsStepImportModeSTD", "ksuToolsStepImportModeComp",\
                             "ksuToolsCopyPlacement", "ksuToolsResetPlacement", "ksuToolsAddToTree",\
                             "ksuToolsRemoveFromTree", "ksuToolsRemoveSubTree", "checkSolidExpSTEP"]
-        if 'LinkView' in dir(FreeCADGui):
-            Hlp_TB.remove("ksuToolsHighlightToggle")
+        #if 'LinkView' in dir(FreeCADGui):
+        #    Hlp_TB.remove("ksuToolsHighlightToggle")
         self.appendToolbar("ksu Show", ["ksuToolsTurnTable", "ksuToolsExplode"])
         self.appendToolbar("ksu Helpers", Hlp_TB)
         #self.appendMenu("ksu Tools", ["ksuTools","ksuToolsEdit"])

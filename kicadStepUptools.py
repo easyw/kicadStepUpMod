@@ -472,7 +472,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.1.0.6"
+___ver___ = "9.1.0.7"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -16113,13 +16113,16 @@ def PushMoved():
         check_ok=False
         sel = FreeCADGui.Selection.getSelection()
         if len (sel) >= 1:
-            if sel[0].Label.rfind('_') < sel[0].Label.rfind('['):
-                ts = sel[0].Label[sel[0].Label.rfind('_')+1:sel[0].Label.rfind('[')]
-            else:
-                ts = sel[0].Label[sel[0].Label.rfind('_')+1:]
-            if len (ts) == 8:
-                #print(ts);stop
-                check_ok=True
+            for s in sel:
+                if s.Label.rfind('_') < s.Label.rfind('['):
+                    ts = s.Label[s.Label.rfind('_')+1:s.Label.rfind('[')]
+                else:
+                    ts = s.Label[s.Label.rfind('_')+1:]
+                if len (ts) == 8:
+                    #print(ts);stop
+                    check_ok=True
+                    #stop
+                    break
             #else:
             #    msg="""select only 3D model(s) moved to be updated/pushed to kicad board!<br><b>a TimeSTamp is required!</b>"""
             #    sayerr(msg)
@@ -16217,6 +16220,7 @@ def PushMoved():
                                 say(msgr)
                                 say_info(msg)
                     if pcb_push:
+                        mdp = 0
                         for s in sel:
                             #sayw(doc.Name)
                             if use_pypro:
@@ -16233,12 +16237,13 @@ def PushMoved():
                                 else:
                                     ts = s.Label[s.Label.rfind('_')+1:]
                                 if len (ts) == 8:
+                                    mdp+=1
                                     #print(ts);stop
                                     content = push3D2pcb(s,content,ts)
-                                else:
-                                    msg="""select only 3D model(s) moved to be updated/pushed to kicad board!<br><b>a TimeSTamp is required!</b>"""
-                                    sayerr(msg)
-                                    say_warning(msg)
+                                #else:
+                                #    msg="""select only 3D model(s) moved to be updated/pushed to kicad board!<br><b>a TimeSTamp is required!</b>"""
+                                #    sayerr(msg)
+                                #    say_warning(msg)
                         newcontent=u''.join(content)
                         pcbTracks=re.findall('\s\(tracks(\s.+?)\)',data, re.MULTILINE|re.DOTALL)
                         found_tracks=False
@@ -16249,7 +16254,8 @@ def PushMoved():
                             ofile.write(newcontent)
                             ofile.close()        
                         say_time()
-                        msg="""<b>3D model new position pushed to kicad board!</b><br><br>"""
+                        say('pushed '+str(mdp)+' model(s)')
+                        msg="""<b>3D model new position(s) pushed to kicad board!</b><br>["""+str(mdp)+"""model(s) updated]<br><br>"""
                         if found_tracks:
                             msg+="<font color='red'><b>tracks found!<br></b>you will need to fix your routing!</font><br><br>"
                         msg+="<b>file saved to<br>"+fpath+"</b><br><br>"
@@ -20247,7 +20253,7 @@ def push3D2pcb(s,cnt,tsp):
     #global original_filename, aux_orig, grid_orig
     global off_x, off_y, maxRadius
     
-    sayw('pushing 3D model moved to pcb')
+    #sayw('pushing 3D model moved to pcb')
     doc=FreeCAD.ActiveDocument
     data=u''.join(cnt)
     tstamp_found=False
@@ -20296,6 +20302,8 @@ def push3D2pcb(s,cnt,tsp):
                 #print(ln)
         FLayer=1.
         if idxF>=0:
+            print(s.Label)
+            sayw('pushing 3D model moved to pcb')
             if 'Front' not in cnt[idxF]:
                 FLayer=-1.
             if FLayer==1.:
@@ -20321,7 +20329,7 @@ def push3D2pcb(s,cnt,tsp):
                     mod_old_angle=float("{0:.3f}".format(float(mod_old_angle)))
                 else:
                     mod_old_angle = 0
-            say ('module old angle '+str(mod_old_angle))
+            #say ('module old angle '+str(mod_old_angle))
             nbr_spaces = len(cnt[idxF+1]) - len(cnt[idxF+1].lstrip())
             #new_pos="{0:.3f}".format(bbpx+off_x)+" "+"{0:.3f}".format(-1*(bbpy+off_y))+\
             #        " "+"{0:.3f}".format(bbpa)+")"
@@ -20359,7 +20367,7 @@ def push3D2pcb(s,cnt,tsp):
                             z_o=float(ofs[2])*k
                         else:
                             x_o=0;y_o=0;z_o=0
-                        sayw(ofs)
+                        #sayw(ofs)
                         ln_r=cnt[idxF+ik+3]
                         #      (rotate (xyz 0 0 0))
                         #print(ln_r)#;stop
@@ -20373,7 +20381,7 @@ def push3D2pcb(s,cnt,tsp):
                         else:
                             z_rot=0
                         #print(z_rot);stop
-                        sayw(z_rot)
+                        #sayw(z_rot)
                         looping=False
                     else:
                         nMdCnt+=1
