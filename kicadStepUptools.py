@@ -16255,7 +16255,7 @@ def PushMoved():
                             ofile.close()        
                         say_time()
                         say('pushed '+str(mdp)+' model(s)')
-                        msg="""<b>3D model new position(s) pushed to kicad board!</b><br>["""+str(mdp)+"""model(s) updated]<br><br>"""
+                        msg="""<b>3D model new position(s) pushed to kicad board!</b><br>["""+str(mdp)+""" model(s) updated]<br><br>"""
                         if found_tracks:
                             msg+="<font color='red'><b>tracks found!<br></b>you will need to fix your routing!</font><br><br>"
                         msg+="<b>file saved to<br>"+fpath+"</b><br><br>"
