@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-__ksuCMD_version__='1.7.7'
+__ksuCMD_version__='1.7.8'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -2174,9 +2174,11 @@ def toggle_highlight_subtree(objs):
     checkinlistcomplete =False
     while not checkinlistcomplete:
         for obj in totoggle:
-            if (obj not in objs) and (frozenset(obj.InList) - totoggle):
-                totoggle.toggle(obj)
-                break
+            if (obj not in objs):
+                if (frozenset(obj.InList) - totoggle):
+                    if hasattr (set, 'totoggle'):
+                        totoggle.toggle(obj)
+                        break
         else:
             checkinlistcomplete = True
     obj_tree=objs[1:len(objs)]
