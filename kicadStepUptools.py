@@ -472,7 +472,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.1.0.7"
+___ver___ = "9.1.1.0.x"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -2553,12 +2553,12 @@ def find_name(n):
 
 def insert(filename, other):
     if os.path.exists(filename):
-        open(filename)
+        open(filename,True)
     else:
         FreeCAD.Console.PrintError("File does not exist.\n")
         reply = QtGui.QMessageBox.information(None,"info", "File does not exist.\n")
 
-def open(filename):
+def open(filename,insert=None):
     #reply = QtGui.QMessageBox.information(None,"info", filename)
     #onLoadBoard_cmd(filename)
     global original_filename
@@ -2568,7 +2568,7 @@ def open(filename):
     say("tolerance on vertex applied")
     if ext==".kicad_pcb":
         original_filename=filename
-        onLoadBoard(filename)
+        onLoadBoard(filename,None,insert)
         # zf= Timer (1.0,ZoomFitThread)
         # zf.start()
     #elif ext==".emn":
@@ -7799,7 +7799,7 @@ def PullPCB(file_name=None):
    #else:
    #    print('Cancel')
 ##
-def onLoadBoard(file_name=None,load_models=None):
+def onLoadBoard(file_name=None,load_models=None,insert=None):
     #name=QtGui.QFileDialog.getOpenFileName(this,tr("Open Image"), "/home/jana", tr("Image Files (*.png *.jpg *.bmp)"))[0]
     #global module_3D_dir
     global test_flag, last_pcb_path, configParser, configFilePath, start_time
@@ -7886,10 +7886,15 @@ def onLoadBoard(file_name=None,load_models=None):
                 ##stop utf-8 test
                 ini_vars[10] = last_pcb_path
                 #cfg_update_all()
-                ## doc=FreeCAD.ActiveDocument
-                ## if doc is None:
-                ##     doc=FreeCAD.newDocument(fname)
-                doc=FreeCAD.newDocument(fname)
+                test_import = False
+                if insert == True:
+                    test_import = True
+                if test_import:
+                    doc=FreeCAD.ActiveDocument
+                    if doc is None:
+                        doc=FreeCAD.newDocument(fname)
+                else:
+                    doc=FreeCAD.newDocument(fname)
                 pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
                 pg.SetString("last_pcb_path", make_string(last_pcb_path)) # py3 .decode("utf-8")
                 #pg.SetString("last_pcb_path", last_pcb_path.decode("utf-8"))
@@ -8426,10 +8431,11 @@ def routineResetPlacement(keepWB=None):
         Part.show(w)
         #say(w)
 
-        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).ShapeColor
-        FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).LineColor
-        FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).PointColor
-        FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).DiffuseColor
+        if hasattr(FreeCADGui.ActiveDocument.getObject(objs[0].Name),'ShapeColor'):
+            FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).ShapeColor
+            FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).LineColor
+            FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).PointColor
+            FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).DiffuseColor
         FreeCADGui.ActiveDocument.ActiveObject.Transparency=FreeCADGui.ActiveDocument.getObject(objs[0].Name).Transparency
 
         new_label=objs[0].Label
@@ -19911,6 +19917,12 @@ def export_pcb(fname=None,sklayer=None):
                         edg_segms+=1
                         break
             if edg_segms == 0:
+                for cr in mypcb.gr_circle:
+                    if ssklayer in cr.layer:
+                        #say(ln.layer)
+                        edg_segms+=1
+                        break
+            if edg_segms == 0:
                 for lp in mypcb.gr_poly:
                     #print(lp)
                     #print(lp.layer)
@@ -19944,10 +19956,25 @@ def export_pcb(fname=None,sklayer=None):
                 #else:
                 #    edge_width=0.16
             oft=None
+            #skip = False
             if aux_orig == 1:
                 oft=getAuxOrigin(data)
-            if grid_orig == 1:
+                if oft is None:
+                    msg="""StepUp is configured for \'aux origin\' reference<br>but \'aux origin\' is not placed/set on kicad destination board"""
+                    say_warning(msg)
+                    stop
+                else:
+                    print ('aux_origin found',oft)
+            elif grid_orig == 1:
                 oft=getGridOrigin(data)
+                if oft is None:
+                    msg="""StepUp is configured for \'grid origin\' reference<br>but \'grid origin\' is not placed/set on kicad destination board"""
+                    say_warning(msg)
+                    stop
+                else:
+                    print ('grid_origin found',oft)
+            else:
+                print('using an approximate PCB center as sketch reference point')
             #print oft
             gof=False
             if oft is not None:
@@ -19996,7 +20023,7 @@ def export_pcb(fname=None,sklayer=None):
                     #say(offset)
                     #stop
                     say('pcb edge exists')
-                    sayw('removing old Edge')
+                    sayw('removing old Edge '+ssklayer)
                     ## removing old Edge
                     repl = re.sub('\s\(gr_line(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_line(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_line(.+?)'+ssklayer+'(.+?)\)\)\n','',data, flags=re.MULTILINE)
                     repl = re.sub('\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE)
@@ -20014,6 +20041,9 @@ def export_pcb(fname=None,sklayer=None):
                 #[148.5, -98.5] center of A4 page
                 if gof and grid_orig==1:
                     sayw('pcb edge does not exist, aligning sketch to Grid Origin')
+                    offset=[off_x,-off_y]
+                elif gof and aux_orig==1:
+                    sayw('pcb edge does not exist, aligning sketch to Aux Origin')
                     offset=[off_x,-off_y]
                 else:
                     sayw('pcb edge does not exist, aligning sketch to center of A4 page')

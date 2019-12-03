@@ -472,7 +472,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.1.0.6"
+___ver___ = "9.1.1.0.x"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -2553,12 +2553,12 @@ def find_name(n):
 
 def insert(filename, other):
     if os.path.exists(filename):
-        open(filename)
+        open(filename,True)
     else:
         FreeCAD.Console.PrintError("File does not exist.\n")
         reply = QtGui.QMessageBox.information(None,"info", "File does not exist.\n")
 
-def open(filename):
+def open(filename,insert=None):
     #reply = QtGui.QMessageBox.information(None,"info", filename)
     #onLoadBoard_cmd(filename)
     global original_filename
@@ -2568,7 +2568,7 @@ def open(filename):
     say("tolerance on vertex applied")
     if ext==".kicad_pcb":
         original_filename=filename
-        onLoadBoard(filename)
+        onLoadBoard(filename,None,insert)
         # zf= Timer (1.0,ZoomFitThread)
         # zf.start()
     #elif ext==".emn":
@@ -7799,7 +7799,7 @@ def PullPCB(file_name=None):
    #else:
    #    print('Cancel')
 ##
-def onLoadBoard(file_name=None,load_models=None):
+def onLoadBoard(file_name=None,load_models=None,insert=None):
     #name=QtGui.QFileDialog.getOpenFileName(this,tr("Open Image"), "/home/jana", tr("Image Files (*.png *.jpg *.bmp)"))[0]
     #global module_3D_dir
     global test_flag, last_pcb_path, configParser, configFilePath, start_time
@@ -7886,10 +7886,15 @@ def onLoadBoard(file_name=None,load_models=None):
                 ##stop utf-8 test
                 ini_vars[10] = last_pcb_path
                 #cfg_update_all()
-                ## doc=FreeCAD.ActiveDocument
-                ## if doc is None:
-                ##     doc=FreeCAD.newDocument(fname)
-                doc=FreeCAD.newDocument(fname)
+                test_import = False
+                if insert == True:
+                    test_import = True
+                if test_import:
+                    doc=FreeCAD.ActiveDocument
+                    if doc is None:
+                        doc=FreeCAD.newDocument(fname)
+                else:
+                    doc=FreeCAD.newDocument(fname)
                 pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
                 pg.SetString("last_pcb_path", make_string(last_pcb_path)) # py3 .decode("utf-8")
                 #pg.SetString("last_pcb_path", last_pcb_path.decode("utf-8"))
@@ -8426,10 +8431,11 @@ def routineResetPlacement(keepWB=None):
         Part.show(w)
         #say(w)
 
-        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).ShapeColor
-        FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).LineColor
-        FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).PointColor
-        FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).DiffuseColor
+        if hasattr(FreeCADGui.ActiveDocument.getObject(objs[0].Name),'ShapeColor'):
+            FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).ShapeColor
+            FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).LineColor
+            FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).PointColor
+            FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).DiffuseColor
         FreeCADGui.ActiveDocument.ActiveObject.Transparency=FreeCADGui.ActiveDocument.getObject(objs[0].Name).Transparency
 
         new_label=objs[0].Label
@@ -16113,13 +16119,16 @@ def PushMoved():
         check_ok=False
         sel = FreeCADGui.Selection.getSelection()
         if len (sel) >= 1:
-            if sel[0].Label.rfind('_') < sel[0].Label.rfind('['):
-                ts = sel[0].Label[sel[0].Label.rfind('_')+1:sel[0].Label.rfind('[')]
-            else:
-                ts = sel[0].Label[sel[0].Label.rfind('_')+1:]
-            if len (ts) == 8:
-                #print(ts);stop
-                check_ok=True
+            for s in sel:
+                if s.Label.rfind('_') < s.Label.rfind('['):
+                    ts = s.Label[s.Label.rfind('_')+1:s.Label.rfind('[')]
+                else:
+                    ts = s.Label[s.Label.rfind('_')+1:]
+                if len (ts) == 8:
+                    #print(ts);stop
+                    check_ok=True
+                    #stop
+                    break
             #else:
             #    msg="""select only 3D model(s) moved to be updated/pushed to kicad board!<br><b>a TimeSTamp is required!</b>"""
             #    sayerr(msg)
@@ -16217,6 +16226,7 @@ def PushMoved():
                                 say(msgr)
                                 say_info(msg)
                     if pcb_push:
+                        mdp = 0
                         for s in sel:
                             #sayw(doc.Name)
                             if use_pypro:
@@ -16233,12 +16243,13 @@ def PushMoved():
                                 else:
                                     ts = s.Label[s.Label.rfind('_')+1:]
                                 if len (ts) == 8:
+                                    mdp+=1
                                     #print(ts);stop
                                     content = push3D2pcb(s,content,ts)
-                                else:
-                                    msg="""select only 3D model(s) moved to be updated/pushed to kicad board!<br><b>a TimeSTamp is required!</b>"""
-                                    sayerr(msg)
-                                    say_warning(msg)
+                                #else:
+                                #    msg="""select only 3D model(s) moved to be updated/pushed to kicad board!<br><b>a TimeSTamp is required!</b>"""
+                                #    sayerr(msg)
+                                #    say_warning(msg)
                         newcontent=u''.join(content)
                         pcbTracks=re.findall('\s\(tracks(\s.+?)\)',data, re.MULTILINE|re.DOTALL)
                         found_tracks=False
@@ -16249,7 +16260,8 @@ def PushMoved():
                             ofile.write(newcontent)
                             ofile.close()        
                         say_time()
-                        msg="""<b>3D model new position pushed to kicad board!</b><br><br>"""
+                        say('pushed '+str(mdp)+' model(s)')
+                        msg="""<b>3D model new position(s) pushed to kicad board!</b><br>["""+str(mdp)+""" model(s) updated]<br><br>"""
                         if found_tracks:
                             msg+="<font color='red'><b>tracks found!<br></b>you will need to fix your routing!</font><br><br>"
                         msg+="<b>file saved to<br>"+fpath+"</b><br><br>"
@@ -19905,6 +19917,12 @@ def export_pcb(fname=None,sklayer=None):
                         edg_segms+=1
                         break
             if edg_segms == 0:
+                for cr in mypcb.gr_circle:
+                    if ssklayer in cr.layer:
+                        #say(ln.layer)
+                        edg_segms+=1
+                        break
+            if edg_segms == 0:
                 for lp in mypcb.gr_poly:
                     #print(lp)
                     #print(lp.layer)
@@ -19938,10 +19956,25 @@ def export_pcb(fname=None,sklayer=None):
                 #else:
                 #    edge_width=0.16
             oft=None
+            #skip = False
             if aux_orig == 1:
                 oft=getAuxOrigin(data)
-            if grid_orig == 1:
+                if oft is None:
+                    msg="""StepUp is configured for \'aux origin\' reference<br>but \'aux origin\' is not placed/set on kicad destination board"""
+                    say_warning(msg)
+                    stop
+                else:
+                    print ('aux_origin found',oft)
+            elif grid_orig == 1:
                 oft=getGridOrigin(data)
+                if oft is None:
+                    msg="""StepUp is configured for \'grid origin\' reference<br>but \'grid origin\' is not placed/set on kicad destination board"""
+                    say_warning(msg)
+                    stop
+                else:
+                    print ('grid_origin found',oft)
+            else:
+                print('using an approximate PCB center as sketch reference point')
             #print oft
             gof=False
             if oft is not None:
@@ -19990,7 +20023,7 @@ def export_pcb(fname=None,sklayer=None):
                     #say(offset)
                     #stop
                     say('pcb edge exists')
-                    sayw('removing old Edge')
+                    sayw('removing old Edge '+ssklayer)
                     ## removing old Edge
                     repl = re.sub('\s\(gr_line(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_line(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_line(.+?)'+ssklayer+'(.+?)\)\)\n','',data, flags=re.MULTILINE)
                     repl = re.sub('\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE)
@@ -20008,6 +20041,9 @@ def export_pcb(fname=None,sklayer=None):
                 #[148.5, -98.5] center of A4 page
                 if gof and grid_orig==1:
                     sayw('pcb edge does not exist, aligning sketch to Grid Origin')
+                    offset=[off_x,-off_y]
+                elif gof and aux_orig==1:
+                    sayw('pcb edge does not exist, aligning sketch to Aux Origin')
                     offset=[off_x,-off_y]
                 else:
                     sayw('pcb edge does not exist, aligning sketch to center of A4 page')
@@ -20247,7 +20283,7 @@ def push3D2pcb(s,cnt,tsp):
     #global original_filename, aux_orig, grid_orig
     global off_x, off_y, maxRadius
     
-    sayw('pushing 3D model moved to pcb')
+    #sayw('pushing 3D model moved to pcb')
     doc=FreeCAD.ActiveDocument
     data=u''.join(cnt)
     tstamp_found=False
@@ -20296,6 +20332,8 @@ def push3D2pcb(s,cnt,tsp):
                 #print(ln)
         FLayer=1.
         if idxF>=0:
+            print(s.Label)
+            sayw('pushing 3D model moved to pcb')
             if 'Front' not in cnt[idxF]:
                 FLayer=-1.
             if FLayer==1.:
@@ -20321,7 +20359,7 @@ def push3D2pcb(s,cnt,tsp):
                     mod_old_angle=float("{0:.3f}".format(float(mod_old_angle)))
                 else:
                     mod_old_angle = 0
-            say ('module old angle '+str(mod_old_angle))
+            #say ('module old angle '+str(mod_old_angle))
             nbr_spaces = len(cnt[idxF+1]) - len(cnt[idxF+1].lstrip())
             #new_pos="{0:.3f}".format(bbpx+off_x)+" "+"{0:.3f}".format(-1*(bbpy+off_y))+\
             #        " "+"{0:.3f}".format(bbpa)+")"
@@ -20359,7 +20397,7 @@ def push3D2pcb(s,cnt,tsp):
                             z_o=float(ofs[2])*k
                         else:
                             x_o=0;y_o=0;z_o=0
-                        sayw(ofs)
+                        #sayw(ofs)
                         ln_r=cnt[idxF+ik+3]
                         #      (rotate (xyz 0 0 0))
                         #print(ln_r)#;stop
@@ -20373,7 +20411,7 @@ def push3D2pcb(s,cnt,tsp):
                         else:
                             z_rot=0
                         #print(z_rot);stop
-                        sayw(z_rot)
+                        #sayw(z_rot)
                         looping=False
                     else:
                         nMdCnt+=1

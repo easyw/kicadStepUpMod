@@ -10,6 +10,9 @@ from PySide import QtGui, QtCore
 import sys,os
 import FreeCAD, FreeCADGui
 global start_time, last_pcb_path, min_drill_size
+global FC_export_min_version
+FC_export_min_version="11670"  #11670 latest JM
+
 
 global use_AppPart, use_Links, use_LinkGroups
 use_AppPart=False # False
