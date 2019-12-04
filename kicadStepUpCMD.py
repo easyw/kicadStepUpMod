@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-__ksuCMD_version__='1.8.0'
+__ksuCMD_version__='1.8.1'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -1464,7 +1464,14 @@ class ksuToolsResetPartPlacement:
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'resetPartPlacement.svg') , # the name of a svg file available in the resources
                      'MenuText': "ksu Reset Part Placement" ,
                      'ToolTip' : "Reset Placement for all Part containers in selection"}
- 
+    def getLinkGlobalPlacement(self,ob):
+        # print(ob.Name,'Link object')
+        # FreeCAD.Console.PrintMessage(ob.Parents)
+        # FreeCAD.Console.PrintWarning(ob.Parents[0][0].Name+' '+ob.Parents[0][1])
+        # FreeCAD.Console.PrintWarning(Part.getShape(ob.Parents[0][0],ob.Parents[0][1]).Placement)
+        # return ob.Label
+        return Part.getShape(ob.Parents[0][0],ob.Parents[0][1]).Placement
+    #
     def Activated(self):        
         doc = FreeCAD.ActiveDocument
         if doc is None:
@@ -1475,18 +1482,27 @@ class ksuToolsResetPartPlacement:
             sel = FreeCADGui.Selection.getSelection()
             for obj in sel: ## App.ActiveDocument.Objects: #going through active document objects
                 if "Placement" in obj.PropertiesList: #if object has a Placement property
+                    #FreeCAD.Console.PrintWarning(obj.TypeId)
                     if hasattr(obj,'getGlobalPlacement'):
                         currState[obj] = obj.getGlobalPlacement() #store the object pointer with its global placement
+                    #elif obj.TypeId == 'App::Link':
+                    #    obj.getLinkGlobalPlacement()
                 for o in obj.OutListRecursive:
                     if "Placement" in o.PropertiesList: #if object has a Placement property
+                        #FreeCAD.Console.PrintWarning(o.TypeId)
                         if hasattr(o,'getGlobalPlacement'):
                             currState[o] = o.getGlobalPlacement() #store the object pointer with its global placement
+                        elif o.TypeId == 'App::Link':
+                            plc = self.getLinkGlobalPlacement(o)
+                            print(plc)
+                            currState[o] = plc
+                            
             FreeCAD.ActiveDocument.openTransaction("Absolufy") #open a transaction for undo management
             
             for obj, plac in currState.items(): #going through all moveable objects
                 if obj.isDerivedFrom("App::Part"): #if object is a part container
                     obj.Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,0),FreeCAD.Rotation(0,0,0)) #reset its placement to global document origin
-                elif obj.TypeId[:5] == "App::": #if object is another App type (typically an origin axis or plane)
+                elif obj.TypeId[:5] == "App::" and obj.TypeId != 'App::Link': #if object is another App type (typically an origin axis or plane)
                     None #do nothing
                 else: #for all other objects
                     obj.Placement = plac #replace them at their global (absolute) placement
