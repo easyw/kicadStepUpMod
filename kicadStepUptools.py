@@ -472,7 +472,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.1.1.0.x"
+___ver___ = "9.1.1.1.x"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -5896,9 +5896,18 @@ def Load_models(pcbThickness,modules):
                             stop   
                         if allow_compound != 'False' :
                             create_compound(counterObj,model_name)
+                            newobj = FreeCAD.ActiveDocument.ActiveObject
+                            if not use_pypro:
+                                if '*' not in myReference:
+                                    newobj.Label = myReference + '_'+ impLabel + '_' + myTimeStamp + myModelNbr
+                                else:
+                                    newobj.Label = 'REF_'+impLabel + '_'  + myTimeStamp + myModelNbr
                         ##addProperty mod
                         #newobj=reset_prop_shapes(FreeCAD.ActiveDocument.ActiveObject,FreeCAD.ActiveDocument, FreeCAD,FreeCADGui)
-                        newobj = FreeCAD.ActiveDocument.ActiveObject
+                        else:
+                            newobj = FreeCAD.ActiveDocument.ActiveObject                        ##addProperty mod
+                        #newobj=reset_prop_shapes(FreeCAD.ActiveDocument.ActiveObject,FreeCAD.ActiveDocument, FreeCAD,FreeCADGui)
+                        #newobj = FreeCAD.ActiveDocument.ActiveObject
                         #stop
                         ##newobj.Label=newobj.Label+"_"
                         # not adding '_' at the end of the name
