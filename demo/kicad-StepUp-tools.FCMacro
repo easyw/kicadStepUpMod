@@ -358,6 +358,9 @@
 # local coordinate system reference added
 # improved search for 3d models on local path without using KIPRJMOD
 # initial support for App::Link & App::LinkGroup
+# added 3d model position pull&push update
+# added Sketches pull&push update
+# added 'stpZ' compressed files support
 # most clean code and comments done
 
 ##todo
@@ -472,7 +475,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.1.1.0.x"
+___ver___ = "9.1.1.2.x"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -3432,7 +3435,14 @@ def exportStep(objs, ffPathName):
     exp_name=exp_name.translate(translation_table)
     path, fname = os.path.split(ffPathName)
     #fname=os.path.splitext(fname)[0]
-    fullFilePathNameStep=path+os.sep+exp_name+'.step'
+    prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+    if prefs.GetBool('stpz_export_enabled'):
+        #'stpz'
+        fullFilePathNameStep=path+os.sep+exp_name+'.stpZ'
+        #print('stpZ',fullFilePathNameStep)
+    else:
+        #not 'stpz'
+        fullFilePathNameStep=path+os.sep+exp_name+'.step'
     exportS=True
     if os.path.exists(fullFilePathNameStep):
         say('file exists')
@@ -3544,7 +3554,13 @@ def exportStep(objs, ffPathName):
         #if not old_hScheme2:
         #    paramGetVS2.SetBool("Scheme_214",1)
         ##  not to be used paramGet.SetString("Product", "Open CASCADE STEP processor 7.0")
-        ImportGui.export(newobj_list,fullFilePathNameStep)
+        #print(fullFilePathNameStep)
+        #stop
+        if fullFilePathNameStep.endswith('stpZ'):
+            import stepZ
+            stepZ.export(newobj_list,fullFilePathNameStep)
+        else:
+            ImportGui.export(newobj_list,fullFilePathNameStep)
         #del __objs__ 
         say(fullFilePathNameStep+' written')
         ##ImportGui.export(objs,fullFilePathNameStep)
@@ -5794,6 +5810,48 @@ def Load_models(pcbThickness,modules):
                                 utf_path2=utf_path2[:-rel_pos+1]+u'IGS'
                                 if os.path.exists(utf_path2):
                                     module_path=utf_path2
+                    #.stpZ
+                    if (module_path=='not-found'):
+                        pos=utf_path.rfind('.')
+                        rel_pos=len(utf_path)-pos
+                        utf_path=utf_path[:-rel_pos+1]+u'stpZ'
+                        if os.path.exists(utf_path):
+                            #module_path=models3D_prefix+step_module
+                            module_path=utf_path
+                            #sayw("found! "+module_path)
+                        else:
+                            pos=step_module.rfind('.')
+                            rel_pos=len(step_module4)-pos
+                            step_module_t=step_module4[:-rel_pos+1]+u'stpZ'
+                            if os.path.exists(step_module_t): # absolute path
+                                module_path=step_module_t
+                            else:
+                                pos=utf_path2.rfind('.')
+                                rel_pos=len(utf_path2)-pos
+                                utf_path2=utf_path2[:-rel_pos+1]+u'stpZ'
+                                if os.path.exists(utf_path2):
+                                    module_path=utf_path2
+                    #.stpz
+                    if (module_path=='not-found'):
+                        pos=utf_path.rfind('.')
+                        rel_pos=len(utf_path)-pos
+                        utf_path=utf_path[:-rel_pos+1]+u'stpz'
+                        if os.path.exists(utf_path):
+                            #module_path=models3D_prefix+step_module
+                            module_path=utf_path
+                            #sayw("found! "+module_path)
+                        else:
+                            pos=step_module.rfind('.')
+                            rel_pos=len(step_module4)-pos
+                            step_module_t=step_module4[:-rel_pos+1]+u'stpz'
+                            if os.path.exists(step_module_t): # absolute path
+                                module_path=step_module_t
+                            else:
+                                pos=utf_path2.rfind('.')
+                                rel_pos=len(utf_path2)-pos
+                                utf_path2=utf_path2[:-rel_pos+1]+u'stpz'
+                                if os.path.exists(utf_path2):
+                                    module_path=utf_path2
                 else:
                     scale_vrml=modules[i][8]
                     #sayw(scale_vrml)
@@ -5819,7 +5877,12 @@ def Load_models(pcbThickness,modules):
                         #sayerr(module_path_n)
                         #ImportGui.insert(module_path_n,FreeCAD.ActiveDocument.Name)
                         try: #if 1: #try: 
-                            ImportGui.insert(module_path,FreeCAD.ActiveDocument.Name)
+                            # support for stpZ files
+                            if module_path.lower.endswith('stpz'):
+                                import stepZ
+                                stepZ.insert(module_path,FreeCAD.ActiveDocument.Name)
+                            else:
+                                ImportGui.insert(module_path,FreeCAD.ActiveDocument.Name)
                             #FreeCADGui.Selection.clearSelection()
                             counterTmp=0
                             for ObJ in doc1.Objects:
@@ -5896,9 +5959,18 @@ def Load_models(pcbThickness,modules):
                             stop   
                         if allow_compound != 'False' :
                             create_compound(counterObj,model_name)
+                            newobj = FreeCAD.ActiveDocument.ActiveObject
+                            if not use_pypro:
+                                if '*' not in myReference:
+                                    newobj.Label = myReference + '_'+ impLabel + '_' + myTimeStamp + myModelNbr
+                                else:
+                                    newobj.Label = 'REF_'+impLabel + '_'  + myTimeStamp + myModelNbr
                         ##addProperty mod
                         #newobj=reset_prop_shapes(FreeCAD.ActiveDocument.ActiveObject,FreeCAD.ActiveDocument, FreeCAD,FreeCADGui)
-                        newobj = FreeCAD.ActiveDocument.ActiveObject
+                        else:
+                            newobj = FreeCAD.ActiveDocument.ActiveObject                        ##addProperty mod
+                        #newobj=reset_prop_shapes(FreeCAD.ActiveDocument.ActiveObject,FreeCAD.ActiveDocument, FreeCAD,FreeCADGui)
+                        #newobj = FreeCAD.ActiveDocument.ActiveObject
                         #stop
                         ##newobj.Label=newobj.Label+"_"
                         # not adding '_' at the end of the name
@@ -8508,7 +8580,7 @@ def routineScaleVRML():
             if exportV:
                 msg+="""- <b>"""+fname+""".wrl<br>"""
             if exportS:
-                msg+="""</b>- <b>"""+fname+""".step</b>"""
+                msg+="""</b>- <b>"""+fname+""".step[stpZ]</b>"""
             else:
                 if len(objs) >= 1:
                     msg+="""<br></b>- <b>step file not exported; multi-part selected</b>"""
