@@ -475,7 +475,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.1.1.2.x"
+___ver___ = "9.1.1.3.x"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -5595,6 +5595,7 @@ def Load_models(pcbThickness,modules):
             step_module2=step_module[:-4]+u'stp'
             step_module3=step_module[:-4]+u'iges'
             step_module4=step_module[:-4]+u'igs'
+            step_module5=step_module[:-4]+u'stpz'
             #if encoded!=1:
             #    #step_module=step_module.decode("utf-8").replace(u'"', u'')  # name with spaces
             #    step_module=step_module.replace(u'"', u'')  # name with spaces
@@ -5784,8 +5785,8 @@ def Load_models(pcbThickness,modules):
                             #module_path=models3D_prefix_U+step_module4
                             module_path=utf_path
                         else:
-                            if os.path.exists(step_module4): # absolute path
-                                module_path=step_module4
+                            if os.path.exists(step_module5): # absolute path
+                                module_path=step_module5
                             else:
                                 if os.path.exists(utf_path2):
                                     module_path=utf_path2
@@ -5821,8 +5822,8 @@ def Load_models(pcbThickness,modules):
                             #sayw("found! "+module_path)
                         else:
                             pos=step_module.rfind('.')
-                            rel_pos=len(step_module4)-pos
-                            step_module_t=step_module4[:-rel_pos+1]+u'stpZ'
+                            rel_pos=len(step_module5)-pos
+                            step_module_t=step_module5[:-rel_pos+1]+u'stpZ'
                             if os.path.exists(step_module_t): # absolute path
                                 module_path=step_module_t
                             else:
@@ -5842,8 +5843,8 @@ def Load_models(pcbThickness,modules):
                             #sayw("found! "+module_path)
                         else:
                             pos=step_module.rfind('.')
-                            rel_pos=len(step_module4)-pos
-                            step_module_t=step_module4[:-rel_pos+1]+u'stpz'
+                            rel_pos=len(step_module5)-pos
+                            step_module_t=step_module5[:-rel_pos+1]+u'stpz'
                             if os.path.exists(step_module_t): # absolute path
                                 module_path=step_module_t
                             else:
@@ -5878,7 +5879,7 @@ def Load_models(pcbThickness,modules):
                         #ImportGui.insert(module_path_n,FreeCAD.ActiveDocument.Name)
                         try: #if 1: #try: 
                             # support for stpZ files
-                            if module_path.lower.endswith('stpz'):
+                            if module_path.lower().endswith('stpz'):
                                 import stepZ
                                 stepZ.insert(module_path,FreeCAD.ActiveDocument.Name)
                             else:
