@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-__ksuCMD_version__='1.8.1'
+__ksuCMD_version__='1.8.2'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -506,7 +506,7 @@ class ksuTools:
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'kicad-StepUp-icon.svg') , # the name of a svg file available in the resources
                      'MenuText': "ksu Tools" ,
-                     'ToolTip' : "kicad StepUp Tools"}
+                     'ToolTip' : "Activate the main\nkicad StepUp Tools Dialog"}
  
     def IsActive(self):
         #if FreeCAD.ActiveDocument == None:
@@ -521,6 +521,9 @@ class ksuTools:
         # do something here...
         import kicadStepUptools
         reload_lib( kicadStepUptools )
+        kicadStepUptools.KSUWidget.activateWindow()
+        kicadStepUptools.KSUWidget.show()
+        kicadStepUptools.KSUWidget.raise_()
         FreeCAD.Console.PrintWarning( 'active :)\n' )
         #import kicadStepUptools
  
@@ -628,9 +631,12 @@ class ksuToolsLoadFootprint:
         import kicadStepUptools
         #if not kicadStepUptools.checkInstance():
         #    reload( kicadStepUptools )
-        if reload_Gui:
+        if 1: #reload_Gui:
             reload_lib( kicadStepUptools )
         #FreeCAD.Console.PrintWarning( 'active :)\n' )
+        kicadStepUptools.KSUWidget.activateWindow()
+        kicadStepUptools.KSUWidget.show()
+        kicadStepUptools.KSUWidget.raise_()
         kicadStepUptools.onLoadFootprint()
 
 FreeCADGui.addCommand('ksuToolsLoadFootprint',ksuToolsLoadFootprint())

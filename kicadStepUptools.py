@@ -475,7 +475,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.1.1.3.x"
+___ver___ = "9.2.1.4.x"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -20715,6 +20715,7 @@ if singleInstance():
 
 KSUWidget.activateWindow()
 KSUWidget.raise_()
+KSUWidget.hide()
 
 def getComboView(self,window):
     """ Returns the main Tab.
