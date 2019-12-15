@@ -18,6 +18,9 @@ global copper_diffuse, silks_diffuse
 global use_AppPart, use_Links, use_LinkGroups
 use_AppPart=False # False
 use_Links=False
+global FC_export_min_version
+FC_export_min_version="11670"  #11670 latest JM
+
 
 use_LinkGroups = False
 if 'LinkView' in dir(FreeCADGui):

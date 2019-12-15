@@ -358,6 +358,10 @@
 # local coordinate system reference added
 # improved search for 3d models on local path without using KIPRJMOD
 # initial support for App::Link & App::LinkGroup
+# added 3d model position pull&push update
+# added Sketches pull&push update
+# added 'stpZ' compressed files support
+# hide main kSU dialog unless when opening a footprint model
 # most clean code and comments done
 
 ##todo
@@ -472,7 +476,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.1.0.7"
+___ver___ = "9.2.1.4"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -2553,12 +2557,19 @@ def find_name(n):
 
 def insert(filename, other):
     if os.path.exists(filename):
-        open(filename)
+        open(filename,True)
     else:
         FreeCAD.Console.PrintError("File does not exist.\n")
         reply = QtGui.QMessageBox.information(None,"info", "File does not exist.\n")
 
-def open(filename):
+def reload_lib(lib):
+    if (sys.version_info > (3, 0)):
+        import importlib
+        importlib.reload(lib)
+    else:
+        reload (lib)
+
+def open(filename,insert=None):
     #reply = QtGui.QMessageBox.information(None,"info", filename)
     #onLoadBoard_cmd(filename)
     global original_filename
@@ -2568,12 +2579,17 @@ def open(filename):
     say("tolerance on vertex applied")
     if ext==".kicad_pcb":
         original_filename=filename
-        onLoadBoard(filename)
+        onLoadBoard(filename,None,insert)
         # zf= Timer (1.0,ZoomFitThread)
         # zf.start()
     #elif ext==".emn":
     #    onLoadBoard_idf(filename)
     elif ext==".kicad_mod":
+        import kicadStepUptools
+        reload_lib( kicadStepUptools )
+        KSUWidget.activateWindow()
+        KSUWidget.show()
+        KSUWidget.raise_()
         onLoadFootprint(filename)
 
 def make_unicode(input):
@@ -3432,7 +3448,14 @@ def exportStep(objs, ffPathName):
     exp_name=exp_name.translate(translation_table)
     path, fname = os.path.split(ffPathName)
     #fname=os.path.splitext(fname)[0]
-    fullFilePathNameStep=path+os.sep+exp_name+'.step'
+    prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+    if prefs.GetBool('stpz_export_enabled'):
+        #'stpz'
+        fullFilePathNameStep=path+os.sep+exp_name+'.stpZ'
+        #print('stpZ',fullFilePathNameStep)
+    else:
+        #not 'stpz'
+        fullFilePathNameStep=path+os.sep+exp_name+'.step'
     exportS=True
     if os.path.exists(fullFilePathNameStep):
         say('file exists')
@@ -3544,7 +3567,13 @@ def exportStep(objs, ffPathName):
         #if not old_hScheme2:
         #    paramGetVS2.SetBool("Scheme_214",1)
         ##  not to be used paramGet.SetString("Product", "Open CASCADE STEP processor 7.0")
-        ImportGui.export(newobj_list,fullFilePathNameStep)
+        #print(fullFilePathNameStep)
+        #stop
+        if fullFilePathNameStep.endswith('stpZ'):
+            import stepZ
+            stepZ.export(newobj_list,fullFilePathNameStep)
+        else:
+            ImportGui.export(newobj_list,fullFilePathNameStep)
         #del __objs__ 
         say(fullFilePathNameStep+' written')
         ##ImportGui.export(objs,fullFilePathNameStep)
@@ -5579,6 +5608,7 @@ def Load_models(pcbThickness,modules):
             step_module2=step_module[:-4]+u'stp'
             step_module3=step_module[:-4]+u'iges'
             step_module4=step_module[:-4]+u'igs'
+            step_module5=step_module[:-4]+u'stpz'
             #if encoded!=1:
             #    #step_module=step_module.decode("utf-8").replace(u'"', u'')  # name with spaces
             #    step_module=step_module.replace(u'"', u'')  # name with spaces
@@ -5768,8 +5798,8 @@ def Load_models(pcbThickness,modules):
                             #module_path=models3D_prefix_U+step_module4
                             module_path=utf_path
                         else:
-                            if os.path.exists(step_module4): # absolute path
-                                module_path=step_module4
+                            if os.path.exists(step_module5): # absolute path
+                                module_path=step_module5
                             else:
                                 if os.path.exists(utf_path2):
                                     module_path=utf_path2
@@ -5792,6 +5822,48 @@ def Load_models(pcbThickness,modules):
                                 pos=utf_path2.rfind('.')
                                 rel_pos=len(utf_path2)-pos
                                 utf_path2=utf_path2[:-rel_pos+1]+u'IGS'
+                                if os.path.exists(utf_path2):
+                                    module_path=utf_path2
+                    #.stpZ
+                    if (module_path=='not-found'):
+                        pos=utf_path.rfind('.')
+                        rel_pos=len(utf_path)-pos
+                        utf_path=utf_path[:-rel_pos+1]+u'stpZ'
+                        if os.path.exists(utf_path):
+                            #module_path=models3D_prefix+step_module
+                            module_path=utf_path
+                            #sayw("found! "+module_path)
+                        else:
+                            pos=step_module.rfind('.')
+                            rel_pos=len(step_module5)-pos
+                            step_module_t=step_module5[:-rel_pos+1]+u'stpZ'
+                            if os.path.exists(step_module_t): # absolute path
+                                module_path=step_module_t
+                            else:
+                                pos=utf_path2.rfind('.')
+                                rel_pos=len(utf_path2)-pos
+                                utf_path2=utf_path2[:-rel_pos+1]+u'stpZ'
+                                if os.path.exists(utf_path2):
+                                    module_path=utf_path2
+                    #.stpz
+                    if (module_path=='not-found'):
+                        pos=utf_path.rfind('.')
+                        rel_pos=len(utf_path)-pos
+                        utf_path=utf_path[:-rel_pos+1]+u'stpz'
+                        if os.path.exists(utf_path):
+                            #module_path=models3D_prefix+step_module
+                            module_path=utf_path
+                            #sayw("found! "+module_path)
+                        else:
+                            pos=step_module.rfind('.')
+                            rel_pos=len(step_module5)-pos
+                            step_module_t=step_module5[:-rel_pos+1]+u'stpz'
+                            if os.path.exists(step_module_t): # absolute path
+                                module_path=step_module_t
+                            else:
+                                pos=utf_path2.rfind('.')
+                                rel_pos=len(utf_path2)-pos
+                                utf_path2=utf_path2[:-rel_pos+1]+u'stpz'
                                 if os.path.exists(utf_path2):
                                     module_path=utf_path2
                 else:
@@ -5819,7 +5891,12 @@ def Load_models(pcbThickness,modules):
                         #sayerr(module_path_n)
                         #ImportGui.insert(module_path_n,FreeCAD.ActiveDocument.Name)
                         try: #if 1: #try: 
-                            ImportGui.insert(module_path,FreeCAD.ActiveDocument.Name)
+                            # support for stpZ files
+                            if module_path.lower().endswith('stpz'):
+                                import stepZ
+                                stepZ.insert(module_path,FreeCAD.ActiveDocument.Name)
+                            else:
+                                ImportGui.insert(module_path,FreeCAD.ActiveDocument.Name)
                             #FreeCADGui.Selection.clearSelection()
                             counterTmp=0
                             for ObJ in doc1.Objects:
@@ -5896,9 +5973,18 @@ def Load_models(pcbThickness,modules):
                             stop   
                         if allow_compound != 'False' :
                             create_compound(counterObj,model_name)
+                            newobj = FreeCAD.ActiveDocument.ActiveObject
+                            if not use_pypro:
+                                if '*' not in myReference:
+                                    newobj.Label = myReference + '_'+ impLabel + '_' + myTimeStamp + myModelNbr
+                                else:
+                                    newobj.Label = 'REF_'+impLabel + '_'  + myTimeStamp + myModelNbr
                         ##addProperty mod
                         #newobj=reset_prop_shapes(FreeCAD.ActiveDocument.ActiveObject,FreeCAD.ActiveDocument, FreeCAD,FreeCADGui)
-                        newobj = FreeCAD.ActiveDocument.ActiveObject
+                        else:
+                            newobj = FreeCAD.ActiveDocument.ActiveObject                        ##addProperty mod
+                        #newobj=reset_prop_shapes(FreeCAD.ActiveDocument.ActiveObject,FreeCAD.ActiveDocument, FreeCAD,FreeCADGui)
+                        #newobj = FreeCAD.ActiveDocument.ActiveObject
                         #stop
                         ##newobj.Label=newobj.Label+"_"
                         # not adding '_' at the end of the name
@@ -7799,7 +7885,7 @@ def PullPCB(file_name=None):
    #else:
    #    print('Cancel')
 ##
-def onLoadBoard(file_name=None,load_models=None):
+def onLoadBoard(file_name=None,load_models=None,insert=None):
     #name=QtGui.QFileDialog.getOpenFileName(this,tr("Open Image"), "/home/jana", tr("Image Files (*.png *.jpg *.bmp)"))[0]
     #global module_3D_dir
     global test_flag, last_pcb_path, configParser, configFilePath, start_time
@@ -7886,10 +7972,15 @@ def onLoadBoard(file_name=None,load_models=None):
                 ##stop utf-8 test
                 ini_vars[10] = last_pcb_path
                 #cfg_update_all()
-                ## doc=FreeCAD.ActiveDocument
-                ## if doc is None:
-                ##     doc=FreeCAD.newDocument(fname)
-                doc=FreeCAD.newDocument(fname)
+                test_import = False
+                if insert == True:
+                    test_import = True
+                if test_import:
+                    doc=FreeCAD.ActiveDocument
+                    if doc is None:
+                        doc=FreeCAD.newDocument(fname)
+                else:
+                    doc=FreeCAD.newDocument(fname)
                 pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
                 pg.SetString("last_pcb_path", make_string(last_pcb_path)) # py3 .decode("utf-8")
                 #pg.SetString("last_pcb_path", last_pcb_path.decode("utf-8"))
@@ -8426,10 +8517,11 @@ def routineResetPlacement(keepWB=None):
         Part.show(w)
         #say(w)
 
-        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).ShapeColor
-        FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).LineColor
-        FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).PointColor
-        FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).DiffuseColor
+        if hasattr(FreeCADGui.ActiveDocument.getObject(objs[0].Name),'ShapeColor'):
+            FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).ShapeColor
+            FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).LineColor
+            FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).PointColor
+            FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).DiffuseColor
         FreeCADGui.ActiveDocument.ActiveObject.Transparency=FreeCADGui.ActiveDocument.getObject(objs[0].Name).Transparency
 
         new_label=objs[0].Label
@@ -8502,7 +8594,7 @@ def routineScaleVRML():
             if exportV:
                 msg+="""- <b>"""+fname+""".wrl<br>"""
             if exportS:
-                msg+="""</b>- <b>"""+fname+""".step</b>"""
+                msg+="""</b>- <b>"""+fname+""".step[stpZ]</b>"""
             else:
                 if len(objs) >= 1:
                     msg+="""<br></b>- <b>step file not exported; multi-part selected</b>"""
@@ -19911,6 +20003,12 @@ def export_pcb(fname=None,sklayer=None):
                         edg_segms+=1
                         break
             if edg_segms == 0:
+                for cr in mypcb.gr_circle:
+                    if ssklayer in cr.layer:
+                        #say(ln.layer)
+                        edg_segms+=1
+                        break
+            if edg_segms == 0:
                 for lp in mypcb.gr_poly:
                     #print(lp)
                     #print(lp.layer)
@@ -19944,10 +20042,25 @@ def export_pcb(fname=None,sklayer=None):
                 #else:
                 #    edge_width=0.16
             oft=None
+            #skip = False
             if aux_orig == 1:
                 oft=getAuxOrigin(data)
-            if grid_orig == 1:
+                if oft is None:
+                    msg="""StepUp is configured for \'aux origin\' reference<br>but \'aux origin\' is not placed/set on kicad destination board"""
+                    say_warning(msg)
+                    stop
+                else:
+                    print ('aux_origin found',oft)
+            elif grid_orig == 1:
                 oft=getGridOrigin(data)
+                if oft is None:
+                    msg="""StepUp is configured for \'grid origin\' reference<br>but \'grid origin\' is not placed/set on kicad destination board"""
+                    say_warning(msg)
+                    stop
+                else:
+                    print ('grid_origin found',oft)
+            else:
+                print('using an approximate PCB center as sketch reference point')
             #print oft
             gof=False
             if oft is not None:
@@ -19996,7 +20109,7 @@ def export_pcb(fname=None,sklayer=None):
                     #say(offset)
                     #stop
                     say('pcb edge exists')
-                    sayw('removing old Edge')
+                    sayw('removing old Edge '+ssklayer)
                     ## removing old Edge
                     repl = re.sub('\s\(gr_line(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_line(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_line(.+?)'+ssklayer+'(.+?)\)\)\n','',data, flags=re.MULTILINE)
                     repl = re.sub('\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE)
@@ -20014,6 +20127,9 @@ def export_pcb(fname=None,sklayer=None):
                 #[148.5, -98.5] center of A4 page
                 if gof and grid_orig==1:
                     sayw('pcb edge does not exist, aligning sketch to Grid Origin')
+                    offset=[off_x,-off_y]
+                elif gof and aux_orig==1:
+                    sayw('pcb edge does not exist, aligning sketch to Aux Origin')
                     offset=[off_x,-off_y]
                 else:
                     sayw('pcb edge does not exist, aligning sketch to center of A4 page')
@@ -20612,6 +20728,7 @@ if singleInstance():
 
 KSUWidget.activateWindow()
 KSUWidget.raise_()
+KSUWidget.hide()
 
 def getComboView(self,window):
     """ Returns the main Tab.

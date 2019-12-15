@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-__ksuCMD_version__='1.7.9'
+__ksuCMD_version__='1.8.2'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -506,7 +506,7 @@ class ksuTools:
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'kicad-StepUp-icon.svg') , # the name of a svg file available in the resources
                      'MenuText': "ksu Tools" ,
-                     'ToolTip' : "kicad StepUp Tools"}
+                     'ToolTip' : "Activate the main\nkicad StepUp Tools Dialog"}
  
     def IsActive(self):
         #if FreeCAD.ActiveDocument == None:
@@ -521,6 +521,9 @@ class ksuTools:
         # do something here...
         import kicadStepUptools
         reload_lib( kicadStepUptools )
+        kicadStepUptools.KSUWidget.activateWindow()
+        kicadStepUptools.KSUWidget.show()
+        kicadStepUptools.KSUWidget.raise_()
         FreeCAD.Console.PrintWarning( 'active :)\n' )
         #import kicadStepUptools
  
@@ -628,9 +631,12 @@ class ksuToolsLoadFootprint:
         import kicadStepUptools
         #if not kicadStepUptools.checkInstance():
         #    reload( kicadStepUptools )
-        if reload_Gui:
+        if 1: #reload_Gui:
             reload_lib( kicadStepUptools )
         #FreeCAD.Console.PrintWarning( 'active :)\n' )
+        kicadStepUptools.KSUWidget.activateWindow()
+        kicadStepUptools.KSUWidget.show()
+        kicadStepUptools.KSUWidget.raise_()
         kicadStepUptools.onLoadFootprint()
 
 FreeCADGui.addCommand('ksuToolsLoadFootprint',ksuToolsLoadFootprint())
@@ -1445,6 +1451,76 @@ class ksuToolsEdges2Sketch:
         ksu_edges2sketch()
         
 FreeCADGui.addCommand('ksuToolsEdges2Sketch',ksuToolsEdges2Sketch())
+##
+
+class ksuToolsResetPartPlacement:
+    "ksu tools Reset PartPlacement"
+    #####################################
+    # Copyright (c) openBrain 2019
+    # Licensed under LGPL v2
+    #
+    # This macro will reset position of all part containers to document origin while keeping the absolute object positions
+    # __Web__ = 'https://www.freecadweb.org/wiki/Macro_PlacementAbsolufy'
+    # Version history :
+    # *0.1 : alpha release, almost no test performed
+    # *0.2 : some typo improvement + commenting for official PR
+    #
+    #####################################
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'resetPartPlacement.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksu Reset Part Placement" ,
+                     'ToolTip' : "Reset Placement for all Part containers in selection"}
+    def getLinkGlobalPlacement(self,ob):
+        # print(ob.Name,'Link object')
+        # FreeCAD.Console.PrintMessage(ob.Parents)
+        # FreeCAD.Console.PrintWarning(ob.Parents[0][0].Name+' '+ob.Parents[0][1])
+        # FreeCAD.Console.PrintWarning(Part.getShape(ob.Parents[0][0],ob.Parents[0][1]).Placement)
+        # return ob.Label
+        return Part.getShape(ob.Parents[0][0],ob.Parents[0][1]).Placement
+    #
+    def Activated(self):        
+        doc = FreeCAD.ActiveDocument
+        if doc is None:
+            FreeCAD.Console.Print("No Active Document found")
+            return
+        else:
+            currState = {} #initialize a dictionary to store current object placements
+            sel = FreeCADGui.Selection.getSelection()
+            for obj in sel: ## App.ActiveDocument.Objects: #going through active document objects
+                if "Placement" in obj.PropertiesList: #if object has a Placement property
+                    #FreeCAD.Console.PrintWarning(obj.TypeId)
+                    if hasattr(obj,'getGlobalPlacement'):
+                        currState[obj] = obj.getGlobalPlacement() #store the object pointer with its global placement
+                    #elif obj.TypeId == 'App::Link':
+                    #    obj.getLinkGlobalPlacement()
+                for o in obj.OutListRecursive:
+                    if "Placement" in o.PropertiesList: #if object has a Placement property
+                        #FreeCAD.Console.PrintWarning(o.TypeId)
+                        if hasattr(o,'getGlobalPlacement'):
+                            currState[o] = o.getGlobalPlacement() #store the object pointer with its global placement
+                        elif o.TypeId == 'App::Link':
+                            plc = self.getLinkGlobalPlacement(o)
+                            print(plc)
+                            currState[o] = plc
+                            
+            FreeCAD.ActiveDocument.openTransaction("Absolufy") #open a transaction for undo management
+            
+            for obj, plac in currState.items(): #going through all moveable objects
+                if obj.isDerivedFrom("App::Part"): #if object is a part container
+                    obj.Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,0),FreeCAD.Rotation(0,0,0)) #reset its placement to global document origin
+                elif obj.TypeId[:5] == "App::" and obj.TypeId != 'App::Link': #if object is another App type (typically an origin axis or plane)
+                    None #do nothing
+                else: #for all other objects
+                    obj.Placement = plac #replace them at their global (absolute) placement
+            
+            FreeCAD.ActiveDocument.commitTransaction() #commit transaction
+        return
+
+    def IsActive(self):
+        doc = FreeCAD.activeDocument()
+        if doc is None: return False
+        return True
+FreeCADGui.addCommand('ksuToolsResetPartPlacement',ksuToolsResetPartPlacement())
 ##
 
 class ksuToolsResetPlacement:
@@ -3284,3 +3360,34 @@ class checkSolidExpSTEP():
 
 FreeCADGui.addCommand('checkSolidExpSTEP',checkSolidExpSTEP())
 
+
+class Restore_Transparency():
+    "ksu tools Restore Transparency to Active Document Objects"
+
+    def GetResources(self):
+        mybtn_tooltip ="Restore Transparency to Active Document Objects"
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Restore_Transparency.svg') , # the name of a svg file available in the resources
+                     'MenuText': mybtn_tooltip ,
+                     'ToolTip' : mybtn_tooltip}
+
+    def Activated(self):        
+        doc = FreeCAD.ActiveDocument
+        if doc is None:
+            FreeCAD.Console.Print("No Active Document found")
+            return
+        else:
+            for obj in doc.Objects:
+                if hasattr (obj, 'ViewObject'):
+                    if hasattr (obj.ViewObject, 'Transparency'):
+                        if obj.ViewObject.Transparency < 100:
+                            transparency = obj.ViewObject.Transparency
+                            obj.ViewObject.Transparency = transparency + 1
+                            obj.ViewObject.Transparency = transparency
+        return
+
+    def IsActive(self):
+        doc = FreeCAD.activeDocument()
+        if doc is None: return False
+        return True
+
+FreeCADGui.addCommand('Restore_Transparency',Restore_Transparency())
