@@ -361,6 +361,7 @@
 # added 3d model position pull&push update
 # added Sketches pull&push update
 # added 'stpZ' compressed files support
+# hide main kSU dialog unless when opening a footprint model
 # most clean code and comments done
 
 ##todo
@@ -475,7 +476,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.2.1.4.x"
+___ver___ = "9.2.1.4"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -2561,6 +2562,13 @@ def insert(filename, other):
         FreeCAD.Console.PrintError("File does not exist.\n")
         reply = QtGui.QMessageBox.information(None,"info", "File does not exist.\n")
 
+def reload_lib(lib):
+    if (sys.version_info > (3, 0)):
+        import importlib
+        importlib.reload(lib)
+    else:
+        reload (lib)
+
 def open(filename,insert=None):
     #reply = QtGui.QMessageBox.information(None,"info", filename)
     #onLoadBoard_cmd(filename)
@@ -2577,6 +2585,11 @@ def open(filename,insert=None):
     #elif ext==".emn":
     #    onLoadBoard_idf(filename)
     elif ext==".kicad_mod":
+        import kicadStepUptools
+        reload_lib( kicadStepUptools )
+        KSUWidget.activateWindow()
+        KSUWidget.show()
+        KSUWidget.raise_()
         onLoadFootprint(filename)
 
 def make_unicode(input):
