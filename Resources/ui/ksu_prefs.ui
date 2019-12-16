@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>542</width>
-    <height>712</height>
+    <height>759</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -644,7 +644,7 @@ default '0.01mm'</string>
           <x>0</x>
           <y>370</y>
           <width>522</width>
-          <height>246</height>
+          <height>291</height>
          </rect>
         </property>
         <property name="title">
@@ -842,7 +842,7 @@ Allowing or not Loading Multi Parts objects</string>
         <widget class="Gui::PrefCheckBox" name="cb_asm3_links">
          <property name="geometry">
           <rect>
-           <x>7</x>
+           <x>8</x>
            <y>140</y>
            <width>246</width>
            <height>20</height>
@@ -874,10 +874,13 @@ Allowing or not Loading Multi Parts objects</string>
           </rect>
          </property>
          <property name="toolTip">
-          <string>Enable Materials for VRML exporting</string>
+          <string notr="true">Enable Materials for VRML exporting</string>
+         </property>
+         <property name="statusTip">
+          <string notr="true"/>
          </property>
          <property name="text">
-          <string>Enable Materials for VRML exporting</string>
+          <string notr="true">Enable Materials for VRML exporting</string>
          </property>
          <property name="checked">
           <bool>true</bool>
@@ -896,7 +899,7 @@ Allowing or not Loading Multi Parts objects</string>
          <property name="geometry">
           <rect>
            <x>9</x>
-           <y>215</y>
+           <y>240</y>
            <width>463</width>
            <height>20</height>
           </rect>
@@ -949,7 +952,7 @@ Allowing or not Loading Multi Parts objects</string>
          <property name="geometry">
           <rect>
            <x>8</x>
-           <y>190</y>
+           <y>215</y>
            <width>463</width>
            <height>20</height>
           </rect>
@@ -973,12 +976,43 @@ Allowing or not Loading Multi Parts objects</string>
           <cstring>Mod/kicadStepUpGui</cstring>
          </property>
         </widget>
+        <widget class="Gui::PrefCheckBox" name="cb_wrz_export">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="geometry">
+          <rect>
+           <x>8</x>
+           <y>190</y>
+           <width>463</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string notr="true">Enable compressed VRML file ('.wrz') generation exporting</string>
+         </property>
+         <property name="text">
+          <string notr="true">Enable compressed VRML file ('.wrz') generation exporting</string>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
+         </property>
+         <property name="tristate">
+          <bool>false</bool>
+         </property>
+         <property name="prefEntry" stdset="0">
+          <cstring>wrz_export_enabled</cstring>
+         </property>
+         <property name="prefPath" stdset="0">
+          <cstring>Mod/kicadStepUpGui</cstring>
+         </property>
+        </widget>
        </widget>
        <widget class="QGroupBox" name="mcad_compare">
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>615</y>
+          <y>665</y>
           <width>522</width>
           <height>46</height>
          </rect>

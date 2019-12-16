@@ -360,7 +360,7 @@
 # initial support for App::Link & App::LinkGroup
 # added 3d model position pull&push update
 # added Sketches pull&push update
-# added 'stpZ' compressed files support
+# added 'stpZ', 'wrz' compressed files support
 # hide main kSU dialog unless when opening a footprint model
 # most clean code and comments done
 
@@ -442,6 +442,15 @@ from shutil import copyfile
 import tempfile, errno
 import re
 import time
+
+if (sys.version_info > (3, 0)):  #py3
+    import builtins as builtin  #py3
+    import gzip as gz
+else:  #py2
+    import __builtin__ as builtin #py2
+    import gzip_utf8 as gz
+
+import zipfile  as zf
 # sys.path.append('C:\Cad\Progetti_K\3D-FreeCad-tools/')
 #sys.path.append(os.path.realpath(__file__)) #workaround to test OpenSCAD2DgeomMau
 #import OpenSCAD2DgeomMau #
@@ -453,10 +462,10 @@ from math import sqrt, atan, sin, cos, radians, degrees, pi
 import argparse
 from threading import Timer
 
-try:
-    import __builtin__ as builtin #py2
-except:
-    import builtins as builtin  #py3
+#try:
+#    import __builtin__ as builtin #py2
+#except:
+#    import builtins as builtin  #py3
 
 if FreeCAD.GuiUp:
     from PySide import QtCore, QtGui
@@ -476,7 +485,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.2.1.4"
+___ver___ = "9.2.1.5"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -2763,7 +2772,7 @@ class Ui_Dialog(object):
         self.plainTextEdit.setToolTip("Shape Color")
         self.plainTextEdit_2.setToolTip("Diffuse Color")
         self.label_3.setText("New")
-        self.label_4.setText("Note: set Material will unmatch colors between wrl and STEP ")
+        self.label_4.setText("NB: set Material will unmatch colors between wrl and STEP")
 ###
 def isWritable(path):
     try:
@@ -2835,7 +2844,14 @@ def exportVRMLmaterials(objects, filepath):
     #global color_list_mat, col_index
     #with __builtin__.open(filepath, 'w') as f:
     # with builtin.open(filepath, 'wb') as f: #py2
-    with builtin.open(filepath, 'w') as f: #py3
+    if filepath.endswith('wrz'):
+        fname=os.path.splitext(os.path.basename(filepath))[0]
+        tempdir = tempfile.gettempdir() # get the current temporary directory
+        tempfilepath = os.path.join(tempdir,fname + u'.wrl')
+        fpath=tempfilepath
+    else:
+        fpath=filepath
+    with builtin.open(fpath, 'w') as f: #py3
         # write the standard VRML header
         f.write("#VRML V2.0 utf8\n#kicad StepUp wrl exported\n\n")
         f.write(material_definitions)
@@ -2921,7 +2937,26 @@ def exportVRMLmaterials(objects, filepath):
                 #say(material_properties[material_index])
                 #f.write("appearance Appearance{"+material_properties[material_index]+"}}\n")
                 f.write("appearance Appearance{material USE "+material_ids[material_index]+" }}\n")
-        say(filepath+' written')
+        #say(fpath+' written')
+        
+    if filepath.endswith('wrz'):
+        with builtin.open(fpath, 'rb') as f_in:
+            file_content = f_in.read()
+            new_f_content = file_content
+            f_in.close()
+        #filepath=filepath[:filepath.rfind('.')]+u'.wrz'
+        with gz.open(filepath, 'wb') as f_out:
+            f_out.write(new_f_content)
+            f_out.close()
+    say(filepath+' written')
+        #if os.path.exists(fpath):
+        #    #os.remove(outfpath)
+        #    os.rename(fpath, filepath)  
+            #os.remove(outfpathT_stp)
+         #else:
+         #    os.rename(outfpathT_str, outfpath)
+            #os.remove(outfpathT_stp)                
+
     #sayw (color_list); sayw(color_list_mat);
     #for obj in objects:
     #    sayw(obj.Label)
@@ -2944,7 +2979,14 @@ def exportVRML(objects, filepath):
     global creaseAngle
     #with __builtin__.open(filepath, 'w') as f:
     # with builtin.open(filepath, 'wb') as f: #py2
-    with builtin.open(filepath, 'w') as f:  #py3
+    if filepath.endswith('wrz'):
+        fname=os.path.splitext(os.path.basename(filepath))[0]
+        tempdir = tempfile.gettempdir() # get the current temporary directory
+        tempfilepath = os.path.join(tempdir,fname + u'.wrl')
+        fpath=tempfilepath
+    else:
+        fpath=filepath
+    with builtin.open(fpath, 'w') as f:  #py3
         # write the standard VRML header
         f.write("#VRML V2.0 utf8\n#kicad StepUp wrl exported\n\n")
         for obj in objects:
@@ -2970,7 +3012,16 @@ def exportVRML(objects, filepath):
             f.write("appearance Appearance{material Material{diffuseColor %g %g %g\n" % shape_col)
             f.write("transparency %g}}" % shape_transparency)
             f.write("}\n") # closes Shape
-        say(filepath+' written')
+    if filepath.endswith('wrz'):
+        with builtin.open(fpath, 'rb') as f_in:
+            file_content = f_in.read()
+            new_f_content = file_content
+            f_in.close()
+        #filepath=filepath[:filepath.rfind('.')]+u'.wrz'
+        with gz.open(filepath, 'wb') as f_out:
+            f_out.write(new_f_content)
+            f_out.close()    
+    say(filepath+' written')
 ###
 
 def export(componentObjs, fullfilePathName, scale=None):
@@ -2989,10 +3040,22 @@ def export(componentObjs, fullfilePathName, scale=None):
     exp_name=exp_name.translate(translation_table)
     path, fname = os.path.split(fullfilePathName)
     fname=os.path.splitext(fname)[0]
+    save_wrz=False
+    prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+    if prefs.GetBool('wrz_export_enabled'):
+        #'stpz'
+        save_wrz=True
+        #print('stpZ',fullFilePathNameStep)
     if scale is not None:
-        filename=path+os.sep+exp_name+'.wrl'
+        if save_wrz:
+            filename=path+os.sep+exp_name+'.wrz'
+        else:
+            filename=path+os.sep+exp_name+'.wrl'
     else:
-        filename=path+os.sep+exp_name+'_1_1.wrl'
+        if save_wrz:
+            filename=path+os.sep+exp_name+'_1_1.wrz'
+        else:
+            filename=path+os.sep+exp_name+'_1_1.wrl'
     say(filename)
     exportV=True
     mesh_deviation_default=0.03 # 0.03 or 0.1
@@ -8586,15 +8649,24 @@ def routineScaleVRML():
         #removing not allowed chars
         translation_table = dict.fromkeys(map(ord, '<>:"/\|?*,;:\\'), None)
         fname=fname.translate(translation_table)
+        vrml_ext='.wrl'
+        prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+        if prefs.GetBool('wrz_export_enabled'):
+            #'stpz'
+            vrml_ext='.wrz'
+        stp_ext='.step'
+        if prefs.GetBool('stpz_export_enabled'):
+            stp_ext='.stpZ'
+        #print('stpZ',fullFilePathNameStep)
         if exportV or exportS:
             msg="""<b>export STEP & scaled VRML file for kicad!</b>
             <font color='white'>****************************************************************************</font><br>
             <i>exporting folder: </i><br><b>- <a href='"""+path+"""' target='_blank'>"""+path+"""</a></b>"""
             msg+="""<br><i>exporting filename: </i><br>"""
             if exportV:
-                msg+="""- <b>"""+fname+""".wrl<br>"""
+                msg+="""- <b>"""+fname+vrml_ext+"""<br>"""
             if exportS:
-                msg+="""</b>- <b>"""+fname+""".step[stpZ]</b>"""
+                msg+="""</b>- <b>"""+fname+stp_ext+"""</b>"""
             else:
                 if len(objs) >= 1:
                     msg+="""<br></b>- <b>step file not exported; multi-part selected</b>"""
