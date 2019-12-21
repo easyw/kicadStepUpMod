@@ -4722,6 +4722,10 @@ def reset_prop_shapes(obj,doc,App,Gui):
     #FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(obj.Name).PointColor
     #FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.getObject(obj.Name).DiffuseColor
     new_label=make_string(obj.Label)
+    #if (obj.TypeId == 'App::Part'):
+    #    removesubtree(obj)
+    #else:
+    #    FreeCAD.ActiveDocument.removeObject(obj.Name)
     FreeCAD.ActiveDocument.removeObject(obj.Name)
     FreeCAD.ActiveDocument.recompute()
     FreeCAD.ActiveDocument.ActiveObject.Label=new_label
@@ -5402,7 +5406,8 @@ def create_compound(count,modelnm):  #create compound function when a multipart 
         #print (sel[lsel-1].Label)
         #for s in sel:
         #    print(s.Label)
-        #sayw(str(objs_to_remove))
+        #tobeimproved for App:Links
+        # sayw(str(objs_to_remove))
         #stop
         #mycompound_new=FreeCAD.activeDocument().ActiveObject
         #sayw (sel.Type)
