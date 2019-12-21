@@ -362,6 +362,8 @@
 # added Sketches pull&push update
 # added 'stpZ', 'wrz' compressed files support
 # hide main kSU dialog unless when opening a footprint model
+# full import of kicad_pcb allowed
+# generating uid for pcb & containers
 # most clean code and comments done
 
 ##todo
@@ -485,7 +487,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.2.1.5"
+___ver___ = "9.3.0.0.x"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -4930,7 +4932,7 @@ def Display_info(blacklisted_models):
     if animate_result==True and apply_reflex==True:  #(apply_reflex==True):
         doc=FreeCAD.ActiveDocument
         for obj in doc.Objects:
-            if (obj.Label!="Board_Geoms") and (obj.Label!="Step_Models") and (obj.Label!="Step_Virtual_Models")\
+            if ("Board_Geoms" not in obj.Label) and ("Step_Models" not in obj.Label) and ("Step_Virtual_Models" not in obj.Label)\
               and (obj.TypeId != "App::Line") and (obj.TypeId != "App::Plane") and (obj.TypeId != "App::Origin")\
               and (obj.TypeId != "App::Part"):
                 if show_data:
@@ -5044,7 +5046,7 @@ def Export2MCAD(blacklisted_model_elements):
     doc=FreeCAD.ActiveDocument
     for obj in doc.Objects:
         # do what you want to automate
-        if (obj.Label!="Board_Geoms") and (obj.Label!="Step_Models") and (obj.Label!="Step_Virtual_Models")\
+        if ("Board_Geoms" not in obj.Label) and ("Step_Models" not in obj.Label) and ("Step_Virtual_Models" not in obj.Label)\
            and (obj.TypeId != "App::Line") and (obj.TypeId != "App::Plane") and (obj.TypeId != "App::Origin")\
            and (obj.TypeId != "App::Part") and (obj.TypeId != "Sketcher::SketchObject"):
             FreeCADGui.Selection.addSelection(obj)
@@ -5520,7 +5522,7 @@ def Load_models(pcbThickness,modules):
     global off_x, off_y, volume_minimum, height_minimum, bbox_all, bbox_list
     global whitelisted_model_elements, models3D_prefix, models3D_prefix2, last_pcb_path, full_placement
     global allow_compound, compound_found, bklist, force_transparency, warning_nbr, use_AppPart
-    global conv_offs, use_Links, links_imp_mode, use_pypro, use_LinkGroups
+    global conv_offs, use_Links, links_imp_mode, use_pypro, use_LinkGroups, fname_sfx
     
     #say (modules)
     missing_models = ''
@@ -5535,6 +5537,13 @@ def Load_models(pcbThickness,modules):
     modelTop_nbr=0
     modelBot_nbr=0
     mod_cnt=0
+    top_name='Top'+fname_sfx
+    bot_name='Bot'+fname_sfx
+    topV_name='TopV'+fname_sfx
+    botV_name='BotV'+fname_sfx
+    stepM_name='Step_Models'+fname_sfx
+    stepV_name='Step_Virtual_Models'+fname_sfx
+                            
     for i in range(len(modules)):
         step_module=modules[i][0]
         module_container = step_module
@@ -6242,24 +6251,25 @@ def Load_models(pcbThickness,modules):
                             # App.ActiveDocument.recompute()
                             if isVirtual == 0:
                                 if use_AppPart and not use_LinkGroups: #layer Top                                  
-                                    FreeCAD.ActiveDocument.getObject("Top").addObject(impPart)
+                                    FreeCAD.ActiveDocument.getObject(top_name).addObject(impPart)
                                     modelTop_nbr+=1
                                 elif use_LinkGroups:
                                     #FreeCAD.ActiveDocument.getObject(impPart.Name).adjustRelativeLinks(FreeCAD.ActiveDocument.getObject('Top'))
-                                    FreeCAD.ActiveDocument.getObject('Top').ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),None,'',[])
+                                    FreeCAD.ActiveDocument.getObject(top_name).ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),None,'',[])
                                     modelTop_nbr+=1
                                 else:
-                                    FreeCAD.ActiveDocument.getObject("Step_Models").addObject(impPart)
+                                    FreeCAD.ActiveDocument.getObject(stepM_name).addObject(impPart)
                             else:  #virtual
                                 if use_AppPart and not use_LinkGroups: #layer Top                                  
-                                    FreeCAD.ActiveDocument.getObject("TopV").addObject(impPart)
+                                    #print(topV_name)
+                                    FreeCAD.ActiveDocument.getObject(topV_name).addObject(impPart)
                                     virtualTop_nbr+=1
                                 elif use_LinkGroups:
                                     #FreeCAD.ActiveDocument.getObject(impPart.Name).adjustRelativeLinks(FreeCAD.ActiveDocument.getObject('TopV'))
-                                    FreeCAD.ActiveDocument.getObject('TopV').ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),None,'',[])
+                                    FreeCAD.ActiveDocument.getObject(topV_name).ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),None,'',[])
                                     virtualTop_nbr+=1
                                 else:
-                                    FreeCAD.ActiveDocument.getObject("Step_Virtual_Models").addObject(impPart)
+                                    FreeCAD.ActiveDocument.getObject(stepV_name).addObject(impPart)
                                 virtual_nbr+=1
                         ###
                         else:
@@ -6307,24 +6317,24 @@ def Load_models(pcbThickness,modules):
                             FreeCAD.ActiveDocument.getObject(impPart.Name)
                             if isVirtual == 0:
                                 if use_AppPart and not use_LinkGroups: #layer Top                                  
-                                    FreeCAD.ActiveDocument.getObject("Bot").addObject(impPart)
+                                    FreeCAD.ActiveDocument.getObject(bot_name).addObject(impPart)
                                     modelBot_nbr+=1
                                 elif use_LinkGroups:
                                     #FreeCAD.ActiveDocument.getObject(impPart.Name).adjustRelativeLinks(FreeCAD.ActiveDocument.getObject('Bot'))
-                                    FreeCAD.ActiveDocument.getObject('Bot').ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),None,'',[])
+                                    FreeCAD.ActiveDocument.getObject(bot_name).ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),None,'',[])
                                     modelBot_nbr+=1
                                 else:
-                                    FreeCAD.ActiveDocument.getObject("Step_Models").addObject(impPart)
+                                    FreeCAD.ActiveDocument.getObject(stepM_name).addObject(impPart)
                             else:  #virtual
                                 if use_AppPart and not use_LinkGroups: #layer Top
-                                    FreeCAD.ActiveDocument.getObject("BotV").addObject(impPart)
+                                    FreeCAD.ActiveDocument.getObject(botV_name).addObject(impPart)
                                     virtualBot_nbr+=1
                                 elif use_LinkGroups:
                                     #FreeCAD.ActiveDocument.getObject(impPart.Name).adjustRelativeLinks(FreeCAD.ActiveDocument.getObject('BotV'))
-                                    FreeCAD.ActiveDocument.getObject('BotV').ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),None,'',[])
+                                    FreeCAD.ActiveDocument.getObject(botV_name).ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),None,'',[])
                                     virtualBot_nbr+=1
                                 else:
-                                    FreeCAD.ActiveDocument.getObject("Step_Virtual_Models").addObject(impPart)
+                                    FreeCAD.ActiveDocument.getObject(stepV_name).addObject(impPart)
                                 virtual_nbr+=1
                 ###
                 elif module_path=='internal shape':
@@ -6387,10 +6397,10 @@ def Load_models(pcbThickness,modules):
                                 impPart.Placement = FreeCAD.Placement(FreeCAD.Vector(pos_x,pos_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),rot))
                             FreeCADGui.Selection.addSelection(impPart)
                             if use_AppPart: #Top
-                                FreeCAD.ActiveDocument.getObject("Top").addObject(impPart)
+                                FreeCAD.ActiveDocument.getObject(top_name).addObject(impPart)
                                 modelTop_nbr+=1
                             else:
-                                FreeCAD.ActiveDocument.getObject("Step_Models").addObject(impPart)
+                                FreeCAD.ActiveDocument.getObject(stepM_name).addObject(impPart)
                         else:
                         #Bottom
                         #Bottom
@@ -6436,7 +6446,7 @@ def Load_models(pcbThickness,modules):
                                 FreeCAD.ActiveDocument.getObject("Bot").addObject(impPart)
                                 modelBot_nbr+=1
                             else:
-                                FreeCAD.ActiveDocument.getObject("Step_Models").addObject(impPart)
+                                FreeCAD.ActiveDocument.getObject(stepM_name).addObject(impPart)
                     else:                        
                         FreeCAD.ActiveDocument.removeObject(impPart.Name)
                 else:
@@ -6462,26 +6472,26 @@ def Load_models(pcbThickness,modules):
     #sleep
     if virtual_nbr==0:
         #FreeCAD.ActiveDocument.getObject("Step_Virtual_Models").removeObjectsFromDocument()
-        FreeCAD.ActiveDocument.removeObject("Step_Virtual_Models")
-        FreeCAD.ActiveDocument.removeObject("BotV")
-        FreeCAD.ActiveDocument.removeObject("TopV")
+        FreeCAD.ActiveDocument.removeObject(stepV_name)
+        FreeCAD.ActiveDocument.removeObject(botV_name)
+        FreeCAD.ActiveDocument.removeObject(topV_name)
     else:
         if use_AppPart:
             if virtualTop_nbr==0:
                 #FreeCAD.ActiveDocument.getObject("TopV").removeObjectsFromDocument()
-                FreeCAD.ActiveDocument.removeObject("TopV")
+                FreeCAD.ActiveDocument.removeObject(topV_name)
                 #FreeCAD.ActiveDocument.recompute()
             if virtualBot_nbr==0:
                 #FreeCAD.ActiveDocument.getObject("BotV").removeObjectsFromDocument()
-                FreeCAD.ActiveDocument.removeObject("BotV")
+                FreeCAD.ActiveDocument.removeObject(botV_name)
                 #FreeCAD.ActiveDocument.recompute()  
     if use_AppPart:
         if modelTop_nbr==0:
             #FreeCAD.ActiveDocument.getObject("Top").removeObjectsFromDocument()
-            FreeCAD.ActiveDocument.removeObject("Top")    
+            FreeCAD.ActiveDocument.removeObject(top_name)    
         if modelBot_nbr==0:
             #FreeCAD.ActiveDocument.getObject("Bot").removeObjectsFromDocument()
-            FreeCAD.ActiveDocument.removeObject("Bot")    
+            FreeCAD.ActiveDocument.removeObject(bot_name)    
     
     FreeCAD.ActiveDocument.recompute()
     say_time()
@@ -7948,6 +7958,18 @@ def PullPCB(file_name=None):
    #else:
    #    print('Cancel')
 ##
+
+def crc_gen(data):
+    import binascii
+    import re
+    
+    #data=u'Würfel'
+    content=re.sub(r'[^\x00-\x7F]+','_', data)
+    #make_unicode(hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:])
+    #hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:].encode('utf-8')
+    #print(data +u'_'+ hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:])
+    return u'_'+ make_unicode(hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:])
+##
 def onLoadBoard(file_name=None,load_models=None,insert=None):
     #name=QtGui.QFileDialog.getOpenFileName(this,tr("Open Image"), "/home/jana", tr("Image Files (*.png *.jpg *.bmp)"))[0]
     #global module_3D_dir
@@ -7961,8 +7983,9 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
     global last_fp_path, last_pcb_path, plcmnt, xp, yp, exportFusing
     global ignore_utf8, ignore_utf8_incfg, pcb_path, disable_VBO, use_AppPart, force_oldGroups, use_Links, use_LinkGroups
     global original_filename, edge_width, load_sketch, grid_orig, warning_nbr, running_time, addConstraints
-    global conv_offs, zfit
-    
+    global conv_offs, zfit, fname_sfx
+
+
     pull_sketch = False
     SketchLayer = 'Edge.Cuts' #None
     if load_models is None:
@@ -8018,6 +8041,17 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                 say('opening '+name)
                 path, fname = os.path.split(name)
                 fname=os.path.splitext(fname)[0]
+                fname_sfx=crc_gen(make_unicode(fname))
+                top_name='Top'+fname_sfx
+                bot_name='Bot'+fname_sfx
+                topV_name='TopV'+fname_sfx
+                botV_name='BotV'+fname_sfx
+                stepM_name='Step_Models'+fname_sfx
+                stepV_name='Step_Virtual_Models'+fname_sfx
+                pcb_name='Pcb'+fname_sfx
+                board_name='Board'+fname_sfx
+                boardG_name='Board_Geoms'+fname_sfx
+                #say(fname_sfx)
                 #fpth = os.path.dirname(os.path.abspath(__file__))
                 fpth = os.path.dirname(os.path.abspath(name))
                 #filePath = os.path.split(os.path.realpath(__file__))[0]
@@ -8103,7 +8137,8 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
             # pos board xm+(xM-xm)/2
             # pos board -(ym+(yM-ym)/2)        
             if SketchLayer == 'Edge.Cuts':
-                center_x, center_y, bb_x, bb_y = findPcbCenter("Pcb")
+                #center_x, center_y, bb_x, bb_y = findPcbCenter("Pcb")
+                center_x, center_y, bb_x, bb_y = findPcbCenter(u"Pcb"+fname_sfx)
             else:
                 draw=FreeCAD.ActiveDocument.PCB_Sketch_draft
                 center_x, center_y, bb_x, bb_y = findPcbCenter(draw.Name)
@@ -8157,10 +8192,11 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                 board_base_point_y=center_y-off_y
             sayw('placing board @ '+str(board_base_point_x)+','+str(board_base_point_y))
             if SketchLayer == 'Edge.Cuts':
-                FreeCAD.ActiveDocument.getObject("Pcb").Placement = FreeCAD.Placement(FreeCAD.Vector(board_base_point_x,board_base_point_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
+                #FreeCAD.ActiveDocument.getObject("Pcb").Placement = FreeCAD.Placement(FreeCAD.Vector(board_base_point_x,board_base_point_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
+                FreeCAD.ActiveDocument.getObject(pcb_name).Placement = FreeCAD.Placement(FreeCAD.Vector(board_base_point_x,board_base_point_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
             #else:
             #    draw.Placement = FreeCAD.Placement(FreeCAD.Vector(board_base_point_x,board_base_point_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
-            newname="PCB_Sketch"
+            newname="PCB_Sketch"+fname_sfx
             if load_sketch:
                 if SketchLayer != 'Edge.Cuts' and SketchLayer is not None:
                     newname = SketchLayer.split('.')[0]+'_Sketch'
@@ -8216,7 +8252,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                         FreeCAD.ActiveDocument.getObject(newname).exposeInternalGeometry(gi)
                     gi+=1
                 if use_LinkGroups and SketchLayer == 'Edge.Cuts':
-                    FreeCAD.ActiveDocument.getObject('Board_Geoms').ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(newname),None,'',[])
+                    FreeCAD.ActiveDocument.getObject(boardG_name).ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(newname),None,'',[])
                     FreeCADGui.Selection.clearSelection()
                     sl = FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.getObject(newname))
                     #FreeCADGui.runCommand('Std_HideSelection',0)
@@ -8225,7 +8261,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                     #FreeCADGui.ActiveDocument.PCB_Sketch.Visibility = False
                     #FreeCAD.ActiveDocument.getObject('PCB_Sketch').adjustRelativeLinks(FreeCAD.ActiveDocument.getObject('Board_Geoms'))
                 elif SketchLayer == 'Edge.Cuts':
-                    FreeCAD.ActiveDocument.Board_Geoms.addObject(pcb_sk)
+                    FreeCAD.ActiveDocument.getObject(boardG_name).addObject(pcb_sk)
                 
             #updating pcb_sketch
             if SketchLayer != 'Edge.Cuts' and SketchLayer is not None:
@@ -8246,73 +8282,85 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                 if use_AppPart and not force_oldGroups and not use_LinkGroups:
                     #sayw("creating hierarchy")
                     ## to evaluate to add App::Part hierarchy
-                    doc.Tip = doc.addObject('App::Part','Step_Models')
-                    doc.Step_Models.Label = 'Step_Models'
-                    doc.Tip = doc.addObject('App::Part','Top')
-                    doc.Top.Label = 'Top'
-                    doc.Tip = doc.addObject('App::Part','Bot')
-                    doc.Bot.Label = 'Bot'
-                    doc.getObject("Step_Models").addObject(doc.Top)
-                    doc.getObject("Step_Models").addObject(doc.Bot)            
+                    doc.Tip = doc.addObject('App::Part',stepM_name)
+                    stepM = doc.ActiveObject
+                    stepM.Label = stepM_name
+                    doc.Tip = doc.addObject('App::Part',top_name)
+                    topG = doc.ActiveObject
+                    topG.Label = top_name
+                    doc.Tip = doc.addObject('App::Part',bot_name)
+                    botG = doc.ActiveObject
+                    botG.Label = bot_name
+                    doc.getObject(stepM_name).addObject(doc.getObject(top_name))
+                    doc.getObject(stepM_name).addObject(doc.getObject(bot_name))            
                     try:
                         doc.Step_Models.License = ''
                         doc.Step_Models.LicenseURL = ''
                     except:
                         pass
                     #FreeCADGui.activeView().setActiveObject('Step_Models', doc.Step_Models)
-                    doc.getObject("Board").addObject(doc.Step_Models)
-                    doc.Tip = doc.addObject('App::Part','Step_Virtual_Models')
-                    doc.Step_Virtual_Models.Label = 'Step_Virtual_Models'
-                    doc.Tip = doc.addObject('App::Part','TopV')
-                    doc.TopV.Label = 'TopV'
-                    doc.Tip = doc.addObject('App::Part','BotV')
-                    doc.BotV.Label = 'BotV'
-                    doc.getObject("Step_Virtual_Models").addObject(doc.TopV)
-                    doc.getObject("Step_Virtual_Models").addObject(doc.BotV)            
+                    doc.getObject(boardG_name).addObject(doc.getObject(stepM_name))
+                    doc.Tip = doc.addObject('App::Part',stepV_name)
+                    stepV = doc.ActiveObject
+                    stepV.Label = stepV_name
+                    doc.Tip = doc.addObject('App::Part',topV_name)
+                    topV = doc.ActiveObject
+                    topV.Label = topV_name
+                    doc.Tip = doc.addObject('App::Part',botV_name)
+                    botV = doc.ActiveObject
+                    botV.Label = botV_name
+                    doc.getObject(stepV_name).addObject(doc.getObject(topV_name))
+                    doc.getObject(stepV_name).addObject(doc.getObject(botV_name))
                     try:
-                        doc.Step_Virtual_Models.License = ''
-                        doc.Step_Virtual_Models.LicenseURL = ''
+                        stepV.License = ''
+                        stepV.LicenseURL = ''
                     except:
                         pass
-                    FreeCADGui.activeView().setActiveObject('Step_Virtual_Models', doc.Step_Virtual_Models)
-                    doc.getObject("Board").addObject(doc.Step_Virtual_Models)
-                    doc.getObject("Board").Label=fname
+                    FreeCADGui.activeView().setActiveObject(stepV_name, stepV)
+                    doc.getObject(board_name).addObject(doc.getObject(stepV_name))
+                    doc.getObject(board_name).Label=fname
                     try:
-                        doc.getObject("Board").License=''
-                        doc.getObject("Board").LicenseURL=''
+                        doc.getObject(board_name).License=''
+                        doc.getObject(board_name).LicenseURL=''
                     except:
                         pass
                     ## end hierarchy
                 elif use_LinkGroups:
-                    doc.Tip = doc.addObject('App::LinkGroup','Step_Models')
-                    doc.Step_Models.Label = 'Step_Models'
-                    doc.Tip = doc.addObject('App::LinkGroup','Step_Virtual_Models')
-                    doc.Step_Virtual_Models.Label = 'Step_Virtual_Models'
-                    doc.addObject('App::LinkGroup','Top')
-                    doc.Top.Label = 'Top'
-                    doc.addObject('App::LinkGroup','Bot')
-                    doc.Bot.Label = 'Bot'
-                    doc.addObject('App::LinkGroup','TopV')
-                    doc.TopV.Label = 'TopV'
-                    doc.addObject('App::LinkGroup','BotV')
-                    doc.BotV.Label = 'BotV'
+                    doc.Tip = doc.addObject('App::LinkGroup',stepM_name)
+                    stepM=doc.ActiveObject
+                    stepM.Label = stepM_name
+                    doc.Tip = doc.addObject('App::LinkGroup',stepV_name)
+                    stepV=doc.ActiveObject
+                    stepV.Label = stepV_name
+                    doc.addObject('App::LinkGroup',top_name)
+                    topG=doc.ActiveObject
+                    topG.Label = top_name
+                    doc.addObject('App::LinkGroup',bot_name)
+                    botG=doc.ActiveObject
+                    botG.Label = bot_name
+                    doc.addObject('App::LinkGroup',topV_name)
+                    topVG=doc.ActiveObject
+                    topVG.Label = topV_name
+                    doc.addObject('App::LinkGroup',botV_name)
+                    botVG=doc.ActiveObject
+                    botVG.Label = botV_name
                     #doc.getObject('Top').adjustRelativeLinks(doc.getObject('Step_Models'))
-                    doc.getObject('Step_Models').ViewObject.dropObject(doc.getObject('Top'),None,'',[])
+                    doc.getObject(stepM_name).ViewObject.dropObject(doc.getObject(top_name),None,'',[])
                     #doc.getObject('TopV').adjustRelativeLinks(doc.getObject('Step_Virtual_Models'))
-                    doc.getObject('Step_Virtual_Models').ViewObject.dropObject(doc.getObject('TopV'),None,'',[])
+                    doc.getObject(stepV_name).ViewObject.dropObject(doc.getObject(topV_name),None,'',[])
                     #doc.getObject('Bot').adjustRelativeLinks(doc.getObject('Step_Models'))
-                    doc.getObject('Step_Models').ViewObject.dropObject(doc.getObject('Bot'),None,'',[])
+                    doc.getObject(stepM_name).ViewObject.dropObject(doc.getObject(bot_name),None,'',[])
                     #doc.getObject('BotV').adjustRelativeLinks(doc.getObject('Step_Virtual_Models'))
-                    doc.getObject('Step_Virtual_Models').ViewObject.dropObject(doc.getObject('BotV'),None,'',[])
+                    doc.getObject(stepV_name).ViewObject.dropObject(doc.getObject(botV_name),None,'',[])
                     #doc.getObject('Step_Models').adjustRelativeLinks(doc.getObject('Board'))
-                    doc.getObject('Board').ViewObject.dropObject(doc.getObject('Step_Models'),None,'',[])
+                    doc.getObject(board_name).ViewObject.dropObject(doc.getObject(stepM_name),None,'',[])
                     #doc.getObject('Step_Virtual_Models').adjustRelativeLinks(doc.getObject('Board'))
-                    doc.getObject('Board').ViewObject.dropObject(doc.getObject('Step_Virtual_Models'),None,'',[])
+                    doc.getObject(board_name).ViewObject.dropObject(doc.getObject(stepV_name),None,'',[])
                     FreeCADGui.Selection.clearSelection()
                 else:
                     #sayerr("creating flat groups")
-                    doc.addObject("App::DocumentObjectGroup", "Step_Models")
-                    doc.addObject("App::DocumentObjectGroup", "Step_Virtual_Models")
+                    doc.addObject("App::DocumentObjectGroup", stepM_name)
+                    doc.addObject("App::DocumentObjectGroup", stepV_name)
                 doc.recompute()
                 say_time()
                 if disable_VBO:
@@ -10991,393 +11039,6 @@ def createTHPlate(x,y,dx,dy,type):
     return THPModel
 
 ###
-def routineDrawFootPrint_old(content,name):  #for FC = 0.15
-    global rot_wrl, zfit
-    #for item in content:
-    #    say(item)
-
-    #                      x1, y1, x2, y2, width
-    say("FootPrint Loader "+name)
-    footprint_name=getModName(content)
-    rot_wrl=getwrlRot(content)
-    posiz, scale, rot = getwrlData(content)
-    #say(posiz);say(scale);say(rot);
-    error_mod=False
-    if scale!=['1', '1', '1']:
-        sayw('wrong scale!!! set scale to (1 1 1)\n')
-        error_mod=True
-    if posiz!=['0', '0', '0']:
-        sayw('wrong xyx position!!! set xyz to (0 0 0)\n')
-        error_mod=True
-    if rot[0]!='0' or rot[1]!='0':
-        sayw('wrong rotation!!! set rotate x and y to (0 0 z)\n')
-        error_mod=True
-    if error_mod:
-        msg="""<b>Error in '.kicad_mod' footprint</b><br>"""
-        msg+="<br>reset values to:<br>"
-        msg+="<b>(at (xyz 0 0 0))<br>"
-        msg+="(scale (xyz 1 1 1))<br>"
-        msg+="(rotate (xyz 0 0 z))<br>"
-        msg+="</b><br>Only z rotation is allowed!"
-        reply = QtGui.QMessageBox.information(None,"info", msg)
-        #stop
-    #say(footprint_name+" wrl rotation:"+str(rot_wrl))
-    if FreeCAD.activeDocument():
-        doc=FreeCAD.activeDocument()
-    else:
-        doc=FreeCAD.newDocument()
-    for obj in FreeCAD.ActiveDocument.Objects:
-        FreeCADGui.Selection.removeSelection(obj)
-
-    TopPadList=[]
-    BotPadList=[]
-    HoleList=[]
-    THPList=[]
-    for pad in getPadsList(content):
-        #
-        #   pads.append({'x': x, 'y': y, 'rot': rot, 'padType': pType, 'padShape': pShape, 'rx': drill_x, 'ry': drill_y, 'dx': dx, 'dy': dy, 'holeType': hType, 'xOF': xOF, 'yOF': yOF, 'layers': layers})
-        pType = pad['padType']
-        pShape = pad['padShape']
-        xs = pad['x'] #+ X1
-        ys = pad['y'] #+ Y1
-        dx = pad['dx']
-        dy = pad['dy']
-        hType = pad['holeType']
-        drill_x = pad['rx']
-        drill_y = pad['ry']
-        xOF = pad['xOF']
-        yOF = pad['yOF']
-        rot = pad['rot']
-        rx=drill_x
-        ry=drill_y
-        numberOfLayers = pad['layers'].split(' ')
-        #say(str(rx))
-        #say(numberOfLayers)
-        #if pType=="thru_hole":
-        #pad shape - circle/rec/oval/trapezoid
-        perc=0
-        if pShape=="circle" or pShape=="oval":
-            ##pShape="oval"
-            perc=100
-            # pad type - SMD/thru_hole/connect
-        #say(pType+"here")
-        if dx>rx and dy>ry:
-            #say(pType)
-            #say(str(dx)+"+"+str(rx)+" dx,rx")
-            #say(str(dy)+"+"+str(ry)+" dy,ry")
-            #say(str(xOF)+"+"+str(yOF)+" xOF,yOF")
-            #def addPadLong(x, y, dx, dy, perc, typ, z_off):
-            x1=xs+xOF
-            y1=ys-yOF #yoffset opposite
-            #say(str(x1)+"+"+str(y1)+" x1,y1")
-            top=False
-            bot=False
-            if 'F.Cu' in numberOfLayers:
-                top=True
-            if '*.Cu' in numberOfLayers:
-                top=True
-                bot=True
-            if 'B.Cu' in numberOfLayers:
-                bot=True
-            if top==True:
-                #mypad=addPadLong(x1, y1, dx, dy, perc, 0, 0)
-                mypad=createPad3(x1, y1, dx, dy, xs,ys,rx,ry,pShape,'top')
-                ##pad pos x,y; pad size x,y; drillcenter x,y; drill size x,y, layer
-                obj=mypad
-                if rot!=0:
-                    rotateObj(obj, [xs, ys, rot])
-                TopPadList.append(obj)
-            if bot==True:
-                #mypad=addPadLong(x1, y1, dx, dy, perc, 0, -1.6)
-                mypad=createPad3(x1, y1, dx, dy, xs,ys,rx,ry,pShape,'bot')
-                ##pad pos x,y; pad size x,y; drillcenter x,y; drill size x,y, layerobj=mypad
-                obj=mypad
-                if rot!=0:
-                    rotateObj(obj, [xs, ys, -rot+180])
-                BotPadList.append(obj)
-        if rx!=0:
-            #obj=createHole2(xs,ys,rx,ry,"oval") #need to be separated instructions
-            obj=createHole2(xs,ys,rx,ry,pShape) #need to be separated instructions
-            #say(HoleList)
-            if rot!=0:
-                rotateObj(obj, [xs, ys, rot])
-            HoleList.append(obj)
-            #obj2=createTHPlate(xs,ys,rx,ry,"oval")
-            obj2=createTHPlate(xs,ys,rx,ry,pShape)
-            THPList.append(obj2)
-            if rot!=0:
-                rotateObj(obj2, [xs, ys, rot])
-
-        ### cmt- #da gestire: pad type trapez
-
-    FCrtYd = []
-    # line
-    #getLine('F.SilkS', content, 'fp_line')
-    for i in getLine('F.CrtYd', content, 'fp_line'):
-        #say("here3")
-        x1 = i[0] #+ X1
-        y1 = i[1] #+ Y1
-        x2 = i[2] #+ X1
-        y2 = i[3] #+ Y1
-        obj = addLine_2(x1, y1, x2, y2, i[4])
-        #layerNew.changeSide(obj, X1, Y1, warst)
-        #layerNew.rotateObj(obj, [X1, Y1, ROT])
-        #layerNew.addObject(obj)
-        FCrtYd.append(addLine_2(x1, y1, x2, y2, i[4]))
-
-    # circle
-    for i in getCircle('F.CrtYd', content, 'fp_circle'):
-        #say(i)
-        xs = i[0] #+ X1
-        ys = i[1] #+ Y1
-        FCrtYd.append(addCircle_2(xs, ys, i[2], i[3]))
-
-    # arc
-    for i in getArc('F.CrtYd', content, 'fp_arc'):
-        x1 = i[0] #+ X1
-        y1 = i[1] #+ Y1
-        x2 = i[2] #+ X1
-        y2 = i[3] #+ Y1
-
-        arc1=addArc_3([x1, y1], [x2, y2], i[4], i[5])
-        #arc2=arc1.copy()
-        #arc2.Placement=arc1.Placement;
-        #FrontSilk.append(arc2)
-        ##shape=arc1.copy()
-        ##shape.Placement=arc1.Placement;
-        #say(i[4])
-        #say(arcMidPoint([x1, y1], [x2, y2],i[4]))
-        #[xm,ym]=arcMidPoint([x1, y1], [x2, y2],i[4])
-        xm=(x1+x2)/2
-        ym=(y1+y2)/2
-        ##shape.rotate((xm,ym,0),(0,0,1),180)
-        #shape.translate(((x1-x2)/2,(y1-y2)/2,0))
-        rotateObj(arc1, [xm, ym, 180])
-        ##arc1.Placement=shape.Placement
-
-        #arc1.Placement = FreeCAD.Placement(arc1.Placement.Base, FreeCAD.Rotation(0, 0, 180))
-        #FrontSilk.append(addArc_3([x1, y1], [x2, y2], i[4], i[5]))
-        FCrtYd.append(arc1)
-
-
-    if len(FCrtYd)>0:
-        FCrtYd_lines = Part.makeCompound(FCrtYd)
-        Part.show(FCrtYd_lines)
-        FreeCAD.ActiveDocument.ActiveObject.Label="F_CrtYd"
-        FCrtYd_name=FreeCAD.ActiveDocument.ActiveObject.Name
-        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (1.0000,1.0000,1.0000)
-        FreeCADGui.ActiveDocument.ActiveObject.Transparency = 60
-    #
-    FrontSilk = []
-    # line
-    #getLine('F.SilkS', content, 'fp_line')
-    for i in getLine('F.SilkS', content, 'fp_line'):
-        #say("here3")
-        x1 = i[0] #+ X1
-        y1 = i[1] #+ Y1
-        x2 = i[2] #+ X1
-        y2 = i[3] #+ Y1
-        obj = addLine_2(x1, y1, x2, y2, i[4])
-        #layerNew.changeSide(obj, X1, Y1, warst)
-        #layerNew.rotateObj(obj, [X1, Y1, ROT])
-        #layerNew.addObject(obj)
-        FrontSilk.append(addLine_2(x1, y1, x2, y2, i[4]))
-
-    # circle
-    for i in getCircle('F.SilkS', content, 'fp_circle'):
-        #say(i)
-        xs = i[0] #+ X1
-        ys = i[1] #+ Y1
-        FrontSilk.append(addCircle_2(xs, ys, i[2], i[3]))
-
-    # arc
-    for i in getArc('F.SilkS', content, 'fp_arc'):
-        x1 = i[0] #+ X1
-        y1 = i[1] #+ Y1
-        x2 = i[2] #+ X1
-        y2 = i[3] #+ Y1
-
-        arc1=addArc_3([x1, y1], [x2, y2], i[4], i[5])
-        #arc2=arc1.copy()
-        #arc2.Placement=arc1.Placement;
-        #FrontSilk.append(arc2)
-        ##shape=arc1.copy()
-        ##shape.Placement=arc1.Placement;
-        #say(i[4])
-        #say(arcMidPoint([x1, y1], [x2, y2],i[4]))
-        #[xm,ym]=arcMidPoint([x1, y1], [x2, y2],i[4])
-        xm=(x1+x2)/2
-        ym=(y1+y2)/2
-        ##shape.rotate((xm,ym,0),(0,0,1),180)
-        #shape.translate(((x1-x2)/2,(y1-y2)/2,0))
-        rotateObj(arc1, [xm, ym, 180])
-        ##arc1.Placement=shape.Placement
-
-        #arc1.Placement = FreeCAD.Placement(arc1.Placement.Base, FreeCAD.Rotation(0, 0, 180))
-        #FrontSilk.append(addArc_3([x1, y1], [x2, y2], i[4], i[5]))
-        FrontSilk.append(arc1)
-
-
-    if len(FrontSilk)>0:
-        FSilk_lines = Part.makeCompound(FrontSilk)
-        Part.show(FSilk_lines)
-        FreeCAD.ActiveDocument.ActiveObject.Label="FrontSilk"
-        FSilk_name=FreeCAD.ActiveDocument.ActiveObject.Name
-        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (1.0000,1.0000,1.0000)
-        FreeCADGui.ActiveDocument.ActiveObject.Transparency = 60
-    #
-    if len(TopPadList)>0:
-        TopPads = Part.makeCompound(TopPadList)
-        Part.show(TopPads)
-        FreeCAD.ActiveDocument.ActiveObject.Label="TopPads"
-        TopPads_name=FreeCAD.ActiveDocument.ActiveObject.Name
-        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.81,0.71,0.23) #(0.85,0.53,0.10)
-        FreeCADGui.ActiveDocument.ActiveObject.Transparency = 60
-    if len(BotPadList)>0:
-        BotPads = Part.makeCompound(BotPadList)
-        Part.show(BotPads)
-        FreeCAD.ActiveDocument.ActiveObject.Label="BotPads"
-        BotPads_name=FreeCAD.ActiveDocument.ActiveObject.Name
-        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.81,0.71,0.23) #(0.85,0.53,0.10)
-        FreeCADGui.ActiveDocument.ActiveObject.Transparency = 60
-
-    #
-    if len(HoleList)>0:
-        Holes = Part.makeCompound(HoleList)
-        Holes = Part.makeSolid(Holes)
-        Part.show(Holes)
-        #say(FreeCAD.ActiveDocument.ActiveObject.Name)
-        FreeCAD.ActiveDocument.ActiveObject.Label="Holes"
-        Holes_name=FreeCAD.ActiveDocument.ActiveObject.Name
-        #say(Holes_name)
-        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.67,1.00,0.50)
-        FreeCADGui.ActiveDocument.ActiveObject.Transparency = 70
-        THPs = Part.makeCompound(THPList)
-        THPs = Part.makeSolid(THPs)
-        Part.show(THPs)
-        #say(FreeCAD.ActiveDocument.ActiveObject.Name)
-        FreeCAD.ActiveDocument.ActiveObject.Label="PTHs"
-        THPs_name=FreeCAD.ActiveDocument.ActiveObject.Name
-        #say(Holes_name)
-        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.67,1.00,0.50)
-        FreeCADGui.ActiveDocument.ActiveObject.Transparency = 70
-
-    fp_group=FreeCAD.ActiveDocument.addObject("App::DocumentObjectGroup", footprint_name+'fp')
-    say(fp_group.Label)
-    list=[]
-    if len(FrontSilk)>0:
-        obj2 = FreeCAD.ActiveDocument.getObject(FSilk_name)
-        list.append(FSilk_name)
-        fp_group.addObject(obj2)
-
-
-    if len(TopPadList)>0:
-        obj3 = FreeCAD.ActiveDocument.getObject(TopPads_name)
-        fp_group.addObject(obj3)
-        list.append(TopPads_name)
-    if len(BotPadList)>0:
-        obj4 = FreeCAD.ActiveDocument.getObject(BotPads_name)
-        fp_group.addObject(obj4)
-        list.append(BotPads_name)
-
-    if len(HoleList)>0:
-        obj5 = FreeCAD.ActiveDocument.getObject(Holes_name)
-        fp_group.addObject(obj5)
-        list.append(Holes_name)
-        obj6 = FreeCAD.ActiveDocument.getObject(THPs_name)
-        fp_group.addObject(obj6)
-        list.append(THPs_name)
-
-    #objFp=Part.makeCompound(list)
-    #Part.show(objFp)
-    #say(list)
-    doc=FreeCAD.ActiveDocument
-    fp_objs=[]
-    list1=[]
-    for obj in fp_group.Group:
-        #if (obj.Label==fp_group.Label):
-        #FreeCADGui.Selection.addSelection(obj)
-        shape=obj.Shape.copy()
-        #shape_name=FreeCAD.ActiveDocument.ActiveObject.Name
-        list1.append(shape)
-        #Part.show(shape)
-        fp_objs.append(obj)
-        #say("added")
-        #
-    #fp_objs.copy
-    #objFp=Part.makeCompound(shape)
-    objFp=Part.makeCompound(list1)
-    Part.show(objFp)
-
-    obj = FreeCAD.ActiveDocument.ActiveObject
-    #say("h")
-    FreeCADGui.Selection.addSelection(obj)            # select the object
-    createSolidBBox2(obj)
-    bbox=FreeCAD.ActiveDocument.ActiveObject
-    FreeCAD.ActiveDocument.ActiveObject.Label ="Pcb_solid"
-    pcb_solid_name=FreeCAD.ActiveDocument.ActiveObject.Name
-    FreeCAD.ActiveDocument.removeObject(obj.Name)
-
-    #FreeCADGui.ActiveDocument.getObject(bbox.Name).BoundingBox = True
-    FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.664,0.664,0.496)
-    FreeCADGui.ActiveDocument.ActiveObject.Transparency = 80
-    #obj6 = FreeCAD.ActiveDocument.getObject(bbox.Name)
-    fp_group.addObject(bbox)
-
-    if len(HoleList)>0:
-        cut_base = FreeCAD.ActiveDocument.getObject(pcb_solid_name).Shape
-        for drill in HoleList:
-            #Holes = Part.makeCompound(HoleList)
-            hole = Part.makeSolid(drill)
-            #Part.show(hole)
-            #hole_name=FreeCAD.ActiveDocument.ActiveObject.Name
-            #cutter = FreeCAD.ActiveDocument.getObject(hole_name).Shape
-            cut_base=cut_base.cut(hole)
-        Part.show(cut_base) 
-        pcb_name=FreeCAD.ActiveDocument.ActiveObject.Name
-        FreeCAD.ActiveDocument.ActiveObject.Label ="Pcb"
-        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.664,0.664,0.496)
-        FreeCADGui.ActiveDocument.ActiveObject.Transparency = 80
-        #say("cutted")
-        pcb=FreeCAD.ActiveDocument.ActiveObject
-        fp_group.addObject(pcb)
-        #say("added")
-        #FreeCAD.activeDocument().recompute()
-        FreeCAD.ActiveDocument.removeObject(pcb_solid_name)
-        FreeCAD.ActiveDocument.removeObject(Holes_name)
-       
-    list2=[]
-    list2_objs=[]
-    for obj in fp_group.Group:
-        # do what you want to automate
-        #if (obj.Label==fp_group.Label):
-        #FreeCADGui.Selection.addSelection(obj)
-        shape=obj.Shape.copy()
-        #shape_name=FreeCAD.ActiveDocument.ActiveObject.Name
-        list2.append(shape)
-        #Part.show(shape)
-        list2_objs.append(obj)
-        #say("added")
-    #say(list2)
-    #say('here1')
-
-    #Draft.rotate(list2_objs,90.0,FreeCAD.Vector(0.0,0.0,0.0),axis=FreeCAD.Vector(-0.0,-0.0,1.0),copy=False)
-    #say('here1')
-
-    rot=[0,0,rot_wrl]
-    rotateObjs(list2_objs, rot)
-
-    for obj in fp_group.Group:
-        FreeCADGui.Selection.removeSelection(obj)
-    #say('here2')
-
-    if len(sys.argv)<4:
-        #sayerr("view fitting2")
-        if (zfit):
-            FreeCADGui.SendMsgToActiveView("ViewFit")
-    #pads_found=getPadsList(content)
-
-###
 def createGeomC(cx, cy, radius, layer, width):
     #createGeomC(Gcx, Gcy, GRad,'top', Gw)
     if layer == 'top':
@@ -12935,7 +12596,7 @@ def DrawPCB(mypcb,lyr=None):
     global start_time, use_AppPart, force_oldGroups, min_drill_size
     global addVirtual, load_sketch, off_x, off_y, aux_orig, grid_orig
     global running_time, conv_offs, use_Links, apply_edge_tolerance, simplifyComSolid
-    global zfit, use_LinkGroups
+    global zfit, use_LinkGroups, fname_sfx
     
     def simu_distance(p0, p1):
         return max (abs(p0[0] - p1[0]), abs(p0[1] - p1[1]))
@@ -13361,7 +13022,7 @@ def DrawPCB(mypcb,lyr=None):
     #if aux_orig ==1 or grid_orig ==1:
     if origin is not None: #adding LCS only on aux or grid origin
         try:
-            FreeCAD.ActiveDocument.addObject('PartDesign::CoordinateSystem','Local_CS')
+            FreeCAD.ActiveDocument.addObject('PartDesign::CoordinateSystem','Local_CS'+fname_sfx)
             LCS = FreeCAD.ActiveDocument.ActiveObject
             FreeCADGui.ActiveDocument.getObject(LCS.Name).Visibility = False
             FreeCADGui.Selection.clearSelection()
@@ -14219,12 +13880,15 @@ def DrawPCB(mypcb,lyr=None):
         get_time()
         say('cutting time ' +str(round(running_time-t1,3)))
         
-        doc_outline=doc.addObject("Part::Feature","Pcb")
+        pcb_name=u'Pcb'+fname_sfx
+        #doc_outline=doc.addObject("Part::Feature","Pcb")
+        doc_outline=doc.addObject("Part::Feature",pcb_name)
         doc_outline.Shape=cut_base 
         try:
             doc_outline.Shape=cut_base.extrude(Base.Vector(0,0,-totalHeight))
         except:
-            doc.removeObject("Pcb")
+            #doc.removeObject("Pcb")
+            doc.removeObject(pcb_name)
             say("*** omitting PCBs because there was a not closed loop in your edge lines ***")
             say('pcb edge not closed')
             QtGui.QApplication.restoreOverrideCursor()
@@ -14238,10 +13902,11 @@ def DrawPCB(mypcb,lyr=None):
                 FreeCADGui.SendMsgToActiveView("ViewFit")
             stop #maui                        
         #stop
-        try:
-            FreeCAD.activeDocument().removeObject('Shape') #removing base shape
-        except:
-            sayw('Shape already removed')
+        #tobechecked
+        #try:
+        #    FreeCAD.activeDocument().removeObject('Shape') #removing base shape
+        #except:
+        #    sayw('Shape already removed')
         #cut_base=cut_base.extrude(Base.Vector(0,0,-pcbThickness))
         #Part.show(cut_base)
         pcb_name=FreeCAD.ActiveDocument.ActiveObject.Name
@@ -14254,7 +13919,8 @@ def DrawPCB(mypcb,lyr=None):
                 _ = Part.Shell(faces)
                 _=Part.Solid(_)
                 FreeCAD.ActiveDocument.removeObject(pcb_name)
-                doc.addObject('Part::Feature','Pcb').Shape=_
+                #doc.addObject('Part::Feature','Pcb').Shape=_
+                doc.addObject('Part::Feature',pcb_name).Shape=_
                 pcb_name=FreeCAD.ActiveDocument.ActiveObject.Name
                 pcb_board=FreeCAD.ActiveDocument.ActiveObject
             except:
@@ -14271,45 +13937,52 @@ def DrawPCB(mypcb,lyr=None):
         #if remove_pcbPad==True:
         #    FreeCAD.activeDocument().removeObject(cut_base_name)
             #FreeCAD.activeDocument().removeObject(Holes_name)
+        boardG_name='Board_Geoms'+fname_sfx
+        board_name='Board'+fname_sfx
         if use_AppPart and not force_oldGroups and not use_LinkGroups:
             ## to evaluate to add App::Part hierarchy
             #sayw("creating hierarchy")
-            doc.Tip = doc.addObject('App::Part','Board_Geoms')
-            doc.Board_Geoms.Label = 'Board_Geoms'
+            doc.Tip = doc.addObject('App::Part',boardG_name)
+            boardG= doc.ActiveObject
+            boardG.Label = boardG_name
             try:
-                doc.Board_Geoms.License = ''
-                doc.Board_Geoms.LicenseURL = ''
+                boardG.License = ''
+                boardG.LicenseURL = ''
             except:
                 pass
-            grp=doc.Board_Geoms
-            doc.Tip = doc.addObject('App::Part','Board')
-            doc.Board.Label = 'Board'
+            grp=boardG
+            doc.Tip = doc.addObject('App::Part',board_name)
+            board= doc.ActiveObject
+            board.Label = board_name
             #FreeCAD.ActiveDocument.getObject("Step_Virtual_Models").addObject(impPart)
-            doc.getObject("Board").addObject(doc.Board_Geoms)
+            doc.getObject(board_name).addObject(doc.getObject(boardG_name))
             try:
-                doc.getObject("Board_Geoms").addObject(LCS)
+                doc.getObject(boardG_name).addObject(LCS)
             except:
                 pass
-            grp.addObject(pcb_board)
+            doc.getObject(boardG_name).addObject(doc.getObject(pcb_name))
             #FreeCADGui.activeView().setActiveObject('Board_Geoms', doc.Board_Geoms)
             ## end hierarchy
         elif use_LinkGroups:
-            doc.Tip = doc.addObject('App::LinkGroup','Board_Geoms')
-            doc.Board_Geoms.Label = 'Board_Geoms'
-            grp=doc.Board_Geoms
-            doc.Tip = doc.addObject('App::LinkGroup','Board')
-            doc.Board.Label = 'Board'
+            doc.Tip = doc.addObject('App::LinkGroup',boardG_name)
+            boardG= doc.ActiveObject
+            boardG.Label = boardG_name
+            grp=boardG_name
+            doc.Tip = doc.addObject('App::LinkGroup',board_name)
+            board= doc.ActiveObject
+            board.Label = board_name
             #FreeCAD.ActiveDocument.getObject("Step_Virtual_Models").addObject(impPart)
             # doc.getObject("Board").addObject(doc.Board_Geoms)
             #doc.getObject('Board_Geoms').adjustRelativeLinks(doc.getObject('Board'))
-            doc.getObject('Board').ViewObject.dropObject(doc.getObject('Board_Geoms'),None,'',[])
+            doc.getObject(board_name).ViewObject.dropObject(doc.getObject(boardG_name),None,'',[])
             FreeCADGui.Selection.clearSelection()
             #grp.addObject(pcb_board)
             #doc.getObject('Pcb').adjustRelativeLinks(doc.getObject('Board_Geoms'))
-            doc.getObject('Board_Geoms').ViewObject.dropObject(doc.getObject('Pcb'),None,'',[])
+            #doc.getObject('Board_Geoms').ViewObject.dropObject(doc.getObject('Pcb'),None,'',[])
+            doc.getObject(boardG_name).ViewObject.dropObject(doc.getObject(pcb_name),None,'',[])
             try:
                 #LCS.adjustRelativeLinks(doc.getObject('Board_Geoms'))
-                doc.getObject('Board_Geoms').ViewObject.dropObject(LCS,None,'',[])
+                doc.getObject(boardG_name).ViewObject.dropObject(LCS,None,'',[])
                 FreeCADGui.Selection.clearSelection()
                 FreeCADGui.Selection.addSelection(LCS)
                 FreeCADGui.runCommand('Std_ToggleVisibility',0)
@@ -14321,7 +13994,7 @@ def DrawPCB(mypcb,lyr=None):
             ## end hierarchy        
         else:
             #sayw("creating flat groups")
-            grp=doc.addObject("App::DocumentObjectGroup", "Board_Geoms")
+            grp=doc.addObject("App::DocumentObjectGroup", boardG_name)
             grp.addObject(pcb_board)
         #pcb_sk=FreeCAD.ActiveDocument.PCB_Sketch
         #grp.addObject(pcb_sk)
@@ -16055,6 +15728,7 @@ def PushPCB():
                     if 'Edge' not in SketchLayer:
                         edge_width=float(ui.lineEdit_width.text().replace(',','.'))
                     print(SketchLayer)
+                    skname=sel[0].Name
                 #else:  #canel
                 #    print('Cancel')
                 #    stop
@@ -16073,7 +15747,7 @@ def PushPCB():
                             pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
                             pg.SetString("last_pcb_path",make_string(last_pcb_path))
                             start_time=current_milli_time()
-                            export_pcb(name,SketchLayer)
+                            export_pcb(name,SketchLayer,skname)
                         else:
                             msg="""Save to <b>an EXISTING KiCad pcb file</b> to update your Edge!"""
                             say_warning(msg)
@@ -19982,7 +19656,7 @@ def getAuxOrigin(dt):
     else:
         return None
 ##
-def export_pcb(fname=None,sklayer=None):
+def export_pcb(fname=None,sklayer=None,skname=None):
     global last_fp_path, test_flag, start_time
     global configParser, configFilePath, start_time
     global ignore_utf8, ignore_utf8_incfg, disable_PoM_Observer
@@ -20162,8 +19836,10 @@ def export_pcb(fname=None,sklayer=None):
                     off_x=0;off_y=0
                 if ksu_found==True or testing==True:
                     if pcb_found==True:
-                        bbpx=-FreeCAD.ActiveDocument.getObject('Pcb').Placement.Base[0]+FreeCAD.ActiveDocument.getObject(skt_name).Placement.Base[0]
-                        bbpy=FreeCAD.ActiveDocument.getObject('Pcb').Placement.Base[1]-FreeCAD.ActiveDocument.getObject(skt_name).Placement.Base[1]
+                        #bbpx=-FreeCAD.ActiveDocument.getObject('Pcb').Placement.Base[0]+FreeCAD.ActiveDocument.getObject(skt_name).Placement.Base[0]
+                        #bbpy=FreeCAD.ActiveDocument.getObject('Pcb').Placement.Base[1]-FreeCAD.ActiveDocument.getObject(skt_name).Placement.Base[1]
+                        bbpx=-FreeCAD.ActiveDocument.getObject(skname).Placement.Base[0]+FreeCAD.ActiveDocument.getObject(skt_name).Placement.Base[0]
+                        bbpy=FreeCAD.ActiveDocument.getObject(skname).Placement.Base[1]-FreeCAD.ActiveDocument.getObject(skt_name).Placement.Base[1]
                         offset=[bbpx,bbpy]
                     else:
                         off_x=0;off_y=0
