@@ -487,7 +487,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.3.0.0.x"
+___ver___ = "9.3.0.2.x"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -5043,7 +5043,7 @@ def Export2MCAD(blacklisted_model_elements):
     global height_minimum, volume_minimum, idf_to_origin, ksu_config_fname
     global board_base_point_x, board_base_point_y, real_board_pos_x, real_board_pos_y
     global animate_result, pcb_path, addVirtual, use_AppPart, force_oldGroups, stp_exp_mode, links_imp_mode
-    global use_Links
+    global use_Links, fname_sfx
     say('exporting to MCAD')
     ## exporting
     __objs__=[]
@@ -5170,13 +5170,13 @@ def Export2MCAD(blacklisted_model_elements):
         __obtoexp__=[]
         # FreeCADGui.Selection.removeSelection(obj)
         # FreeCADGui.Selection.addSelection(doc.getObject("Board"))
-        __obtoexp__.append(doc.getObject("Board"))
+        __obtoexp__.append(doc.getObject("Board"+fname_sfx))
         ImportGui.export(__obtoexp__,fpath)
         del __obtoexp__
     elif (stp_exp_mode == 'onelevel') or (stp_exp_mode == 'hierarchy' and fcb):
         sayw('exporting ONE level hierarchy')
         FreeCADGui.Selection.removeSelection(obj)
-        FreeCADGui.Selection.addSelection(doc.getObject("Board"))
+        FreeCADGui.Selection.addSelection(doc.getObject("Board"+ fname_sfx))
         try:
             import kicadStepUpCMD
         except:
@@ -5419,16 +5419,12 @@ def create_compound(count,modelnm):  #create compound function when a multipart 
             mycompound=FreeCAD.activeDocument().ActiveObject
             FreeCAD.ActiveDocument.recompute()
             removesubtree([objs_to_remove[0]])
-        elif 'Compound' in objs_to_remove[0].TypeId: #new release will load already a compound
-            for Obj in objs_to_remove:
-                if 'Compound' in Obj.TypeId:
-                    nbr_cmpd+=1
-            if nbr_cmpd == 1:
-                mycompound=FreeCAD.activeDocument().getObject(objs_to_remove[0].Name)
-                #FreeCADGui.Selection.addSelection(mycompound)
-                sayw('single Compound part')
-        #print sel[0].TypeId
-        #stop
+        elif 'LinkView' in dir(FreeCADGui):
+            if 'App::Part' in objs_to_remove[lotr-1].TypeId:  #from FC 0.17-12090 multipart STEPs are loded as App::Part and have a list inverted
+                simple_copy_link(objs_to_remove[lotr-1])
+                mycompound=FreeCAD.activeDocument().ActiveObject
+                FreeCAD.ActiveDocument.recompute()
+                removesubtree([objs_to_remove[lotr-1]])
         elif 'App::Part' in objs_to_remove[0].TypeId:  #from FC 0.17-10647 multipart STEPs are loded as App::Part
             sc_list=[]
             recurse_node(objs_to_remove[0],objs_to_remove[0].Placement, sc_list)
@@ -5451,16 +5447,19 @@ def create_compound(count,modelnm):  #create compound function when a multipart 
             #FreeCADGui.Selection.addSelection(FreeCAD.activeDocument().ActiveObject)
             FreeCAD.ActiveDocument.recompute()
             #simple_copy(FreeCAD.activeDocument().ActiveObject)
+        
+        
         elif 'App::Part' in objs_to_remove[lotr-1].TypeId:  #from FC 0.17-12090 multipart STEPs are loded as App::Part and have a list inverted
             sc_list=[]
             recurse_node(objs_to_remove[lotr-1],objs_to_remove[lotr-1].Placement, sc_list)
         #else:  #from FC 0.17-10647 multipart STEPs are loded as App::Part
             sc_list_compound=[]
             for o in sc_list:
-                if 'Part' in o.TypeId and 'App::Part' not in o.TypeId:
+                if 'Part' in o.TypeId and 'App::Part' not in o.TypeId and 'Compound' not in o.TypeId:
                     sc_list_compound.append(o)
             FreeCAD.ActiveDocument.recompute()
             #sayw(sc_list_compound)
+            #say('Part container found')
             #stop
             FreeCAD.activeDocument().addObject("Part::Compound",objs_to_remove[lotr-1].Label+"_mp")
             FreeCAD.activeDocument().ActiveObject.Links = sc_list_compound #[FreeCAD.activeDocument().Part__Feature,FreeCAD.activeDocument().Shape,]
@@ -5475,6 +5474,16 @@ def create_compound(count,modelnm):  #create compound function when a multipart 
             #FreeCADGui.Selection.addSelection(FreeCAD.activeDocument().ActiveObject)
             FreeCAD.ActiveDocument.recompute()
             #simple_copy(FreeCAD.activeDocument().ActiveObject)
+        elif 'Compound' in objs_to_remove[0].TypeId: #new release will load already a compound
+            for Obj in objs_to_remove:
+                if 'Compound' in Obj.TypeId:
+                    nbr_cmpd+=1
+            if nbr_cmpd == 1:
+                mycompound=FreeCAD.activeDocument().getObject(objs_to_remove[0].Name)
+                #FreeCADGui.Selection.addSelection(mycompound)
+                sayw('single Compound part')
+        #print sel[0].TypeId
+        #stop
         else:    
         #if nbr_cmpd > 1 or nbr_cmpd == 0:
         #if 'App::Part' not in sel[0].TypeId:
