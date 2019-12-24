@@ -487,7 +487,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.3.0.2.x"
+___ver___ = "9.3.0.3.x"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -8313,7 +8313,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                     except:
                         pass
                     #FreeCADGui.activeView().setActiveObject('Step_Models', doc.Step_Models)
-                    doc.getObject(boardG_name).addObject(doc.getObject(stepM_name))
+                    doc.getObject(board_name).addObject(doc.getObject(stepM_name))
                     doc.Tip = doc.addObject('App::Part',stepV_name)
                     stepV = doc.ActiveObject
                     stepV.Label = stepV_name
