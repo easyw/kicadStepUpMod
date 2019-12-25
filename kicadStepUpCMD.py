@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-__ksuCMD_version__='1.8.2'
+__ksuCMD_version__='1.8.3'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -2016,13 +2016,46 @@ class ksuToolsSimpleCopy:
                     cp_label=mk_str(obj_tocopy.Label)+u'_sc'
                     if hasattr(FreeCAD.ActiveDocument.getObject(obj_tocopy.Name), "Shape"):
                         FreeCAD.ActiveDocument.addObject('Part::Feature',cp_label).Shape=FreeCAD.ActiveDocument.getObject(obj_tocopy.Name).Shape
-                        FreeCAD.ActiveDocument.ActiveObject.Label=cp_label
-                        if hasattr(FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name),'ShapeColor'):
+                        newObj = FreeCAD.ActiveDocument.ActiveObject
+                        newObjV = FreeCADGui.ActiveDocument.ActiveObject
+                        newObj.Label=cp_label
+                        #FreeCAD.Console.PrintMessage(obj_tocopy.Label);FreeCAD.Console.PrintMessage('\n')
+                        #FreeCAD.Console.PrintMessage(obj_tocopy.TypeId)
+                        #FreeCAD.Console.PrintMessage(obj_tocopy.OutList)
+                        #FreeCAD.Console.PrintMessage(obj_tocopy.TypeId);FreeCAD.Console.PrintMessage('\n')
+                        if obj_tocopy.TypeId == 'App::Part':
+                            for subobj in obj_tocopy.OutList:
+                                #FreeCAD.Console.PrintMessage(subobj.Label);FreeCAD.Console.PrintMessage('\n')
+                                if hasattr(FreeCADGui.ActiveDocument.getObject(subobj.Name),'ShapeColor'):# and ('Origin' not in FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).TypeId):
+                                    # if 'LinkView' in dir(FreeCADGui):
+                                    #     FreeCAD.ActiveDocument.ActiveObject.ViewObject.ShapeColor=getattr(FreeCAD.ActiveDocument.getObject(obj_tocopy.Name).getLinkedObject(True).ViewObject,'ShapeColor',FreeCAD.ActiveDocument.getObject(obj_tocopy.Name).ViewObject.ShapeColor)
+                                    #     FreeCAD.ActiveDocument.ActiveObject.ViewObject.LineColor=getattr(FreeCAD.ActiveDocument.getObject(obj_tocopy.Name).getLinkedObject(True).ViewObject,'LineColor',FreeCAD.ActiveDocument.getObject(obj_tocopy.Name).ViewObject.LineColor)
+                                    #else:
+                                    newObjV.ShapeColor=FreeCADGui.ActiveDocument.getObject(subobj.Name).ShapeColor
+                                    #FreeCAD.Console.PrintMessage(subobj.Label);FreeCAD.Console.PrintMessage(' ShapeColor ' +str(FreeCADGui.ActiveDocument.getObject(subobj.Name).ShapeColor)+ '\n')
+                                    if hasattr(FreeCADGui.ActiveDocument.getObject(subobj.Name),'LineColor'):
+                                        #FreeCAD.Console.PrintMessage(subobj.Label);FreeCAD.Console.PrintMessage(' LineColor ' +str(FreeCADGui.ActiveDocument.getObject(subobj.Name).LineColor)+ '\n')
+                                        newObjV.LineColor=FreeCADGui.ActiveDocument.getObject(subobj.Name).LineColor
+                                        newObjV.PointColor=FreeCADGui.ActiveDocument.getObject(subobj.Name).PointColor
+                                    if hasattr(FreeCADGui.ActiveDocument.getObject(subobj.Name),'DiffuseColor'):
+                                        #FreeCAD.Console.PrintMessage(subobj.Label);FreeCAD.Console.PrintMessage(' DiffuseColor ' +str(FreeCADGui.ActiveDocument.getObject(subobj.Name).DiffuseColor)+ '\n')
+                                        newObjV.DiffuseColor=FreeCADGui.ActiveDocument.getObject(subobj.Name).DiffuseColor
+                                    if hasattr(FreeCADGui.ActiveDocument.getObject(subobj.Name),'Transparency'):
+                                        #FreeCAD.Console.PrintMessage(subobj.Label);FreeCAD.Console.PrintMessage(' Transparency ' +str(FreeCADGui.ActiveDocument.getObject(subobj.Name).Transparency)+ '\n')
+                                        newObjV.Transparency=FreeCADGui.ActiveDocument.getObject(subobj.Name).Transparency
+                        elif hasattr(FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name),'ShapeColor'):# and ('Origin' not in FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).TypeId):
+                            # if 'LinkView' in dir(FreeCADGui):
+                            #     FreeCAD.ActiveDocument.ActiveObject.ViewObject.ShapeColor=getattr(FreeCAD.ActiveDocument.getObject(obj_tocopy.Name).getLinkedObject(True).ViewObject,'ShapeColor',FreeCAD.ActiveDocument.getObject(obj_tocopy.Name).ViewObject.ShapeColor)
+                            #     FreeCAD.ActiveDocument.ActiveObject.ViewObject.LineColor=getattr(FreeCAD.ActiveDocument.getObject(obj_tocopy.Name).getLinkedObject(True).ViewObject,'LineColor',FreeCAD.ActiveDocument.getObject(obj_tocopy.Name).ViewObject.LineColor)
+                            #else:
                             FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).ShapeColor
-                            FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).LineColor
-                            FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).PointColor
-                            FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).DiffuseColor
-                            FreeCADGui.ActiveDocument.ActiveObject.Transparency=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).Transparency
+                            if hasattr(FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name),'LineColor'):
+                                FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).LineColor
+                                FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).PointColor
+                            if hasattr(FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name),'DiffuseColor'):
+                                FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).DiffuseColor
+                            if hasattr(FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name),'Transparency'):
+                                FreeCADGui.ActiveDocument.ActiveObject.Transparency=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).Transparency
                         else:
                             FreeCAD.Console.PrintWarning('missing copy of color attributes')
                         FreeCAD.ActiveDocument.recompute()

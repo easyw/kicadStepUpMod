@@ -487,7 +487,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.3.0.3.x"
+___ver___ = "9.3.0.4.x"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -2661,10 +2661,26 @@ def simple_copy_link(obj): #simple copy with incremental placement
     __shape = Part.getShape(obj,'',needSubElement=False,refine=False)
     FreeCAD.ActiveDocument.addObject('Part::Feature','LinkGroup').Shape=__shape
     nobj = FreeCAD.ActiveDocument.ActiveObject
+    nobjV = FreeCADGui.ActiveDocument.ActiveObject
     nobj.Label=obj.Label
-    nobj.ViewObject.ShapeColor=getattr(obj.getLinkedObject(True).ViewObject,'ShapeColor',nobj.ViewObject.ShapeColor)
-    nobj.ViewObject.LineColor= getattr(obj.getLinkedObject(True).ViewObject,'LineColor' ,nobj.ViewObject.LineColor)
-    nobj.ViewObject.PointColor=getattr(obj.getLinkedObject(True).ViewObject,'PointColor',nobj.ViewObject.PointColor)
+    if obj.TypeId == 'App::Part':
+        for subobj in obj.OutList:
+            if hasattr(FreeCADGui.ActiveDocument.getObject(subobj.Name),'ShapeColor'):
+                nobjV.ShapeColor=FreeCADGui.ActiveDocument.getObject(subobj.Name).ShapeColor
+                if hasattr(FreeCADGui.ActiveDocument.getObject(subobj.Name),'LineColor'):
+                    #FreeCAD.Console.PrintMessage(subobj.Label);FreeCAD.Console.PrintMessage(' LineColor ' +str(FreeCADGui.ActiveDocument.getObject(subobj.Name).LineColor)+ '\n')
+                    nobjV.LineColor=FreeCADGui.ActiveDocument.getObject(subobj.Name).LineColor
+                    nobjV.PointColor=FreeCADGui.ActiveDocument.getObject(subobj.Name).PointColor
+                if hasattr(FreeCADGui.ActiveDocument.getObject(subobj.Name),'DiffuseColor'):
+                    #FreeCAD.Console.PrintMessage(subobj.Label);FreeCAD.Console.PrintMessage(' DiffuseColor ' +str(FreeCADGui.ActiveDocument.getObject(subobj.Name).DiffuseColor)+ '\n')
+                    nobjV.DiffuseColor=FreeCADGui.ActiveDocument.getObject(subobj.Name).DiffuseColor
+                if hasattr(FreeCADGui.ActiveDocument.getObject(subobj.Name),'Transparency'):
+                    #FreeCAD.Console.PrintMessage(subobj.Label);FreeCAD.Console.PrintMessage(' Transparency ' +str(FreeCADGui.ActiveDocument.getObject(subobj.Name).Transparency)+ '\n')
+                    nobjV.Transparency=FreeCADGui.ActiveDocument.getObject(subobj.Name).Transparency
+    else:
+        nobj.ViewObject.ShapeColor=getattr(obj.getLinkedObject(True).ViewObject,'ShapeColor',nobj.ViewObject.ShapeColor)
+        nobj.ViewObject.LineColor= getattr(obj.getLinkedObject(True).ViewObject,'LineColor' ,nobj.ViewObject.LineColor)
+        nobj.ViewObject.PointColor=getattr(obj.getLinkedObject(True).ViewObject,'PointColor',nobj.ViewObject.PointColor)
     FreeCAD.ActiveDocument.recompute()
 
 def simple_cpy_plc(obj,proot): #simple copy with incremental placement
