@@ -487,7 +487,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.3.0.4.x"
+___ver___ = "9.4.0.1.x"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -3928,12 +3928,16 @@ def cfg_read_all():
     else:
         stp_exp_mode = 'onelevel'
     m3D_loading_mode = prefs.GetInt('3D_loading_mode')
-    if m3D_loading_mode == 0:
-        allow_compound = 'True'
+    if m3D_loading_mode == 0: #old Standard
+        #allow_compound = 'True' #old Standard
+        allow_compound = 'Hierarchy' #full hierarchy allowed
     elif m3D_loading_mode == 1:
         allow_compound = 'Simplified'
-    else:
+    elif m3D_loading_mode == 2:
         allow_compound = 'False' #NotAllowedMultiParts
+    else:
+        #allow_compound = 'Hierarchy' #full hierarchy allowed
+        allow_compound = 'True' #old Standard
     sketch_constraints = prefs.GetInt('sketch_constraints')
     if sketch_constraints == 1:
         addConstraints='all'
@@ -3991,654 +3995,6 @@ def cfg_read_all():
     #stop
     
 ##
-def cfg_read_all_old():
-    global ksu_config_fname, default_ksu_config_ini, applymaterials
-    ##ksu pre-set
-    global models3D_prefix, models3D_prefix2, blacklisted_model_elements, col, colr, colg, colb
-    global bbox, volume_minimum, height_minimum, idf_to_origin, aux_orig
-    global base_orig, base_point, bbox_all, bbox_list, whitelisted_model_elements
-    global fusion, addVirtual, blacklisted_models, exportFusing, min_drill_size
-    global last_fp_path, last_pcb_path, plcmnt, xp, yp, exportFusing, export_board_2step
-    global enable_materials, docking_mode, mat_section, dock_section, compound_section, turntable_section
-    global font_section, ini_vars, num_min_lines, animate_result, allow_compound, font_size, grid_orig
-    global constraints_section, addConstraints, exporting_mode_section, stp_exp_mode, links_importing_mode_section, links_imp_mode
-##
-    regenerate_ini=False
-    if os.path.isfile(ksu_config_fname):
-        say("ksu file \'ksu-config.ini\' exists")
-        ini_content=[];cfg_content=[]
-        #Kicad_Board_elaborated = open(filename, "r").read()[0:]
-        #txtFile = __builtin__.open(ksu_config_fname,"r")
-        #with io.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-        with codecs.open(ksu_config_fname,mode='r', encoding='utf-8') as cfg_file:
-            #text = f.read()
-            cfg_content = cfg_file.readlines() #
-            cfg_file.close()
-        if len(cfg_content) >= num_min_lines:
-            for line in cfg_content:
-                if re.match(r'^\s*$', line): #empty lines
-                    say('line empty')
-                else:
-                    #ini_content.append(make_unicode(line))
-                    ini_content.append(line)
-            #ini_content.append(" ")
-                
-            if any("Materials" in s for s in cfg_content):
-                say ("materials section present")
-            else:
-            #if "Materials" not in content:
-                enable_materials = 1
-                applymaterials = 1
-                say ("missing material section, adding default one")
-                #with __builtin__.open(configFilePath, 'a') as mycfg:
-                #with io.open(ksu_config_fname,'a', encoding='utf-8') as mycfg:
-                with codecs.open(ksu_config_fname,'a', encoding='utf-8') as mycfg:
-                #with __builtin__.open(configFilePath, 'ab') as mycfg:
-                    #mycfg.write(make_unicode(mat_section))
-                    mycfg.write(mat_section)
-                mycfg.close()
-                ini_content=[];cfg_content=[]
-                #with io.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                with codecs.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                #text = f.read()
-                    cfg_content = cfg_file.readlines() #
-                #ini_content = cfg_content
-                for line in cfg_content:
-                    if re.match(r'^\s*$', line): #empty lines
-                        say('line empty')
-                    else:
-                        #ini_content.append(make_unicode(line))
-                        ini_content.append(line)
-            if not any('[turntable]' in s for s in cfg_content):
-            #if 'docking' not in cfg_content:
-                say ("missing turntable section, adding default one")
-                #cfg_content.append(make_unicode(turntable_section)) 
-                cfg_content.append(turntable_section)
-                out_file=ksu_config_fname
-                #with io.open(out_file,'a', encoding='utf-8') as cfg_file_out:
-                with codecs.open(out_file,'a', encoding='utf-8') as cfg_file_out:
-                    #cfg_file_out.write(make_unicode(turntable_section))
-                    cfg_file_out.write(turntable_section)
-                ini_content=[];cfg_content=[]
-                #with io.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                with codecs.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                #text = f.read()
-                    cfg_content = cfg_file.readlines() #
-                #ini_content = cfg_content
-                for line in cfg_content:
-                    if re.match(r'^\s*$', line): #empty lines
-                        say('line empty')
-                    else:
-                        #ini_content.append(make_unicode(line))
-                        ini_content.append(line)
-            else:
-                say ("turntable section present")
-            if not any('[compound]' in s for s in cfg_content):
-            #if 'docking' not in cfg_content:
-                say ("missing compound section, adding default one")
-                #cfg_content.append(make_unicode(compound_section))
-                cfg_content.append(compound_section)
-                out_file=ksu_config_fname
-                #with io.open(out_file,'a', encoding='utf-8') as cfg_file_out:
-                with codecs.open(out_file,'a', encoding='utf-8') as cfg_file_out:
-                    #cfg_file_out.write(make_unicode(compound_section))
-                    cfg_file_out.write(compound_section)
-                ini_content=[];cfg_content=[]
-                #with io.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                with codecs.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                #text = f.read()
-                    cfg_content = cfg_file.readlines() #
-                #ini_content = cfg_content
-                for line in cfg_content:
-                    if re.match(r'^\s*$', line): #empty lines
-                        say('line empty')
-                    else:
-                        #ini_content.append(make_unicode(line))
-                        ini_content.append(line)
-            elif not any(';compound = simplified' in s for s in cfg_content):
-            #if 'docking' not in cfg_content:
-                sayerr ("missing compound section, adding default one")
-                #cfg_content.append(make_unicode(compound_section))
-                cfg_content_new=[]
-                for st in cfg_content:
-                    cfg_content_new.append(st)
-                    if ('[compound]') in st:
-                        cfg_content_new.append(';compound = simplified\n')
-                out_file=ksu_config_fname
-                #with io.open(out_file,'a', encoding='utf-8') as cfg_file_out:
-                #with io.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                with codecs.open(ksu_config_fname,'w', encoding='utf-8') as cfg_file_out:
-                    #cfg_file_out.write( codecs.BOM_UTF8 )
-                    if ';utf-8 coded' not in cfg_content_new[0]:
-                        cfg_file_out.write(u'\ufeff;utf-8 coded: do not edit this line\n')
-                    for line in cfg_content_new:
-                        #cfg_file_out.write(make_unicode(line))
-                        cfg_file_out.write(line)
-                    #for lines in cfg_out:
-                    #    cfg_file_out.write(lines)
-                with codecs.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                #text = f.read()
-                    cfg_content = cfg_file.readlines() #
-                #ini_content = cfg_content
-                for line in cfg_content:
-                    if re.match(r'^\s*$', line): #empty lines
-                        say('line empty')
-                    else:
-                        #ini_content.append(make_unicode(line))
-                        ini_content.append(line)
-            else:
-                say ("compound section present")
-            if not any('[docking]' in s for s in cfg_content):
-            #if 'docking' not in cfg_content:
-                say ("missing docking section, adding default one")
-                #cfg_content.append(u'[docking]\ndkmode = float\n;;docking mode\n;dkmode = left\n;dkmode = right\n;dkmode = float\n')
-                cfg_content.append(dock_section) 
-                out_file=ksu_config_fname
-                #with io.open(out_file,'a', encoding='utf-8') as cfg_file_out:
-                with codecs.open(out_file,'a', encoding='utf-8') as cfg_file_out:
-                    #cfg_file_out.write(make_unicode(dock_section))
-                    cfg_file_out.write(dock_section)
-                ini_content=[];cfg_content=[]
-                #with io.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                with codecs.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                #text = f.read()
-                    cfg_content = cfg_file.readlines() #
-                #ini_content = cfg_content
-                for line in cfg_content:
-                    if re.match(r'^\s*$', line): #empty lines
-                        say('line empty')
-                    else:
-                        #ini_content.append(make_unicode(line))
-                        ini_content.append(line)
-            else:
-                say ("docking section present")
-            if not any('[sketch_constraints]' in s for s in cfg_content):
-            #if 'docking' not in cfg_content:
-                sayerr ("missing Constraints section, adding default one")
-                cfg_content.append(constraints_section) 
-                out_file=ksu_config_fname
-                #with io.open(out_file,'a', encoding='utf-8') as cfg_file_out:
-                with codecs.open(out_file,'a', encoding='utf-8') as cfg_file_out:
-                    #cfg_file_out.write(make_unicode(constraints_section))
-                    cfg_file_out.write(constraints_section)
-                ini_content=[];cfg_content=[]
-                #with io.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                with codecs.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                #text = f.read()
-                    cfg_content = cfg_file.readlines() #
-                #ini_content = cfg_content
-                for line in cfg_content:
-                    if re.match(r'^\s*$', line): #empty lines
-                        say('line empty')
-                    else:
-                        #ini_content.append(make_unicode(line))
-                        ini_content.append(line)
-            else:
-                say ("constraints section present")
-            if not any('[step_exporting_mode]' in s for s in cfg_content):
-            #if 'docking' not in cfg_content:
-                sayerr ("missing Exporting Mode section, adding default one")
-                cfg_content.append(exporting_mode_section) 
-                out_file=ksu_config_fname
-                #with io.open(out_file,'a', encoding='utf-8') as cfg_file_out:
-                with codecs.open(out_file,'a', encoding='utf-8') as cfg_file_out:
-                    #cfg_file_out.write(make_unicode(constraints_section))
-                    cfg_file_out.write(exporting_mode_section)
-                ini_content=[];cfg_content=[]
-                #with io.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                with codecs.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                #text = f.read()
-                    cfg_content = cfg_file.readlines() #
-                #ini_content = cfg_content
-                for line in cfg_content:
-                    if re.match(r'^\s*$', line): #empty lines
-                        say('line empty')
-                    else:
-                        #ini_content.append(make_unicode(line))
-                        ini_content.append(line)
-            else:
-                say ("exporting mode section present")
-            if not any('[links_importing_mode]' in s for s in cfg_content):
-            #if 'docking' not in cfg_content:
-                sayerr ("missing Importing Mode section, adding default one")
-                cfg_content.append(links_importing_mode_section) 
-                out_file=ksu_config_fname
-                #with io.open(out_file,'a', encoding='utf-8') as cfg_file_out:
-                with codecs.open(out_file,'a', encoding='utf-8') as cfg_file_out:
-                    #cfg_file_out.write(make_unicode(constraints_section))
-                    cfg_file_out.write(links_importing_mode_section)
-                ini_content=[];cfg_content=[]
-                #with io.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                with codecs.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                #text = f.read()
-                    cfg_content = cfg_file.readlines() #
-                #ini_content = cfg_content
-                for line in cfg_content:
-                    if re.match(r'^\s*$', line): #empty lines
-                        say('line empty')
-                    else:
-                        #ini_content.append(make_unicode(line))
-                        ini_content.append(line)
-            else:
-                say ("importing mode section present")
-            if not any('[fonts]' in s for s in cfg_content):
-            #if 'docking' not in cfg_content:
-                say ("missing fonts section, adding default one")
-                #cfg_content.append(u'[docking]\ndkmode = float\n;;docking mode\n;dkmode = left\n;dkmode = right\n;dkmode = float\n')
-                cfg_content.append(font_section) 
-                out_file=ksu_config_fname
-                #with io.open(out_file,'a', encoding='utf-8') as cfg_file_out:
-                with codecs.open(out_file,'a', encoding='utf-8') as cfg_file_out:
-                    #cfg_file_out.write(make_unicode(font_section))
-                    cfg_file_out.write(font_section)
-                ini_content=[];cfg_content=[]
-                #with io.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                with codecs.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                #text = f.read()
-                    cfg_content = cfg_file.readlines() #
-                #ini_content = cfg_content
-                for line in cfg_content:
-                    if re.match(r'^\s*$', line): #empty lines
-                        say('line empty')
-                    else:
-                        #ini_content.append(make_unicode(line))
-                        ini_content.append(line)
-            else:
-                say ("font section present")
-            if not any('usegridorigin' in s for s in cfg_content):
-            #if 'docking' not in cfg_content:
-                sayerr ("missing useGridOrigin, adding default one")
-                #cfg_content.append(make_unicode(compound_section))
-                cfg_content_new=[]
-                for st in cfg_content:
-                    cfg_content_new.append(st)
-                    if ('[Placement]') in st:
-                        cfg_content_new.append(';placement = usegridorigin\n')
-                out_file=ksu_config_fname
-                #with io.open(out_file,'a', encoding='utf-8') as cfg_file_out:
-                #with io.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                with codecs.open(ksu_config_fname,'w', encoding='utf-8') as cfg_file_out:
-                    #cfg_file_out.write( codecs.BOM_UTF8 )
-                    if ';utf-8 coded' not in cfg_content_new[0]:
-                        cfg_file_out.write(u'\ufeff;utf-8 coded: do not edit this line\n')
-                    for line in cfg_content_new:
-                        #cfg_file_out.write(make_unicode(line))
-                        cfg_file_out.write(line)
-                    #for lines in cfg_out:
-                    #    cfg_file_out.write(lines)
-                with codecs.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                #text = f.read()
-                    cfg_content = cfg_file.readlines() #
-                #ini_content = cfg_content
-                for line in cfg_content:
-                    if re.match(r'^\s*$', line): #empty lines
-                        say('line empty')
-                    else:
-                        #ini_content.append(make_unicode(line))
-                        ini_content.append(line)
-            else:
-                say ("useGridOrigin option present")
-            ini_content=[];cfg_content=[]
-            #with io.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-            with codecs.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                #text = f.read()
-                cfg_content = cfg_file.readlines() #
-                cfg_file.close()
-            for line in cfg_content: #stripping empty lines
-                if not re.match(r'^\s*$', line): #not empty lines
-                    #ini_content.append(make_unicode(line))
-                    ini_content.append(line)
-            #with io.open(ksu_config_fname,'w', encoding='utf-8') as cfg_file:
-            with codecs.open(ksu_config_fname,'w', encoding='utf-8') as cfg_file:
-            #with __builtin__.open(ksu_config_fname,'wb') as myfile:
-                #cfg_file.write( codecs.BOM_UTF8 )
-                if ';utf-8 coded' not in cfg_content[0]:
-                    cfg_file.write(u'\ufeff;utf-8 coded: do not edit this line\n')
-                for line in ini_content:
-                    #cfg_file.write(make_unicode(line))
-                    cfg_file.write(line)
-                cfg_file.close()
-            data=u""
-            for item in ini_content:
-                if item.startswith("["):
-                    data+="<b><font color=GoldenRod>"+item+"</font></b><br>"
-                elif item.startswith(";"):
-                    data+="<font color=blue>"+item+"</font><br>"
-                else:
-                    data+="<font color=black>"+item+"</font><br>"
-            data_ini_content=data
-            #for lines in cfg_out:
-            #    cfg_file_out.write(lines)
-            #say(ini_content)
-            for line in ini_content:
-                line = line.strip() #removes all whitespace at the start and end, including spaces, tabs, newlines and carriage returns
-                if len(line)>0:
-                    if line[0] != ';' and line[0] != '[':
-                        if '=' in line:
-                            data = line.split('=', 1)
-                            #sayw(len(data))
-                            if len(data) == 1:
-                                name = make_unicode(data[0].strip())
-                                key_value = u"" #None
-                            else:
-                                name = make_unicode(data[0].strip())
-                                key_value = make_unicode(data[1].strip())
-                            # sayerr(len(ini_vars))
-                            # sayw(str(find_name(name))+' -> '+name+' -> '+key_value)
-                            ini_vars[find_name(name)]= key_value
-            # sayw(ini_vars)
-            # sayw(len(ini_vars))
-            # stop
-            #sayerr(ini_vars[11])
-            #filename=ini_vars[11]+u'\CDT7300-3V.kicad_mod'
-            #if os.path.exists(filename):
-            #    sayerr('found!')
-            #    sayw(filename)
-            #else:
-            #    sayerr(filename)
-        else:
-            regenerate_ini=True
-    else:
-        regenerate_ini=True
-    if regenerate_ini:
-        say("ksu file doesn't exist")
-        say("making default")
-        #with io.open(ksu_config_fname,'w', encoding='utf-8') as cfg_file:
-        with codecs.open(ksu_config_fname,'w', encoding='utf-8') as cfg_file:
-        #with __builtin__.open(ksu_config_fname,'wb') as myfile:
-            #cfg_file.write( codecs.BOM_UTF8 )
-            cfg_file.write(u'\ufeff;utf-8 coded: do not edit this line\n')
-            #cfg_file.write(make_unicode(default_ksu_config_ini))
-            cfg_file.write(default_ksu_config_ini)
-            cfg_file.close()
-        ini_content=[]
-        #with io.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-        with codecs.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-        #    #text = f.read()
-            cfg_content = cfg_file.readlines() #
-            cfg_file.close()
-        ini_content = cfg_content
-        cfg_out=u""
-        for line in cfg_content:
-            line = line.strip() #removes all whitespace at the start and end, including spaces, tabs, newlines and carriage returns
-            cfg_out=cfg_out+line+'\n'#+os.linesep
-            if len(line)>0:
-                if line[0] != ';' and line[0] != '[':
-                    if '=' in line:
-                        data = line.split('=', 1)
-                        #sayw(len(data))
-                        if len(data) == 1:
-                            name = make_unicode(data[0].strip())
-                            key_value = u"" #None
-                        else:
-                            name = make_unicode(data[0].strip())
-                            key_value = make_unicode(data[1].strip())
-                        #sayw(str(find_name(name))+' -> '+name+' -> '+key_value)
-                        ini_vars[find_name(name)]= key_value
-        #sayw(ini_vars)
-        data=u""
-        for item in ini_content:
-            if item.startswith("["):
-                data+="<b><font color=GoldenRod>"+item+"</font></b><br>"
-            elif item.startswith(";"):
-                data+="<font color=blue>"+item+"</font><br>"
-            else:
-                data+="<font color=black>"+item+"</font><br>"
-        data_ini_content=data
-        msg="""<b>kicad StepUp ver. """
-        msg+=___ver___+"</b><br>"
-        msg+="default ksu config file created<br>"
-        msg+="<b>"+ksu_config_fname+"</b>"
-        msg+="<br>adapt your <b>3D model DIR path</b> in config file<br>"
-        msg+="see <b><font color=GoldenRod>[prefix3D]</font></b> section"
-        QtGui.QApplication.restoreOverrideCursor()
-        reply = QtGui.QMessageBox.information(None,"Info ...",msg)
-    ###
-    models3D_prefix = ''
-    blacklisted_model_elements=''
-    #col=''; col='0.0,0.5,0.0,green';  # color
-    col=''; col='0.0,0.0,1.0,blue';  # color
-    bbox=0
-    #(0.6,0.4,0.2) brown
-    volume_minimum=0 #0.8  ##1 #mm^3, 0 skipped #global var default
-    height_minimum=0 #0.8  ##1 #mm, 0 skipped   #global var default
-    ## to debug quickly put show_messages=False
-    ### from release 6091 this flag enables the option to place IDF exported to origin
-    idf_to_origin=True
-    #idf_to_origin=False
-    aux_orig=0;base_orig=0;base_point=0; grid_orig=0
-    bbox_all=0; bbox_list=0; whitelisted_model_elements=''
-    fusion=False; addVirtual=0; enable_materials=0
-    #configParser.readfp(codecs.open(configFilePath, 'rb', 'utf8'))
-    models3D_prefix = ini_vars[1] #configParser.get('prefix3D', 'prefix3D_1')
-    #models3D_prefix2=u""
-    #try:
-    #    models3D_prefix2 = configParser.get('prefix3D', 'prefix3D_2')
-    #    say("prefix3D_2 checking")
-    #    if len (models3D_prefix2) > 0:
-    #        say("prefix3D_2 found "+ models3D_prefix2)
-    #        if not models3D_prefix2.endswith('/'):
-    #            if not models3D_prefix2.endswith('\\'):
-    #                models3D_prefix2+='/'
-    #except:
-    #    sayw("prefix3D_2 not found")
-    #    pass
-    models3D_prefix2=ini_vars[2]
-    if len (models3D_prefix2) > 0:
-        say("prefix3D_2 found "+ models3D_prefix2)
-        if not models3D_prefix2.endswith('/'):
-            if not models3D_prefix2.endswith('\\'):
-                models3D_prefix2+='/'
-    #if not models3D_prefix.endswith('/'):
-    #    if not models3D_prefix.endswith('\\'):
-    #        models3D_prefix+='/'
-    #say(models3D_prefix)
-    pcb_color = ini_vars[3] #configParser.get('PcbColor', 'pcb_color')
-    bklist = ini_vars[4] #configParser.get('Blacklist', 'bklist')
-    bbox_opt = ini_vars[5] #configParser.get('BoundingBox', 'bbox')
-    plcmnt = ini_vars[6] #configParser.get('Placement', 'placement')
-    virtual = ini_vars[7] #configParser.get('Virtual', 'virt')
-    exportFusing = ini_vars[8] #configParser.get('ExportFuse', 'exportFusing')
-    min_drill_size = float(ini_vars[9]) #configParser.get('minimum_drill_size', 'min_drill_size'))
-    last_pcb_path = ini_vars[10] #configParser.get('last_pcb_path', 'last_pcb_path')
-    last_fp_path = ini_vars[11] #configParser.get('last_footprint_path', 'last_fp_path') 
-    export2S = ini_vars[12] #configParser.get('export', 'export_to_STEP') 
-    enablematerials = ini_vars[13] #configParser.get('Materials', 'mat')    
-    if 'enabled' in ini_vars[14]:
-        animate_result = True
-    else:
-        animate_result = False
-    if 'disallowed' in ini_vars[15]:
-        allow_compound = 'False'
-    elif 'simplified' in ini_vars[15]:
-        allow_compound = 'Simplified'   
-    else:
-        allow_compound = 'True'
-    docking_mode = ini_vars[16]
-    font_size = int(ini_vars[17])
-    stp_exp_mode = ini_vars[18]
-    links_imp_mode = ini_vars[19]
-    
-    add_constraints_val = ini_vars[0]  # find_name default value
-    
-    #sayerr(links_imp_mode)
-    #print add_constraints_val
-    #stop
-    if 'links' in links_imp_mode:
-        links_imp_mode = 'links_allowed'
-    else:
-        links_imp_mode = 'links_not_allowed'
-    if 'hierarchy' in stp_exp_mode:
-        stp_exp_mode = 'hierarchy'
-    elif 'flat' in stp_exp_mode:
-        stp_exp_mode = 'flat'
-    elif 'onelevel' in stp_exp_mode:
-        stp_exp_mode = 'onelevel'
-    if "yes" in export2S:
-        export_board_2step=True
-    else:
-        export_board_2step=False
-    if bklist.find('none') !=-1:
-        blacklisted_model_elements=''
-    elif bklist.find('volume') !=-1:
-        vval=bklist.strip('\r\n')
-        vvalue=vval.split("=")
-        volume_minimum=float(vvalue[1])
-        #reply = QtGui.QMessageBox.information(None,"info ...","volume "+str(volume_minimum))
-    elif bklist.find('height') !=-1:
-        vval=bklist.strip('\r\n')
-        vvalue=vval.split("=")
-        height_minimum=float(vvalue[1])
-        #reply = QtGui.QMessageBox.information(None,"info ...","height "+str(height_minimum))
-    else:
-        blacklisted_model_elements=bklist.strip('\r\n')
-        #say(bklist);
-        blacklisted_models=blacklisted_model_elements.split(",")
-        #say(blacklisted_models)
-    col=pcb_color.strip('\r\n')
-    if bbox_opt.upper().find('ALL') !=-1:
-        bbox_all=1
-        whitelisted_model_elements=''
-    else:
-        if bbox_opt.upper().find('LIST') !=-1:
-            bbox_list=1
-            whitelisted_model_elements=bbox_opt.strip('\r\n')
-            #whitelisted_models=whitelisted_model_elements.split(",")        
-    if plcmnt.lower().find('auxorigin') !=-1:
-        aux_orig=1
-        #whitelisted_model_elements=''
-    if plcmnt.lower().find('baseorigin') !=-1:
-        base_orig=1
-    if plcmnt.lower().find('basepoint') !=-1:
-        base_point=1
-        basepoint=plcmnt.strip('\r\n')
-        coords_BP=basepoint.split(";")
-        xp=float(coords_BP[1]);yp=float(coords_BP[2])
-    if plcmnt.lower().find('gridorigin') !=-1:
-        grid_orig=1
-    if plcmnt.lower().find('autoadjust') !=-1:
-        idf_to_origin=False
-    if virtual.lower().find('addvirtual') !=-1:
-        addVirtual=1
-    if exportFusing.lower().find('fuseall') !=-1:
-        fusion=True
-    if enablematerials.lower().find('enablematerials') !=-1:
-        enable_materials=1
-    if add_constraints_val.lower().find('all') !=-1:
-        addConstraints='all'
-    elif add_constraints_val.lower().find('coincident') !=-1:
-        addConstraints='coincident'
-    elif add_constraints_val.lower().find('none') !=-1:
-        addConstraints='none'
-    else:
-        addConstraints='all'
-    say('3D models prefix='+models3D_prefix)
-    say('3D models prefix2='+models3D_prefix2)
-    say('pcb color='+col)
-    #cfg_parameters.append(models3D_prefix)
-    #cfg_parameters.append(col)
-    say('blacklist modules: '+blacklisted_model_elements)
-    #cfg_parameters.append(blacklisted_model_elements)
-    say('volume: '+str(volume_minimum)+' heigh: '+str(height_minimum))
-    #cfg_parameters.append(volume_minimum)
-    say('bounding box option: '+str(bbox_all)+' whitelist: '+whitelisted_model_elements)
-    #cfg_parameters.append(bbox_all);cfg_parameters.append(whitelisted_model_elements)
-    say('placement board @ '+plcmnt); say("idf_to_origin: "+ str(idf_to_origin))
-    say('last fp path: '+last_fp_path)
-    say('last brd path: '+last_pcb_path)
-    #cfg_parameters.append(plcmnt);cfg_parameters.append(last_fp_path)
-    #cfg_parameters.append(last_pcb_path)
-    say('virtual models: '+virtual)
-    say('export fusing option: '+exportFusing)
-    #cfg_parameters.append(virtual);cfg_parameters.append(exportFusing)
-    say ('minimum drill size: '+str(min_drill_size)+'mm')
-    say ('export to STEP: '+str(export_board_2step))
-    say ('STEP exporting mode: '+str(stp_exp_mode))
-    say ('Links importing mode: '+str(links_imp_mode))
-
-    if enable_materials==1:
-        say ("enable materials: True")
-    else:
-        say ("enable materials: False")
-    say ('turntable: '+str(animate_result))
-    say ('compound allowed: '+str(allow_compound))
-    say ('docking mode: '+docking_mode)
-    say ('constraints mode: '+addConstraints)
-    #say ('fonts size '+str(font_size))
-    #cfg_parameters.append(min_drill_size);
-    ## color
-    #FreeCADGui.ActiveDocument.getObject("Board_outline").ShapeColor = (0.3333,0.3333,0.4980)
-    col= col.split(',')
-    colr=float(col[0]);colg=float(col[1]);colb=float(col[2])
-    ##cfg_parameters = (models3D_prefix,blacklisted_model_elements,col,bbox,volume_minimum,height_minimum
-    #cfg_parameters.append(colr);cfg_parameters.append(colg);cfg_parameters.append(colb)
-    #return cfg_parameters    
-    
-    sayw("kicad StepUp version "+str(___ver___))
-    #FC_majorV,FC_minorV,FC_git_Nbr=getFCversion()
-    #sayw('FC Version '+str(FC_majorV)+str(FC_minorV)+"-"+str(FC_git_Nbr))  
-    ###
-    return data_ini_content
-#
-
-def cfg_update_all_old():
-    global ksu_config_fname, default_ksu_config_ini
-    ##ksu pre-set
-    global models3D_prefix, models3D_prefix2, blacklisted_model_elements, col, colr, colg, colb
-    global bbox, volume_minimum, height_minimum, idf_to_origin, aux_orig
-    global base_orig, base_point, bbox_all, bbox_list, whitelisted_model_elements
-    global fusion, addVirtual, blacklisted_models, exportFusing, min_drill_size
-    global last_fp_path, last_pcb_path, plcmnt, xp, yp, exportFusing, export_board_2step
-    global enable_materials, docking_mode, mat_section, dock_section
-    global ini_vars, num_min_lines, animate_result, allow_compound, font_size, grid_orig
-
-##
-    #with io.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-    with codecs.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-        #text = f.read()
-        cfg_content = cfg_file.readlines() #
-    cfg_out=[]
-    for line in cfg_content:
-        line = line.strip() #removes all whitespace at the start and end, including spaces, tabs, newlines and carriage returns
-        if len(line)>0:
-            if line[0] != ';' and line[0] != '[':
-                if '=' in line:
-                    data = line.split('=', 1)
-                    #sayw(len(data))
-                    if len(data) == 1:
-                        name = data[0].strip()
-                        key_value = u"" #None
-                    else:
-                        name = data[0].strip()
-                        key_value = data[1].strip()
-                    key_value = ini_vars[find_name(name)]
-                    #say(name+' -> '+key_value)
-                    #cfg_out.append(make_unicode(name)+u' = '+make_unicode(key_value)+u'\n')
-                    cfg_out.append(make_unicode(name+u' = '+key_value+u'\n'))
-                    # if find_name(name)== 2:
-                    #     filename=key_value+u'\can-term-r2-test.kicad_pcb'
-                    #     if os.path.exists(filename):
-                    #         sayerr('found!')
-                    #         sayw(filename)
-                    #     else:
-                    #         sayerr(filename)
-            else:
-                #cfg_out.append(make_unicode(line+u'\n'))
-                if ';utf-8 coded' not in line:
-                    cfg_out.append(line+u'\n')
-    #sayerr(cfg_out)
-    #with io.open(ksu_config_fname,'w', encoding='utf-8') as cfg_file_out:
-    with codecs.open(ksu_config_fname,'w', encoding='utf-8') as cfg_file_out:
-        #cfg_file_out.write( codecs.BOM_UTF8 )
-        if ';utf-8 coded' not in cfg_out[0]:
-            cfg_file_out.write(u'\ufeff;utf-8 coded: do not edit this line\n')
-        for line in cfg_out:
-            #cfg_file_out.write(make_unicode(line))
-            cfg_file_out.write(line)
-        #for lines in cfg_out:
-        #    cfg_file_out.write(lines)
-
-#
 
 #ini_content=read_ini_file()
 ini_content=cfg_read_all()
@@ -5548,6 +4904,24 @@ def create_compound(count,modelnm):  #create compound function when a multipart 
         #stop
         FreeCADGui.Selection.clearSelection()
 ###
+
+def find_top_container(objs_list):
+    '''searching for top level Part container'''
+    ap_list = []
+    for o in objs_list:
+        #say(o.Label)
+        if o.TypeId == 'App::Part':
+            ap_list.append(o)
+    top_ap=None
+    for ap in ap_list:
+        if len(ap.InListRecursive) == 0:
+            top_ap = ap
+            break
+    #say(str(ap_list));stop
+    if top_ap is not None:
+        say(top_ap.Label)
+    return top_ap
+##
 def Load_models(pcbThickness,modules):
     global off_x, off_y, volume_minimum, height_minimum, bbox_all, bbox_list
     global whitelisted_model_elements, models3D_prefix, models3D_prefix2, last_pcb_path, full_placement
@@ -5985,6 +5359,9 @@ def Load_models(pcbThickness,modules):
                     for ObJ in doc1.Objects:
                         counterObj+=1
                     say(model_name)
+                    Links_available = False
+                    if 'LinkView' in dir(FreeCADGui):
+                        Links_available = True
                     if model_name not in loaded_models:
                         loaded_models.append(model_name)
                         #sayw(module_path)
@@ -5992,7 +5369,7 @@ def Load_models(pcbThickness,modules):
                         #module_path_n = re.sub("/", "\\\\", module_path)
                         #sayerr(module_path_n)
                         #ImportGui.insert(module_path_n,FreeCAD.ActiveDocument.Name)
-                        try: #if 1: #try: 
+                        try: #tobefixed
                             # support for stpZ files
                             if module_path.lower().endswith('stpz'):
                                 import stepZ
@@ -6000,20 +5377,35 @@ def Load_models(pcbThickness,modules):
                             else:
                                 ImportGui.insert(module_path,FreeCAD.ActiveDocument.Name)
                             #FreeCADGui.Selection.clearSelection()
+                            imported_obj_list = []
                             counterTmp=0
                             for ObJ in doc1.Objects:
                                 counterTmp+=1#stop
+                            mp_found=False
                             if counterTmp!=counterObj+1:
                                 #multipart loaded
                                 #print ('allow_compound ',allow_compound)
                                 FreeCADGui.Selection.clearSelection()
-                                if allow_compound != 'False' :
-                                    create_compound(counterObj,model_name)                        
-                            myStep = FreeCAD.ActiveDocument.ActiveObject
+                                mp_found=True
+                                #if allow_compound != 'False' and allow_compound != 'Hierarchy':
+                                if allow_compound != 'False' and (allow_compound != 'Hierarchy' or not Links_available):
+                                    create_compound(counterObj,model_name)
+                                    myStep = FreeCAD.ActiveDocument.ActiveObject
+                                    impLabel = myStep.Label
+                                elif allow_compound == 'Hierarchy' and Links_available:
+                                    imported_obj_list = doc1.Objects[counterObj+1:]
+                                    compound_found=True
+                                    #say(str(doc1.Objects)+' HERE')
+                                    #sayw(str(imported_obj_list)+' HERE')
+                                    newStep = find_top_container(imported_obj_list)
+                                    impLabel = make_string(newStep.Label)
+                            #myStep = FreeCAD.ActiveDocument.ActiveObject
                             #print(myStep.Label)
                             #impLabel = myStep.Label
-                            impLabel = make_string(myStep.Label)
-                            newStep=reset_prop_shapes(FreeCAD.ActiveDocument.ActiveObject,FreeCAD.ActiveDocument, FreeCAD,FreeCADGui)
+                            if (allow_compound != 'Hierarchy' or not Links_available) or not mp_found :
+                                newStep=reset_prop_shapes(FreeCAD.ActiveDocument.ActiveObject,FreeCAD.ActiveDocument, FreeCAD,FreeCADGui)
+                                myStep=newStep
+                                impLabel = make_string(myStep.Label)
                             #use_pypro=False
                             if use_pypro:  #use python property for timestamp
                                 myObj = FreeCAD.ActiveDocument.addObject("Part::FeaturePython","model3D")
@@ -6065,7 +5457,7 @@ def Load_models(pcbThickness,modules):
                             # Part.show(s)
                             #Part.Shape.read(module_path)
                             #Part.insert(module_path,FreeCAD.ActiveDocument.Name)
-                        except: #else: # except:    
+                        except: #tobefixed
                             sayerr('3D STEP model '+model_name+' is WRONG')
                             msg="""3D STEP model <b><font color=red>"""
                             msg+=model_name+"</font> is WRONG</b><br>or are not allowed Multi Part objects...<br>"
@@ -6073,7 +5465,7 @@ def Load_models(pcbThickness,modules):
                             QtGui.QApplication.restoreOverrideCursor()
                             reply = QtGui.QMessageBox.information(None,"Info ...",msg)
                             stop   
-                        if allow_compound != 'False' :
+                        if allow_compound != 'False' and (allow_compound != 'Hierarchy' or not Links_available):
                             create_compound(counterObj,model_name)
                             newobj = FreeCAD.ActiveDocument.ActiveObject
                             if not use_pypro:
@@ -6083,6 +5475,14 @@ def Load_models(pcbThickness,modules):
                                     newobj.Label = 'REF_'+impLabel + '_'  + myTimeStamp + myModelNbr
                         ##addProperty mod
                         #newobj=reset_prop_shapes(FreeCAD.ActiveDocument.ActiveObject,FreeCAD.ActiveDocument, FreeCAD,FreeCADGui)
+                        elif allow_compound == 'Hierarchy' and mp_found:
+                            newobj = newStep
+                            #tobefixed
+                            if not use_pypro:
+                                if '*' not in myReference:
+                                    newobj.Label = myReference + '_'+ impLabel + '_' + myTimeStamp + myModelNbr
+                                else:
+                                    newobj.Label = 'REF_'+impLabel + '_'  + myTimeStamp + myModelNbr
                         else:
                             newobj = FreeCAD.ActiveDocument.ActiveObject                        ##addProperty mod
                         #newobj=reset_prop_shapes(FreeCAD.ActiveDocument.ActiveObject,FreeCAD.ActiveDocument, FreeCAD,FreeCADGui)
@@ -6095,6 +5495,7 @@ def Load_models(pcbThickness,modules):
                                 bboxLabel=newobj.Label=newobj.Label
                                 newobj=createSolidBBox3(newobj)
                         skip_status="not"
+                        #tobefixed volume for App::Part
                         if volume_minimum != 0 or height_minimum != 0: #if checking volume or height
                             if newobj.Shape.Volume>volume_minimum:  #mauitemp min vol
                                 if abs(newobj.Shape.BoundBox.ZLength)>height_minimum:  #mauitemp min height
@@ -6114,7 +5515,7 @@ def Load_models(pcbThickness,modules):
                         FreeCADGui.Selection.clearSelection()
                         for ObJ in doc1.Objects:
                             counter+=1
-                        if counterObj+1 != counter:
+                        if counterObj+1 != counter and (allow_compound != 'Hierarchy' or not Links_available):
                             msg="""3D STEP model <b><font color=red>"""
                             msg+=model_name+"</font> is NOT fused ('union') in a single part</b> ...<br>"
                             msg+="@ "+module_path+" <br>...stopping execution! <br>Please <b>fix</b> the model."
@@ -6187,6 +5588,7 @@ def Load_models(pcbThickness,modules):
                                         FreeCAD.ActiveDocument.addObject('App::Link',o.Label+'_ln_').setLink(o)
                                 else:
                                     FreeCAD.ActiveDocument.copyObject(loaded_model_objs[idxO], True)
+                                #allow_compound != 'Hierarchy':
                                 impPart=FreeCAD.ActiveDocument.ActiveObject
                                 if use_pypro:
                                     impPart.TimeStamp=str(modules[i][10])
@@ -6262,6 +5664,8 @@ def Load_models(pcbThickness,modules):
                                 impPart.Placement = FreeCAD.Placement(FreeCAD.Vector(pos_x+float(wrl_pos[0])*25.4,pos_y+float(wrl_pos[1])*25.4,0+float(wrl_pos[2])*25.4),FreeCAD.Rotation(-float(wrl_rot[2]),-float(wrl_rot[1]),-float(wrl_rot[0]))) #rot is already rot fp -rot wrl
                                 if impPart.TypeId=='App::Link' or impPart.TypeId=='App::LinkPython':
                                     shape=Part.getShape(o)
+                                elif impPart.TypeId=='App::Part': #tobefixed
+                                    shape=Part.getShape(impPart)
                                 else:
                                     shape=impPart.Shape.copy()
                                 shape.Placement=impPart.Placement;

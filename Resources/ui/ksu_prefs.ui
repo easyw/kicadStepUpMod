@@ -822,7 +822,7 @@ Allowing or not Loading Multi Parts objects</string>
             </property>
             <item>
              <property name="text">
-              <string>Standard</string>
+              <string>Hierarchy</string>
              </property>
             </item>
             <item>
@@ -833,6 +833,11 @@ Allowing or not Loading Multi Parts objects</string>
             <item>
              <property name="text">
               <string>NotMultiParts</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Standard</string>
              </property>
             </item>
            </widget>
