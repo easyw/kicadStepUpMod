@@ -4923,11 +4923,14 @@ def find_top_container(objs_list):
     #say(str(ap_list));stop
     if top_ap is not None:
         say(top_ap.Label)
+        sayw('multi Part found! ...')
         return top_ap
     else:
         for cp in cp_list:
             if len(cp.InListRecursive) == 0:
                 top_cp = cp
+                say(top_cp.Label)
+                sayw('multi Compound found! ...')
                 break
         return top_cp
 ##
