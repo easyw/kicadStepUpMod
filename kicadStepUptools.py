@@ -487,7 +487,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.4.0.1.x"
+___ver___ = "9.4.0.2.x"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -4908,10 +4908,13 @@ def create_compound(count,modelnm):  #create compound function when a multipart 
 def find_top_container(objs_list):
     '''searching for top level Part container'''
     ap_list = []
+    cp_list = []
     for o in objs_list:
         #say(o.Label)
         if o.TypeId == 'App::Part':
             ap_list.append(o)
+        elif o.TypeId == 'Part::Compound2':
+            cp_list.append(o)
     top_ap=None
     for ap in ap_list:
         if len(ap.InListRecursive) == 0:
@@ -4920,7 +4923,13 @@ def find_top_container(objs_list):
     #say(str(ap_list));stop
     if top_ap is not None:
         say(top_ap.Label)
-    return top_ap
+        return top_ap
+    else:
+        for cp in cp_list:
+            if len(cp.InListRecursive) == 0:
+                top_cp = cp
+                break
+        return top_cp
 ##
 def Load_models(pcbThickness,modules):
     global off_x, off_y, volume_minimum, height_minimum, bbox_all, bbox_list
