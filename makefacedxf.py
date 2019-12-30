@@ -13,14 +13,14 @@ from PySide import QtGui, QtCore
 from sys import platform as _platform
 import sys,os
 import time
-global copper_diffuse, silks_diffuse
+global copper_diffuse, silks_diffuse, silks_version
 
 global use_AppPart, use_Links, use_LinkGroups
 use_AppPart=False # False
 use_Links=False
 global FC_export_min_version
 FC_export_min_version="11670"  #11670 latest JM
-
+silks_version = '1.1'
 
 use_LinkGroups = False
 if 'LinkView' in dir(FreeCADGui):
@@ -62,6 +62,41 @@ if FC_majorV == 0 and FC_minorV > 17:
     #if FC_git_Nbr >= int(FC_export_min_version):
     use_AppPart=True
 
+def crc_gen_d(data):
+    import binascii
+    import re
+    
+    #data=u'Würfel'
+    content=re.sub(r'[^\x00-\x7F]+','_', data)
+    #make_unicode(hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:])
+    #hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:].encode('utf-8')
+    #print(data +u'_'+ hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:])
+    return u'_'+ make_unicode_d(hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:])
+##
+
+def make_unicode_d(input):
+    if (sys.version_info > (3, 0)):  #py3
+        if isinstance(input, str):
+            return input
+        else:
+            input =  input.decode('utf-8')
+            return input
+    else: #py2
+        if type(input) != unicode:
+            input =  input.decode('utf-8')
+            return input
+        else:
+            return input
+
+def find_pcb_name():
+    #searching for a pcb 
+    pcb_name = ''
+    for o in FreeCAD.ActiveDocument.Objects:
+        if 'Pcb' in o.Label:
+            pcb_name=o.Name
+            break
+    return pcb_name
+
 def say(msg):
     FreeCAD.Console.PrintMessage(msg)
     FreeCAD.Console.PrintMessage('\n')
@@ -88,8 +123,10 @@ from kicadStepUptools import make_unicode, make_string
 
 def makeFaceDXF():
     global copper_diffuse, silks_diffuse
-    global use_LinkGroups, use_AppPart
+    global use_LinkGroups, use_AppPart, silks_version
     
+    FreeCAD.Console.PrintMessage('SilkS version: '+silks_version+'\n')
+
     doc=FreeCAD.ActiveDocument
     if doc is None:
         FreeCAD.newDocument()
@@ -108,6 +145,8 @@ def makeFaceDXF():
         if len(fname) > 0:
             #importDXF.open(fname)
             last_pcb_path=os.path.dirname(fname)
+            ftname_sfx=crc_gen_d(make_unicode_d(filename))
+
             pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
             pg.SetString("last_pcb_path", make_string(last_pcb_path)) # py3 .decode("utf-8")
             pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
@@ -155,25 +194,27 @@ def makeFaceDXF():
             if 'B.' in filename or 'B_' in filename:
                 layerName = 'bot'+layerName
         
-            doc.addObject('Part::Feature',layerName).Shape=f
+            doc.addObject('Part::Feature',layerName+ftname_sfx).Shape=f
             newShape=doc.ActiveObject
             botOffset = 1.6
             if 'Silk' in layerName:
                 docG.getObject(newShape.Name).ShapeColor = silks_diffuse
             else:
                 docG.getObject(newShape.Name).ShapeColor = brass_diffuse #copper_diffuse  #(0.78,0.56,0.11)
-            if len (doc.getObjectsByLabel('Pcb')) > 0:
-                newShape.Placement = doc.getObjectsByLabel('Pcb')[0].Placement
+            pcb_name = find_pcb_name()
+            if len (doc.getObjectsByLabel(pcb_name)) > 0:
+                newShape.Placement = doc.getObjectsByLabel(pcb_name)[0].Placement
                 #botTracks.Placement = doc.Pcb.Placement
-                if len (doc.getObjectsByLabel('Board_Geoms')) > 0:
+                board_geom_name='Board_Geoms'+pcb_name[pcb_name.rfind('_'):]
+                if len (doc.getObjectsByLabel(board_geom_name)) > 0:
                     if use_AppPart and not use_LinkGroups:
-                        doc.getObject('Board_Geoms').addObject(newShape)
+                        doc.getObject(board_geom_name).addObject(newShape)
                     elif use_LinkGroups:
-                        doc.getObject('Board_Geoms').ViewObject.dropObject(newShape,None,'',[])
-                if hasattr(doc.getObjectsByLabel('Pcb')[0], 'Shape'):
-                    botOffset = doc.getObjectsByLabel('Pcb')[0].Shape.BoundBox.ZLength
+                        doc.getObject(board_geom_name).ViewObject.dropObject(newShape,None,'',[])
+                if hasattr(doc.getObjectsByLabel(pcb_name)[0], 'Shape'):
+                    botOffset = doc.getObjectsByLabel(pcb_name)[0].Shape.BoundBox.ZLength
                 else:
-                    botOffset = doc.getObjectsByLabel('Pcb')[0].OutList[1].Shape.BoundBox.ZLength
+                    botOffset = doc.getObjectsByLabel(pcb_name)[0].OutList[1].Shape.BoundBox.ZLength
             #elif 'bot' in layerName:
             #    newShape.Placement.Base.z-=1.6
             if 'top' in layerName:

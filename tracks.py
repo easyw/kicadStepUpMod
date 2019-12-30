@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 #****************************************************************************
 
+global tracks_version
+tracks_version = '1.1'
+
 import kicad_parser
 #import kicad_parser; import importlib; importlib.reload(kicad_parser)
 import time
@@ -59,6 +62,7 @@ if FC_majorV == 0 and FC_minorV > 17:
     use_AppPart=True
 
 current_milli_time = lambda: int(round(time.time() * 1000))
+
 def say_time():
     end_milli_time = current_milli_time()
     running_time=(end_milli_time-start_time)/1000
@@ -92,6 +96,32 @@ def reload_lib(lib):
         importlib.reload(lib)
     else:
         reload (lib)
+
+def crc_gen_t(data):
+    import binascii
+    import re
+    
+    #data=u'Würfel'
+    content=re.sub(r'[^\x00-\x7F]+','_', data)
+    #make_unicode(hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:])
+    #hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:].encode('utf-8')
+    #print(data +u'_'+ hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:])
+    return u'_'+ make_unicode_t(hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:])
+##
+
+def make_unicode_t(input):
+    if (sys.version_info > (3, 0)):  #py3
+        if isinstance(input, str):
+            return input
+        else:
+            input =  input.decode('utf-8')
+            return input
+    else: #py2
+        if type(input) != unicode:
+            input =  input.decode('utf-8')
+            return input
+        else:
+            return input
 
 def mkColor(*color):
     if len(color)==1:
@@ -139,12 +169,13 @@ from kicadStepUptools import KicadPCB, make_unicode, make_string
 #filename="C:/Cad/Progetti_K/eth-32gpio/eth-32gpio.kicad_pcb"
 def addtracks():
     global start_time, last_pcb_path, min_drill_size
-    global use_LinkGroups, use_AppPart
+    global use_LinkGroups, use_AppPart, tracks_version
     import sys
     
     # cfg_read_all() it doesn't work through different files
     # print (min_drill_size)
     
+    FreeCAD.Console.PrintMessage('tracks version: '+tracks_version+'\n')
     Filter=""
     pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
     last_pcb_path = pg.GetString("last_pcb_path")
@@ -159,6 +190,9 @@ def addtracks():
     if len(fname) > 0:
         start_time=current_milli_time()
         last_pcb_path=os.path.dirname(fname)
+        path, ftname = os.path.split(fname)
+        ftname=os.path.splitext(ftname)[0]
+        ftname_sfx=crc_gen_t(make_unicode_t(ftname))
         pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
         pg.SetString("last_pcb_path", make_string(last_pcb_path)) # py3 .decode("utf-8")
         prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
@@ -216,7 +250,7 @@ def addtracks():
         deltaz = 0.01 #10 micron
         composed = doc.ActiveObject
         s = composed.Shape
-        doc.addObject('Part::Feature','topTracks').Shape=composed.Shape
+        doc.addObject('Part::Feature','topTracks'+ftname_sfx).Shape=composed.Shape
         topTracks = doc.ActiveObject
         #print (doc.ActiveObject.Label)
         #print (topTracks.Label)
@@ -226,17 +260,18 @@ def addtracks():
         docG.ActiveObject.DiffuseColor = docG.getObject(composed.Name).DiffuseColor
         #doc.recompute()
         #doc.addObject('Part::Feature',"topTraks").Shape=s
-        topTracks.Label="topTracks"
+        topTracks.Label="topTracks"+ftname_sfx
         topTracks.Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,deltaz),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
         #if hasattr(doc.Pcb, 'Shape'):
-        if len (doc.getObjectsByLabel('Pcb')) >0:
-            topTracks.Placement = doc.getObjectsByLabel('Pcb')[0].Placement
+        #if len (doc.getObjectsByLabel('Pcb')) >0:
+        if len (doc.getObjectsByLabel('Pcb'+ftname_sfx)) >0:
+            topTracks.Placement = doc.getObject('Pcb'+ftname_sfx).Placement
             topTracks.Placement.Base.z+=deltaz
-            if len (doc.getObjectsByLabel('Board_Geoms')) > 0:
+            if len (doc.getObjectsByLabel('Board_Geoms'+ftname_sfx)) > 0:
                 if use_AppPart and not use_LinkGroups:
-                    doc.getObject('Board_Geoms').addObject(topTracks)
+                    doc.getObject('Board_Geoms'+ftname_sfx).addObject(topTracks)
                 elif use_LinkGroups:
-                    doc.getObject('Board_Geoms').ViewObject.dropObject(topTracks,None,'',[])
+                    doc.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(topTracks,None,'',[])
         #topTracks.Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,0.05),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
         ##docG.getObject(topTracks.Name).Transparency=40
         if 0:
@@ -257,7 +292,7 @@ def addtracks():
         pcb.makeCopper(holes=True, minSize=minSizeDrill)
         composed = doc.ActiveObject
         s = composed.Shape
-        doc.addObject('Part::Feature','botTracks').Shape=composed.Shape
+        doc.addObject('Part::Feature','botTracks'+ftname_sfx).Shape=composed.Shape
         botTracks = doc.ActiveObject
         #print (doc.ActiveObject.Label)
         #print (topTracks.Label)
@@ -267,7 +302,7 @@ def addtracks():
         docG.ActiveObject.DiffuseColor = docG.getObject(composed.Name).DiffuseColor
         #doc.recompute()
         #doc.addObject('Part::Feature',"topTraks").Shape=s
-        botTracks.Label="botTracks"
+        botTracks.Label="botTracks"+ftname_sfx
         botTracks.Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,-1.6-deltaz),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))            
         #if hasattr(doc.Pcb, 'Shape'):
         ##docG.getObject(botTracks.Name).Transparency=40
@@ -278,15 +313,15 @@ def addtracks():
         
         removesubtree(FreeCADGui.Selection.getSelection())
         #if hasattr(doc.Pcb, 'Shape'):
-        if len (doc.getObjectsByLabel('Pcb')) > 0:
-            botTracks.Placement = doc.getObjectsByLabel('Pcb')[0].Placement
+        if len (doc.getObjectsByLabel('Pcb'+ftname_sfx)) > 0:
+            botTracks.Placement = doc.getObject('Pcb'+ftname_sfx).Placement
             #botTracks.Placement = doc.Pcb.Placement
             botTracks.Placement.Base.z-=pcbThickness+deltaz
-            if len (doc.getObjectsByLabel('Board_Geoms')) > 0:
+            if len (doc.getObjectsByLabel('Board_Geoms'+ftname_sfx)) > 0:
                 if use_AppPart and not use_LinkGroups:
-                    doc.getObject('Board_Geoms').addObject(botTracks)
+                    doc.getObject('Board_Geoms'+ftname_sfx).addObject(botTracks)
                 elif use_LinkGroups:
-                    doc.getObject('Board_Geoms').ViewObject.dropObject(botTracks,None,'',[])
+                    doc.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(botTracks,None,'',[])
         #botTracks = FreeCAD.ActiveDocument.ActiveObject
         #botTracks.Label="botTracks"
         #botTracks.Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,-1.6),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))    
