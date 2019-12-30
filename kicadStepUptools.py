@@ -488,7 +488,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.4.0.3.x"
+___ver___ = "9.4.0.4.x"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -13333,10 +13333,19 @@ def DrawPCB(mypcb,lyr=None):
         pcb_name=u'Pcb'+fname_sfx
         #doc_outline=doc.addObject("Part::Feature","Pcb")
         doc_outline=doc.addObject("Part::Feature",pcb_name)
-        try:
+        if 1: #try:
             #doc_outline.Shape=cut_base.extrude(Base.Vector(0,0,-totalHeight))
-            doc_outline.Shape=cut_base.Faces[0].extrude(Base.Vector(0,0,-totalHeight))
-        except:
+            f0 = cut_base.Faces[0]
+            s0 = f0.extrude(Base.Vector(0,0,-totalHeight))
+            s = s0
+            for f in cut_base.Faces[1:]:
+                #f0 = f0.union(f)
+                s1 = f.extrude(Base.Vector(0,0,-totalHeight))
+                s = s.fuse(s1)
+            doc_outline.Shape=s
+            #doc_outline.Shape=f0.extrude(Base.Vector(0,0,-totalHeight))
+            #doc_outline.Shape=cut_base.Faces[0].extrude(Base.Vector(0,0,-totalHeight))
+        else: #except:
             #doc.removeObject("Pcb")
             doc.removeObject(pcb_name)
             say("*** omitting PCBs because there was a not closed loop in your edge lines ***")
