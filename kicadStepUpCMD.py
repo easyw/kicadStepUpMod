@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-__ksuCMD_version__='1.8.3'
+__ksuCMD_version__='1.8.4'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -2494,13 +2494,14 @@ class ksuToolsTransparencyToggle:
             sel=FreeCADGui.Selection.getSelection()
             doc=FreeCADGui.ActiveDocument
             for obj in sel:
-                if "App::Part" not in obj.TypeId and "App::LinkGroup" not in obj.TypeId:
-                    if doc.getObject(obj.Name).Transparency == 0:
-                        doc.getObject(obj.Name).Transparency = 70
+                if hasattr(doc.getObject(obj.Name), 'Transparency'):
+                    if "App::Part" not in obj.TypeId and "App::LinkGroup" not in obj.TypeId:
+                        if doc.getObject(obj.Name).Transparency == 0:
+                            doc.getObject(obj.Name).Transparency = 70
+                        else:
+                            doc.getObject(obj.Name).Transparency = 0
                     else:
-                        doc.getObject(obj.Name).Transparency = 0
-                else:
-                    toggle_transparency_subtree(FreeCADGui.Selection.getSelection())
+                        toggle_transparency_subtree(FreeCADGui.Selection.getSelection())
         else:
             #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
             reply = QtGui.QMessageBox.information(None,"Warning", "Select one or more object(s) to change its transparency!")
