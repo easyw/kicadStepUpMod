@@ -13333,6 +13333,8 @@ def DrawPCB(mypcb,lyr=None):
         pcb_name=u'Pcb'+fname_sfx
         #doc_outline=doc.addObject("Part::Feature","Pcb")
         doc_outline=doc.addObject("Part::Feature",pcb_name)
+        pcb_name=FreeCAD.ActiveDocument.ActiveObject.Name
+        pcb_board=FreeCAD.ActiveDocument.ActiveObject
         try:
             #doc_outline.Shape=cut_base.extrude(Base.Vector(0,0,-totalHeight))
             f0 = cut_base.Faces[0]
@@ -13368,8 +13370,6 @@ def DrawPCB(mypcb,lyr=None):
         #    sayw('Shape already removed')
         #cut_base=cut_base.extrude(Base.Vector(0,0,-pcbThickness))
         #Part.show(cut_base)
-        pcb_name=FreeCAD.ActiveDocument.ActiveObject.Name
-        pcb_board=FreeCAD.ActiveDocument.ActiveObject
         if simplifyComSolid:
             faces=[]
             for f in pcb_board.Shape.Faces:
