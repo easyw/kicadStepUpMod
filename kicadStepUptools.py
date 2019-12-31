@@ -446,6 +446,8 @@ import tempfile, errno
 import re
 import time
 
+import ksu_locator
+
 if (sys.version_info > (3, 0)):  #py3
     import builtins as builtin  #py3
     import gzip as gz
@@ -488,7 +490,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.4.0.6.x"
+___ver___ = "9.4.0.7.x"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -7947,6 +7949,26 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
             zf.cancel()
             if SketchLayer != 'Edge.Cuts' and SketchLayer is not None:
                 FreeCADGui.ActiveDocument.ActiveView.viewTop()
+            prefsKSU = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+            prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import")
+            paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
+            ReadShapeCompoundMode_status=paramGetVS.GetBool("ReadShapeCompoundMode")
+            if 'UseAppPart' in prefs.GetBools():
+                if not prefs.GetBool('UseAppPart') or prefs.GetBool('UseLegacyImporter') or not prefs.GetBool('UseBaseName')\
+                       or prefs.GetBool('ExportLegacy') or ReadShapeCompoundMode_status or prefs.GetBool('UseLinkGroup'):
+                    msg = """Please set your preferences for STEP Import Export to:<br>"""
+                    msg += """(you can disable this warning on StepUp preferences)"""
+                    if 'help_warning_enabled' in prefsKSU.GetBools():
+                        if prefsKSU.GetBool('help_warning_enabled'):
+                            StepPrefsDlg = QtGui.QDialog()
+                            ui = Ui_STEP_Preferences()
+                            ui.setupUi(StepPrefsDlg)
+                            reply=StepPrefsDlg.exec_()
+                            #QtGui.QApplication.restoreOverrideCursor()
+                            #reply = QtGui.QMessageBox.information(None,"Info ...",msg)
+                    else: #first time new settings parameter
+                        QtGui.QApplication.restoreOverrideCursor()
+                        reply = QtGui.QMessageBox.information(None,"Info ...",msg)
             # TB reviewed
             #if 'LinkView' in dir(FreeCADGui):
             #    FreeCADGui.Selection.clearSelection()
@@ -14776,18 +14798,35 @@ class Ui_DockWidget(object):
             #else:
             #    msg="missing Mod folder Module!\r\n\r\n"
             #    reply = QtGui.QMessageBox.information(None,"Info ...",msg)
-            if not pt_osx and not pt_lnx:
-                pdf_file_path=file_path_mod+os.sep+'ksu-wb'+os.sep+'demo'+os.sep+'kicadStepUp-starter-Guide.pdf'
-                #say(pdf_file_path)
-                pdf_name='kicadStepUp-starter-Guide'
-                help_txt+="<b>configuration options:</b><br>Configuration options are located in the preferences system of FreeCAD, which is located in the Edit menu -&gt; Preferences.<br>"
-                help_txt+="<b>starter Guide:</b><br><a href='"+pdf_file_path+"' target='_blank'>"+pdf_name+"</a><br>"
-            else:
-                #say(pdf_file_path)
-                pdf_name='kicadStepUp-starter-Guide'
-                help_txt+="<b>configuration options:</b><br>Configuration options are located in the preferences system of FreeCAD, which is located in the Edit menu -&gt; Preferences.<br>"
-                help_txt+="starter Guide:<br><u>FC-UserAppData/Mod<br>"+pdf_name+"</u><br>"
-            
+            #if not pt_osx and not pt_lnx:
+            #    import ksu_locator
+            #    ksuWBpath = os.path.dirname(ksu_locator.__file__)
+            #    #sys.path.append(ksuWB + '/Gui')
+            #    ksuWB_demo_path =  os.path.join( ksuWBpath, 'demo')
+            #    pdf_file_path=os.path.join(ksuWB_demo_path,'kicadStepUp-starter-Guide.pdf')
+            #    #say(pdf_file_path)
+            #    pdf_name='kicadStepUp-starter-Guide'
+            #    help_txt+="<b>configuration options:</b><br>Configuration options are located in the preferences system of FreeCAD, which is located in the Edit menu -&gt; Preferences.<br>"
+            #    help_txt+="<b>starter Guide:</b><br><a href='"+pdf_file_path+"' target='_blank'>"+pdf_name+"</a><br>"
+            #if not pt_osx and not pt_lnx:
+            #    pdf_file_path=file_path_mod+os.sep+'ksu-wb'+os.sep+'demo'+os.sep+'kicadStepUp-starter-Guide.pdf'
+            #    #say(pdf_file_path)
+            #    pdf_name='kicadStepUp-starter-Guide'
+            #    help_txt+="<b>configuration options:</b><br>Configuration options are located in the preferences system of FreeCAD, which is located in the Edit menu -&gt; Preferences.<br>"
+            #    help_txt+="<b>starter Guide:</b><br><a href='"+pdf_file_path+"' target='_blank'>"+pdf_name+"</a><br>"
+            #else:
+            #    #say(pdf_file_path)
+            #    pdf_name='kicadStepUp-starter-Guide'
+            #    help_txt+="<b>configuration options:</b><br>Configuration options are located in the preferences system of FreeCAD, which is located in the Edit menu -&gt; Preferences.<br>"
+            #    help_txt+="starter Guide:<br><u>FC-UserAppData/Mod<br>"+pdf_name+"</u><br>"
+            import ksu_locator
+            ksuWBpath = os.path.dirname(ksu_locator.__file__)
+            ksuWB_demo_path =  os.path.join( ksuWBpath, 'demo')
+            pdf_file_path=os.path.join(ksuWB_demo_path,'kicadStepUp-starter-Guide.pdf')
+            pdf_name='kicadStepUp-cheat-sheet'
+            help_txt+="<b>configuration options:</b><br>Configuration options are located in the preferences system of FreeCAD, which is located in the Edit menu -&gt; Preferences.<br>"
+            help_txt+="starter Guide:<br><b>"+pdf_file_path+"<br>"+pdf_name+"</b><br>"
+            help_txt+="<a href='https://github.com/easyw/kicadStepUpMod/blob/master/demo/kicadStepUp-cheat-sheet.pdf'  target='_blank'>kicadStepUp-cheat-sheet.pdf</a><br>"
             #help_txt+="<img src='"+pm+"' style='width:32px;height:32px;'>"
             help_txt+="<b>StepUp</b> can be used <b>to align 3D model to kicad footprint</b>.<br>"
             help_txt+="The artwork can be used for MCAD interchange and collaboration, and for enclosure design.<br>"
@@ -15066,6 +15105,58 @@ def Import3DModelF():
 ##from PyQt5 import QtCore, QtGui, QtWidgets
 QtWidgets = QtGui
 
+class Ui_STEP_Preferences(object):
+    def setupUi(self, STEP_Preferences):
+        import os
+        import ksu_locator
+        ksuWBpath = os.path.dirname(ksu_locator.__file__)
+        #sys.path.append(ksuWB + '/Gui')
+        ksuWB_demo_path =  os.path.join( ksuWBpath, 'demo')
+        STEP_Preferences.setObjectName("STEP_Preferences")
+        STEP_Preferences.resize(860, 752)
+        STEP_Preferences.setWindowTitle("STEP Preferences")
+        STEP_Preferences.setToolTip("")
+        self.verticalLayoutWidget = QtWidgets.QWidget(STEP_Preferences)
+        self.verticalLayoutWidget.setGeometry(QtCore.QRect(10, 10, 847, 732))
+        self.verticalLayoutWidget.setObjectName("verticalLayoutWidget")
+        self.verticalLayout = QtWidgets.QVBoxLayout(self.verticalLayoutWidget)
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout.setObjectName("verticalLayout")
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
+        self.label = QtWidgets.QLabel(self.verticalLayoutWidget)
+        self.label.setText("Please set your preferences for STEP Import Export to:")
+        self.label.setObjectName("label")
+        self.verticalLayout_2.addWidget(self.label)
+        self.label_2 = QtWidgets.QLabel(self.verticalLayoutWidget)
+        self.label_2.setText("")
+        self.label_2.setPixmap(QtGui.QPixmap(os.path.join(ksuWB_demo_path,"Import-Export-settings.png")))
+        self.label_2.setObjectName("label_2")
+        self.verticalLayout_2.addWidget(self.label_2)
+        self.label_3 = QtWidgets.QLabel(self.verticalLayoutWidget)
+        self.label_3.setText("(you can disable this warning on StepUp preferences)")
+        self.label_3.setAlignment(QtCore.Qt.AlignCenter)
+        self.label_3.setObjectName("label_3")
+        self.verticalLayout_2.addWidget(self.label_3)
+        self.buttonBox = QtWidgets.QDialogButtonBox(self.verticalLayoutWidget)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.buttonBox.sizePolicy().hasHeightForWidth())
+        self.buttonBox.setSizePolicy(sizePolicy)
+        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Ok)
+        self.buttonBox.setObjectName("buttonBox")
+        self.verticalLayout_2.addWidget(self.buttonBox)
+        self.verticalLayout.addLayout(self.verticalLayout_2)
+
+        self.buttonBox.accepted.connect(STEP_Preferences.accept)
+        self.retranslateUi(STEP_Preferences)
+        QtCore.QMetaObject.connectSlotsByName(STEP_Preferences)
+
+    def retranslateUi(self, STEP_Preferences):
+        pass
+
+##
 class Ui_LayerSelection(object):
     def setupUi(self, LayerSelection):
         LayerSelection.setObjectName("LayerSelection")
