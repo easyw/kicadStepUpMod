@@ -7953,7 +7953,16 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
             prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import")
             paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
             ReadShapeCompoundMode_status=paramGetVS.GetBool("ReadShapeCompoundMode")
-            if 'UseAppPart' in prefs.GetBools():
+            FCV_date = ''
+            STEP_UseAppPart_available = False
+            if len (FreeCAD.Version()) >= 5:
+                FCV_date = str(FreeCAD.Version()[4])
+                FCV_date = FCV_date[0:FCV_date.find(' ')]
+                say(FCV_date)
+                if FCV_date >= '2019/12/03':
+                    STEP_UseAppPart_available = True #new STEP import export mode available
+                    say('STEP UseAppPart available')
+            if 'UseAppPart' in prefs.GetBools() or STEP_UseAppPart_available:
                 if not prefs.GetBool('UseAppPart') or prefs.GetBool('UseLegacyImporter') or not prefs.GetBool('UseBaseName')\
                        or prefs.GetBool('ExportLegacy') or ReadShapeCompoundMode_status or prefs.GetBool('UseLinkGroup'):
                     msg = """Please set your preferences for STEP Import Export to:<br>"""
@@ -7967,8 +7976,10 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                             #QtGui.QApplication.restoreOverrideCursor()
                             #reply = QtGui.QMessageBox.information(None,"Info ...",msg)
                     else: #first time new settings parameter
-                        QtGui.QApplication.restoreOverrideCursor()
-                        reply = QtGui.QMessageBox.information(None,"Info ...",msg)
+                        StepPrefsDlg = QtGui.QDialog()
+                        ui = Ui_STEP_Preferences()
+                        ui.setupUi(StepPrefsDlg)
+                        reply=StepPrefsDlg.exec_()
             # TB reviewed
             #if 'LinkView' in dir(FreeCADGui):
             #    FreeCADGui.Selection.clearSelection()
@@ -15114,7 +15125,7 @@ class Ui_STEP_Preferences(object):
         ksuWB_demo_path =  os.path.join( ksuWBpath, 'demo')
         STEP_Preferences.setObjectName("STEP_Preferences")
         STEP_Preferences.resize(860, 752)
-        STEP_Preferences.setWindowTitle("STEP Preferences")
+        STEP_Preferences.setWindowTitle("STEP Suggested Preferences")
         STEP_Preferences.setToolTip("")
         self.verticalLayoutWidget = QtWidgets.QWidget(STEP_Preferences)
         self.verticalLayoutWidget.setGeometry(QtCore.QRect(10, 10, 847, 732))
@@ -15125,7 +15136,7 @@ class Ui_STEP_Preferences(object):
         self.verticalLayout_2 = QtWidgets.QVBoxLayout()
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.label = QtWidgets.QLabel(self.verticalLayoutWidget)
-        self.label.setText("Please set your preferences for STEP Import Export to:")
+        self.label.setText("<b><font color='red'>Please set your preferences for STEP Import Export to:</font></b>")
         self.label.setObjectName("label")
         self.verticalLayout_2.addWidget(self.label)
         self.label_2 = QtWidgets.QLabel(self.verticalLayoutWidget)
