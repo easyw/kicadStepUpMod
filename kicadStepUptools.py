@@ -453,7 +453,11 @@ if (sys.version_info > (3, 0)):  #py3
     import gzip as gz
 else:  #py2
     import __builtin__ as builtin #py2
-    import gzip_utf8 as gz
+    try:
+        import gzip_utf8 as gz
+    except:
+        FreeCAD.Console.PrintError("'.stpZ' not supported")
+        pass
 
 import zipfile  as zf
 # sys.path.append('C:\Cad\Progetti_K\3D-FreeCad-tools/')
@@ -490,7 +494,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.4.0.7.x"
+___ver___ = "9.4.0.8.x"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -5938,8 +5942,9 @@ def Load_models(pcbThickness,modules):
     if virtual_nbr==0:
         #FreeCAD.ActiveDocument.getObject("Step_Virtual_Models").removeObjectsFromDocument()
         FreeCAD.ActiveDocument.removeObject(stepV_name)
-        FreeCAD.ActiveDocument.removeObject(botV_name)
-        FreeCAD.ActiveDocument.removeObject(topV_name)
+        if use_AppPart:
+            FreeCAD.ActiveDocument.removeObject(botV_name)
+            FreeCAD.ActiveDocument.removeObject(topV_name)
     else:
         if use_AppPart:
             if virtualTop_nbr==0:
@@ -7958,28 +7963,31 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
             if len (FreeCAD.Version()) >= 5:
                 FCV_date = str(FreeCAD.Version()[4])
                 FCV_date = FCV_date[0:FCV_date.find(' ')]
-                say(FCV_date)
+                say('FreeCAD build date: '+FCV_date)
                 if FCV_date >= '2019/12/03':
                     STEP_UseAppPart_available = True #new STEP import export mode available
                     say('STEP UseAppPart available')
-            if 'UseAppPart' in prefs.GetBools() or STEP_UseAppPart_available:
-                if not prefs.GetBool('UseAppPart') or prefs.GetBool('UseLegacyImporter') or not prefs.GetBool('UseBaseName')\
-                       or prefs.GetBool('ExportLegacy') or ReadShapeCompoundMode_status or prefs.GetBool('UseLinkGroup'):
-                    msg = """Please set your preferences for STEP Import Export to:<br>"""
-                    msg += """(you can disable this warning on StepUp preferences)"""
-                    if 'help_warning_enabled' in prefsKSU.GetBools():
-                        if prefsKSU.GetBool('help_warning_enabled'):
+            if hasattr(prefs, 'GetBools'):
+                if 'UseAppPart' in prefs.GetBools() or STEP_UseAppPart_available:
+                    if not prefs.GetBool('UseAppPart') or prefs.GetBool('UseLegacyImporter') or not prefs.GetBool('UseBaseName')\
+                        or prefs.GetBool('ExportLegacy') or ReadShapeCompoundMode_status or prefs.GetBool('UseLinkGroup'):
+                        msg = "Please set your preferences for STEP Import Export as in the displayed image\n"
+                        msg += "(you can disable this warning on StepUp preferences)\n"
+                        if 'help_warning_enabled' in prefsKSU.GetBools():
+                            if prefsKSU.GetBool('help_warning_enabled'):
+                                StepPrefsDlg = QtGui.QDialog()
+                                ui = Ui_STEP_Preferences()
+                                ui.setupUi(StepPrefsDlg)
+                                reply=StepPrefsDlg.exec_()
+                                sayw(msg)
+                                #QtGui.QApplication.restoreOverrideCursor()
+                                #reply = QtGui.QMessageBox.information(None,"Info ...",msg)
+                        else: #first time new settings parameter
                             StepPrefsDlg = QtGui.QDialog()
                             ui = Ui_STEP_Preferences()
                             ui.setupUi(StepPrefsDlg)
                             reply=StepPrefsDlg.exec_()
-                            #QtGui.QApplication.restoreOverrideCursor()
-                            #reply = QtGui.QMessageBox.information(None,"Info ...",msg)
-                    else: #first time new settings parameter
-                        StepPrefsDlg = QtGui.QDialog()
-                        ui = Ui_STEP_Preferences()
-                        ui.setupUi(StepPrefsDlg)
-                        reply=StepPrefsDlg.exec_()
+                            sayw(msg)
             # TB reviewed
             #if 'LinkView' in dir(FreeCADGui):
             #    FreeCADGui.Selection.clearSelection()

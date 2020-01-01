@@ -17,3 +17,8 @@ FreeCAD.Version() (fc 018 AppImage)
 
 FreeCAD.Version() (fc 017 AppImage)
 ['0', '17', '13541 (Git)', 'git://github.com/FreeCAD/FreeCAD.git releases/FreeCAD-0-17', '2018/08/16 05:58:57', 'releases/FreeCAD-0-17', '9948ee4f1570df9216862a79705afb367b2c6ffb']
+
+FreeCAD.Version() (fc 016 AppImage)
+FreeCAD.Version()
+['0', '16', '6712 (Git)', 'git://github.com/FreeCAD/FreeCAD.git releases/FreeCAD-0-16', '2017/07/17 17:27:47', 'releases/FreeCAD-0-16', 'da2d364457257a7a8c6fb2137cea12c45becd71a']
+ 
