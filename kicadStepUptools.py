@@ -365,10 +365,12 @@
 # full import of kicad_pcb allowed
 # generating uid for pcb & containers
 # pcb as solid (removed compsolid)
+# applying transparency in case of LED or GLASS material found in wrl file model
 # most clean code and comments done
 
 ##todo
 
+## support wrz transparency check
 ## collaps the App::LinkGroups at the end of loading
 ## multi-board compatibility with asm3 A3
 ## check "{:.3f}".format for pushpcb & Pushfootprint
@@ -494,7 +496,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.4.0.8.x"
+___ver___ = "9.4.0.9.x"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -5108,6 +5110,27 @@ def Load_models(pcbThickness,modules):
         if step_module != 'no3Dmodel':
             #model_type = step_module.split('.')[1]
             #if encoded!=1:
+            step_transparency = 0
+            prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+            if prefs.GetBool('transparency_material_enabled'):
+                #sayw('force transparency for glass or led materials'
+                if step_module.lower().endswith('wrl'):
+                    if os.path.exists(step_module):  # a wrl model could be missing
+                        read_mode = 'r'
+                        #if (sys.version_info > (3, 0)):  #py3
+                        #    read_mode = 'rb'
+                        #else:
+                        #    read_mode = 'r'
+                        with builtin.open(step_module, read_mode) as f:
+                            model_content = f.read()
+                            if 'material USE LED' in model_content:
+                                sayw('force transparency for glass or led materials')
+                                step_transparency = 30
+                            elif 'material USE GLASS' in model_content:
+                                sayw('force transparency for glass or led materials')
+                                step_transparency = 70
+                elif step_module.lower().endswith('wrz'):
+                    sayerr('wrz transparency NOT supported ATM')
             step_module=step_module.replace(u'"', u'')  # name with spaces
             pos=step_module.rfind('.')
             #sayw(pos)
@@ -5440,6 +5463,7 @@ def Load_models(pcbThickness,modules):
                             if (allow_compound != 'Hierarchy' or not Links_available) or not mp_found :
                                 newStep=reset_prop_shapes(FreeCAD.ActiveDocument.ActiveObject,FreeCAD.ActiveDocument, FreeCAD,FreeCADGui)
                                 myStep=newStep
+                                FreeCADGui.ActiveDocument.getObject(myStep.Name).Transparency = step_transparency
                                 impLabel = make_string(myStep.Label)
                             #use_pypro=False
                             if use_pypro:  #use python property for timestamp
@@ -15153,7 +15177,7 @@ class Ui_STEP_Preferences(object):
         self.label_2.setObjectName("label_2")
         self.verticalLayout_2.addWidget(self.label_2)
         self.label_3 = QtWidgets.QLabel(self.verticalLayoutWidget)
-        self.label_3.setText("(you can disable this warning on StepUp preferences)")
+        self.label_3.setText("<b><font color='red'>(you can disable this warning on StepUp preferences)</font></b>")
         self.label_3.setAlignment(QtCore.Qt.AlignCenter)
         self.label_3.setObjectName("label_3")
         self.verticalLayout_2.addWidget(self.label_3)
