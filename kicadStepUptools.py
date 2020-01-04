@@ -365,12 +365,11 @@
 # full import of kicad_pcb allowed
 # generating uid for pcb & containers
 # pcb as solid (removed compsolid)
-# applying transparency in case of LED or GLASS material found in wrl file model
+# applying transparency in case of LED or GLASS material found in wrl/wrz file model
 # most clean code and comments done
 
 ##todo
 
-## support wrz transparency check
 ## collaps the App::LinkGroups at the end of loading
 ## multi-board compatibility with asm3 A3
 ## check "{:.3f}".format for pushpcb & Pushfootprint
@@ -496,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.4.1.0.x"
+___ver___ = "9.4.1.1.x"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -4959,6 +4958,58 @@ def find_top_container(objs_list):
                 break
         return top_ag
 ##
+
+def check_wrl_transparency(step_module):
+    prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+    step_transparency = 0
+    if prefs.GetBool('transparency_material_enabled'):
+        #sayw('force transparency for glass or led materials'
+        if step_module.lower().endswith('wrl'):
+            if os.path.exists(step_module):  # a wrl model could be missing
+                read_mode = 'r'
+                if (sys.version_info > (3, 0)):  #py3
+                    read_mode = 'rb'
+                    LedM=b'material USE LED'
+                    GlassM=b'material USE GLASS'
+                else:
+                    read_mode = 'r'
+                    LedM='material USE LED'
+                    GlassM='material USE GLASS'
+                with builtin.open(step_module, read_mode) as f:
+                    #FreeCAD.Console.PrintError(step_module)
+                    #FreeCAD.Console.PrintError(' WRL MATERIALS\n')
+                    model_content = f.read()
+                    if LedM in model_content:
+                        sayw('force transparency for glass or led materials')
+                        step_transparency = 30
+                    elif GlassM in model_content:
+                        sayw('force transparency for glass or led materials')
+                        step_transparency = 70
+        elif step_module.lower().endswith('wrz'):
+            read_mode = 'r'
+            if (sys.version_info > (3, 0)):  #py3
+                read_mode = 'rb'
+                LedM=b'material USE LED'
+                GlassM=b'material USE GLASS'
+            else:
+                read_mode = 'r'
+                LedM='material USE LED'
+                GlassM='material USE GLASS'
+            try:
+                with gz.open(step_module, read_mode) as f:
+                    model_content = f.read()
+                    #FreeCAD.Console.PrintError(model_content)
+                    if LedM in model_content:
+                        sayw('force transparency for glass or led materials')
+                        step_transparency = 30
+                    elif GlassM in model_content:
+                        sayw('force transparency for glass or led materials')
+                        step_transparency = 70
+            except:
+                step_transparency = 0
+                sayerr('wrz transparency NOT supported')
+    return step_transparency
+##
 def Load_models(pcbThickness,modules):
     global off_x, off_y, volume_minimum, height_minimum, bbox_all, bbox_list
     global whitelisted_model_elements, models3D_prefix, models3D_prefix2, last_pcb_path, full_placement
@@ -5110,51 +5161,10 @@ def Load_models(pcbThickness,modules):
         if step_module != 'no3Dmodel':
             #model_type = step_module.split('.')[1]
             #if encoded!=1:
-            step_transparency = 0
-            prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
-            if prefs.GetBool('transparency_material_enabled'):
-                #sayw('force transparency for glass or led materials'
-                if step_module.lower().endswith('wrl'):
-                    if os.path.exists(step_module):  # a wrl model could be missing
-                        read_mode = 'r'
-                        if (sys.version_info > (3, 0)):  #py3
-                            read_mode = 'rb'
-                            LedM=b'material USE LED'
-                            GlassM=b'material USE GLASS'
-                        else:
-                            read_mode = 'r'
-                            LedM='material USE LED'
-                            GlassM='material USE GLASS'
-                        with builtin.open(step_module, read_mode) as f:
-                            model_content = f.read()
-                            if LedM in model_content:
-                                sayw('force transparency for glass or led materials')
-                                step_transparency = 30
-                            elif GlassM in model_content:
-                                sayw('force transparency for glass or led materials')
-                                step_transparency = 70
-                elif step_module.lower().endswith('wrz'):
-                    read_mode = 'r'
-                    if (sys.version_info > (3, 0)):  #py3
-                        read_mode = 'rb'
-                        LedM=b'material USE LED'
-                        GlassM=b'material USE GLASS'
-                    else:
-                        read_mode = 'r'
-                        LedM='material USE LED'
-                        GlassM='material USE GLASS'
-                    try:
-                        with gz.open(step_module, read_mode) as f:
-                            model_content = f.read()
-                            FreeCAD.Console.PrintError(model_content)
-                            if LedM in model_content:
-                                sayw('force transparency for glass or led materials')
-                                step_transparency = 30
-                            elif GlassM in model_content:
-                                sayw('force transparency for glass or led materials')
-                                step_transparency = 70
-                    except:
-                        sayerr('wrz transparency NOT supported')
+            wrl_model = ''
+            if step_module.lower().endswith('wrl') or step_module.lower().endswith('wrz'):
+                wrl_model = step_module
+            #step_transparency = check_wrl_transparency
             step_module=step_module.replace(u'"', u'')  # name with spaces
             pos=step_module.rfind('.')
             #sayw(pos)
@@ -5487,7 +5497,9 @@ def Load_models(pcbThickness,modules):
                             if (allow_compound != 'Hierarchy' or not Links_available) or not mp_found :
                                 newStep=reset_prop_shapes(FreeCAD.ActiveDocument.ActiveObject,FreeCAD.ActiveDocument, FreeCAD,FreeCADGui)
                                 myStep=newStep
-                                FreeCADGui.ActiveDocument.getObject(myStep.Name).Transparency = step_transparency
+                                if wrl_model != '':
+                                    step_transparency = check_wrl_transparency(wrl_model)
+                                    FreeCADGui.ActiveDocument.getObject(myStep.Name).Transparency = step_transparency
                                 impLabel = make_string(myStep.Label)
                             #use_pypro=False
                             if use_pypro:  #use python property for timestamp
@@ -8012,11 +8024,11 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                 FCV_date = str(FreeCAD.Version()[4])
                 FCV_date = FCV_date[0:FCV_date.find(' ')]
                 say('FreeCAD build date: '+FCV_date)
-                if FCV_date >= '2019/12/03':
+                if FCV_date >= '2020/01/31':
                     STEP_UseAppPart_available = True #new STEP import export mode available
                     say('STEP UseAppPart available')
             if hasattr(prefs, 'GetBools'):
-                if 'UseAppPart' in prefs.GetBools() or STEP_UseAppPart_available:
+                if 'UseAppPart' in prefs.GetBools() and STEP_UseAppPart_available:
                     if not prefs.GetBool('UseAppPart') or prefs.GetBool('UseLegacyImporter') or not prefs.GetBool('UseBaseName')\
                         or prefs.GetBool('ExportLegacy') or ReadShapeCompoundMode_status or prefs.GetBool('UseLinkGroup'):
                         msg = "Please set your preferences for STEP Import Export as in the displayed image\n"
