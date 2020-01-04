@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-__ksuCMD_version__='1.8.5'
+__ksuCMD_version__='1.8.6'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -574,6 +574,60 @@ class ksuToolsOffset2D:
 
 FreeCADGui.addCommand('ksuToolsOffset2D',ksuToolsOffset2D())    
 ##
+class ksuToolsExtrude:
+    "ksu tools Extrude Selection"
+    
+    def GetResources(self):
+        mybtn_tooltip ="ksu tools \'Extrude\'\nExtrude selection"
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Part_Extrude.svg') , # the name of a svg file available in the resources
+                     'MenuText': mybtn_tooltip ,
+                     'ToolTip' : mybtn_tooltip}
+ 
+    def __init__(self):
+        self.obj = None
+        self.sub = []
+        self.active = False
+
+    def IsActive(self):
+        if bool(FreeCADGui.Selection.getSelection()) is False:
+            return False
+        return True
+        
+    def Activated(self):
+        sel = FreeCADGui.Selection.getSelectionEx()[0]
+        FreeCADGui.runCommand('Part_Extrude',0)
+
+if FreeCAD.GuiUp:
+    FreeCADGui.addCommand('ksuToolsExtrude',ksuToolsExtrude())
+##
+
+class ksuToolsSkValidate:
+    "ksu tools Sketcher Validate Selection"
+    
+    def GetResources(self):
+        mybtn_tooltip ="ksu tools \'Sketcher Validate\'\nValidate selected Sketch"
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Sketcher_Validate.svg') , # the name of a svg file available in the resources
+                     'MenuText': mybtn_tooltip ,
+                     'ToolTip' : mybtn_tooltip}
+ 
+    def __init__(self):
+        self.obj = None
+        self.sub = []
+        self.active = False
+
+    def IsActive(self):
+        if bool(FreeCADGui.Selection.getSelection()) is False:
+            return False
+        return True
+        
+    def Activated(self):
+        sel = FreeCADGui.Selection.getSelectionEx()[0]
+        FreeCADGui.runCommand('Sketcher_ValidateSketch',0)
+
+if FreeCAD.GuiUp:
+    FreeCADGui.addCommand('ksuToolsSkValidate',ksuToolsSkValidate())
+##
+
 class ksuToolsOpenBoard:
     "ksu tools Open Board object"
  
