@@ -496,7 +496,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.4.0.9.x"
+___ver___ = "9.4.1.0.x"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -5117,20 +5117,44 @@ def Load_models(pcbThickness,modules):
                 if step_module.lower().endswith('wrl'):
                     if os.path.exists(step_module):  # a wrl model could be missing
                         read_mode = 'r'
-                        #if (sys.version_info > (3, 0)):  #py3
-                        #    read_mode = 'rb'
-                        #else:
-                        #    read_mode = 'r'
+                        if (sys.version_info > (3, 0)):  #py3
+                            read_mode = 'rb'
+                            LedM=b'material USE LED'
+                            GlassM=b'material USE GLASS'
+                        else:
+                            read_mode = 'r'
+                            LedM='material USE LED'
+                            GlassM='material USE GLASS'
                         with builtin.open(step_module, read_mode) as f:
                             model_content = f.read()
-                            if 'material USE LED' in model_content:
+                            if LedM in model_content:
                                 sayw('force transparency for glass or led materials')
                                 step_transparency = 30
-                            elif 'material USE GLASS' in model_content:
+                            elif GlassM in model_content:
                                 sayw('force transparency for glass or led materials')
                                 step_transparency = 70
                 elif step_module.lower().endswith('wrz'):
-                    sayerr('wrz transparency NOT supported ATM')
+                    read_mode = 'r'
+                    if (sys.version_info > (3, 0)):  #py3
+                        read_mode = 'rb'
+                        LedM=b'material USE LED'
+                        GlassM=b'material USE GLASS'
+                    else:
+                        read_mode = 'r'
+                        LedM='material USE LED'
+                        GlassM='material USE GLASS'
+                    try:
+                        with gz.open(step_module, read_mode) as f:
+                            model_content = f.read()
+                            FreeCAD.Console.PrintError(model_content)
+                            if LedM in model_content:
+                                sayw('force transparency for glass or led materials')
+                                step_transparency = 30
+                            elif GlassM in model_content:
+                                sayw('force transparency for glass or led materials')
+                                step_transparency = 70
+                    except:
+                        sayerr('wrz transparency NOT supported')
             step_module=step_module.replace(u'"', u'')  # name with spaces
             pos=step_module.rfind('.')
             #sayw(pos)
