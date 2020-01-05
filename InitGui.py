@@ -148,7 +148,7 @@ class KiCadStepUpWB ( Workbench ):
                            #, "ksuToolsPushMoved","ksuToolsSync3DModels"])
         self.appendToolbar("ksu Sketching", ["ksuTools3D2D", "ksuTools2D2Sketch", "ksuTools2DtoFace",\
                            "ksuToolsLoopSelection","ksuToolsEdges2Sketch","ksuToolsOffset2D","ksuToolsExtrude","ksuToolsMergeSketches",\
-                           "ksuToolsSimplifySketck", "ksuToolsBsplineNormalize", "ksuToolsConstrainator", "ksuToolsDiscretize", "ksuToolsSkValidate"])
+                           "ksuToolsSimplifySketck", "ksuToolsBsplineNormalize", "ksuToolsConstrainator", "ksuToolsSkValidate", "ksuToolsDiscretize"])
                            #, "ksuToolsPushMoved","ksuToolsSync3DModels"])
         ksuTB = ["ksuToolsOpenBoard","ksuToolsPushPCB","ksuToolsPushMoved","ksuToolsSync3DModels","ksuToolsPullPCB","ksuToolsPullMoved","ksuAsm2Part",\
                  "Separator","ksuToolsGeneratePositions","ksuToolsComparePositions",\
