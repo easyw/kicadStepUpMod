@@ -5498,7 +5498,7 @@ def Load_models(pcbThickness,modules):
                                 newStep=reset_prop_shapes(FreeCAD.ActiveDocument.ActiveObject,FreeCAD.ActiveDocument, FreeCAD,FreeCADGui)
                                 myStep=newStep
                                 if wrl_model != '':
-                                    wrl_module_path = module_path[:module_path.rfind(u'.')]+u'.wrl'
+                                    wrl_module_path = module_path[:module_path.rfind(u'.')]+wrl_model[-4:]
                                     step_transparency = check_wrl_transparency(wrl_module_path)
                                     FreeCADGui.ActiveDocument.getObject(myStep.Name).Transparency = step_transparency
                                 impLabel = make_string(myStep.Label)
