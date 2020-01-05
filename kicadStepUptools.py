@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.4.1.1.x"
+___ver___ = "9.4.1.2.x"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -5498,7 +5498,8 @@ def Load_models(pcbThickness,modules):
                                 newStep=reset_prop_shapes(FreeCAD.ActiveDocument.ActiveObject,FreeCAD.ActiveDocument, FreeCAD,FreeCADGui)
                                 myStep=newStep
                                 if wrl_model != '':
-                                    step_transparency = check_wrl_transparency(wrl_model)
+                                    wrl_module_path = module_path[:module_path.rfind(u'.')]+u'.wrl'
+                                    step_transparency = check_wrl_transparency(wrl_module_path)
                                     FreeCADGui.ActiveDocument.getObject(myStep.Name).Transparency = step_transparency
                                 impLabel = make_string(myStep.Label)
                             #use_pypro=False
