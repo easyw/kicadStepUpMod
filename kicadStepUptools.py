@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.4.1.2.x"
+___ver___ = "9.4.1.3.x"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -15747,9 +15747,9 @@ def PushMoved():
                         say(msgr)
                         say_info(msg)
                     else:
-                        msg="""To update 3D model Position(s) in <b>an EXISTING KiCad pcb file</b><br>the board must have assigned \'Grid Origin\' or<br>\'Aux Origin\' (Drill and Place offset)!"""
+                        msg="""To update 3D model Position(s) in <b>an EXISTING KiCad pcb file</b><br>the KiCAD pcbnew board file must have assigned \'Grid Origin\' or<br>\'Aux Origin\' (Drill and Place offset)!"""
                         say_warning(msg)
-                        msg="To update 3D model Position(s) in an EXISTING KiCad pcb file\nthe board must have assigned \'Grid Origin\' or \'Aux Origin\' (Drill and Place offset)!"
+                        msg="To update 3D model Position(s) in an EXISTING KiCad pcb file\nthe KiCAD pcbnew board file must have assigned \'Grid Origin\' or \'Aux Origin\' (Drill and Place offset)!"
                         sayerr(msg)
                 else:
                     msg="""Save to <b>an EXISTING KiCad pcb file</b> to update your 3D model position!"""
@@ -16088,9 +16088,9 @@ def PullMoved():
                         say(msgr)
                         say_info(msg)
                     else:
-                        msg="""To update 3D model Position(s) from <b>an EXISTING KiCad pcb file</b><br>the board must have assigned \'Grid Origin\' or<br>\'Aux Origin\' (Drill and Place offset)!"""
+                        msg="""To update 3D model Position(s) from <b>an EXISTING KiCad pcb file</b><br>the KiCAD pcbnew board file must have assigned \'Grid Origin\' or<br>\'Aux Origin\' (Drill and Place offset)!"""
                         say_warning(msg)
-                        msg="To update 3D model Position(s) from an EXISTING KiCad pcb file\nthe board must have assigned \'Grid Origin\' or \'Aux Origin\' (Drill and Place offset)!"
+                        msg="To update 3D model Position(s) from an EXISTING KiCad pcb file\nthe KiCAD pcbnew board file must have assigned \'Grid Origin\' or \'Aux Origin\' (Drill and Place offset)!"
                         sayerr(msg)
                 else:
                     msg="""Load from <b>an EXISTING KiCad pcb file</b> to update your 3D model position!"""
