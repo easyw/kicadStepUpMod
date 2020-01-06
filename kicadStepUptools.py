@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.4.1.3.x"
+___ver___ = "9.5.0.1.x"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -7625,8 +7625,8 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                         xp=-mypcb.setup.grid_origin[0]; yp=mypcb.setup.grid_origin[1]
                         sayw('grid origin found @ ('+str(xp)+', '+str(yp)+')') 
                     else:
-                        say('grid origin not found\nplacing at center of an A4')
-                        xp=-148.5;yp=98.5
+                        say('grid origin not set\nusing default top left corner')
+                        xp=0;yp=0
                     ##off_x=-xp+xmin+(xMax-xmin)/2; off_y=-yp-(ymin+(yMax-ymin)/2)  #offset of the board & modules
                     #off_x=-xp+center_x;off_y=-yp+center_y
                     off_x=-xp;off_y=-yp
@@ -12283,7 +12283,7 @@ def DrawPCB(mypcb,lyr=None):
         #say(mypcb.setup.aux_axis_origin)
         #xp=mypcb.setup.aux_axis_origin[0]; yp=-mypcb.setup.aux_axis_origin[1]
     else:
-        say('grid origin not found')
+        say('grid origin not set\ndefault value on top left corner')
     #if hasattr(mypcb.setup, 'aux origin'):
     #    say('aux origin' + str(mypcb.setup.aux_axis_origin))
     #else:
@@ -19289,7 +19289,8 @@ def getGridOrigin(dt):
     if match is not None:
         return [float(match.group(1)), float(match.group(2))];
     else:
-        return None
+        #returning default top left corner value
+        return [0.0,0.0]
 ##
 ##  getAuxOrigin
 def getAuxOrigin(dt):
