@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.5.0.1.x"
+___ver___ = "9.5.0.2.x"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -15683,11 +15683,14 @@ def PushMoved():
                         oft=None
                         if aux_orig == 1:
                             oft=getAuxOrigin(data)
-                        if grid_orig == 1:
+                        elif grid_orig == 1:
                             oft=getGridOrigin(data)
                         #print oft
                         gof=False
+                        origin_warn=False
                         if oft is not None:
+                            if oft == [0.0,0.0]:
+                                origin_warn=True
                             off_x=oft[0];off_y=-oft[1]
                             offset = oft
                             gof=True
@@ -15756,6 +15759,17 @@ def PushMoved():
                         msgr+="backup file saved to "+foname
                         say(msgr)
                         say_info(msg)
+                        if origin_warn:
+                            if aux_orig == 1:
+                                origin_msg='AuxOrigin'
+                            elif grid_orig == 1:
+                                origin_msg='GridOrigin'
+                            msg = origin_msg +' is set in FC Preferences but not set in KiCAD pcbnew file'
+                            sayw(msg)
+                            msg="""<b><font color='red'>"""+origin_msg+""" is set in FreeCAD Preferences<br>but not set in KiCAD pcbnew file</font></b>"""
+                            msg+="""<br><br>Please assign """+origin_msg+""" to your KiCAD pcbnew board file"""
+                            msg+="""<br>for a better Mechanical integration"""
+                            say_warning(msg)
                     else:
                         msg="""To update 3D model Position(s) in <b>an EXISTING KiCad pcb file</b><br>the KiCAD pcbnew board file must have assigned \'Grid Origin\' or<br>\'Aux Origin\' (Drill and Place offset)!"""
                         say_warning(msg)
@@ -16042,13 +16056,19 @@ def PullMoved():
                             if hasattr(mypcb.setup, 'aux_axis_origin'):
                                 oft = mypcb.setup.aux_axis_origin 
                                 #oft=getAuxOrigin(data)
-                        if grid_orig == 1:
+                        elif grid_orig == 1:
                             if hasattr(mypcb.setup, 'grid_origin'):
                                 oft=mypcb.setup.grid_origin
+                            else:
+                                oft = [0.0,0.0]
                                 #oft=getGridOrigin(data)
                         #print ('oft ',oft)
                         gof=False
+                        
+                        origin_warn=False
                         if oft is not None:
+                            if oft == [0.0,0.0]:
+                                origin_warn=True
                             off_x=oft[0];off_y=-oft[1]
                             offset = oft
                             gof=True
@@ -16097,6 +16117,17 @@ def PullMoved():
                         msgr="3D model new position pulled from kicad board!\n"
                         say(msgr)
                         say_info(msg)
+                        if origin_warn:
+                            if aux_orig == 1:
+                                origin_msg='AuxOrigin'
+                            elif grid_orig == 1:
+                                origin_msg='GridOrigin'
+                            msg = origin_msg +' is set in FC Preferences but not set in KiCAD pcbnew file'
+                            sayw(msg)
+                            msg="""<b><font color='red'>"""+origin_msg+""" is set in FreeCAD Preferences<br>but not set in KiCAD pcbnew file</font></b>"""
+                            msg+="""<br><br>Please assign """+origin_msg+""" to your KiCAD pcbnew board file"""
+                            msg+="""<br>for a better Mechanical integration"""
+                            say_warning(msg)
                     else:
                         msg="""To update 3D model Position(s) from <b>an EXISTING KiCad pcb file</b><br>the KiCAD pcbnew board file must have assigned \'Grid Origin\' or<br>\'Aux Origin\' (Drill and Place offset)!"""
                         say_warning(msg)
@@ -19308,6 +19339,8 @@ def getAuxOrigin(dt):
     if match is not None:
         return [float(match.group(1)), float(match.group(2))];
     else:
+        # #returning default top left corner value
+        # return [0.0,0.0]
         return None
 ##
 def export_pcb(fname=None,sklayer=None,skname=None):
@@ -19442,6 +19475,7 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                 #else:
                 #    edge_width=0.16
             oft=None
+            origin_warn = False
             #skip = False
             if aux_orig == 1:
                 oft=getAuxOrigin(data)
@@ -19458,6 +19492,8 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                     say_warning(msg)
                     stop
                 else:
+                    if oft == [0.0,0.0]:
+                        origin_warn = True
                     print ('grid_origin found',oft)
             else:
                 print('using an approximate PCB center as sketch reference point')
@@ -19687,7 +19723,18 @@ def export_pcb(fname=None,sklayer=None,skname=None):
             if not edge_pcb_exists:
                 msg="<b>close your FC Sketch<br>and reload the kicad_pcb file</b>"
                 say_warning(msg)
-            
+            if origin_warn:
+                if aux_orig == 1:
+                    origin_msg='AuxOrigin'
+                elif grid_orig == 1:
+                    origin_msg='GridOrigin'
+                msg = origin_msg +' is set in FC Preferences but not set in KiCAD pcbnew file'
+                sayw(msg)
+                msg="""<b><font color='red'>"""+origin_msg+""" is set in FreeCAD Preferences<br>but not set in KiCAD pcbnew file</font></b>"""
+                msg+="""<br><br>Please assign """+origin_msg+""" to your KiCAD pcbnew board file"""
+                msg+="""<br>for a better Mechanical integration"""
+                say_warning(msg)
+
     #def precision(self, value):
     #    return "%.2f" % float(value)
     
