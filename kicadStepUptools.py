@@ -7618,6 +7618,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                 #filename="c:\\Temp\\backpanel3.kicad_pcb"
                 mypcb = KicadPCB.load(name) #test parser
                 off_x=0; off_y=0  #offset of the board & modules
+                grid_orig_warn=False
                 if (grid_orig==1):
                     #xp=getAuxAxisOrigin()[0]; yp=-getAuxAxisOrigin()[1]  #offset of the board & modules
                     if hasattr(mypcb.setup, 'grid_origin'):
@@ -7627,6 +7628,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                     else:
                         say('grid origin not set\nusing default top left corner')
                         xp=0;yp=0
+                        grid_orig_warn=True
                     ##off_x=-xp+xmin+(xMax-xmin)/2; off_y=-yp-(ymin+(yMax-ymin)/2)  #offset of the board & modules
                     #off_x=-xp+center_x;off_y=-yp+center_y
                     off_x=-xp;off_y=-yp
@@ -8015,6 +8017,14 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
             zf.cancel()
             if SketchLayer != 'Edge.Cuts' and SketchLayer is not None:
                 FreeCADGui.ActiveDocument.ActiveView.viewTop()
+            if grid_orig_warn: #adding a warning message because GridOrigin is set in FC Preferences but not set in KiCAD pcbnew file
+                msg = 'GridOrigin is set in FC Preferences but not set in KiCAD pcbnew file'
+                sayw(msg)
+                QtGui.QApplication.restoreOverrideCursor()
+                msg="""<b><font color='red'>GridOrigin is set in FreeCAD Preferences<br>but not set in KiCAD pcbnew file</font></b>"""
+                msg+="""<br><br>Please assign Grid Origin to your KiCAD pcbnew board file"""
+                msg+="""<br>for a better Mechanical integration"""
+                reply = QtGui.QMessageBox.information(None,"Warning ...",msg)
             prefsKSU = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
             prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import")
             paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
