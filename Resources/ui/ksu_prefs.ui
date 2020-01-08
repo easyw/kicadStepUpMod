@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>542</width>
+    <width>558</width>
     <height>814</height>
    </rect>
   </property>
@@ -643,7 +643,7 @@ default '0.01mm'</string>
          <rect>
           <x>0</x>
           <y>375</y>
-          <width>522</width>
+          <width>525</width>
           <height>341</height>
          </rect>
         </property>
@@ -1043,7 +1043,7 @@ Allowing or not Loading Multi Parts objects</string>
           <cstring>Mod/kicadStepUpGui</cstring>
          </property>
         </widget>
-        <widget class="Gui::PrefCheckBox" name="cb_transparency_export">
+        <widget class="Gui::PrefCheckBox" name="cb_transparency_export_glass">
          <property name="enabled">
           <bool>true</bool>
          </property>
@@ -1051,15 +1051,15 @@ Allowing or not Loading Multi Parts objects</string>
           <rect>
            <x>8</x>
            <y>245</y>
-           <width>463</width>
+           <width>264</width>
            <height>20</height>
           </rect>
          </property>
          <property name="toolTip">
-          <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Apply Transparency for 'Glass' or 'Led' Materials:&lt;/p&gt;&lt;p&gt;Force Transparency to STEP model if 'Glass' or 'Led' is found in '.wrl' model&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Apply Transparency for 'Glass' Materials:&lt;/p&gt;&lt;p&gt;Force Transparency to STEP model if 'Glass' is found in '.wrl' model&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
-          <string notr="true">Apply Transparency for 'Glass' or 'Led' Materials</string>
+          <string notr="true">Apply Transparency for 'Glass' Materials</string>
          </property>
          <property name="checked">
           <bool>false</bool>
@@ -1068,7 +1068,38 @@ Allowing or not Loading Multi Parts objects</string>
           <bool>false</bool>
          </property>
          <property name="prefEntry" stdset="0">
-          <cstring>transparency_material_enabled</cstring>
+          <cstring>transparency_material_glass_enabled</cstring>
+         </property>
+         <property name="prefPath" stdset="0">
+          <cstring>Mod/kicadStepUpGui</cstring>
+         </property>
+        </widget>
+        <widget class="Gui::PrefCheckBox" name="cb_transparency_export_led">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="geometry">
+          <rect>
+           <x>270</x>
+           <y>245</y>
+           <width>264</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Apply Transparency for 'Led' Materials:&lt;/p&gt;&lt;p&gt;Force Transparency to STEP model if 'Led' is found in '.wrl' model&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string notr="true">Apply Transparency for 'Led' Materials</string>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
+         </property>
+         <property name="tristate">
+          <bool>false</bool>
+         </property>
+         <property name="prefEntry" stdset="0">
+          <cstring>transparency_material_led_enabled</cstring>
          </property>
          <property name="prefPath" stdset="0">
           <cstring>Mod/kicadStepUpGui</cstring>
