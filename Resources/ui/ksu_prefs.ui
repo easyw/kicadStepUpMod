@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>542</width>
-    <height>759</height>
+    <width>558</width>
+    <height>814</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -40,7 +40,7 @@
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>20</y>
+          <y>25</y>
           <width>501</width>
           <height>34</height>
          </rect>
@@ -94,7 +94,7 @@
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>60</y>
+          <y>65</y>
           <width>501</width>
           <height>34</height>
          </rect>
@@ -148,7 +148,7 @@
         <property name="geometry">
          <rect>
           <x>-1</x>
-          <y>105</y>
+          <y>110</y>
           <width>524</width>
           <height>261</height>
          </rect>
@@ -642,9 +642,9 @@ default '0.01mm'</string>
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>370</y>
-          <width>522</width>
-          <height>291</height>
+          <y>375</y>
+          <width>525</width>
+          <height>341</height>
          </rect>
         </property>
         <property name="title">
@@ -654,7 +654,7 @@ default '0.01mm'</string>
          <property name="geometry">
           <rect>
            <x>8</x>
-           <y>20</y>
+           <y>25</y>
            <width>463</width>
            <height>20</height>
           </rect>
@@ -679,7 +679,7 @@ default '0.01mm'</string>
          <property name="geometry">
           <rect>
            <x>8</x>
-           <y>45</y>
+           <y>50</y>
            <width>463</width>
            <height>20</height>
           </rect>
@@ -704,7 +704,7 @@ default '0.01mm'</string>
          <property name="geometry">
           <rect>
            <x>9</x>
-           <y>75</y>
+           <y>80</y>
            <width>491</width>
            <height>26</height>
           </rect>
@@ -773,7 +773,7 @@ default '0.01mm'</string>
          <property name="geometry">
           <rect>
            <x>8</x>
-           <y>105</y>
+           <y>110</y>
            <width>491</width>
            <height>26</height>
           </rect>
@@ -822,7 +822,7 @@ Allowing or not Loading Multi Parts objects</string>
             </property>
             <item>
              <property name="text">
-              <string>Standard</string>
+              <string>Hierarchy</string>
              </property>
             </item>
             <item>
@@ -835,6 +835,11 @@ Allowing or not Loading Multi Parts objects</string>
               <string>NotMultiParts</string>
              </property>
             </item>
+            <item>
+             <property name="text">
+              <string>Standard</string>
+             </property>
+            </item>
            </widget>
           </item>
          </layout>
@@ -843,7 +848,7 @@ Allowing or not Loading Multi Parts objects</string>
          <property name="geometry">
           <rect>
            <x>8</x>
-           <y>140</y>
+           <y>145</y>
            <width>246</width>
            <height>20</height>
           </rect>
@@ -868,7 +873,7 @@ Allowing or not Loading Multi Parts objects</string>
          <property name="geometry">
           <rect>
            <x>8</x>
-           <y>165</y>
+           <y>170</y>
            <width>463</width>
            <height>20</height>
           </rect>
@@ -899,7 +904,7 @@ Allowing or not Loading Multi Parts objects</string>
          <property name="geometry">
           <rect>
            <x>9</x>
-           <y>240</y>
+           <y>295</y>
            <width>463</width>
            <height>20</height>
           </rect>
@@ -924,7 +929,7 @@ Allowing or not Loading Multi Parts objects</string>
          <property name="geometry">
           <rect>
            <x>267</x>
-           <y>140</y>
+           <y>145</y>
            <width>246</width>
            <height>20</height>
           </rect>
@@ -952,7 +957,7 @@ Allowing or not Loading Multi Parts objects</string>
          <property name="geometry">
           <rect>
            <x>8</x>
-           <y>215</y>
+           <y>220</y>
            <width>463</width>
            <height>20</height>
           </rect>
@@ -983,7 +988,7 @@ Allowing or not Loading Multi Parts objects</string>
          <property name="geometry">
           <rect>
            <x>8</x>
-           <y>190</y>
+           <y>195</y>
            <width>463</width>
            <height>20</height>
           </rect>
@@ -1007,13 +1012,106 @@ Allowing or not Loading Multi Parts objects</string>
           <cstring>Mod/kicadStepUpGui</cstring>
          </property>
         </widget>
+        <widget class="Gui::PrefCheckBox" name="cb_help_warn">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="geometry">
+          <rect>
+           <x>8</x>
+           <y>270</y>
+           <width>463</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string notr="true">Display STEP import settings warning</string>
+         </property>
+         <property name="text">
+          <string notr="true">Display STEP import settings warning</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+         <property name="tristate">
+          <bool>false</bool>
+         </property>
+         <property name="prefEntry" stdset="0">
+          <cstring>help_warning_enabled</cstring>
+         </property>
+         <property name="prefPath" stdset="0">
+          <cstring>Mod/kicadStepUpGui</cstring>
+         </property>
+        </widget>
+        <widget class="Gui::PrefCheckBox" name="cb_transparency_export_glass">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="geometry">
+          <rect>
+           <x>8</x>
+           <y>245</y>
+           <width>264</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Apply Transparency for 'Glass' Materials:&lt;/p&gt;&lt;p&gt;Force Transparency to STEP model if 'Glass' is found in '.wrl' model&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string notr="true">Apply Transparency for 'Glass' Materials</string>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
+         </property>
+         <property name="tristate">
+          <bool>false</bool>
+         </property>
+         <property name="prefEntry" stdset="0">
+          <cstring>transparency_material_glass_enabled</cstring>
+         </property>
+         <property name="prefPath" stdset="0">
+          <cstring>Mod/kicadStepUpGui</cstring>
+         </property>
+        </widget>
+        <widget class="Gui::PrefCheckBox" name="cb_transparency_export_led">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="geometry">
+          <rect>
+           <x>270</x>
+           <y>245</y>
+           <width>264</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Apply Transparency for 'Led' Materials:&lt;/p&gt;&lt;p&gt;Force Transparency to STEP model if 'Led' is found in '.wrl' model&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string notr="true">Apply Transparency for 'Led' Materials</string>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
+         </property>
+         <property name="tristate">
+          <bool>false</bool>
+         </property>
+         <property name="prefEntry" stdset="0">
+          <cstring>transparency_material_led_enabled</cstring>
+         </property>
+         <property name="prefPath" stdset="0">
+          <cstring>Mod/kicadStepUpGui</cstring>
+         </property>
+        </widget>
        </widget>
        <widget class="QGroupBox" name="mcad_compare">
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>665</y>
-          <width>522</width>
+          <y>720</y>
+          <width>525</width>
           <height>46</height>
          </rect>
         </property>
@@ -1024,7 +1122,7 @@ Allowing or not Loading Multi Parts objects</string>
          <property name="geometry">
           <rect>
            <x>8</x>
-           <y>20</y>
+           <y>25</y>
            <width>463</width>
            <height>20</height>
           </rect>

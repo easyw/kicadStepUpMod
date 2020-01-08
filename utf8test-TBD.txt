@@ -2,6 +2,9 @@ import kicadStepUptools; import importlib; importlib.reload(kicadStepUptools);Fr
 
 import kicadStepUptools; reload(kicadStepUptools)
 
+import tracks; import importlib; importlib.reload(tracks)
+import makefacedxf; import importlib; importlib.reload(makefacedxf)
+
 
 import kicadStepUpCMD; import importlib; importlib.reload(kicadStepUpCMD)
 

@@ -7,7 +7,7 @@
 #
 # WARNING! All changes made in this file will be lost!
 
-__version__ = "v1.0.4"
+__version__ = "v1.0.5"
 
 import FreeCAD, FreeCADGui, os
 from PySide import QtCore, QtGui
@@ -235,13 +235,17 @@ def explode_pcb(pos):
                             else:
                                 docG.getObject(o.Name).Transparency=0
                 elif 'Top' in o.Label and 'TopV' not in o.Label:
-                    o.Placement.Base.z=pos
+                    if hasattr(o,'Placement'):
+                        o.Placement.Base.z=pos
                 elif 'Bot' in o.Label and 'BotV' not in o.Label:
-                    o.Placement.Base.z=-pos
+                    if hasattr(o,'Placement'):
+                        o.Placement.Base.z=-pos
                 elif 'TopV' in o.Label:
-                    o.Placement.Base.z=pos*sc
+                    if hasattr(o,'Placement'):
+                        o.Placement.Base.z=pos*sc
                 elif 'BotV' in o.Label:
-                    o.Placement.Base.z=-pos*sc
+                    if hasattr(o,'Placement'):
+                        o.Placement.Base.z=-pos*sc
                 elif 'topTracks' in o.Label or 'botTracks' in o.Label:
                     if hasattr (o, 'Shape'):
                         if (pos != 0):

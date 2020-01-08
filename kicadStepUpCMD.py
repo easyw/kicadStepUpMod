@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-__ksuCMD_version__='1.8.2'
+__ksuCMD_version__='1.8.6'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -574,6 +574,60 @@ class ksuToolsOffset2D:
 
 FreeCADGui.addCommand('ksuToolsOffset2D',ksuToolsOffset2D())    
 ##
+class ksuToolsExtrude:
+    "ksu tools Extrude Selection"
+    
+    def GetResources(self):
+        mybtn_tooltip ="ksu tools \'Extrude\'\nExtrude selection"
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Part_Extrude.svg') , # the name of a svg file available in the resources
+                     'MenuText': mybtn_tooltip ,
+                     'ToolTip' : mybtn_tooltip}
+ 
+    def __init__(self):
+        self.obj = None
+        self.sub = []
+        self.active = False
+
+    def IsActive(self):
+        if bool(FreeCADGui.Selection.getSelection()) is False:
+            return False
+        return True
+        
+    def Activated(self):
+        sel = FreeCADGui.Selection.getSelectionEx()[0]
+        FreeCADGui.runCommand('Part_Extrude',0)
+
+if FreeCAD.GuiUp:
+    FreeCADGui.addCommand('ksuToolsExtrude',ksuToolsExtrude())
+##
+
+class ksuToolsSkValidate:
+    "ksu tools Sketcher Validate Selection"
+    
+    def GetResources(self):
+        mybtn_tooltip ="ksu tools \'Sketcher Validate\'\nValidate selected Sketch"
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Sketcher_Validate.svg') , # the name of a svg file available in the resources
+                     'MenuText': mybtn_tooltip ,
+                     'ToolTip' : mybtn_tooltip}
+ 
+    def __init__(self):
+        self.obj = None
+        self.sub = []
+        self.active = False
+
+    def IsActive(self):
+        if bool(FreeCADGui.Selection.getSelection()) is False:
+            return False
+        return True
+        
+    def Activated(self):
+        sel = FreeCADGui.Selection.getSelectionEx()[0]
+        FreeCADGui.runCommand('Sketcher_ValidateSketch',0)
+
+if FreeCAD.GuiUp:
+    FreeCADGui.addCommand('ksuToolsSkValidate',ksuToolsSkValidate())
+##
+
 class ksuToolsOpenBoard:
     "ksu tools Open Board object"
  
@@ -2016,13 +2070,46 @@ class ksuToolsSimpleCopy:
                     cp_label=mk_str(obj_tocopy.Label)+u'_sc'
                     if hasattr(FreeCAD.ActiveDocument.getObject(obj_tocopy.Name), "Shape"):
                         FreeCAD.ActiveDocument.addObject('Part::Feature',cp_label).Shape=FreeCAD.ActiveDocument.getObject(obj_tocopy.Name).Shape
-                        FreeCAD.ActiveDocument.ActiveObject.Label=cp_label
-                        if hasattr(FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name),'ShapeColor'):
+                        newObj = FreeCAD.ActiveDocument.ActiveObject
+                        newObjV = FreeCADGui.ActiveDocument.ActiveObject
+                        newObj.Label=cp_label
+                        #FreeCAD.Console.PrintMessage(obj_tocopy.Label);FreeCAD.Console.PrintMessage('\n')
+                        #FreeCAD.Console.PrintMessage(obj_tocopy.TypeId)
+                        #FreeCAD.Console.PrintMessage(obj_tocopy.OutList)
+                        #FreeCAD.Console.PrintMessage(obj_tocopy.TypeId);FreeCAD.Console.PrintMessage('\n')
+                        if obj_tocopy.TypeId == 'App::Part':
+                            for subobj in obj_tocopy.OutList:
+                                #FreeCAD.Console.PrintMessage(subobj.Label);FreeCAD.Console.PrintMessage('\n')
+                                if hasattr(FreeCADGui.ActiveDocument.getObject(subobj.Name),'ShapeColor'):# and ('Origin' not in FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).TypeId):
+                                    # if 'LinkView' in dir(FreeCADGui):
+                                    #     FreeCAD.ActiveDocument.ActiveObject.ViewObject.ShapeColor=getattr(FreeCAD.ActiveDocument.getObject(obj_tocopy.Name).getLinkedObject(True).ViewObject,'ShapeColor',FreeCAD.ActiveDocument.getObject(obj_tocopy.Name).ViewObject.ShapeColor)
+                                    #     FreeCAD.ActiveDocument.ActiveObject.ViewObject.LineColor=getattr(FreeCAD.ActiveDocument.getObject(obj_tocopy.Name).getLinkedObject(True).ViewObject,'LineColor',FreeCAD.ActiveDocument.getObject(obj_tocopy.Name).ViewObject.LineColor)
+                                    #else:
+                                    newObjV.ShapeColor=FreeCADGui.ActiveDocument.getObject(subobj.Name).ShapeColor
+                                    #FreeCAD.Console.PrintMessage(subobj.Label);FreeCAD.Console.PrintMessage(' ShapeColor ' +str(FreeCADGui.ActiveDocument.getObject(subobj.Name).ShapeColor)+ '\n')
+                                    if hasattr(FreeCADGui.ActiveDocument.getObject(subobj.Name),'LineColor'):
+                                        #FreeCAD.Console.PrintMessage(subobj.Label);FreeCAD.Console.PrintMessage(' LineColor ' +str(FreeCADGui.ActiveDocument.getObject(subobj.Name).LineColor)+ '\n')
+                                        newObjV.LineColor=FreeCADGui.ActiveDocument.getObject(subobj.Name).LineColor
+                                        newObjV.PointColor=FreeCADGui.ActiveDocument.getObject(subobj.Name).PointColor
+                                    if hasattr(FreeCADGui.ActiveDocument.getObject(subobj.Name),'DiffuseColor'):
+                                        #FreeCAD.Console.PrintMessage(subobj.Label);FreeCAD.Console.PrintMessage(' DiffuseColor ' +str(FreeCADGui.ActiveDocument.getObject(subobj.Name).DiffuseColor)+ '\n')
+                                        newObjV.DiffuseColor=FreeCADGui.ActiveDocument.getObject(subobj.Name).DiffuseColor
+                                    if hasattr(FreeCADGui.ActiveDocument.getObject(subobj.Name),'Transparency'):
+                                        #FreeCAD.Console.PrintMessage(subobj.Label);FreeCAD.Console.PrintMessage(' Transparency ' +str(FreeCADGui.ActiveDocument.getObject(subobj.Name).Transparency)+ '\n')
+                                        newObjV.Transparency=FreeCADGui.ActiveDocument.getObject(subobj.Name).Transparency
+                        elif hasattr(FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name),'ShapeColor'):# and ('Origin' not in FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).TypeId):
+                            # if 'LinkView' in dir(FreeCADGui):
+                            #     FreeCAD.ActiveDocument.ActiveObject.ViewObject.ShapeColor=getattr(FreeCAD.ActiveDocument.getObject(obj_tocopy.Name).getLinkedObject(True).ViewObject,'ShapeColor',FreeCAD.ActiveDocument.getObject(obj_tocopy.Name).ViewObject.ShapeColor)
+                            #     FreeCAD.ActiveDocument.ActiveObject.ViewObject.LineColor=getattr(FreeCAD.ActiveDocument.getObject(obj_tocopy.Name).getLinkedObject(True).ViewObject,'LineColor',FreeCAD.ActiveDocument.getObject(obj_tocopy.Name).ViewObject.LineColor)
+                            #else:
                             FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).ShapeColor
-                            FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).LineColor
-                            FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).PointColor
-                            FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).DiffuseColor
-                            FreeCADGui.ActiveDocument.ActiveObject.Transparency=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).Transparency
+                            if hasattr(FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name),'LineColor'):
+                                FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).LineColor
+                                FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).PointColor
+                            if hasattr(FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name),'DiffuseColor'):
+                                FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).DiffuseColor
+                            if hasattr(FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name),'Transparency'):
+                                FreeCADGui.ActiveDocument.ActiveObject.Transparency=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).Transparency
                         else:
                             FreeCAD.Console.PrintWarning('missing copy of color attributes')
                         FreeCAD.ActiveDocument.recompute()
@@ -2435,9 +2522,11 @@ def toggle_transparency_subtree(objs):
         else:
             checkinlistcomplete = True
     for obj in totoggle:
+        #FreeCAD.Console.PrintMessage(obj.Label)
         #if 'App::Part' not in obj.TypeId and 'Part::Feature' in obj.TypeId:
         if 'App::Part' not in obj.TypeId and 'Part' in obj.TypeId:
             #if obj.Visibility==True:
+            #FreeCAD.Console.PrintMessage(obj.Label)
             if doc.getObject(obj.Name).Transparency == 0:
                 #obj.Document.getObject(obj.Name).Visibility=False
                 doc.getObject(obj.Name).Transparency = 70
@@ -2462,10 +2551,11 @@ class ksuToolsTransparencyToggle:
             doc=FreeCADGui.ActiveDocument
             for obj in sel:
                 if "App::Part" not in obj.TypeId and "App::LinkGroup" not in obj.TypeId:
-                    if doc.getObject(obj.Name).Transparency == 0:
-                        doc.getObject(obj.Name).Transparency = 70
-                    else:
-                        doc.getObject(obj.Name).Transparency = 0
+                    if hasattr(doc.getObject(obj.Name), 'Transparency'):
+                        if doc.getObject(obj.Name).Transparency == 0:
+                            doc.getObject(obj.Name).Transparency = 70
+                        else:
+                            doc.getObject(obj.Name).Transparency = 0
                 else:
                     toggle_transparency_subtree(FreeCADGui.Selection.getSelection())
         else:

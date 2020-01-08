@@ -362,6 +362,10 @@
 # added Sketches pull&push update
 # added 'stpZ', 'wrz' compressed files support
 # hide main kSU dialog unless when opening a footprint model
+# full import of kicad_pcb allowed
+# generating uid for pcb & containers
+# pcb as solid (removed compsolid)
+# applying transparency in case of LED or GLASS material found in wrl/wrz file model
 # most clean code and comments done
 
 ##todo
@@ -443,12 +447,18 @@ import tempfile, errno
 import re
 import time
 
+import ksu_locator
+
 if (sys.version_info > (3, 0)):  #py3
     import builtins as builtin  #py3
     import gzip as gz
 else:  #py2
     import __builtin__ as builtin #py2
-    import gzip_utf8 as gz
+    try:
+        import gzip_utf8 as gz
+    except:
+        FreeCAD.Console.PrintError("'.stpZ' not supported")
+        pass
 
 import zipfile  as zf
 # sys.path.append('C:\Cad\Progetti_K\3D-FreeCad-tools/')
@@ -485,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.2.1.5"
+___ver___ = "9.5.0.4"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -2659,10 +2669,26 @@ def simple_copy_link(obj): #simple copy with incremental placement
     __shape = Part.getShape(obj,'',needSubElement=False,refine=False)
     FreeCAD.ActiveDocument.addObject('Part::Feature','LinkGroup').Shape=__shape
     nobj = FreeCAD.ActiveDocument.ActiveObject
+    nobjV = FreeCADGui.ActiveDocument.ActiveObject
     nobj.Label=obj.Label
-    nobj.ViewObject.ShapeColor=getattr(obj.getLinkedObject(True).ViewObject,'ShapeColor',nobj.ViewObject.ShapeColor)
-    nobj.ViewObject.LineColor= getattr(obj.getLinkedObject(True).ViewObject,'LineColor' ,nobj.ViewObject.LineColor)
-    nobj.ViewObject.PointColor=getattr(obj.getLinkedObject(True).ViewObject,'PointColor',nobj.ViewObject.PointColor)
+    if obj.TypeId == 'App::Part':
+        for subobj in obj.OutList:
+            if hasattr(FreeCADGui.ActiveDocument.getObject(subobj.Name),'ShapeColor'):
+                nobjV.ShapeColor=FreeCADGui.ActiveDocument.getObject(subobj.Name).ShapeColor
+                if hasattr(FreeCADGui.ActiveDocument.getObject(subobj.Name),'LineColor'):
+                    #FreeCAD.Console.PrintMessage(subobj.Label);FreeCAD.Console.PrintMessage(' LineColor ' +str(FreeCADGui.ActiveDocument.getObject(subobj.Name).LineColor)+ '\n')
+                    nobjV.LineColor=FreeCADGui.ActiveDocument.getObject(subobj.Name).LineColor
+                    nobjV.PointColor=FreeCADGui.ActiveDocument.getObject(subobj.Name).PointColor
+                if hasattr(FreeCADGui.ActiveDocument.getObject(subobj.Name),'DiffuseColor'):
+                    #FreeCAD.Console.PrintMessage(subobj.Label);FreeCAD.Console.PrintMessage(' DiffuseColor ' +str(FreeCADGui.ActiveDocument.getObject(subobj.Name).DiffuseColor)+ '\n')
+                    nobjV.DiffuseColor=FreeCADGui.ActiveDocument.getObject(subobj.Name).DiffuseColor
+                if hasattr(FreeCADGui.ActiveDocument.getObject(subobj.Name),'Transparency'):
+                    #FreeCAD.Console.PrintMessage(subobj.Label);FreeCAD.Console.PrintMessage(' Transparency ' +str(FreeCADGui.ActiveDocument.getObject(subobj.Name).Transparency)+ '\n')
+                    nobjV.Transparency=FreeCADGui.ActiveDocument.getObject(subobj.Name).Transparency
+    else:
+        nobj.ViewObject.ShapeColor=getattr(obj.getLinkedObject(True).ViewObject,'ShapeColor',nobj.ViewObject.ShapeColor)
+        nobj.ViewObject.LineColor= getattr(obj.getLinkedObject(True).ViewObject,'LineColor' ,nobj.ViewObject.LineColor)
+        nobj.ViewObject.PointColor=getattr(obj.getLinkedObject(True).ViewObject,'PointColor',nobj.ViewObject.PointColor)
     FreeCAD.ActiveDocument.recompute()
 
 def simple_cpy_plc(obj,proot): #simple copy with incremental placement
@@ -3910,12 +3936,19 @@ def cfg_read_all():
     else:
         stp_exp_mode = 'onelevel'
     m3D_loading_mode = prefs.GetInt('3D_loading_mode')
-    if m3D_loading_mode == 0:
-        allow_compound = 'True'
+    if m3D_loading_mode == 0: #old Standard
+        #allow_compound = 'True' #old Standard
+        allow_compound = 'Hierarchy' #full hierarchy allowed
+        if 'LinkView' not in dir(FreeCADGui):
+            allow_compound = 'True' #old Standard
+            sayw('Links not allowed... \nfalling from Hierarchy to Compound')
     elif m3D_loading_mode == 1:
         allow_compound = 'Simplified'
-    else:
+    elif m3D_loading_mode == 2:
         allow_compound = 'False' #NotAllowedMultiParts
+    else:
+        #allow_compound = 'Hierarchy' #full hierarchy allowed
+        allow_compound = 'True' #old Standard
     sketch_constraints = prefs.GetInt('sketch_constraints')
     if sketch_constraints == 1:
         addConstraints='all'
@@ -3973,654 +4006,6 @@ def cfg_read_all():
     #stop
     
 ##
-def cfg_read_all_old():
-    global ksu_config_fname, default_ksu_config_ini, applymaterials
-    ##ksu pre-set
-    global models3D_prefix, models3D_prefix2, blacklisted_model_elements, col, colr, colg, colb
-    global bbox, volume_minimum, height_minimum, idf_to_origin, aux_orig
-    global base_orig, base_point, bbox_all, bbox_list, whitelisted_model_elements
-    global fusion, addVirtual, blacklisted_models, exportFusing, min_drill_size
-    global last_fp_path, last_pcb_path, plcmnt, xp, yp, exportFusing, export_board_2step
-    global enable_materials, docking_mode, mat_section, dock_section, compound_section, turntable_section
-    global font_section, ini_vars, num_min_lines, animate_result, allow_compound, font_size, grid_orig
-    global constraints_section, addConstraints, exporting_mode_section, stp_exp_mode, links_importing_mode_section, links_imp_mode
-##
-    regenerate_ini=False
-    if os.path.isfile(ksu_config_fname):
-        say("ksu file \'ksu-config.ini\' exists")
-        ini_content=[];cfg_content=[]
-        #Kicad_Board_elaborated = open(filename, "r").read()[0:]
-        #txtFile = __builtin__.open(ksu_config_fname,"r")
-        #with io.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-        with codecs.open(ksu_config_fname,mode='r', encoding='utf-8') as cfg_file:
-            #text = f.read()
-            cfg_content = cfg_file.readlines() #
-            cfg_file.close()
-        if len(cfg_content) >= num_min_lines:
-            for line in cfg_content:
-                if re.match(r'^\s*$', line): #empty lines
-                    say('line empty')
-                else:
-                    #ini_content.append(make_unicode(line))
-                    ini_content.append(line)
-            #ini_content.append(" ")
-                
-            if any("Materials" in s for s in cfg_content):
-                say ("materials section present")
-            else:
-            #if "Materials" not in content:
-                enable_materials = 1
-                applymaterials = 1
-                say ("missing material section, adding default one")
-                #with __builtin__.open(configFilePath, 'a') as mycfg:
-                #with io.open(ksu_config_fname,'a', encoding='utf-8') as mycfg:
-                with codecs.open(ksu_config_fname,'a', encoding='utf-8') as mycfg:
-                #with __builtin__.open(configFilePath, 'ab') as mycfg:
-                    #mycfg.write(make_unicode(mat_section))
-                    mycfg.write(mat_section)
-                mycfg.close()
-                ini_content=[];cfg_content=[]
-                #with io.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                with codecs.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                #text = f.read()
-                    cfg_content = cfg_file.readlines() #
-                #ini_content = cfg_content
-                for line in cfg_content:
-                    if re.match(r'^\s*$', line): #empty lines
-                        say('line empty')
-                    else:
-                        #ini_content.append(make_unicode(line))
-                        ini_content.append(line)
-            if not any('[turntable]' in s for s in cfg_content):
-            #if 'docking' not in cfg_content:
-                say ("missing turntable section, adding default one")
-                #cfg_content.append(make_unicode(turntable_section)) 
-                cfg_content.append(turntable_section)
-                out_file=ksu_config_fname
-                #with io.open(out_file,'a', encoding='utf-8') as cfg_file_out:
-                with codecs.open(out_file,'a', encoding='utf-8') as cfg_file_out:
-                    #cfg_file_out.write(make_unicode(turntable_section))
-                    cfg_file_out.write(turntable_section)
-                ini_content=[];cfg_content=[]
-                #with io.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                with codecs.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                #text = f.read()
-                    cfg_content = cfg_file.readlines() #
-                #ini_content = cfg_content
-                for line in cfg_content:
-                    if re.match(r'^\s*$', line): #empty lines
-                        say('line empty')
-                    else:
-                        #ini_content.append(make_unicode(line))
-                        ini_content.append(line)
-            else:
-                say ("turntable section present")
-            if not any('[compound]' in s for s in cfg_content):
-            #if 'docking' not in cfg_content:
-                say ("missing compound section, adding default one")
-                #cfg_content.append(make_unicode(compound_section))
-                cfg_content.append(compound_section)
-                out_file=ksu_config_fname
-                #with io.open(out_file,'a', encoding='utf-8') as cfg_file_out:
-                with codecs.open(out_file,'a', encoding='utf-8') as cfg_file_out:
-                    #cfg_file_out.write(make_unicode(compound_section))
-                    cfg_file_out.write(compound_section)
-                ini_content=[];cfg_content=[]
-                #with io.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                with codecs.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                #text = f.read()
-                    cfg_content = cfg_file.readlines() #
-                #ini_content = cfg_content
-                for line in cfg_content:
-                    if re.match(r'^\s*$', line): #empty lines
-                        say('line empty')
-                    else:
-                        #ini_content.append(make_unicode(line))
-                        ini_content.append(line)
-            elif not any(';compound = simplified' in s for s in cfg_content):
-            #if 'docking' not in cfg_content:
-                sayerr ("missing compound section, adding default one")
-                #cfg_content.append(make_unicode(compound_section))
-                cfg_content_new=[]
-                for st in cfg_content:
-                    cfg_content_new.append(st)
-                    if ('[compound]') in st:
-                        cfg_content_new.append(';compound = simplified\n')
-                out_file=ksu_config_fname
-                #with io.open(out_file,'a', encoding='utf-8') as cfg_file_out:
-                #with io.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                with codecs.open(ksu_config_fname,'w', encoding='utf-8') as cfg_file_out:
-                    #cfg_file_out.write( codecs.BOM_UTF8 )
-                    if ';utf-8 coded' not in cfg_content_new[0]:
-                        cfg_file_out.write(u'\ufeff;utf-8 coded: do not edit this line\n')
-                    for line in cfg_content_new:
-                        #cfg_file_out.write(make_unicode(line))
-                        cfg_file_out.write(line)
-                    #for lines in cfg_out:
-                    #    cfg_file_out.write(lines)
-                with codecs.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                #text = f.read()
-                    cfg_content = cfg_file.readlines() #
-                #ini_content = cfg_content
-                for line in cfg_content:
-                    if re.match(r'^\s*$', line): #empty lines
-                        say('line empty')
-                    else:
-                        #ini_content.append(make_unicode(line))
-                        ini_content.append(line)
-            else:
-                say ("compound section present")
-            if not any('[docking]' in s for s in cfg_content):
-            #if 'docking' not in cfg_content:
-                say ("missing docking section, adding default one")
-                #cfg_content.append(u'[docking]\ndkmode = float\n;;docking mode\n;dkmode = left\n;dkmode = right\n;dkmode = float\n')
-                cfg_content.append(dock_section) 
-                out_file=ksu_config_fname
-                #with io.open(out_file,'a', encoding='utf-8') as cfg_file_out:
-                with codecs.open(out_file,'a', encoding='utf-8') as cfg_file_out:
-                    #cfg_file_out.write(make_unicode(dock_section))
-                    cfg_file_out.write(dock_section)
-                ini_content=[];cfg_content=[]
-                #with io.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                with codecs.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                #text = f.read()
-                    cfg_content = cfg_file.readlines() #
-                #ini_content = cfg_content
-                for line in cfg_content:
-                    if re.match(r'^\s*$', line): #empty lines
-                        say('line empty')
-                    else:
-                        #ini_content.append(make_unicode(line))
-                        ini_content.append(line)
-            else:
-                say ("docking section present")
-            if not any('[sketch_constraints]' in s for s in cfg_content):
-            #if 'docking' not in cfg_content:
-                sayerr ("missing Constraints section, adding default one")
-                cfg_content.append(constraints_section) 
-                out_file=ksu_config_fname
-                #with io.open(out_file,'a', encoding='utf-8') as cfg_file_out:
-                with codecs.open(out_file,'a', encoding='utf-8') as cfg_file_out:
-                    #cfg_file_out.write(make_unicode(constraints_section))
-                    cfg_file_out.write(constraints_section)
-                ini_content=[];cfg_content=[]
-                #with io.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                with codecs.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                #text = f.read()
-                    cfg_content = cfg_file.readlines() #
-                #ini_content = cfg_content
-                for line in cfg_content:
-                    if re.match(r'^\s*$', line): #empty lines
-                        say('line empty')
-                    else:
-                        #ini_content.append(make_unicode(line))
-                        ini_content.append(line)
-            else:
-                say ("constraints section present")
-            if not any('[step_exporting_mode]' in s for s in cfg_content):
-            #if 'docking' not in cfg_content:
-                sayerr ("missing Exporting Mode section, adding default one")
-                cfg_content.append(exporting_mode_section) 
-                out_file=ksu_config_fname
-                #with io.open(out_file,'a', encoding='utf-8') as cfg_file_out:
-                with codecs.open(out_file,'a', encoding='utf-8') as cfg_file_out:
-                    #cfg_file_out.write(make_unicode(constraints_section))
-                    cfg_file_out.write(exporting_mode_section)
-                ini_content=[];cfg_content=[]
-                #with io.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                with codecs.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                #text = f.read()
-                    cfg_content = cfg_file.readlines() #
-                #ini_content = cfg_content
-                for line in cfg_content:
-                    if re.match(r'^\s*$', line): #empty lines
-                        say('line empty')
-                    else:
-                        #ini_content.append(make_unicode(line))
-                        ini_content.append(line)
-            else:
-                say ("exporting mode section present")
-            if not any('[links_importing_mode]' in s for s in cfg_content):
-            #if 'docking' not in cfg_content:
-                sayerr ("missing Importing Mode section, adding default one")
-                cfg_content.append(links_importing_mode_section) 
-                out_file=ksu_config_fname
-                #with io.open(out_file,'a', encoding='utf-8') as cfg_file_out:
-                with codecs.open(out_file,'a', encoding='utf-8') as cfg_file_out:
-                    #cfg_file_out.write(make_unicode(constraints_section))
-                    cfg_file_out.write(links_importing_mode_section)
-                ini_content=[];cfg_content=[]
-                #with io.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                with codecs.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                #text = f.read()
-                    cfg_content = cfg_file.readlines() #
-                #ini_content = cfg_content
-                for line in cfg_content:
-                    if re.match(r'^\s*$', line): #empty lines
-                        say('line empty')
-                    else:
-                        #ini_content.append(make_unicode(line))
-                        ini_content.append(line)
-            else:
-                say ("importing mode section present")
-            if not any('[fonts]' in s for s in cfg_content):
-            #if 'docking' not in cfg_content:
-                say ("missing fonts section, adding default one")
-                #cfg_content.append(u'[docking]\ndkmode = float\n;;docking mode\n;dkmode = left\n;dkmode = right\n;dkmode = float\n')
-                cfg_content.append(font_section) 
-                out_file=ksu_config_fname
-                #with io.open(out_file,'a', encoding='utf-8') as cfg_file_out:
-                with codecs.open(out_file,'a', encoding='utf-8') as cfg_file_out:
-                    #cfg_file_out.write(make_unicode(font_section))
-                    cfg_file_out.write(font_section)
-                ini_content=[];cfg_content=[]
-                #with io.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                with codecs.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                #text = f.read()
-                    cfg_content = cfg_file.readlines() #
-                #ini_content = cfg_content
-                for line in cfg_content:
-                    if re.match(r'^\s*$', line): #empty lines
-                        say('line empty')
-                    else:
-                        #ini_content.append(make_unicode(line))
-                        ini_content.append(line)
-            else:
-                say ("font section present")
-            if not any('usegridorigin' in s for s in cfg_content):
-            #if 'docking' not in cfg_content:
-                sayerr ("missing useGridOrigin, adding default one")
-                #cfg_content.append(make_unicode(compound_section))
-                cfg_content_new=[]
-                for st in cfg_content:
-                    cfg_content_new.append(st)
-                    if ('[Placement]') in st:
-                        cfg_content_new.append(';placement = usegridorigin\n')
-                out_file=ksu_config_fname
-                #with io.open(out_file,'a', encoding='utf-8') as cfg_file_out:
-                #with io.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                with codecs.open(ksu_config_fname,'w', encoding='utf-8') as cfg_file_out:
-                    #cfg_file_out.write( codecs.BOM_UTF8 )
-                    if ';utf-8 coded' not in cfg_content_new[0]:
-                        cfg_file_out.write(u'\ufeff;utf-8 coded: do not edit this line\n')
-                    for line in cfg_content_new:
-                        #cfg_file_out.write(make_unicode(line))
-                        cfg_file_out.write(line)
-                    #for lines in cfg_out:
-                    #    cfg_file_out.write(lines)
-                with codecs.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                #text = f.read()
-                    cfg_content = cfg_file.readlines() #
-                #ini_content = cfg_content
-                for line in cfg_content:
-                    if re.match(r'^\s*$', line): #empty lines
-                        say('line empty')
-                    else:
-                        #ini_content.append(make_unicode(line))
-                        ini_content.append(line)
-            else:
-                say ("useGridOrigin option present")
-            ini_content=[];cfg_content=[]
-            #with io.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-            with codecs.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-                #text = f.read()
-                cfg_content = cfg_file.readlines() #
-                cfg_file.close()
-            for line in cfg_content: #stripping empty lines
-                if not re.match(r'^\s*$', line): #not empty lines
-                    #ini_content.append(make_unicode(line))
-                    ini_content.append(line)
-            #with io.open(ksu_config_fname,'w', encoding='utf-8') as cfg_file:
-            with codecs.open(ksu_config_fname,'w', encoding='utf-8') as cfg_file:
-            #with __builtin__.open(ksu_config_fname,'wb') as myfile:
-                #cfg_file.write( codecs.BOM_UTF8 )
-                if ';utf-8 coded' not in cfg_content[0]:
-                    cfg_file.write(u'\ufeff;utf-8 coded: do not edit this line\n')
-                for line in ini_content:
-                    #cfg_file.write(make_unicode(line))
-                    cfg_file.write(line)
-                cfg_file.close()
-            data=u""
-            for item in ini_content:
-                if item.startswith("["):
-                    data+="<b><font color=GoldenRod>"+item+"</font></b><br>"
-                elif item.startswith(";"):
-                    data+="<font color=blue>"+item+"</font><br>"
-                else:
-                    data+="<font color=black>"+item+"</font><br>"
-            data_ini_content=data
-            #for lines in cfg_out:
-            #    cfg_file_out.write(lines)
-            #say(ini_content)
-            for line in ini_content:
-                line = line.strip() #removes all whitespace at the start and end, including spaces, tabs, newlines and carriage returns
-                if len(line)>0:
-                    if line[0] != ';' and line[0] != '[':
-                        if '=' in line:
-                            data = line.split('=', 1)
-                            #sayw(len(data))
-                            if len(data) == 1:
-                                name = make_unicode(data[0].strip())
-                                key_value = u"" #None
-                            else:
-                                name = make_unicode(data[0].strip())
-                                key_value = make_unicode(data[1].strip())
-                            # sayerr(len(ini_vars))
-                            # sayw(str(find_name(name))+' -> '+name+' -> '+key_value)
-                            ini_vars[find_name(name)]= key_value
-            # sayw(ini_vars)
-            # sayw(len(ini_vars))
-            # stop
-            #sayerr(ini_vars[11])
-            #filename=ini_vars[11]+u'\CDT7300-3V.kicad_mod'
-            #if os.path.exists(filename):
-            #    sayerr('found!')
-            #    sayw(filename)
-            #else:
-            #    sayerr(filename)
-        else:
-            regenerate_ini=True
-    else:
-        regenerate_ini=True
-    if regenerate_ini:
-        say("ksu file doesn't exist")
-        say("making default")
-        #with io.open(ksu_config_fname,'w', encoding='utf-8') as cfg_file:
-        with codecs.open(ksu_config_fname,'w', encoding='utf-8') as cfg_file:
-        #with __builtin__.open(ksu_config_fname,'wb') as myfile:
-            #cfg_file.write( codecs.BOM_UTF8 )
-            cfg_file.write(u'\ufeff;utf-8 coded: do not edit this line\n')
-            #cfg_file.write(make_unicode(default_ksu_config_ini))
-            cfg_file.write(default_ksu_config_ini)
-            cfg_file.close()
-        ini_content=[]
-        #with io.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-        with codecs.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-        #    #text = f.read()
-            cfg_content = cfg_file.readlines() #
-            cfg_file.close()
-        ini_content = cfg_content
-        cfg_out=u""
-        for line in cfg_content:
-            line = line.strip() #removes all whitespace at the start and end, including spaces, tabs, newlines and carriage returns
-            cfg_out=cfg_out+line+'\n'#+os.linesep
-            if len(line)>0:
-                if line[0] != ';' and line[0] != '[':
-                    if '=' in line:
-                        data = line.split('=', 1)
-                        #sayw(len(data))
-                        if len(data) == 1:
-                            name = make_unicode(data[0].strip())
-                            key_value = u"" #None
-                        else:
-                            name = make_unicode(data[0].strip())
-                            key_value = make_unicode(data[1].strip())
-                        #sayw(str(find_name(name))+' -> '+name+' -> '+key_value)
-                        ini_vars[find_name(name)]= key_value
-        #sayw(ini_vars)
-        data=u""
-        for item in ini_content:
-            if item.startswith("["):
-                data+="<b><font color=GoldenRod>"+item+"</font></b><br>"
-            elif item.startswith(";"):
-                data+="<font color=blue>"+item+"</font><br>"
-            else:
-                data+="<font color=black>"+item+"</font><br>"
-        data_ini_content=data
-        msg="""<b>kicad StepUp ver. """
-        msg+=___ver___+"</b><br>"
-        msg+="default ksu config file created<br>"
-        msg+="<b>"+ksu_config_fname+"</b>"
-        msg+="<br>adapt your <b>3D model DIR path</b> in config file<br>"
-        msg+="see <b><font color=GoldenRod>[prefix3D]</font></b> section"
-        QtGui.QApplication.restoreOverrideCursor()
-        reply = QtGui.QMessageBox.information(None,"Info ...",msg)
-    ###
-    models3D_prefix = ''
-    blacklisted_model_elements=''
-    #col=''; col='0.0,0.5,0.0,green';  # color
-    col=''; col='0.0,0.0,1.0,blue';  # color
-    bbox=0
-    #(0.6,0.4,0.2) brown
-    volume_minimum=0 #0.8  ##1 #mm^3, 0 skipped #global var default
-    height_minimum=0 #0.8  ##1 #mm, 0 skipped   #global var default
-    ## to debug quickly put show_messages=False
-    ### from release 6091 this flag enables the option to place IDF exported to origin
-    idf_to_origin=True
-    #idf_to_origin=False
-    aux_orig=0;base_orig=0;base_point=0; grid_orig=0
-    bbox_all=0; bbox_list=0; whitelisted_model_elements=''
-    fusion=False; addVirtual=0; enable_materials=0
-    #configParser.readfp(codecs.open(configFilePath, 'rb', 'utf8'))
-    models3D_prefix = ini_vars[1] #configParser.get('prefix3D', 'prefix3D_1')
-    #models3D_prefix2=u""
-    #try:
-    #    models3D_prefix2 = configParser.get('prefix3D', 'prefix3D_2')
-    #    say("prefix3D_2 checking")
-    #    if len (models3D_prefix2) > 0:
-    #        say("prefix3D_2 found "+ models3D_prefix2)
-    #        if not models3D_prefix2.endswith('/'):
-    #            if not models3D_prefix2.endswith('\\'):
-    #                models3D_prefix2+='/'
-    #except:
-    #    sayw("prefix3D_2 not found")
-    #    pass
-    models3D_prefix2=ini_vars[2]
-    if len (models3D_prefix2) > 0:
-        say("prefix3D_2 found "+ models3D_prefix2)
-        if not models3D_prefix2.endswith('/'):
-            if not models3D_prefix2.endswith('\\'):
-                models3D_prefix2+='/'
-    #if not models3D_prefix.endswith('/'):
-    #    if not models3D_prefix.endswith('\\'):
-    #        models3D_prefix+='/'
-    #say(models3D_prefix)
-    pcb_color = ini_vars[3] #configParser.get('PcbColor', 'pcb_color')
-    bklist = ini_vars[4] #configParser.get('Blacklist', 'bklist')
-    bbox_opt = ini_vars[5] #configParser.get('BoundingBox', 'bbox')
-    plcmnt = ini_vars[6] #configParser.get('Placement', 'placement')
-    virtual = ini_vars[7] #configParser.get('Virtual', 'virt')
-    exportFusing = ini_vars[8] #configParser.get('ExportFuse', 'exportFusing')
-    min_drill_size = float(ini_vars[9]) #configParser.get('minimum_drill_size', 'min_drill_size'))
-    last_pcb_path = ini_vars[10] #configParser.get('last_pcb_path', 'last_pcb_path')
-    last_fp_path = ini_vars[11] #configParser.get('last_footprint_path', 'last_fp_path') 
-    export2S = ini_vars[12] #configParser.get('export', 'export_to_STEP') 
-    enablematerials = ini_vars[13] #configParser.get('Materials', 'mat')    
-    if 'enabled' in ini_vars[14]:
-        animate_result = True
-    else:
-        animate_result = False
-    if 'disallowed' in ini_vars[15]:
-        allow_compound = 'False'
-    elif 'simplified' in ini_vars[15]:
-        allow_compound = 'Simplified'   
-    else:
-        allow_compound = 'True'
-    docking_mode = ini_vars[16]
-    font_size = int(ini_vars[17])
-    stp_exp_mode = ini_vars[18]
-    links_imp_mode = ini_vars[19]
-    
-    add_constraints_val = ini_vars[0]  # find_name default value
-    
-    #sayerr(links_imp_mode)
-    #print add_constraints_val
-    #stop
-    if 'links' in links_imp_mode:
-        links_imp_mode = 'links_allowed'
-    else:
-        links_imp_mode = 'links_not_allowed'
-    if 'hierarchy' in stp_exp_mode:
-        stp_exp_mode = 'hierarchy'
-    elif 'flat' in stp_exp_mode:
-        stp_exp_mode = 'flat'
-    elif 'onelevel' in stp_exp_mode:
-        stp_exp_mode = 'onelevel'
-    if "yes" in export2S:
-        export_board_2step=True
-    else:
-        export_board_2step=False
-    if bklist.find('none') !=-1:
-        blacklisted_model_elements=''
-    elif bklist.find('volume') !=-1:
-        vval=bklist.strip('\r\n')
-        vvalue=vval.split("=")
-        volume_minimum=float(vvalue[1])
-        #reply = QtGui.QMessageBox.information(None,"info ...","volume "+str(volume_minimum))
-    elif bklist.find('height') !=-1:
-        vval=bklist.strip('\r\n')
-        vvalue=vval.split("=")
-        height_minimum=float(vvalue[1])
-        #reply = QtGui.QMessageBox.information(None,"info ...","height "+str(height_minimum))
-    else:
-        blacklisted_model_elements=bklist.strip('\r\n')
-        #say(bklist);
-        blacklisted_models=blacklisted_model_elements.split(",")
-        #say(blacklisted_models)
-    col=pcb_color.strip('\r\n')
-    if bbox_opt.upper().find('ALL') !=-1:
-        bbox_all=1
-        whitelisted_model_elements=''
-    else:
-        if bbox_opt.upper().find('LIST') !=-1:
-            bbox_list=1
-            whitelisted_model_elements=bbox_opt.strip('\r\n')
-            #whitelisted_models=whitelisted_model_elements.split(",")        
-    if plcmnt.lower().find('auxorigin') !=-1:
-        aux_orig=1
-        #whitelisted_model_elements=''
-    if plcmnt.lower().find('baseorigin') !=-1:
-        base_orig=1
-    if plcmnt.lower().find('basepoint') !=-1:
-        base_point=1
-        basepoint=plcmnt.strip('\r\n')
-        coords_BP=basepoint.split(";")
-        xp=float(coords_BP[1]);yp=float(coords_BP[2])
-    if plcmnt.lower().find('gridorigin') !=-1:
-        grid_orig=1
-    if plcmnt.lower().find('autoadjust') !=-1:
-        idf_to_origin=False
-    if virtual.lower().find('addvirtual') !=-1:
-        addVirtual=1
-    if exportFusing.lower().find('fuseall') !=-1:
-        fusion=True
-    if enablematerials.lower().find('enablematerials') !=-1:
-        enable_materials=1
-    if add_constraints_val.lower().find('all') !=-1:
-        addConstraints='all'
-    elif add_constraints_val.lower().find('coincident') !=-1:
-        addConstraints='coincident'
-    elif add_constraints_val.lower().find('none') !=-1:
-        addConstraints='none'
-    else:
-        addConstraints='all'
-    say('3D models prefix='+models3D_prefix)
-    say('3D models prefix2='+models3D_prefix2)
-    say('pcb color='+col)
-    #cfg_parameters.append(models3D_prefix)
-    #cfg_parameters.append(col)
-    say('blacklist modules: '+blacklisted_model_elements)
-    #cfg_parameters.append(blacklisted_model_elements)
-    say('volume: '+str(volume_minimum)+' heigh: '+str(height_minimum))
-    #cfg_parameters.append(volume_minimum)
-    say('bounding box option: '+str(bbox_all)+' whitelist: '+whitelisted_model_elements)
-    #cfg_parameters.append(bbox_all);cfg_parameters.append(whitelisted_model_elements)
-    say('placement board @ '+plcmnt); say("idf_to_origin: "+ str(idf_to_origin))
-    say('last fp path: '+last_fp_path)
-    say('last brd path: '+last_pcb_path)
-    #cfg_parameters.append(plcmnt);cfg_parameters.append(last_fp_path)
-    #cfg_parameters.append(last_pcb_path)
-    say('virtual models: '+virtual)
-    say('export fusing option: '+exportFusing)
-    #cfg_parameters.append(virtual);cfg_parameters.append(exportFusing)
-    say ('minimum drill size: '+str(min_drill_size)+'mm')
-    say ('export to STEP: '+str(export_board_2step))
-    say ('STEP exporting mode: '+str(stp_exp_mode))
-    say ('Links importing mode: '+str(links_imp_mode))
-
-    if enable_materials==1:
-        say ("enable materials: True")
-    else:
-        say ("enable materials: False")
-    say ('turntable: '+str(animate_result))
-    say ('compound allowed: '+str(allow_compound))
-    say ('docking mode: '+docking_mode)
-    say ('constraints mode: '+addConstraints)
-    #say ('fonts size '+str(font_size))
-    #cfg_parameters.append(min_drill_size);
-    ## color
-    #FreeCADGui.ActiveDocument.getObject("Board_outline").ShapeColor = (0.3333,0.3333,0.4980)
-    col= col.split(',')
-    colr=float(col[0]);colg=float(col[1]);colb=float(col[2])
-    ##cfg_parameters = (models3D_prefix,blacklisted_model_elements,col,bbox,volume_minimum,height_minimum
-    #cfg_parameters.append(colr);cfg_parameters.append(colg);cfg_parameters.append(colb)
-    #return cfg_parameters    
-    
-    sayw("kicad StepUp version "+str(___ver___))
-    #FC_majorV,FC_minorV,FC_git_Nbr=getFCversion()
-    #sayw('FC Version '+str(FC_majorV)+str(FC_minorV)+"-"+str(FC_git_Nbr))  
-    ###
-    return data_ini_content
-#
-
-def cfg_update_all_old():
-    global ksu_config_fname, default_ksu_config_ini
-    ##ksu pre-set
-    global models3D_prefix, models3D_prefix2, blacklisted_model_elements, col, colr, colg, colb
-    global bbox, volume_minimum, height_minimum, idf_to_origin, aux_orig
-    global base_orig, base_point, bbox_all, bbox_list, whitelisted_model_elements
-    global fusion, addVirtual, blacklisted_models, exportFusing, min_drill_size
-    global last_fp_path, last_pcb_path, plcmnt, xp, yp, exportFusing, export_board_2step
-    global enable_materials, docking_mode, mat_section, dock_section
-    global ini_vars, num_min_lines, animate_result, allow_compound, font_size, grid_orig
-
-##
-    #with io.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-    with codecs.open(ksu_config_fname,'r', encoding='utf-8') as cfg_file:
-        #text = f.read()
-        cfg_content = cfg_file.readlines() #
-    cfg_out=[]
-    for line in cfg_content:
-        line = line.strip() #removes all whitespace at the start and end, including spaces, tabs, newlines and carriage returns
-        if len(line)>0:
-            if line[0] != ';' and line[0] != '[':
-                if '=' in line:
-                    data = line.split('=', 1)
-                    #sayw(len(data))
-                    if len(data) == 1:
-                        name = data[0].strip()
-                        key_value = u"" #None
-                    else:
-                        name = data[0].strip()
-                        key_value = data[1].strip()
-                    key_value = ini_vars[find_name(name)]
-                    #say(name+' -> '+key_value)
-                    #cfg_out.append(make_unicode(name)+u' = '+make_unicode(key_value)+u'\n')
-                    cfg_out.append(make_unicode(name+u' = '+key_value+u'\n'))
-                    # if find_name(name)== 2:
-                    #     filename=key_value+u'\can-term-r2-test.kicad_pcb'
-                    #     if os.path.exists(filename):
-                    #         sayerr('found!')
-                    #         sayw(filename)
-                    #     else:
-                    #         sayerr(filename)
-            else:
-                #cfg_out.append(make_unicode(line+u'\n'))
-                if ';utf-8 coded' not in line:
-                    cfg_out.append(line+u'\n')
-    #sayerr(cfg_out)
-    #with io.open(ksu_config_fname,'w', encoding='utf-8') as cfg_file_out:
-    with codecs.open(ksu_config_fname,'w', encoding='utf-8') as cfg_file_out:
-        #cfg_file_out.write( codecs.BOM_UTF8 )
-        if ';utf-8 coded' not in cfg_out[0]:
-            cfg_file_out.write(u'\ufeff;utf-8 coded: do not edit this line\n')
-        for line in cfg_out:
-            #cfg_file_out.write(make_unicode(line))
-            cfg_file_out.write(line)
-        #for lines in cfg_out:
-        #    cfg_file_out.write(lines)
-
-#
 
 #ini_content=read_ini_file()
 ini_content=cfg_read_all()
@@ -4720,6 +4105,10 @@ def reset_prop_shapes(obj,doc,App,Gui):
     #FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(obj.Name).PointColor
     #FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.getObject(obj.Name).DiffuseColor
     new_label=make_string(obj.Label)
+    #if (obj.TypeId == 'App::Part'):
+    #    removesubtree(obj)
+    #else:
+    #    FreeCAD.ActiveDocument.removeObject(obj.Name)
     FreeCAD.ActiveDocument.removeObject(obj.Name)
     FreeCAD.ActiveDocument.recompute()
     FreeCAD.ActiveDocument.ActiveObject.Label=new_label
@@ -4930,7 +4319,7 @@ def Display_info(blacklisted_models):
     if animate_result==True and apply_reflex==True:  #(apply_reflex==True):
         doc=FreeCAD.ActiveDocument
         for obj in doc.Objects:
-            if (obj.Label!="Board_Geoms") and (obj.Label!="Step_Models") and (obj.Label!="Step_Virtual_Models")\
+            if ("Board_Geoms" not in obj.Label) and ("Step_Models" not in obj.Label) and ("Step_Virtual_Models" not in obj.Label)\
               and (obj.TypeId != "App::Line") and (obj.TypeId != "App::Plane") and (obj.TypeId != "App::Origin")\
               and (obj.TypeId != "App::Part"):
                 if show_data:
@@ -5037,14 +4426,14 @@ def Export2MCAD(blacklisted_model_elements):
     global height_minimum, volume_minimum, idf_to_origin, ksu_config_fname
     global board_base_point_x, board_base_point_y, real_board_pos_x, real_board_pos_y
     global animate_result, pcb_path, addVirtual, use_AppPart, force_oldGroups, stp_exp_mode, links_imp_mode
-    global use_Links
+    global use_Links, fname_sfx
     say('exporting to MCAD')
     ## exporting
     __objs__=[]
     doc=FreeCAD.ActiveDocument
     for obj in doc.Objects:
         # do what you want to automate
-        if (obj.Label!="Board_Geoms") and (obj.Label!="Step_Models") and (obj.Label!="Step_Virtual_Models")\
+        if ("Board_Geoms" not in obj.Label) and ("Step_Models" not in obj.Label) and ("Step_Virtual_Models" not in obj.Label)\
            and (obj.TypeId != "App::Line") and (obj.TypeId != "App::Plane") and (obj.TypeId != "App::Origin")\
            and (obj.TypeId != "App::Part") and (obj.TypeId != "Sketcher::SketchObject"):
             FreeCADGui.Selection.addSelection(obj)
@@ -5164,13 +4553,13 @@ def Export2MCAD(blacklisted_model_elements):
         __obtoexp__=[]
         # FreeCADGui.Selection.removeSelection(obj)
         # FreeCADGui.Selection.addSelection(doc.getObject("Board"))
-        __obtoexp__.append(doc.getObject("Board"))
+        __obtoexp__.append(doc.getObject("Board"+fname_sfx))
         ImportGui.export(__obtoexp__,fpath)
         del __obtoexp__
     elif (stp_exp_mode == 'onelevel') or (stp_exp_mode == 'hierarchy' and fcb):
         sayw('exporting ONE level hierarchy')
         FreeCADGui.Selection.removeSelection(obj)
-        FreeCADGui.Selection.addSelection(doc.getObject("Board"))
+        FreeCADGui.Selection.addSelection(doc.getObject("Board"+ fname_sfx))
         try:
             import kicadStepUpCMD
         except:
@@ -5400,7 +4789,8 @@ def create_compound(count,modelnm):  #create compound function when a multipart 
         #print (sel[lsel-1].Label)
         #for s in sel:
         #    print(s.Label)
-        #sayw(str(objs_to_remove))
+        #tobeimproved for App:Links
+        # sayw(str(objs_to_remove))
         #stop
         #mycompound_new=FreeCAD.activeDocument().ActiveObject
         #sayw (sel.Type)
@@ -5412,16 +4802,12 @@ def create_compound(count,modelnm):  #create compound function when a multipart 
             mycompound=FreeCAD.activeDocument().ActiveObject
             FreeCAD.ActiveDocument.recompute()
             removesubtree([objs_to_remove[0]])
-        elif 'Compound' in objs_to_remove[0].TypeId: #new release will load already a compound
-            for Obj in objs_to_remove:
-                if 'Compound' in Obj.TypeId:
-                    nbr_cmpd+=1
-            if nbr_cmpd == 1:
-                mycompound=FreeCAD.activeDocument().getObject(objs_to_remove[0].Name)
-                #FreeCADGui.Selection.addSelection(mycompound)
-                sayw('single Compound part')
-        #print sel[0].TypeId
-        #stop
+        elif 'LinkView' in dir(FreeCADGui):
+            if 'App::Part' in objs_to_remove[lotr-1].TypeId:  #from FC 0.17-12090 multipart STEPs are loded as App::Part and have a list inverted
+                simple_copy_link(objs_to_remove[lotr-1])
+                mycompound=FreeCAD.activeDocument().ActiveObject
+                FreeCAD.ActiveDocument.recompute()
+                removesubtree([objs_to_remove[lotr-1]])
         elif 'App::Part' in objs_to_remove[0].TypeId:  #from FC 0.17-10647 multipart STEPs are loded as App::Part
             sc_list=[]
             recurse_node(objs_to_remove[0],objs_to_remove[0].Placement, sc_list)
@@ -5444,16 +4830,19 @@ def create_compound(count,modelnm):  #create compound function when a multipart 
             #FreeCADGui.Selection.addSelection(FreeCAD.activeDocument().ActiveObject)
             FreeCAD.ActiveDocument.recompute()
             #simple_copy(FreeCAD.activeDocument().ActiveObject)
+        
+        
         elif 'App::Part' in objs_to_remove[lotr-1].TypeId:  #from FC 0.17-12090 multipart STEPs are loded as App::Part and have a list inverted
             sc_list=[]
             recurse_node(objs_to_remove[lotr-1],objs_to_remove[lotr-1].Placement, sc_list)
         #else:  #from FC 0.17-10647 multipart STEPs are loded as App::Part
             sc_list_compound=[]
             for o in sc_list:
-                if 'Part' in o.TypeId and 'App::Part' not in o.TypeId:
+                if 'Part' in o.TypeId and 'App::Part' not in o.TypeId and 'Compound' not in o.TypeId:
                     sc_list_compound.append(o)
             FreeCAD.ActiveDocument.recompute()
             #sayw(sc_list_compound)
+            #say('Part container found')
             #stop
             FreeCAD.activeDocument().addObject("Part::Compound",objs_to_remove[lotr-1].Label+"_mp")
             FreeCAD.activeDocument().ActiveObject.Links = sc_list_compound #[FreeCAD.activeDocument().Part__Feature,FreeCAD.activeDocument().Shape,]
@@ -5468,6 +4857,16 @@ def create_compound(count,modelnm):  #create compound function when a multipart 
             #FreeCADGui.Selection.addSelection(FreeCAD.activeDocument().ActiveObject)
             FreeCAD.ActiveDocument.recompute()
             #simple_copy(FreeCAD.activeDocument().ActiveObject)
+        elif 'Compound' in objs_to_remove[0].TypeId: #new release will load already a compound
+            for Obj in objs_to_remove:
+                if 'Compound' in Obj.TypeId:
+                    nbr_cmpd+=1
+            if nbr_cmpd == 1:
+                mycompound=FreeCAD.activeDocument().getObject(objs_to_remove[0].Name)
+                #FreeCADGui.Selection.addSelection(mycompound)
+                sayw('single Compound part')
+        #print sel[0].TypeId
+        #stop
         else:    
         #if nbr_cmpd > 1 or nbr_cmpd == 0:
         #if 'App::Part' not in sel[0].TypeId:
@@ -5516,11 +4915,108 @@ def create_compound(count,modelnm):  #create compound function when a multipart 
         #stop
         FreeCADGui.Selection.clearSelection()
 ###
+
+def find_top_container(objs_list):
+    '''searching for top level Part container'''
+    ap_list = []
+    cp_list = []
+    ag_list = []
+    for o in objs_list:
+        #say(o.Label)
+        if o.TypeId == 'App::Part':
+            ap_list.append(o)
+        elif o.TypeId == 'Part::Compound2':
+            cp_list.append(o)
+        elif o.TypeId == 'App::LinkGroup':
+            ag_list.append(o)
+    top_ap=None
+    top_cp=None
+    for ap in ap_list:
+        if len(ap.InListRecursive) == 0:
+            top_ap = ap
+            break
+    #say(str(ap_list));stop
+    if top_ap is not None:
+        say(top_ap.Label)
+        sayw('multi Part found! ...')
+        return top_ap
+    else:
+        for cp in cp_list:
+            if len(cp.InListRecursive) == 0:
+                top_cp = cp
+                say(top_cp.Label)
+                sayw('multi Compound found! ...')
+                break
+    if top_cp is not None:
+        return top_cp
+    else:
+        for ag in ag_list:
+            if len(ag.InListRecursive) == 0:
+                top_ag = ag
+                say(top_ag.Label)
+                sayw('multi LinkGroup found! ...')
+                break
+        return top_ag
+##
+
+def check_wrl_transparency(step_module):
+    prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+    step_transparency = 0
+    Led_enabled = prefs.GetBool('transparency_material_led_enabled')
+    Glass_enabled = prefs.GetBool('transparency_material_glass_enabled')
+    if Led_enabled or Glass_enabled:
+        #sayw('force transparency for glass or led materials'
+        if step_module.lower().endswith('wrl'):
+            if os.path.exists(step_module):  # a wrl model could be missing
+                read_mode = 'r'
+                if (sys.version_info > (3, 0)):  #py3
+                    read_mode = 'rb'
+                    LedM=b'material USE LED'
+                    GlassM=b'material USE GLASS'
+                else:
+                    read_mode = 'r'
+                    LedM='material USE LED'
+                    GlassM='material USE GLASS'
+                with builtin.open(step_module, read_mode) as f:
+                    #FreeCAD.Console.PrintError(step_module)
+                    #FreeCAD.Console.PrintError(' WRL MATERIALS\n')
+                    model_content = f.read()
+                    if Led_enabled and LedM in model_content:
+                        sayw('force transparency for led materials')
+                        step_transparency = 30
+                    if Glass_enabled and GlassM in model_content:
+                        sayw('force transparency for glass materials')
+                        step_transparency = 70
+        elif step_module.lower().endswith('wrz'):
+            read_mode = 'r'
+            if (sys.version_info > (3, 0)):  #py3
+                read_mode = 'rb'
+                LedM=b'material USE LED'
+                GlassM=b'material USE GLASS'
+            else:
+                read_mode = 'r'
+                LedM='material USE LED'
+                GlassM='material USE GLASS'
+            try:
+                with gz.open(step_module, read_mode) as f:
+                    model_content = f.read()
+                    #FreeCAD.Console.PrintError(model_content)
+                    if Led_enabled and LedM in model_content:
+                        sayw('force transparency for led materials')
+                        step_transparency = 30
+                    if Glass_enabled and GlassM in model_content:
+                        sayw('force transparency for glass materials')
+                        step_transparency = 70
+            except:
+                step_transparency = 0
+                sayerr('wrz transparency NOT supported')
+    return step_transparency
+##
 def Load_models(pcbThickness,modules):
     global off_x, off_y, volume_minimum, height_minimum, bbox_all, bbox_list
     global whitelisted_model_elements, models3D_prefix, models3D_prefix2, last_pcb_path, full_placement
     global allow_compound, compound_found, bklist, force_transparency, warning_nbr, use_AppPart
-    global conv_offs, use_Links, links_imp_mode, use_pypro, use_LinkGroups
+    global conv_offs, use_Links, links_imp_mode, use_pypro, use_LinkGroups, fname_sfx
     
     #say (modules)
     missing_models = ''
@@ -5535,6 +5031,13 @@ def Load_models(pcbThickness,modules):
     modelTop_nbr=0
     modelBot_nbr=0
     mod_cnt=0
+    top_name='Top'+fname_sfx
+    bot_name='Bot'+fname_sfx
+    topV_name='TopV'+fname_sfx
+    botV_name='BotV'+fname_sfx
+    stepM_name='Step_Models'+fname_sfx
+    stepV_name='Step_Virtual_Models'+fname_sfx
+                            
     for i in range(len(modules)):
         step_module=modules[i][0]
         module_container = step_module
@@ -5660,6 +5163,10 @@ def Load_models(pcbThickness,modules):
         if step_module != 'no3Dmodel':
             #model_type = step_module.split('.')[1]
             #if encoded!=1:
+            wrl_model = ''
+            if step_module.lower().endswith('wrl') or step_module.lower().endswith('wrz'):
+                wrl_model = step_module
+            #step_transparency = check_wrl_transparency
             step_module=step_module.replace(u'"', u'')  # name with spaces
             pos=step_module.rfind('.')
             #sayw(pos)
@@ -5946,6 +5453,9 @@ def Load_models(pcbThickness,modules):
                     for ObJ in doc1.Objects:
                         counterObj+=1
                     say(model_name)
+                    Links_available = False
+                    if 'LinkView' in dir(FreeCADGui):
+                        Links_available = True
                     if model_name not in loaded_models:
                         loaded_models.append(model_name)
                         #sayw(module_path)
@@ -5953,7 +5463,7 @@ def Load_models(pcbThickness,modules):
                         #module_path_n = re.sub("/", "\\\\", module_path)
                         #sayerr(module_path_n)
                         #ImportGui.insert(module_path_n,FreeCAD.ActiveDocument.Name)
-                        try: #if 1: #try: 
+                        try: #tobefixed
                             # support for stpZ files
                             if module_path.lower().endswith('stpz'):
                                 import stepZ
@@ -5961,20 +5471,39 @@ def Load_models(pcbThickness,modules):
                             else:
                                 ImportGui.insert(module_path,FreeCAD.ActiveDocument.Name)
                             #FreeCADGui.Selection.clearSelection()
+                            imported_obj_list = []
                             counterTmp=0
                             for ObJ in doc1.Objects:
                                 counterTmp+=1#stop
+                            mp_found=False
                             if counterTmp!=counterObj+1:
                                 #multipart loaded
                                 #print ('allow_compound ',allow_compound)
                                 FreeCADGui.Selection.clearSelection()
-                                if allow_compound != 'False' :
-                                    create_compound(counterObj,model_name)                        
-                            myStep = FreeCAD.ActiveDocument.ActiveObject
+                                mp_found=True
+                                #if allow_compound != 'False' and allow_compound != 'Hierarchy':
+                                if allow_compound != 'False' and (allow_compound != 'Hierarchy' or not Links_available):
+                                    create_compound(counterObj,model_name)
+                                    myStep = FreeCAD.ActiveDocument.ActiveObject
+                                    impLabel = myStep.Label
+                                elif allow_compound == 'Hierarchy' and Links_available:
+                                    imported_obj_list = doc1.Objects[counterObj+1:]
+                                    compound_found=True
+                                    #say(str(doc1.Objects)+' HERE')
+                                    #sayw(str(imported_obj_list)+' HERE')
+                                    newStep = find_top_container(imported_obj_list)
+                                    impLabel = make_string(newStep.Label)
+                            #myStep = FreeCAD.ActiveDocument.ActiveObject
                             #print(myStep.Label)
                             #impLabel = myStep.Label
-                            impLabel = make_string(myStep.Label)
-                            newStep=reset_prop_shapes(FreeCAD.ActiveDocument.ActiveObject,FreeCAD.ActiveDocument, FreeCAD,FreeCADGui)
+                            if (allow_compound != 'Hierarchy' or not Links_available) or not mp_found :
+                                newStep=reset_prop_shapes(FreeCAD.ActiveDocument.ActiveObject,FreeCAD.ActiveDocument, FreeCAD,FreeCADGui)
+                                myStep=newStep
+                                if wrl_model != '':
+                                    wrl_module_path = module_path[:module_path.rfind(u'.')]+wrl_model[-4:]
+                                    step_transparency = check_wrl_transparency(wrl_module_path)
+                                    FreeCADGui.ActiveDocument.getObject(myStep.Name).Transparency = step_transparency
+                                impLabel = make_string(myStep.Label)
                             #use_pypro=False
                             if use_pypro:  #use python property for timestamp
                                 myObj = FreeCAD.ActiveDocument.addObject("Part::FeaturePython","model3D")
@@ -6026,7 +5555,7 @@ def Load_models(pcbThickness,modules):
                             # Part.show(s)
                             #Part.Shape.read(module_path)
                             #Part.insert(module_path,FreeCAD.ActiveDocument.Name)
-                        except: #else: # except:    
+                        except: #tobefixed
                             sayerr('3D STEP model '+model_name+' is WRONG')
                             msg="""3D STEP model <b><font color=red>"""
                             msg+=model_name+"</font> is WRONG</b><br>or are not allowed Multi Part objects...<br>"
@@ -6034,7 +5563,7 @@ def Load_models(pcbThickness,modules):
                             QtGui.QApplication.restoreOverrideCursor()
                             reply = QtGui.QMessageBox.information(None,"Info ...",msg)
                             stop   
-                        if allow_compound != 'False' :
+                        if allow_compound != 'False' and (allow_compound != 'Hierarchy' or not Links_available):
                             create_compound(counterObj,model_name)
                             newobj = FreeCAD.ActiveDocument.ActiveObject
                             if not use_pypro:
@@ -6044,6 +5573,14 @@ def Load_models(pcbThickness,modules):
                                     newobj.Label = 'REF_'+impLabel + '_'  + myTimeStamp + myModelNbr
                         ##addProperty mod
                         #newobj=reset_prop_shapes(FreeCAD.ActiveDocument.ActiveObject,FreeCAD.ActiveDocument, FreeCAD,FreeCADGui)
+                        elif allow_compound == 'Hierarchy' and mp_found:
+                            newobj = newStep
+                            #tobefixed
+                            if not use_pypro:
+                                if '*' not in myReference:
+                                    newobj.Label = myReference + '_'+ impLabel + '_' + myTimeStamp + myModelNbr
+                                else:
+                                    newobj.Label = 'REF_'+impLabel + '_'  + myTimeStamp + myModelNbr
                         else:
                             newobj = FreeCAD.ActiveDocument.ActiveObject                        ##addProperty mod
                         #newobj=reset_prop_shapes(FreeCAD.ActiveDocument.ActiveObject,FreeCAD.ActiveDocument, FreeCAD,FreeCADGui)
@@ -6056,6 +5593,7 @@ def Load_models(pcbThickness,modules):
                                 bboxLabel=newobj.Label=newobj.Label
                                 newobj=createSolidBBox3(newobj)
                         skip_status="not"
+                        #tobefixed volume for App::Part
                         if volume_minimum != 0 or height_minimum != 0: #if checking volume or height
                             if newobj.Shape.Volume>volume_minimum:  #mauitemp min vol
                                 if abs(newobj.Shape.BoundBox.ZLength)>height_minimum:  #mauitemp min height
@@ -6075,7 +5613,7 @@ def Load_models(pcbThickness,modules):
                         FreeCADGui.Selection.clearSelection()
                         for ObJ in doc1.Objects:
                             counter+=1
-                        if counterObj+1 != counter:
+                        if counterObj+1 != counter and (allow_compound != 'Hierarchy' or not Links_available):
                             msg="""3D STEP model <b><font color=red>"""
                             msg+=model_name+"</font> is NOT fused ('union') in a single part</b> ...<br>"
                             msg+="@ "+module_path+" <br>...stopping execution! <br>Please <b>fix</b> the model."
@@ -6148,6 +5686,7 @@ def Load_models(pcbThickness,modules):
                                         FreeCAD.ActiveDocument.addObject('App::Link',o.Label+'_ln_').setLink(o)
                                 else:
                                     FreeCAD.ActiveDocument.copyObject(loaded_model_objs[idxO], True)
+                                #allow_compound != 'Hierarchy':
                                 impPart=FreeCAD.ActiveDocument.ActiveObject
                                 if use_pypro:
                                     impPart.TimeStamp=str(modules[i][10])
@@ -6223,6 +5762,8 @@ def Load_models(pcbThickness,modules):
                                 impPart.Placement = FreeCAD.Placement(FreeCAD.Vector(pos_x+float(wrl_pos[0])*25.4,pos_y+float(wrl_pos[1])*25.4,0+float(wrl_pos[2])*25.4),FreeCAD.Rotation(-float(wrl_rot[2]),-float(wrl_rot[1]),-float(wrl_rot[0]))) #rot is already rot fp -rot wrl
                                 if impPart.TypeId=='App::Link' or impPart.TypeId=='App::LinkPython':
                                     shape=Part.getShape(o)
+                                elif impPart.TypeId=='App::Part': #tobefixed
+                                    shape=Part.getShape(impPart)
                                 else:
                                     shape=impPart.Shape.copy()
                                 shape.Placement=impPart.Placement;
@@ -6242,24 +5783,25 @@ def Load_models(pcbThickness,modules):
                             # App.ActiveDocument.recompute()
                             if isVirtual == 0:
                                 if use_AppPart and not use_LinkGroups: #layer Top                                  
-                                    FreeCAD.ActiveDocument.getObject("Top").addObject(impPart)
+                                    FreeCAD.ActiveDocument.getObject(top_name).addObject(impPart)
                                     modelTop_nbr+=1
                                 elif use_LinkGroups:
                                     #FreeCAD.ActiveDocument.getObject(impPart.Name).adjustRelativeLinks(FreeCAD.ActiveDocument.getObject('Top'))
-                                    FreeCAD.ActiveDocument.getObject('Top').ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),None,'',[])
+                                    FreeCAD.ActiveDocument.getObject(top_name).ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),None,'',[])
                                     modelTop_nbr+=1
                                 else:
-                                    FreeCAD.ActiveDocument.getObject("Step_Models").addObject(impPart)
+                                    FreeCAD.ActiveDocument.getObject(stepM_name).addObject(impPart)
                             else:  #virtual
                                 if use_AppPart and not use_LinkGroups: #layer Top                                  
-                                    FreeCAD.ActiveDocument.getObject("TopV").addObject(impPart)
+                                    #print(topV_name)
+                                    FreeCAD.ActiveDocument.getObject(topV_name).addObject(impPart)
                                     virtualTop_nbr+=1
                                 elif use_LinkGroups:
                                     #FreeCAD.ActiveDocument.getObject(impPart.Name).adjustRelativeLinks(FreeCAD.ActiveDocument.getObject('TopV'))
-                                    FreeCAD.ActiveDocument.getObject('TopV').ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),None,'',[])
+                                    FreeCAD.ActiveDocument.getObject(topV_name).ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),None,'',[])
                                     virtualTop_nbr+=1
                                 else:
-                                    FreeCAD.ActiveDocument.getObject("Step_Virtual_Models").addObject(impPart)
+                                    FreeCAD.ActiveDocument.getObject(stepV_name).addObject(impPart)
                                 virtual_nbr+=1
                         ###
                         else:
@@ -6307,24 +5849,24 @@ def Load_models(pcbThickness,modules):
                             FreeCAD.ActiveDocument.getObject(impPart.Name)
                             if isVirtual == 0:
                                 if use_AppPart and not use_LinkGroups: #layer Top                                  
-                                    FreeCAD.ActiveDocument.getObject("Bot").addObject(impPart)
+                                    FreeCAD.ActiveDocument.getObject(bot_name).addObject(impPart)
                                     modelBot_nbr+=1
                                 elif use_LinkGroups:
                                     #FreeCAD.ActiveDocument.getObject(impPart.Name).adjustRelativeLinks(FreeCAD.ActiveDocument.getObject('Bot'))
-                                    FreeCAD.ActiveDocument.getObject('Bot').ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),None,'',[])
+                                    FreeCAD.ActiveDocument.getObject(bot_name).ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),None,'',[])
                                     modelBot_nbr+=1
                                 else:
-                                    FreeCAD.ActiveDocument.getObject("Step_Models").addObject(impPart)
+                                    FreeCAD.ActiveDocument.getObject(stepM_name).addObject(impPart)
                             else:  #virtual
                                 if use_AppPart and not use_LinkGroups: #layer Top
-                                    FreeCAD.ActiveDocument.getObject("BotV").addObject(impPart)
+                                    FreeCAD.ActiveDocument.getObject(botV_name).addObject(impPart)
                                     virtualBot_nbr+=1
                                 elif use_LinkGroups:
                                     #FreeCAD.ActiveDocument.getObject(impPart.Name).adjustRelativeLinks(FreeCAD.ActiveDocument.getObject('BotV'))
-                                    FreeCAD.ActiveDocument.getObject('BotV').ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),None,'',[])
+                                    FreeCAD.ActiveDocument.getObject(botV_name).ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),None,'',[])
                                     virtualBot_nbr+=1
                                 else:
-                                    FreeCAD.ActiveDocument.getObject("Step_Virtual_Models").addObject(impPart)
+                                    FreeCAD.ActiveDocument.getObject(stepV_name).addObject(impPart)
                                 virtual_nbr+=1
                 ###
                 elif module_path=='internal shape':
@@ -6387,10 +5929,10 @@ def Load_models(pcbThickness,modules):
                                 impPart.Placement = FreeCAD.Placement(FreeCAD.Vector(pos_x,pos_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),rot))
                             FreeCADGui.Selection.addSelection(impPart)
                             if use_AppPart: #Top
-                                FreeCAD.ActiveDocument.getObject("Top").addObject(impPart)
+                                FreeCAD.ActiveDocument.getObject(top_name).addObject(impPart)
                                 modelTop_nbr+=1
                             else:
-                                FreeCAD.ActiveDocument.getObject("Step_Models").addObject(impPart)
+                                FreeCAD.ActiveDocument.getObject(stepM_name).addObject(impPart)
                         else:
                         #Bottom
                         #Bottom
@@ -6436,7 +5978,7 @@ def Load_models(pcbThickness,modules):
                                 FreeCAD.ActiveDocument.getObject("Bot").addObject(impPart)
                                 modelBot_nbr+=1
                             else:
-                                FreeCAD.ActiveDocument.getObject("Step_Models").addObject(impPart)
+                                FreeCAD.ActiveDocument.getObject(stepM_name).addObject(impPart)
                     else:                        
                         FreeCAD.ActiveDocument.removeObject(impPart.Name)
                 else:
@@ -6462,26 +6004,27 @@ def Load_models(pcbThickness,modules):
     #sleep
     if virtual_nbr==0:
         #FreeCAD.ActiveDocument.getObject("Step_Virtual_Models").removeObjectsFromDocument()
-        FreeCAD.ActiveDocument.removeObject("Step_Virtual_Models")
-        FreeCAD.ActiveDocument.removeObject("BotV")
-        FreeCAD.ActiveDocument.removeObject("TopV")
+        FreeCAD.ActiveDocument.removeObject(stepV_name)
+        if use_AppPart:
+            FreeCAD.ActiveDocument.removeObject(botV_name)
+            FreeCAD.ActiveDocument.removeObject(topV_name)
     else:
         if use_AppPart:
             if virtualTop_nbr==0:
                 #FreeCAD.ActiveDocument.getObject("TopV").removeObjectsFromDocument()
-                FreeCAD.ActiveDocument.removeObject("TopV")
+                FreeCAD.ActiveDocument.removeObject(topV_name)
                 #FreeCAD.ActiveDocument.recompute()
             if virtualBot_nbr==0:
                 #FreeCAD.ActiveDocument.getObject("BotV").removeObjectsFromDocument()
-                FreeCAD.ActiveDocument.removeObject("BotV")
+                FreeCAD.ActiveDocument.removeObject(botV_name)
                 #FreeCAD.ActiveDocument.recompute()  
     if use_AppPart:
         if modelTop_nbr==0:
             #FreeCAD.ActiveDocument.getObject("Top").removeObjectsFromDocument()
-            FreeCAD.ActiveDocument.removeObject("Top")    
+            FreeCAD.ActiveDocument.removeObject(top_name)    
         if modelBot_nbr==0:
             #FreeCAD.ActiveDocument.getObject("Bot").removeObjectsFromDocument()
-            FreeCAD.ActiveDocument.removeObject("Bot")    
+            FreeCAD.ActiveDocument.removeObject(bot_name)    
     
     FreeCAD.ActiveDocument.recompute()
     say_time()
@@ -7948,6 +7491,18 @@ def PullPCB(file_name=None):
    #else:
    #    print('Cancel')
 ##
+
+def crc_gen(data):
+    import binascii
+    import re
+    
+    #data=u'Würfel'
+    content=re.sub(r'[^\x00-\x7F]+','_', data)
+    #make_unicode(hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:])
+    #hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:].encode('utf-8')
+    #print(data +u'_'+ hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:])
+    return u'_'+ make_unicode(hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:])
+##
 def onLoadBoard(file_name=None,load_models=None,insert=None):
     #name=QtGui.QFileDialog.getOpenFileName(this,tr("Open Image"), "/home/jana", tr("Image Files (*.png *.jpg *.bmp)"))[0]
     #global module_3D_dir
@@ -7961,8 +7516,9 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
     global last_fp_path, last_pcb_path, plcmnt, xp, yp, exportFusing
     global ignore_utf8, ignore_utf8_incfg, pcb_path, disable_VBO, use_AppPart, force_oldGroups, use_Links, use_LinkGroups
     global original_filename, edge_width, load_sketch, grid_orig, warning_nbr, running_time, addConstraints
-    global conv_offs, zfit
-    
+    global conv_offs, zfit, fname_sfx
+
+
     pull_sketch = False
     SketchLayer = 'Edge.Cuts' #None
     if load_models is None:
@@ -8018,6 +7574,17 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                 say('opening '+name)
                 path, fname = os.path.split(name)
                 fname=os.path.splitext(fname)[0]
+                fname_sfx=crc_gen(make_unicode(fname))
+                top_name='Top'+fname_sfx
+                bot_name='Bot'+fname_sfx
+                topV_name='TopV'+fname_sfx
+                botV_name='BotV'+fname_sfx
+                stepM_name='Step_Models'+fname_sfx
+                stepV_name='Step_Virtual_Models'+fname_sfx
+                pcb_name='Pcb'+fname_sfx
+                board_name='Board'+fname_sfx
+                boardG_name='Board_Geoms'+fname_sfx
+                #say(fname_sfx)
                 #fpth = os.path.dirname(os.path.abspath(__file__))
                 fpth = os.path.dirname(os.path.abspath(name))
                 #filePath = os.path.split(os.path.realpath(__file__))[0]
@@ -8053,6 +7620,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                 #filename="c:\\Temp\\backpanel3.kicad_pcb"
                 mypcb = KicadPCB.load(name) #test parser
                 off_x=0; off_y=0  #offset of the board & modules
+                grid_orig_warn=False
                 if (grid_orig==1):
                     #xp=getAuxAxisOrigin()[0]; yp=-getAuxAxisOrigin()[1]  #offset of the board & modules
                     if hasattr(mypcb.setup, 'grid_origin'):
@@ -8060,8 +7628,9 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                         xp=-mypcb.setup.grid_origin[0]; yp=mypcb.setup.grid_origin[1]
                         sayw('grid origin found @ ('+str(xp)+', '+str(yp)+')') 
                     else:
-                        say('grid origin not found\nplacing at center of an A4')
-                        xp=-148.5;yp=98.5
+                        say('grid origin not set\nusing default top left corner')
+                        xp=0;yp=0
+                        grid_orig_warn=True
                     ##off_x=-xp+xmin+(xMax-xmin)/2; off_y=-yp-(ymin+(yMax-ymin)/2)  #offset of the board & modules
                     #off_x=-xp+center_x;off_y=-yp+center_y
                     off_x=-xp;off_y=-yp
@@ -8103,7 +7672,8 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
             # pos board xm+(xM-xm)/2
             # pos board -(ym+(yM-ym)/2)        
             if SketchLayer == 'Edge.Cuts':
-                center_x, center_y, bb_x, bb_y = findPcbCenter("Pcb")
+                #center_x, center_y, bb_x, bb_y = findPcbCenter("Pcb")
+                center_x, center_y, bb_x, bb_y = findPcbCenter(u"Pcb"+fname_sfx)
             else:
                 draw=FreeCAD.ActiveDocument.PCB_Sketch_draft
                 center_x, center_y, bb_x, bb_y = findPcbCenter(draw.Name)
@@ -8157,10 +7727,11 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                 board_base_point_y=center_y-off_y
             sayw('placing board @ '+str(board_base_point_x)+','+str(board_base_point_y))
             if SketchLayer == 'Edge.Cuts':
-                FreeCAD.ActiveDocument.getObject("Pcb").Placement = FreeCAD.Placement(FreeCAD.Vector(board_base_point_x,board_base_point_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
+                #FreeCAD.ActiveDocument.getObject("Pcb").Placement = FreeCAD.Placement(FreeCAD.Vector(board_base_point_x,board_base_point_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
+                FreeCAD.ActiveDocument.getObject(pcb_name).Placement = FreeCAD.Placement(FreeCAD.Vector(board_base_point_x,board_base_point_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
             #else:
             #    draw.Placement = FreeCAD.Placement(FreeCAD.Vector(board_base_point_x,board_base_point_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
-            newname="PCB_Sketch"
+            newname="PCB_Sketch"+fname_sfx
             if load_sketch:
                 if SketchLayer != 'Edge.Cuts' and SketchLayer is not None:
                     newname = SketchLayer.split('.')[0]+'_Sketch'
@@ -8216,7 +7787,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                         FreeCAD.ActiveDocument.getObject(newname).exposeInternalGeometry(gi)
                     gi+=1
                 if use_LinkGroups and SketchLayer == 'Edge.Cuts':
-                    FreeCAD.ActiveDocument.getObject('Board_Geoms').ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(newname),None,'',[])
+                    FreeCAD.ActiveDocument.getObject(boardG_name).ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(newname),None,'',[])
                     FreeCADGui.Selection.clearSelection()
                     sl = FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.getObject(newname))
                     #FreeCADGui.runCommand('Std_HideSelection',0)
@@ -8225,7 +7796,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                     #FreeCADGui.ActiveDocument.PCB_Sketch.Visibility = False
                     #FreeCAD.ActiveDocument.getObject('PCB_Sketch').adjustRelativeLinks(FreeCAD.ActiveDocument.getObject('Board_Geoms'))
                 elif SketchLayer == 'Edge.Cuts':
-                    FreeCAD.ActiveDocument.Board_Geoms.addObject(pcb_sk)
+                    FreeCAD.ActiveDocument.getObject(boardG_name).addObject(pcb_sk)
                 
             #updating pcb_sketch
             if SketchLayer != 'Edge.Cuts' and SketchLayer is not None:
@@ -8246,73 +7817,85 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                 if use_AppPart and not force_oldGroups and not use_LinkGroups:
                     #sayw("creating hierarchy")
                     ## to evaluate to add App::Part hierarchy
-                    doc.Tip = doc.addObject('App::Part','Step_Models')
-                    doc.Step_Models.Label = 'Step_Models'
-                    doc.Tip = doc.addObject('App::Part','Top')
-                    doc.Top.Label = 'Top'
-                    doc.Tip = doc.addObject('App::Part','Bot')
-                    doc.Bot.Label = 'Bot'
-                    doc.getObject("Step_Models").addObject(doc.Top)
-                    doc.getObject("Step_Models").addObject(doc.Bot)            
+                    doc.Tip = doc.addObject('App::Part',stepM_name)
+                    stepM = doc.ActiveObject
+                    stepM.Label = stepM_name
+                    doc.Tip = doc.addObject('App::Part',top_name)
+                    topG = doc.ActiveObject
+                    topG.Label = top_name
+                    doc.Tip = doc.addObject('App::Part',bot_name)
+                    botG = doc.ActiveObject
+                    botG.Label = bot_name
+                    doc.getObject(stepM_name).addObject(doc.getObject(top_name))
+                    doc.getObject(stepM_name).addObject(doc.getObject(bot_name))            
                     try:
                         doc.Step_Models.License = ''
                         doc.Step_Models.LicenseURL = ''
                     except:
                         pass
                     #FreeCADGui.activeView().setActiveObject('Step_Models', doc.Step_Models)
-                    doc.getObject("Board").addObject(doc.Step_Models)
-                    doc.Tip = doc.addObject('App::Part','Step_Virtual_Models')
-                    doc.Step_Virtual_Models.Label = 'Step_Virtual_Models'
-                    doc.Tip = doc.addObject('App::Part','TopV')
-                    doc.TopV.Label = 'TopV'
-                    doc.Tip = doc.addObject('App::Part','BotV')
-                    doc.BotV.Label = 'BotV'
-                    doc.getObject("Step_Virtual_Models").addObject(doc.TopV)
-                    doc.getObject("Step_Virtual_Models").addObject(doc.BotV)            
+                    doc.getObject(board_name).addObject(doc.getObject(stepM_name))
+                    doc.Tip = doc.addObject('App::Part',stepV_name)
+                    stepV = doc.ActiveObject
+                    stepV.Label = stepV_name
+                    doc.Tip = doc.addObject('App::Part',topV_name)
+                    topV = doc.ActiveObject
+                    topV.Label = topV_name
+                    doc.Tip = doc.addObject('App::Part',botV_name)
+                    botV = doc.ActiveObject
+                    botV.Label = botV_name
+                    doc.getObject(stepV_name).addObject(doc.getObject(topV_name))
+                    doc.getObject(stepV_name).addObject(doc.getObject(botV_name))
                     try:
-                        doc.Step_Virtual_Models.License = ''
-                        doc.Step_Virtual_Models.LicenseURL = ''
+                        stepV.License = ''
+                        stepV.LicenseURL = ''
                     except:
                         pass
-                    FreeCADGui.activeView().setActiveObject('Step_Virtual_Models', doc.Step_Virtual_Models)
-                    doc.getObject("Board").addObject(doc.Step_Virtual_Models)
-                    doc.getObject("Board").Label=fname
+                    FreeCADGui.activeView().setActiveObject(stepV_name, stepV)
+                    doc.getObject(board_name).addObject(doc.getObject(stepV_name))
+                    doc.getObject(board_name).Label=fname
                     try:
-                        doc.getObject("Board").License=''
-                        doc.getObject("Board").LicenseURL=''
+                        doc.getObject(board_name).License=''
+                        doc.getObject(board_name).LicenseURL=''
                     except:
                         pass
                     ## end hierarchy
                 elif use_LinkGroups:
-                    doc.Tip = doc.addObject('App::LinkGroup','Step_Models')
-                    doc.Step_Models.Label = 'Step_Models'
-                    doc.Tip = doc.addObject('App::LinkGroup','Step_Virtual_Models')
-                    doc.Step_Virtual_Models.Label = 'Step_Virtual_Models'
-                    doc.addObject('App::LinkGroup','Top')
-                    doc.Top.Label = 'Top'
-                    doc.addObject('App::LinkGroup','Bot')
-                    doc.Bot.Label = 'Bot'
-                    doc.addObject('App::LinkGroup','TopV')
-                    doc.TopV.Label = 'TopV'
-                    doc.addObject('App::LinkGroup','BotV')
-                    doc.BotV.Label = 'BotV'
+                    doc.Tip = doc.addObject('App::LinkGroup',stepM_name)
+                    stepM=doc.ActiveObject
+                    stepM.Label = stepM_name
+                    doc.Tip = doc.addObject('App::LinkGroup',stepV_name)
+                    stepV=doc.ActiveObject
+                    stepV.Label = stepV_name
+                    doc.addObject('App::LinkGroup',top_name)
+                    topG=doc.ActiveObject
+                    topG.Label = top_name
+                    doc.addObject('App::LinkGroup',bot_name)
+                    botG=doc.ActiveObject
+                    botG.Label = bot_name
+                    doc.addObject('App::LinkGroup',topV_name)
+                    topVG=doc.ActiveObject
+                    topVG.Label = topV_name
+                    doc.addObject('App::LinkGroup',botV_name)
+                    botVG=doc.ActiveObject
+                    botVG.Label = botV_name
                     #doc.getObject('Top').adjustRelativeLinks(doc.getObject('Step_Models'))
-                    doc.getObject('Step_Models').ViewObject.dropObject(doc.getObject('Top'),None,'',[])
+                    doc.getObject(stepM_name).ViewObject.dropObject(doc.getObject(top_name),None,'',[])
                     #doc.getObject('TopV').adjustRelativeLinks(doc.getObject('Step_Virtual_Models'))
-                    doc.getObject('Step_Virtual_Models').ViewObject.dropObject(doc.getObject('TopV'),None,'',[])
+                    doc.getObject(stepV_name).ViewObject.dropObject(doc.getObject(topV_name),None,'',[])
                     #doc.getObject('Bot').adjustRelativeLinks(doc.getObject('Step_Models'))
-                    doc.getObject('Step_Models').ViewObject.dropObject(doc.getObject('Bot'),None,'',[])
+                    doc.getObject(stepM_name).ViewObject.dropObject(doc.getObject(bot_name),None,'',[])
                     #doc.getObject('BotV').adjustRelativeLinks(doc.getObject('Step_Virtual_Models'))
-                    doc.getObject('Step_Virtual_Models').ViewObject.dropObject(doc.getObject('BotV'),None,'',[])
+                    doc.getObject(stepV_name).ViewObject.dropObject(doc.getObject(botV_name),None,'',[])
                     #doc.getObject('Step_Models').adjustRelativeLinks(doc.getObject('Board'))
-                    doc.getObject('Board').ViewObject.dropObject(doc.getObject('Step_Models'),None,'',[])
+                    doc.getObject(board_name).ViewObject.dropObject(doc.getObject(stepM_name),None,'',[])
                     #doc.getObject('Step_Virtual_Models').adjustRelativeLinks(doc.getObject('Board'))
-                    doc.getObject('Board').ViewObject.dropObject(doc.getObject('Step_Virtual_Models'),None,'',[])
+                    doc.getObject(board_name).ViewObject.dropObject(doc.getObject(stepV_name),None,'',[])
                     FreeCADGui.Selection.clearSelection()
                 else:
                     #sayerr("creating flat groups")
-                    doc.addObject("App::DocumentObjectGroup", "Step_Models")
-                    doc.addObject("App::DocumentObjectGroup", "Step_Virtual_Models")
+                    doc.addObject("App::DocumentObjectGroup", stepM_name)
+                    doc.addObject("App::DocumentObjectGroup", stepV_name)
                 doc.recompute()
                 say_time()
                 if disable_VBO:
@@ -8436,6 +8019,48 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
             zf.cancel()
             if SketchLayer != 'Edge.Cuts' and SketchLayer is not None:
                 FreeCADGui.ActiveDocument.ActiveView.viewTop()
+            if grid_orig_warn: #adding a warning message because GridOrigin is set in FC Preferences but not set in KiCAD pcbnew file
+                msg = 'GridOrigin is set in FC Preferences but not set in KiCAD pcbnew file'
+                sayw(msg)
+                QtGui.QApplication.restoreOverrideCursor()
+                msg="""<b><font color='red'>GridOrigin is set in FreeCAD Preferences<br>but not set in KiCAD pcbnew file</font></b>"""
+                msg+="""<br><br>Please assign Grid Origin to your KiCAD pcbnew board file"""
+                msg+="""<br>for a better Mechanical integration"""
+                reply = QtGui.QMessageBox.information(None,"Warning ...",msg)
+            prefsKSU = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+            prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import")
+            paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
+            ReadShapeCompoundMode_status=paramGetVS.GetBool("ReadShapeCompoundMode")
+            FCV_date = ''
+            STEP_UseAppPart_available = False
+            if len (FreeCAD.Version()) >= 5:
+                FCV_date = str(FreeCAD.Version()[4])
+                FCV_date = FCV_date[0:FCV_date.find(' ')]
+                say('FreeCAD build date: '+FCV_date)
+                if FCV_date >= '2020/03/27':
+                    STEP_UseAppPart_available = True #new STEP import export mode available
+                    say('STEP UseAppPart available')
+            if hasattr(prefs, 'GetBools'):
+                if 'UseAppPart' in prefs.GetBools() and STEP_UseAppPart_available:
+                    if not prefs.GetBool('UseAppPart') or prefs.GetBool('UseLegacyImporter') or not prefs.GetBool('UseBaseName')\
+                        or prefs.GetBool('ExportLegacy') or ReadShapeCompoundMode_status or prefs.GetBool('UseLinkGroup'):
+                        msg = "Please set your preferences for STEP Import Export as in the displayed image\n"
+                        msg += "(you can disable this warning on StepUp preferences)\n"
+                        if 'help_warning_enabled' in prefsKSU.GetBools():
+                            if prefsKSU.GetBool('help_warning_enabled'):
+                                StepPrefsDlg = QtGui.QDialog()
+                                ui = Ui_STEP_Preferences()
+                                ui.setupUi(StepPrefsDlg)
+                                reply=StepPrefsDlg.exec_()
+                                sayw(msg)
+                                #QtGui.QApplication.restoreOverrideCursor()
+                                #reply = QtGui.QMessageBox.information(None,"Info ...",msg)
+                        else: #first time new settings parameter
+                            StepPrefsDlg = QtGui.QDialog()
+                            ui = Ui_STEP_Preferences()
+                            ui.setupUi(StepPrefsDlg)
+                            reply=StepPrefsDlg.exec_()
+                            sayw(msg)
             # TB reviewed
             #if 'LinkView' in dir(FreeCADGui):
             #    FreeCADGui.Selection.clearSelection()
@@ -10991,393 +10616,6 @@ def createTHPlate(x,y,dx,dy,type):
     return THPModel
 
 ###
-def routineDrawFootPrint_old(content,name):  #for FC = 0.15
-    global rot_wrl, zfit
-    #for item in content:
-    #    say(item)
-
-    #                      x1, y1, x2, y2, width
-    say("FootPrint Loader "+name)
-    footprint_name=getModName(content)
-    rot_wrl=getwrlRot(content)
-    posiz, scale, rot = getwrlData(content)
-    #say(posiz);say(scale);say(rot);
-    error_mod=False
-    if scale!=['1', '1', '1']:
-        sayw('wrong scale!!! set scale to (1 1 1)\n')
-        error_mod=True
-    if posiz!=['0', '0', '0']:
-        sayw('wrong xyx position!!! set xyz to (0 0 0)\n')
-        error_mod=True
-    if rot[0]!='0' or rot[1]!='0':
-        sayw('wrong rotation!!! set rotate x and y to (0 0 z)\n')
-        error_mod=True
-    if error_mod:
-        msg="""<b>Error in '.kicad_mod' footprint</b><br>"""
-        msg+="<br>reset values to:<br>"
-        msg+="<b>(at (xyz 0 0 0))<br>"
-        msg+="(scale (xyz 1 1 1))<br>"
-        msg+="(rotate (xyz 0 0 z))<br>"
-        msg+="</b><br>Only z rotation is allowed!"
-        reply = QtGui.QMessageBox.information(None,"info", msg)
-        #stop
-    #say(footprint_name+" wrl rotation:"+str(rot_wrl))
-    if FreeCAD.activeDocument():
-        doc=FreeCAD.activeDocument()
-    else:
-        doc=FreeCAD.newDocument()
-    for obj in FreeCAD.ActiveDocument.Objects:
-        FreeCADGui.Selection.removeSelection(obj)
-
-    TopPadList=[]
-    BotPadList=[]
-    HoleList=[]
-    THPList=[]
-    for pad in getPadsList(content):
-        #
-        #   pads.append({'x': x, 'y': y, 'rot': rot, 'padType': pType, 'padShape': pShape, 'rx': drill_x, 'ry': drill_y, 'dx': dx, 'dy': dy, 'holeType': hType, 'xOF': xOF, 'yOF': yOF, 'layers': layers})
-        pType = pad['padType']
-        pShape = pad['padShape']
-        xs = pad['x'] #+ X1
-        ys = pad['y'] #+ Y1
-        dx = pad['dx']
-        dy = pad['dy']
-        hType = pad['holeType']
-        drill_x = pad['rx']
-        drill_y = pad['ry']
-        xOF = pad['xOF']
-        yOF = pad['yOF']
-        rot = pad['rot']
-        rx=drill_x
-        ry=drill_y
-        numberOfLayers = pad['layers'].split(' ')
-        #say(str(rx))
-        #say(numberOfLayers)
-        #if pType=="thru_hole":
-        #pad shape - circle/rec/oval/trapezoid
-        perc=0
-        if pShape=="circle" or pShape=="oval":
-            ##pShape="oval"
-            perc=100
-            # pad type - SMD/thru_hole/connect
-        #say(pType+"here")
-        if dx>rx and dy>ry:
-            #say(pType)
-            #say(str(dx)+"+"+str(rx)+" dx,rx")
-            #say(str(dy)+"+"+str(ry)+" dy,ry")
-            #say(str(xOF)+"+"+str(yOF)+" xOF,yOF")
-            #def addPadLong(x, y, dx, dy, perc, typ, z_off):
-            x1=xs+xOF
-            y1=ys-yOF #yoffset opposite
-            #say(str(x1)+"+"+str(y1)+" x1,y1")
-            top=False
-            bot=False
-            if 'F.Cu' in numberOfLayers:
-                top=True
-            if '*.Cu' in numberOfLayers:
-                top=True
-                bot=True
-            if 'B.Cu' in numberOfLayers:
-                bot=True
-            if top==True:
-                #mypad=addPadLong(x1, y1, dx, dy, perc, 0, 0)
-                mypad=createPad3(x1, y1, dx, dy, xs,ys,rx,ry,pShape,'top')
-                ##pad pos x,y; pad size x,y; drillcenter x,y; drill size x,y, layer
-                obj=mypad
-                if rot!=0:
-                    rotateObj(obj, [xs, ys, rot])
-                TopPadList.append(obj)
-            if bot==True:
-                #mypad=addPadLong(x1, y1, dx, dy, perc, 0, -1.6)
-                mypad=createPad3(x1, y1, dx, dy, xs,ys,rx,ry,pShape,'bot')
-                ##pad pos x,y; pad size x,y; drillcenter x,y; drill size x,y, layerobj=mypad
-                obj=mypad
-                if rot!=0:
-                    rotateObj(obj, [xs, ys, -rot+180])
-                BotPadList.append(obj)
-        if rx!=0:
-            #obj=createHole2(xs,ys,rx,ry,"oval") #need to be separated instructions
-            obj=createHole2(xs,ys,rx,ry,pShape) #need to be separated instructions
-            #say(HoleList)
-            if rot!=0:
-                rotateObj(obj, [xs, ys, rot])
-            HoleList.append(obj)
-            #obj2=createTHPlate(xs,ys,rx,ry,"oval")
-            obj2=createTHPlate(xs,ys,rx,ry,pShape)
-            THPList.append(obj2)
-            if rot!=0:
-                rotateObj(obj2, [xs, ys, rot])
-
-        ### cmt- #da gestire: pad type trapez
-
-    FCrtYd = []
-    # line
-    #getLine('F.SilkS', content, 'fp_line')
-    for i in getLine('F.CrtYd', content, 'fp_line'):
-        #say("here3")
-        x1 = i[0] #+ X1
-        y1 = i[1] #+ Y1
-        x2 = i[2] #+ X1
-        y2 = i[3] #+ Y1
-        obj = addLine_2(x1, y1, x2, y2, i[4])
-        #layerNew.changeSide(obj, X1, Y1, warst)
-        #layerNew.rotateObj(obj, [X1, Y1, ROT])
-        #layerNew.addObject(obj)
-        FCrtYd.append(addLine_2(x1, y1, x2, y2, i[4]))
-
-    # circle
-    for i in getCircle('F.CrtYd', content, 'fp_circle'):
-        #say(i)
-        xs = i[0] #+ X1
-        ys = i[1] #+ Y1
-        FCrtYd.append(addCircle_2(xs, ys, i[2], i[3]))
-
-    # arc
-    for i in getArc('F.CrtYd', content, 'fp_arc'):
-        x1 = i[0] #+ X1
-        y1 = i[1] #+ Y1
-        x2 = i[2] #+ X1
-        y2 = i[3] #+ Y1
-
-        arc1=addArc_3([x1, y1], [x2, y2], i[4], i[5])
-        #arc2=arc1.copy()
-        #arc2.Placement=arc1.Placement;
-        #FrontSilk.append(arc2)
-        ##shape=arc1.copy()
-        ##shape.Placement=arc1.Placement;
-        #say(i[4])
-        #say(arcMidPoint([x1, y1], [x2, y2],i[4]))
-        #[xm,ym]=arcMidPoint([x1, y1], [x2, y2],i[4])
-        xm=(x1+x2)/2
-        ym=(y1+y2)/2
-        ##shape.rotate((xm,ym,0),(0,0,1),180)
-        #shape.translate(((x1-x2)/2,(y1-y2)/2,0))
-        rotateObj(arc1, [xm, ym, 180])
-        ##arc1.Placement=shape.Placement
-
-        #arc1.Placement = FreeCAD.Placement(arc1.Placement.Base, FreeCAD.Rotation(0, 0, 180))
-        #FrontSilk.append(addArc_3([x1, y1], [x2, y2], i[4], i[5]))
-        FCrtYd.append(arc1)
-
-
-    if len(FCrtYd)>0:
-        FCrtYd_lines = Part.makeCompound(FCrtYd)
-        Part.show(FCrtYd_lines)
-        FreeCAD.ActiveDocument.ActiveObject.Label="F_CrtYd"
-        FCrtYd_name=FreeCAD.ActiveDocument.ActiveObject.Name
-        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (1.0000,1.0000,1.0000)
-        FreeCADGui.ActiveDocument.ActiveObject.Transparency = 60
-    #
-    FrontSilk = []
-    # line
-    #getLine('F.SilkS', content, 'fp_line')
-    for i in getLine('F.SilkS', content, 'fp_line'):
-        #say("here3")
-        x1 = i[0] #+ X1
-        y1 = i[1] #+ Y1
-        x2 = i[2] #+ X1
-        y2 = i[3] #+ Y1
-        obj = addLine_2(x1, y1, x2, y2, i[4])
-        #layerNew.changeSide(obj, X1, Y1, warst)
-        #layerNew.rotateObj(obj, [X1, Y1, ROT])
-        #layerNew.addObject(obj)
-        FrontSilk.append(addLine_2(x1, y1, x2, y2, i[4]))
-
-    # circle
-    for i in getCircle('F.SilkS', content, 'fp_circle'):
-        #say(i)
-        xs = i[0] #+ X1
-        ys = i[1] #+ Y1
-        FrontSilk.append(addCircle_2(xs, ys, i[2], i[3]))
-
-    # arc
-    for i in getArc('F.SilkS', content, 'fp_arc'):
-        x1 = i[0] #+ X1
-        y1 = i[1] #+ Y1
-        x2 = i[2] #+ X1
-        y2 = i[3] #+ Y1
-
-        arc1=addArc_3([x1, y1], [x2, y2], i[4], i[5])
-        #arc2=arc1.copy()
-        #arc2.Placement=arc1.Placement;
-        #FrontSilk.append(arc2)
-        ##shape=arc1.copy()
-        ##shape.Placement=arc1.Placement;
-        #say(i[4])
-        #say(arcMidPoint([x1, y1], [x2, y2],i[4]))
-        #[xm,ym]=arcMidPoint([x1, y1], [x2, y2],i[4])
-        xm=(x1+x2)/2
-        ym=(y1+y2)/2
-        ##shape.rotate((xm,ym,0),(0,0,1),180)
-        #shape.translate(((x1-x2)/2,(y1-y2)/2,0))
-        rotateObj(arc1, [xm, ym, 180])
-        ##arc1.Placement=shape.Placement
-
-        #arc1.Placement = FreeCAD.Placement(arc1.Placement.Base, FreeCAD.Rotation(0, 0, 180))
-        #FrontSilk.append(addArc_3([x1, y1], [x2, y2], i[4], i[5]))
-        FrontSilk.append(arc1)
-
-
-    if len(FrontSilk)>0:
-        FSilk_lines = Part.makeCompound(FrontSilk)
-        Part.show(FSilk_lines)
-        FreeCAD.ActiveDocument.ActiveObject.Label="FrontSilk"
-        FSilk_name=FreeCAD.ActiveDocument.ActiveObject.Name
-        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (1.0000,1.0000,1.0000)
-        FreeCADGui.ActiveDocument.ActiveObject.Transparency = 60
-    #
-    if len(TopPadList)>0:
-        TopPads = Part.makeCompound(TopPadList)
-        Part.show(TopPads)
-        FreeCAD.ActiveDocument.ActiveObject.Label="TopPads"
-        TopPads_name=FreeCAD.ActiveDocument.ActiveObject.Name
-        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.81,0.71,0.23) #(0.85,0.53,0.10)
-        FreeCADGui.ActiveDocument.ActiveObject.Transparency = 60
-    if len(BotPadList)>0:
-        BotPads = Part.makeCompound(BotPadList)
-        Part.show(BotPads)
-        FreeCAD.ActiveDocument.ActiveObject.Label="BotPads"
-        BotPads_name=FreeCAD.ActiveDocument.ActiveObject.Name
-        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.81,0.71,0.23) #(0.85,0.53,0.10)
-        FreeCADGui.ActiveDocument.ActiveObject.Transparency = 60
-
-    #
-    if len(HoleList)>0:
-        Holes = Part.makeCompound(HoleList)
-        Holes = Part.makeSolid(Holes)
-        Part.show(Holes)
-        #say(FreeCAD.ActiveDocument.ActiveObject.Name)
-        FreeCAD.ActiveDocument.ActiveObject.Label="Holes"
-        Holes_name=FreeCAD.ActiveDocument.ActiveObject.Name
-        #say(Holes_name)
-        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.67,1.00,0.50)
-        FreeCADGui.ActiveDocument.ActiveObject.Transparency = 70
-        THPs = Part.makeCompound(THPList)
-        THPs = Part.makeSolid(THPs)
-        Part.show(THPs)
-        #say(FreeCAD.ActiveDocument.ActiveObject.Name)
-        FreeCAD.ActiveDocument.ActiveObject.Label="PTHs"
-        THPs_name=FreeCAD.ActiveDocument.ActiveObject.Name
-        #say(Holes_name)
-        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.67,1.00,0.50)
-        FreeCADGui.ActiveDocument.ActiveObject.Transparency = 70
-
-    fp_group=FreeCAD.ActiveDocument.addObject("App::DocumentObjectGroup", footprint_name+'fp')
-    say(fp_group.Label)
-    list=[]
-    if len(FrontSilk)>0:
-        obj2 = FreeCAD.ActiveDocument.getObject(FSilk_name)
-        list.append(FSilk_name)
-        fp_group.addObject(obj2)
-
-
-    if len(TopPadList)>0:
-        obj3 = FreeCAD.ActiveDocument.getObject(TopPads_name)
-        fp_group.addObject(obj3)
-        list.append(TopPads_name)
-    if len(BotPadList)>0:
-        obj4 = FreeCAD.ActiveDocument.getObject(BotPads_name)
-        fp_group.addObject(obj4)
-        list.append(BotPads_name)
-
-    if len(HoleList)>0:
-        obj5 = FreeCAD.ActiveDocument.getObject(Holes_name)
-        fp_group.addObject(obj5)
-        list.append(Holes_name)
-        obj6 = FreeCAD.ActiveDocument.getObject(THPs_name)
-        fp_group.addObject(obj6)
-        list.append(THPs_name)
-
-    #objFp=Part.makeCompound(list)
-    #Part.show(objFp)
-    #say(list)
-    doc=FreeCAD.ActiveDocument
-    fp_objs=[]
-    list1=[]
-    for obj in fp_group.Group:
-        #if (obj.Label==fp_group.Label):
-        #FreeCADGui.Selection.addSelection(obj)
-        shape=obj.Shape.copy()
-        #shape_name=FreeCAD.ActiveDocument.ActiveObject.Name
-        list1.append(shape)
-        #Part.show(shape)
-        fp_objs.append(obj)
-        #say("added")
-        #
-    #fp_objs.copy
-    #objFp=Part.makeCompound(shape)
-    objFp=Part.makeCompound(list1)
-    Part.show(objFp)
-
-    obj = FreeCAD.ActiveDocument.ActiveObject
-    #say("h")
-    FreeCADGui.Selection.addSelection(obj)            # select the object
-    createSolidBBox2(obj)
-    bbox=FreeCAD.ActiveDocument.ActiveObject
-    FreeCAD.ActiveDocument.ActiveObject.Label ="Pcb_solid"
-    pcb_solid_name=FreeCAD.ActiveDocument.ActiveObject.Name
-    FreeCAD.ActiveDocument.removeObject(obj.Name)
-
-    #FreeCADGui.ActiveDocument.getObject(bbox.Name).BoundingBox = True
-    FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.664,0.664,0.496)
-    FreeCADGui.ActiveDocument.ActiveObject.Transparency = 80
-    #obj6 = FreeCAD.ActiveDocument.getObject(bbox.Name)
-    fp_group.addObject(bbox)
-
-    if len(HoleList)>0:
-        cut_base = FreeCAD.ActiveDocument.getObject(pcb_solid_name).Shape
-        for drill in HoleList:
-            #Holes = Part.makeCompound(HoleList)
-            hole = Part.makeSolid(drill)
-            #Part.show(hole)
-            #hole_name=FreeCAD.ActiveDocument.ActiveObject.Name
-            #cutter = FreeCAD.ActiveDocument.getObject(hole_name).Shape
-            cut_base=cut_base.cut(hole)
-        Part.show(cut_base) 
-        pcb_name=FreeCAD.ActiveDocument.ActiveObject.Name
-        FreeCAD.ActiveDocument.ActiveObject.Label ="Pcb"
-        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.664,0.664,0.496)
-        FreeCADGui.ActiveDocument.ActiveObject.Transparency = 80
-        #say("cutted")
-        pcb=FreeCAD.ActiveDocument.ActiveObject
-        fp_group.addObject(pcb)
-        #say("added")
-        #FreeCAD.activeDocument().recompute()
-        FreeCAD.ActiveDocument.removeObject(pcb_solid_name)
-        FreeCAD.ActiveDocument.removeObject(Holes_name)
-       
-    list2=[]
-    list2_objs=[]
-    for obj in fp_group.Group:
-        # do what you want to automate
-        #if (obj.Label==fp_group.Label):
-        #FreeCADGui.Selection.addSelection(obj)
-        shape=obj.Shape.copy()
-        #shape_name=FreeCAD.ActiveDocument.ActiveObject.Name
-        list2.append(shape)
-        #Part.show(shape)
-        list2_objs.append(obj)
-        #say("added")
-    #say(list2)
-    #say('here1')
-
-    #Draft.rotate(list2_objs,90.0,FreeCAD.Vector(0.0,0.0,0.0),axis=FreeCAD.Vector(-0.0,-0.0,1.0),copy=False)
-    #say('here1')
-
-    rot=[0,0,rot_wrl]
-    rotateObjs(list2_objs, rot)
-
-    for obj in fp_group.Group:
-        FreeCADGui.Selection.removeSelection(obj)
-    #say('here2')
-
-    if len(sys.argv)<4:
-        #sayerr("view fitting2")
-        if (zfit):
-            FreeCADGui.SendMsgToActiveView("ViewFit")
-    #pads_found=getPadsList(content)
-
-###
 def createGeomC(cx, cy, radius, layer, width):
     #createGeomC(Gcx, Gcy, GRad,'top', Gw)
     if layer == 'top':
@@ -12935,7 +12173,7 @@ def DrawPCB(mypcb,lyr=None):
     global start_time, use_AppPart, force_oldGroups, min_drill_size
     global addVirtual, load_sketch, off_x, off_y, aux_orig, grid_orig
     global running_time, conv_offs, use_Links, apply_edge_tolerance, simplifyComSolid
-    global zfit, use_LinkGroups
+    global zfit, use_LinkGroups, fname_sfx
     
     def simu_distance(p0, p1):
         return max (abs(p0[0] - p1[0]), abs(p0[1] - p1[1]))
@@ -13057,7 +12295,7 @@ def DrawPCB(mypcb,lyr=None):
         #say(mypcb.setup.aux_axis_origin)
         #xp=mypcb.setup.aux_axis_origin[0]; yp=-mypcb.setup.aux_axis_origin[1]
     else:
-        say('grid origin not found')
+        say('grid origin not set\ndefault value on top left corner')
     #if hasattr(mypcb.setup, 'aux origin'):
     #    say('aux origin' + str(mypcb.setup.aux_axis_origin))
     #else:
@@ -13361,7 +12599,7 @@ def DrawPCB(mypcb,lyr=None):
     #if aux_orig ==1 or grid_orig ==1:
     if origin is not None: #adding LCS only on aux or grid origin
         try:
-            FreeCAD.ActiveDocument.addObject('PartDesign::CoordinateSystem','Local_CS')
+            FreeCAD.ActiveDocument.addObject('PartDesign::CoordinateSystem','Local_CS'+fname_sfx)
             LCS = FreeCAD.ActiveDocument.ActiveObject
             FreeCADGui.ActiveDocument.getObject(LCS.Name).Visibility = False
             FreeCADGui.Selection.clearSelection()
@@ -14219,12 +13457,26 @@ def DrawPCB(mypcb,lyr=None):
         get_time()
         say('cutting time ' +str(round(running_time-t1,3)))
         
-        doc_outline=doc.addObject("Part::Feature","Pcb")
-        doc_outline.Shape=cut_base 
+        pcb_name=u'Pcb'+fname_sfx
+        #doc_outline=doc.addObject("Part::Feature","Pcb")
+        doc_outline=doc.addObject("Part::Feature",pcb_name)
+        pcb_name=FreeCAD.ActiveDocument.ActiveObject.Name
+        pcb_board=FreeCAD.ActiveDocument.ActiveObject
         try:
-            doc_outline.Shape=cut_base.extrude(Base.Vector(0,0,-totalHeight))
+            #doc_outline.Shape=cut_base.extrude(Base.Vector(0,0,-totalHeight))
+            f0 = cut_base.Faces[0]
+            s0 = f0.extrude(Base.Vector(0,0,-totalHeight))
+            s = s0
+            for f in cut_base.Faces[1:]:
+                #f0 = f0.union(f)
+                s1 = f.extrude(Base.Vector(0,0,-totalHeight))
+                s = s.fuse(s1)
+            doc_outline.Shape=s
+            #doc_outline.Shape=f0.extrude(Base.Vector(0,0,-totalHeight))
+            #doc_outline.Shape=cut_base.Faces[0].extrude(Base.Vector(0,0,-totalHeight))
         except:
-            doc.removeObject("Pcb")
+            #doc.removeObject("Pcb")
+            doc.removeObject(pcb_name)
             say("*** omitting PCBs because there was a not closed loop in your edge lines ***")
             say('pcb edge not closed')
             QtGui.QApplication.restoreOverrideCursor()
@@ -14238,14 +13490,13 @@ def DrawPCB(mypcb,lyr=None):
                 FreeCADGui.SendMsgToActiveView("ViewFit")
             stop #maui                        
         #stop
-        try:
-            FreeCAD.activeDocument().removeObject('Shape') #removing base shape
-        except:
-            sayw('Shape already removed')
+        #tobechecked
+        #try:
+        #    FreeCAD.activeDocument().removeObject('Shape') #removing base shape
+        #except:
+        #    sayw('Shape already removed')
         #cut_base=cut_base.extrude(Base.Vector(0,0,-pcbThickness))
         #Part.show(cut_base)
-        pcb_name=FreeCAD.ActiveDocument.ActiveObject.Name
-        pcb_board=FreeCAD.ActiveDocument.ActiveObject
         if simplifyComSolid:
             faces=[]
             for f in pcb_board.Shape.Faces:
@@ -14254,7 +13505,8 @@ def DrawPCB(mypcb,lyr=None):
                 _ = Part.Shell(faces)
                 _=Part.Solid(_)
                 FreeCAD.ActiveDocument.removeObject(pcb_name)
-                doc.addObject('Part::Feature','Pcb').Shape=_
+                #doc.addObject('Part::Feature','Pcb').Shape=_
+                doc.addObject('Part::Feature',pcb_name).Shape=_
                 pcb_name=FreeCAD.ActiveDocument.ActiveObject.Name
                 pcb_board=FreeCAD.ActiveDocument.ActiveObject
             except:
@@ -14271,45 +13523,52 @@ def DrawPCB(mypcb,lyr=None):
         #if remove_pcbPad==True:
         #    FreeCAD.activeDocument().removeObject(cut_base_name)
             #FreeCAD.activeDocument().removeObject(Holes_name)
+        boardG_name='Board_Geoms'+fname_sfx
+        board_name='Board'+fname_sfx
         if use_AppPart and not force_oldGroups and not use_LinkGroups:
             ## to evaluate to add App::Part hierarchy
             #sayw("creating hierarchy")
-            doc.Tip = doc.addObject('App::Part','Board_Geoms')
-            doc.Board_Geoms.Label = 'Board_Geoms'
+            doc.Tip = doc.addObject('App::Part',boardG_name)
+            boardG= doc.ActiveObject
+            boardG.Label = boardG_name
             try:
-                doc.Board_Geoms.License = ''
-                doc.Board_Geoms.LicenseURL = ''
+                boardG.License = ''
+                boardG.LicenseURL = ''
             except:
                 pass
-            grp=doc.Board_Geoms
-            doc.Tip = doc.addObject('App::Part','Board')
-            doc.Board.Label = 'Board'
+            grp=boardG
+            doc.Tip = doc.addObject('App::Part',board_name)
+            board= doc.ActiveObject
+            board.Label = board_name
             #FreeCAD.ActiveDocument.getObject("Step_Virtual_Models").addObject(impPart)
-            doc.getObject("Board").addObject(doc.Board_Geoms)
+            doc.getObject(board_name).addObject(doc.getObject(boardG_name))
             try:
-                doc.getObject("Board_Geoms").addObject(LCS)
+                doc.getObject(boardG_name).addObject(LCS)
             except:
                 pass
-            grp.addObject(pcb_board)
+            doc.getObject(boardG_name).addObject(doc.getObject(pcb_name))
             #FreeCADGui.activeView().setActiveObject('Board_Geoms', doc.Board_Geoms)
             ## end hierarchy
         elif use_LinkGroups:
-            doc.Tip = doc.addObject('App::LinkGroup','Board_Geoms')
-            doc.Board_Geoms.Label = 'Board_Geoms'
-            grp=doc.Board_Geoms
-            doc.Tip = doc.addObject('App::LinkGroup','Board')
-            doc.Board.Label = 'Board'
+            doc.Tip = doc.addObject('App::LinkGroup',boardG_name)
+            boardG= doc.ActiveObject
+            boardG.Label = boardG_name
+            grp=boardG_name
+            doc.Tip = doc.addObject('App::LinkGroup',board_name)
+            board= doc.ActiveObject
+            board.Label = board_name
             #FreeCAD.ActiveDocument.getObject("Step_Virtual_Models").addObject(impPart)
             # doc.getObject("Board").addObject(doc.Board_Geoms)
             #doc.getObject('Board_Geoms').adjustRelativeLinks(doc.getObject('Board'))
-            doc.getObject('Board').ViewObject.dropObject(doc.getObject('Board_Geoms'),None,'',[])
+            doc.getObject(board_name).ViewObject.dropObject(doc.getObject(boardG_name),None,'',[])
             FreeCADGui.Selection.clearSelection()
             #grp.addObject(pcb_board)
             #doc.getObject('Pcb').adjustRelativeLinks(doc.getObject('Board_Geoms'))
-            doc.getObject('Board_Geoms').ViewObject.dropObject(doc.getObject('Pcb'),None,'',[])
+            #doc.getObject('Board_Geoms').ViewObject.dropObject(doc.getObject('Pcb'),None,'',[])
+            doc.getObject(boardG_name).ViewObject.dropObject(doc.getObject(pcb_name),None,'',[])
             try:
                 #LCS.adjustRelativeLinks(doc.getObject('Board_Geoms'))
-                doc.getObject('Board_Geoms').ViewObject.dropObject(LCS,None,'',[])
+                doc.getObject(boardG_name).ViewObject.dropObject(LCS,None,'',[])
                 FreeCADGui.Selection.clearSelection()
                 FreeCADGui.Selection.addSelection(LCS)
                 FreeCADGui.runCommand('Std_ToggleVisibility',0)
@@ -14321,7 +13580,7 @@ def DrawPCB(mypcb,lyr=None):
             ## end hierarchy        
         else:
             #sayw("creating flat groups")
-            grp=doc.addObject("App::DocumentObjectGroup", "Board_Geoms")
+            grp=doc.addObject("App::DocumentObjectGroup", boardG_name)
             grp.addObject(pcb_board)
         #pcb_sk=FreeCAD.ActiveDocument.PCB_Sketch
         #grp.addObject(pcb_sk)
@@ -15631,18 +14890,35 @@ class Ui_DockWidget(object):
             #else:
             #    msg="missing Mod folder Module!\r\n\r\n"
             #    reply = QtGui.QMessageBox.information(None,"Info ...",msg)
-            if not pt_osx and not pt_lnx:
-                pdf_file_path=file_path_mod+os.sep+'ksu-wb'+os.sep+'demo'+os.sep+'kicadStepUp-starter-Guide.pdf'
-                #say(pdf_file_path)
-                pdf_name='kicadStepUp-starter-Guide'
-                help_txt+="<b>configuration options:</b><br>Configuration options are located in the preferences system of FreeCAD, which is located in the Edit menu -&gt; Preferences.<br>"
-                help_txt+="<b>starter Guide:</b><br><a href='"+pdf_file_path+"' target='_blank'>"+pdf_name+"</a><br>"
-            else:
-                #say(pdf_file_path)
-                pdf_name='kicadStepUp-starter-Guide'
-                help_txt+="<b>configuration options:</b><br>Configuration options are located in the preferences system of FreeCAD, which is located in the Edit menu -&gt; Preferences.<br>"
-                help_txt+="starter Guide:<br><u>FC-UserAppData/Mod<br>"+pdf_name+"</u><br>"
-            
+            #if not pt_osx and not pt_lnx:
+            #    import ksu_locator
+            #    ksuWBpath = os.path.dirname(ksu_locator.__file__)
+            #    #sys.path.append(ksuWB + '/Gui')
+            #    ksuWB_demo_path =  os.path.join( ksuWBpath, 'demo')
+            #    pdf_file_path=os.path.join(ksuWB_demo_path,'kicadStepUp-starter-Guide.pdf')
+            #    #say(pdf_file_path)
+            #    pdf_name='kicadStepUp-starter-Guide'
+            #    help_txt+="<b>configuration options:</b><br>Configuration options are located in the preferences system of FreeCAD, which is located in the Edit menu -&gt; Preferences.<br>"
+            #    help_txt+="<b>starter Guide:</b><br><a href='"+pdf_file_path+"' target='_blank'>"+pdf_name+"</a><br>"
+            #if not pt_osx and not pt_lnx:
+            #    pdf_file_path=file_path_mod+os.sep+'ksu-wb'+os.sep+'demo'+os.sep+'kicadStepUp-starter-Guide.pdf'
+            #    #say(pdf_file_path)
+            #    pdf_name='kicadStepUp-starter-Guide'
+            #    help_txt+="<b>configuration options:</b><br>Configuration options are located in the preferences system of FreeCAD, which is located in the Edit menu -&gt; Preferences.<br>"
+            #    help_txt+="<b>starter Guide:</b><br><a href='"+pdf_file_path+"' target='_blank'>"+pdf_name+"</a><br>"
+            #else:
+            #    #say(pdf_file_path)
+            #    pdf_name='kicadStepUp-starter-Guide'
+            #    help_txt+="<b>configuration options:</b><br>Configuration options are located in the preferences system of FreeCAD, which is located in the Edit menu -&gt; Preferences.<br>"
+            #    help_txt+="starter Guide:<br><u>FC-UserAppData/Mod<br>"+pdf_name+"</u><br>"
+            import ksu_locator
+            ksuWBpath = os.path.dirname(ksu_locator.__file__)
+            ksuWB_demo_path =  os.path.join( ksuWBpath, 'demo')
+            pdf_file_path=os.path.join(ksuWB_demo_path,'kicadStepUp-starter-Guide.pdf')
+            pdf_name='kicadStepUp-cheat-sheet'
+            help_txt+="<b>configuration options:</b><br>Configuration options are located in the preferences system of FreeCAD, which is located in the Edit menu -&gt; Preferences.<br>"
+            help_txt+="starter Guide:<br><b>"+pdf_file_path+"<br>"+pdf_name+"</b><br>"
+            help_txt+="<a href='https://github.com/easyw/kicadStepUpMod/blob/master/demo/kicadStepUp-cheat-sheet.pdf'  target='_blank'>kicadStepUp-cheat-sheet.pdf</a><br>"
             #help_txt+="<img src='"+pm+"' style='width:32px;height:32px;'>"
             help_txt+="<b>StepUp</b> can be used <b>to align 3D model to kicad footprint</b>.<br>"
             help_txt+="The artwork can be used for MCAD interchange and collaboration, and for enclosure design.<br>"
@@ -15921,6 +15197,58 @@ def Import3DModelF():
 ##from PyQt5 import QtCore, QtGui, QtWidgets
 QtWidgets = QtGui
 
+class Ui_STEP_Preferences(object):
+    def setupUi(self, STEP_Preferences):
+        import os
+        import ksu_locator
+        ksuWBpath = os.path.dirname(ksu_locator.__file__)
+        #sys.path.append(ksuWB + '/Gui')
+        ksuWB_demo_path =  os.path.join( ksuWBpath, 'demo')
+        STEP_Preferences.setObjectName("STEP_Preferences")
+        STEP_Preferences.resize(860, 752)
+        STEP_Preferences.setWindowTitle("STEP Suggested Preferences")
+        STEP_Preferences.setToolTip("")
+        self.verticalLayoutWidget = QtWidgets.QWidget(STEP_Preferences)
+        self.verticalLayoutWidget.setGeometry(QtCore.QRect(10, 10, 847, 732))
+        self.verticalLayoutWidget.setObjectName("verticalLayoutWidget")
+        self.verticalLayout = QtWidgets.QVBoxLayout(self.verticalLayoutWidget)
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout.setObjectName("verticalLayout")
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
+        self.label = QtWidgets.QLabel(self.verticalLayoutWidget)
+        self.label.setText("<b><font color='red'>Please set your preferences for STEP Import Export to:</font></b>")
+        self.label.setObjectName("label")
+        self.verticalLayout_2.addWidget(self.label)
+        self.label_2 = QtWidgets.QLabel(self.verticalLayoutWidget)
+        self.label_2.setText("")
+        self.label_2.setPixmap(QtGui.QPixmap(os.path.join(ksuWB_demo_path,"Import-Export-settings.png")))
+        self.label_2.setObjectName("label_2")
+        self.verticalLayout_2.addWidget(self.label_2)
+        self.label_3 = QtWidgets.QLabel(self.verticalLayoutWidget)
+        self.label_3.setText("<b><font color='red'>(you can disable this warning on StepUp preferences)</font></b>")
+        self.label_3.setAlignment(QtCore.Qt.AlignCenter)
+        self.label_3.setObjectName("label_3")
+        self.verticalLayout_2.addWidget(self.label_3)
+        self.buttonBox = QtWidgets.QDialogButtonBox(self.verticalLayoutWidget)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.buttonBox.sizePolicy().hasHeightForWidth())
+        self.buttonBox.setSizePolicy(sizePolicy)
+        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Ok)
+        self.buttonBox.setObjectName("buttonBox")
+        self.verticalLayout_2.addWidget(self.buttonBox)
+        self.verticalLayout.addLayout(self.verticalLayout_2)
+
+        self.buttonBox.accepted.connect(STEP_Preferences.accept)
+        self.retranslateUi(STEP_Preferences)
+        QtCore.QMetaObject.connectSlotsByName(STEP_Preferences)
+
+    def retranslateUi(self, STEP_Preferences):
+        pass
+
+##
 class Ui_LayerSelection(object):
     def setupUi(self, LayerSelection):
         LayerSelection.setObjectName("LayerSelection")
@@ -16055,6 +15383,7 @@ def PushPCB():
                     if 'Edge' not in SketchLayer:
                         edge_width=float(ui.lineEdit_width.text().replace(',','.'))
                     print(SketchLayer)
+                    skname=sel[0].Name
                 #else:  #canel
                 #    print('Cancel')
                 #    stop
@@ -16073,7 +15402,7 @@ def PushPCB():
                             pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
                             pg.SetString("last_pcb_path",make_string(last_pcb_path))
                             start_time=current_milli_time()
-                            export_pcb(name,SketchLayer)
+                            export_pcb(name,SketchLayer,skname)
                         else:
                             msg="""Save to <b>an EXISTING KiCad pcb file</b> to update your Edge!"""
                             say_warning(msg)
@@ -16356,11 +15685,14 @@ def PushMoved():
                         oft=None
                         if aux_orig == 1:
                             oft=getAuxOrigin(data)
-                        if grid_orig == 1:
+                        elif grid_orig == 1:
                             oft=getGridOrigin(data)
                         #print oft
                         gof=False
+                        origin_warn=False
                         if oft is not None:
+                            if oft == [0.0,0.0]:
+                                origin_warn=True
                             off_x=oft[0];off_y=-oft[1]
                             offset = oft
                             gof=True
@@ -16429,10 +15761,21 @@ def PushMoved():
                         msgr+="backup file saved to "+foname
                         say(msgr)
                         say_info(msg)
+                        if origin_warn:
+                            if aux_orig == 1:
+                                origin_msg='AuxOrigin'
+                            elif grid_orig == 1:
+                                origin_msg='GridOrigin'
+                            msg = origin_msg +' is set in FC Preferences but not set in KiCAD pcbnew file'
+                            sayw(msg)
+                            msg="""<b><font color='red'>"""+origin_msg+""" is set in FreeCAD Preferences<br>but not set in KiCAD pcbnew file</font></b>"""
+                            msg+="""<br><br>Please assign """+origin_msg+""" to your KiCAD pcbnew board file"""
+                            msg+="""<br>for a better Mechanical integration"""
+                            say_warning(msg)
                     else:
-                        msg="""To update 3D model Position(s) in <b>an EXISTING KiCad pcb file</b><br>the board must have assigned \'Grid Origin\' or<br>\'Aux Origin\' (Drill and Place offset)!"""
+                        msg="""To update 3D model Position(s) in <b>an EXISTING KiCad pcb file</b><br>the KiCAD pcbnew board file must have assigned \'Grid Origin\' or<br>\'Aux Origin\' (Drill and Place offset)!"""
                         say_warning(msg)
-                        msg="To update 3D model Position(s) in an EXISTING KiCad pcb file\nthe board must have assigned \'Grid Origin\' or \'Aux Origin\' (Drill and Place offset)!"
+                        msg="To update 3D model Position(s) in an EXISTING KiCad pcb file\nthe KiCAD pcbnew board file must have assigned \'Grid Origin\' or \'Aux Origin\' (Drill and Place offset)!"
                         sayerr(msg)
                 else:
                     msg="""Save to <b>an EXISTING KiCad pcb file</b> to update your 3D model position!"""
@@ -16715,13 +16058,19 @@ def PullMoved():
                             if hasattr(mypcb.setup, 'aux_axis_origin'):
                                 oft = mypcb.setup.aux_axis_origin 
                                 #oft=getAuxOrigin(data)
-                        if grid_orig == 1:
+                        elif grid_orig == 1:
                             if hasattr(mypcb.setup, 'grid_origin'):
                                 oft=mypcb.setup.grid_origin
+                            else:
+                                oft = [0.0,0.0]
                                 #oft=getGridOrigin(data)
                         #print ('oft ',oft)
                         gof=False
+                        
+                        origin_warn=False
                         if oft is not None:
+                            if oft == [0.0,0.0]:
+                                origin_warn=True
                             off_x=oft[0];off_y=-oft[1]
                             offset = oft
                             gof=True
@@ -16770,10 +16119,21 @@ def PullMoved():
                         msgr="3D model new position pulled from kicad board!\n"
                         say(msgr)
                         say_info(msg)
+                        if origin_warn:
+                            if aux_orig == 1:
+                                origin_msg='AuxOrigin'
+                            elif grid_orig == 1:
+                                origin_msg='GridOrigin'
+                            msg = origin_msg +' is set in FC Preferences but not set in KiCAD pcbnew file'
+                            sayw(msg)
+                            msg="""<b><font color='red'>"""+origin_msg+""" is set in FreeCAD Preferences<br>but not set in KiCAD pcbnew file</font></b>"""
+                            msg+="""<br><br>Please assign """+origin_msg+""" to your KiCAD pcbnew board file"""
+                            msg+="""<br>for a better Mechanical integration"""
+                            say_warning(msg)
                     else:
-                        msg="""To update 3D model Position(s) from <b>an EXISTING KiCad pcb file</b><br>the board must have assigned \'Grid Origin\' or<br>\'Aux Origin\' (Drill and Place offset)!"""
+                        msg="""To update 3D model Position(s) from <b>an EXISTING KiCad pcb file</b><br>the KiCAD pcbnew board file must have assigned \'Grid Origin\' or<br>\'Aux Origin\' (Drill and Place offset)!"""
                         say_warning(msg)
-                        msg="To update 3D model Position(s) from an EXISTING KiCad pcb file\nthe board must have assigned \'Grid Origin\' or \'Aux Origin\' (Drill and Place offset)!"
+                        msg="To update 3D model Position(s) from an EXISTING KiCad pcb file\nthe KiCAD pcbnew board file must have assigned \'Grid Origin\' or \'Aux Origin\' (Drill and Place offset)!"
                         sayerr(msg)
                 else:
                     msg="""Load from <b>an EXISTING KiCad pcb file</b> to update your 3D model position!"""
@@ -19972,7 +19332,8 @@ def getGridOrigin(dt):
     if match is not None:
         return [float(match.group(1)), float(match.group(2))];
     else:
-        return None
+        #returning default top left corner value
+        return [0.0,0.0]
 ##
 ##  getAuxOrigin
 def getAuxOrigin(dt):
@@ -19980,9 +19341,11 @@ def getAuxOrigin(dt):
     if match is not None:
         return [float(match.group(1)), float(match.group(2))];
     else:
+        # #returning default top left corner value
+        # return [0.0,0.0]
         return None
 ##
-def export_pcb(fname=None,sklayer=None):
+def export_pcb(fname=None,sklayer=None,skname=None):
     global last_fp_path, test_flag, start_time
     global configParser, configFilePath, start_time
     global ignore_utf8, ignore_utf8_incfg, disable_PoM_Observer
@@ -20114,6 +19477,7 @@ def export_pcb(fname=None,sklayer=None):
                 #else:
                 #    edge_width=0.16
             oft=None
+            origin_warn = False
             #skip = False
             if aux_orig == 1:
                 oft=getAuxOrigin(data)
@@ -20130,6 +19494,8 @@ def export_pcb(fname=None,sklayer=None):
                     say_warning(msg)
                     stop
                 else:
+                    if oft == [0.0,0.0]:
+                        origin_warn = True
                     print ('grid_origin found',oft)
             else:
                 print('using an approximate PCB center as sketch reference point')
@@ -20162,8 +19528,10 @@ def export_pcb(fname=None,sklayer=None):
                     off_x=0;off_y=0
                 if ksu_found==True or testing==True:
                     if pcb_found==True:
-                        bbpx=-FreeCAD.ActiveDocument.getObject('Pcb').Placement.Base[0]+FreeCAD.ActiveDocument.getObject(skt_name).Placement.Base[0]
-                        bbpy=FreeCAD.ActiveDocument.getObject('Pcb').Placement.Base[1]-FreeCAD.ActiveDocument.getObject(skt_name).Placement.Base[1]
+                        #bbpx=-FreeCAD.ActiveDocument.getObject('Pcb').Placement.Base[0]+FreeCAD.ActiveDocument.getObject(skt_name).Placement.Base[0]
+                        #bbpy=FreeCAD.ActiveDocument.getObject('Pcb').Placement.Base[1]-FreeCAD.ActiveDocument.getObject(skt_name).Placement.Base[1]
+                        bbpx=-FreeCAD.ActiveDocument.getObject(skname).Placement.Base[0]+FreeCAD.ActiveDocument.getObject(skt_name).Placement.Base[0]
+                        bbpy=FreeCAD.ActiveDocument.getObject(skname).Placement.Base[1]-FreeCAD.ActiveDocument.getObject(skt_name).Placement.Base[1]
                         offset=[bbpx,bbpy]
                     else:
                         off_x=0;off_y=0
@@ -20357,7 +19725,18 @@ def export_pcb(fname=None,sklayer=None):
             if not edge_pcb_exists:
                 msg="<b>close your FC Sketch<br>and reload the kicad_pcb file</b>"
                 say_warning(msg)
-            
+            if origin_warn:
+                if aux_orig == 1:
+                    origin_msg='AuxOrigin'
+                elif grid_orig == 1:
+                    origin_msg='GridOrigin'
+                msg = origin_msg +' is set in FC Preferences but not set in KiCAD pcbnew file'
+                sayw(msg)
+                msg="""<b><font color='red'>"""+origin_msg+""" is set in FreeCAD Preferences<br>but not set in KiCAD pcbnew file</font></b>"""
+                msg+="""<br><br>Please assign """+origin_msg+""" to your KiCAD pcbnew board file"""
+                msg+="""<br>for a better Mechanical integration"""
+                say_warning(msg)
+
     #def precision(self, value):
     #    return "%.2f" % float(value)
     
