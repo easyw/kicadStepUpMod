@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.5.0.3.x"
+___ver___ = "9.5.0.4"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -8037,7 +8037,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                 FCV_date = str(FreeCAD.Version()[4])
                 FCV_date = FCV_date[0:FCV_date.find(' ')]
                 say('FreeCAD build date: '+FCV_date)
-                if FCV_date >= '2020/01/31':
+                if FCV_date >= '2020/03/27':
                     STEP_UseAppPart_available = True #new STEP import export mode available
                     say('STEP UseAppPart available')
             if hasattr(prefs, 'GetBools'):
