@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.5.0.2.x"
+___ver___ = "9.5.0.3.x"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -4962,7 +4962,9 @@ def find_top_container(objs_list):
 def check_wrl_transparency(step_module):
     prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
     step_transparency = 0
-    if prefs.GetBool('transparency_material_enabled'):
+    Led_enabled = prefs.GetBool('transparency_material_led_enabled')
+    Glass_enabled = prefs.GetBool('transparency_material_glass_enabled')
+    if Led_enabled or Glass_enabled:
         #sayw('force transparency for glass or led materials'
         if step_module.lower().endswith('wrl'):
             if os.path.exists(step_module):  # a wrl model could be missing
@@ -4979,11 +4981,11 @@ def check_wrl_transparency(step_module):
                     #FreeCAD.Console.PrintError(step_module)
                     #FreeCAD.Console.PrintError(' WRL MATERIALS\n')
                     model_content = f.read()
-                    if LedM in model_content:
-                        sayw('force transparency for glass or led materials')
+                    if Led_enabled and LedM in model_content:
+                        sayw('force transparency for led materials')
                         step_transparency = 30
-                    elif GlassM in model_content:
-                        sayw('force transparency for glass or led materials')
+                    if Glass_enabled and GlassM in model_content:
+                        sayw('force transparency for glass materials')
                         step_transparency = 70
         elif step_module.lower().endswith('wrz'):
             read_mode = 'r'
@@ -4999,11 +5001,11 @@ def check_wrl_transparency(step_module):
                 with gz.open(step_module, read_mode) as f:
                     model_content = f.read()
                     #FreeCAD.Console.PrintError(model_content)
-                    if LedM in model_content:
-                        sayw('force transparency for glass or led materials')
+                    if Led_enabled and LedM in model_content:
+                        sayw('force transparency for led materials')
                         step_transparency = 30
-                    elif GlassM in model_content:
-                        sayw('force transparency for glass or led materials')
+                    if Glass_enabled and GlassM in model_content:
+                        sayw('force transparency for glass materials')
                         step_transparency = 70
             except:
                 step_transparency = 0
