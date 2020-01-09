@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.5.0.4"
+___ver___ = "9.5.1.1"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -7520,6 +7520,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
 
 
     pull_sketch = False
+    override_pcb = None
     SketchLayer = 'Edge.Cuts' #None
     if load_models is None:
         load_models = True
@@ -7534,6 +7535,8 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
         if reply==1: # ok
             SketchLayer=str(ui.comboBoxLayerSel.currentText())
             print(SketchLayer)
+            if SketchLayer == 'Edge.Cuts':
+                override_pcb = ui.checkBox_replace.isChecked()
             pull_sketch = True
         else:
             print('Cancel')
@@ -7603,12 +7606,22 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                 ini_vars[10] = last_pcb_path
                 #cfg_update_all()
                 test_import = False
+                if override_pcb == True:
+                    insert=True
                 if insert == True:
                     test_import = True
                 if test_import:
                     doc=FreeCAD.ActiveDocument
                     if doc is None:
                         doc=FreeCAD.newDocument(fname)
+                    elif override_pcb == True:
+                        if doc.getObject(boardG_name) in doc.Objects: #if 1: #try:
+                            removesubtree([doc.getObject(boardG_name)])
+                            #doc.recompute()
+                            sayw('old Pcb removed')
+                            #stop
+                        else: #except:
+                            say('Pcb not present')
                 else:
                     doc=FreeCAD.newDocument(fname)
                 pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
@@ -7656,7 +7669,14 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                 #    ##off_x=-xp+xmin+(xMax-xmin)/2; off_y=-yp-(ymin+(yMax-ymin)/2)  #offset of the board & modules
                 #    off_x=-xp+center_x;off_y=-yp+center_y
                 #    #off_x=-xp;off_y=-yp
-                modules=DrawPCB(mypcb,SketchLayer)
+                modules=DrawPCB(mypcb,SketchLayer,override_pcb)
+                if override_pcb == True:
+                    if use_AppPart and not force_oldGroups and not use_LinkGroups:
+                        doc.getObject(board_name).addObject(doc.getObject(boardG_name))
+                    elif use_LinkGroups:
+                        doc.getObject(board_name).ViewObject.dropObject(doc.getObject(boardG_name),None,'',[])
+                if SketchLayer == 'Edge.Cuts':
+                    FreeCAD.ActiveDocument.getObject(board_name).Label = fname
                 pcbThickness=float(mypcb.general.thickness)
                 ## stop  #test parser
                 check_requirements()
@@ -12169,7 +12189,7 @@ def OSCD2Dg_edgestofaces(edges,algo=3,eps=0.001):
 #
 
 ###
-def DrawPCB(mypcb,lyr=None):
+def DrawPCB(mypcb,lyr=None,rmv_container=None):
     global start_time, use_AppPart, force_oldGroups, min_drill_size
     global addVirtual, load_sketch, off_x, off_y, aux_orig, grid_orig
     global running_time, conv_offs, use_Links, apply_edge_tolerance, simplifyComSolid
@@ -13537,11 +13557,12 @@ def DrawPCB(mypcb,lyr=None):
             except:
                 pass
             grp=boardG
-            doc.Tip = doc.addObject('App::Part',board_name)
-            board= doc.ActiveObject
-            board.Label = board_name
-            #FreeCAD.ActiveDocument.getObject("Step_Virtual_Models").addObject(impPart)
-            doc.getObject(board_name).addObject(doc.getObject(boardG_name))
+            if rmv_container is None or rmv_container is False:
+                doc.Tip = doc.addObject('App::Part',board_name)
+                board= doc.ActiveObject
+                board.Label = board_name
+                #FreeCAD.ActiveDocument.getObject("Step_Virtual_Models").addObject(impPart)
+                doc.getObject(board_name).addObject(doc.getObject(boardG_name))
             try:
                 doc.getObject(boardG_name).addObject(LCS)
             except:
@@ -13554,13 +13575,14 @@ def DrawPCB(mypcb,lyr=None):
             boardG= doc.ActiveObject
             boardG.Label = boardG_name
             grp=boardG_name
-            doc.Tip = doc.addObject('App::LinkGroup',board_name)
-            board= doc.ActiveObject
-            board.Label = board_name
-            #FreeCAD.ActiveDocument.getObject("Step_Virtual_Models").addObject(impPart)
-            # doc.getObject("Board").addObject(doc.Board_Geoms)
-            #doc.getObject('Board_Geoms').adjustRelativeLinks(doc.getObject('Board'))
-            doc.getObject(board_name).ViewObject.dropObject(doc.getObject(boardG_name),None,'',[])
+            if rmv_container is None or rmv_container is False:
+                doc.Tip = doc.addObject('App::LinkGroup',board_name)
+                board= doc.ActiveObject
+                board.Label = board_name
+                #FreeCAD.ActiveDocument.getObject("Step_Virtual_Models").addObject(impPart)
+                # doc.getObject("Board").addObject(doc.Board_Geoms)
+                #doc.getObject('Board_Geoms').adjustRelativeLinks(doc.getObject('Board'))
+                doc.getObject(board_name).ViewObject.dropObject(doc.getObject(boardG_name),None,'',[])
             FreeCADGui.Selection.clearSelection()
             #grp.addObject(pcb_board)
             #doc.getObject('Pcb').adjustRelativeLinks(doc.getObject('Board_Geoms'))
@@ -15252,16 +15274,16 @@ class Ui_STEP_Preferences(object):
 class Ui_LayerSelection(object):
     def setupUi(self, LayerSelection):
         LayerSelection.setObjectName("LayerSelection")
-        LayerSelection.resize(294, 151)
+        LayerSelection.resize(294, 168)
         LayerSelection.setWindowTitle("LayerSelection")
         LayerSelection.setToolTip("")
         self.buttonBoxLayer = QtWidgets.QDialogButtonBox(LayerSelection)
-        self.buttonBoxLayer.setGeometry(QtCore.QRect(10, 110, 271, 32))
+        self.buttonBoxLayer.setGeometry(QtCore.QRect(10, 130, 271, 32))
         self.buttonBoxLayer.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBoxLayer.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
         self.buttonBoxLayer.setObjectName("buttonBoxLayer")
         self.verticalLayoutWidget = QtWidgets.QWidget(LayerSelection)
-        self.verticalLayoutWidget.setGeometry(QtCore.QRect(10, 10, 271, 80))
+        self.verticalLayoutWidget.setGeometry(QtCore.QRect(10, 10, 271, 101))
         self.verticalLayoutWidget.setObjectName("verticalLayoutWidget")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.verticalLayoutWidget)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
@@ -15277,6 +15299,11 @@ class Ui_LayerSelection(object):
         self.comboBoxLayerSel = QtWidgets.QComboBox(self.verticalLayoutWidget)
         self.comboBoxLayerSel.setObjectName("comboBoxLayerSel")
         self.verticalLayout.addWidget(self.comboBoxLayerSel)
+        self.checkBox_replace = QtWidgets.QCheckBox(self.verticalLayoutWidget)
+        self.checkBox_replace.setToolTip("<html><head/><body><p>replace PCB in current document</p><p><span style=\" font-weight:600; color:#aa0000;\">N.B.</span> Sketch constrains will be deleted!</p></body></html>")
+        self.checkBox_replace.setText("replace PCB in current document")
+        self.checkBox_replace.setObjectName("checkBox_replace")
+        self.verticalLayout.addWidget(self.checkBox_replace)
 
         self.retranslateUi(LayerSelection)
         self.buttonBoxLayer.accepted.connect(LayerSelection.accept)

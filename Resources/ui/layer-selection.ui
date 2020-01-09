@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>294</width>
-    <height>151</height>
+    <height>168</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -20,7 +20,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>110</y>
+     <y>130</y>
      <width>271</width>
      <height>32</height>
     </rect>
@@ -38,7 +38,7 @@
      <x>10</x>
      <y>10</y>
      <width>271</width>
-     <height>80</height>
+     <height>101</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -56,6 +56,16 @@ Default 'Edge.Cuts'</string>
     </item>
     <item>
      <widget class="QComboBox" name="comboBoxLayerSel"/>
+    </item>
+    <item>
+     <widget class="QCheckBox" name="checkBox_replace">
+      <property name="toolTip">
+       <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;replace PCB in current document&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; color:#aa0000;&quot;&gt;N.B.&lt;/span&gt; Sketch constrains will be deleted!&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="text">
+       <string notr="true">replace PCB in current document</string>
+      </property>
+     </widget>
     </item>
    </layout>
   </widget>
