@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.5.1.1"
+___ver___ = "9.5.1.2"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -7614,6 +7614,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                     doc=FreeCAD.ActiveDocument
                     if doc is None:
                         doc=FreeCAD.newDocument(fname)
+                        override_pcb = False
                     elif override_pcb == True:
                         if doc.getObject(boardG_name) in doc.Objects: #if 1: #try:
                             removesubtree([doc.getObject(boardG_name)])
@@ -7621,6 +7622,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                             sayw('old Pcb removed')
                             #stop
                         else: #except:
+                            override_pcb = False
                             say('Pcb not present')
                 else:
                     doc=FreeCAD.newDocument(fname)
