@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.5.1.2"
+___ver___ = "9.5.2.3"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -7521,6 +7521,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
 
     pull_sketch = False
     override_pcb = None
+    keep_pcb_sketch = None
     SketchLayer = 'Edge.Cuts' #None
     if load_models is None:
         load_models = True
@@ -7536,7 +7537,12 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
             SketchLayer=str(ui.comboBoxLayerSel.currentText())
             print(SketchLayer)
             if SketchLayer == 'Edge.Cuts':
-                override_pcb = ui.checkBox_replace.isChecked()
+                #override_pcb = ui.checkBox_replace.isChecked()
+                if ui.radioBtn_replace_pcb.isChecked():
+                    override_pcb = True
+                elif ui.radioBtn_keep_sketch.isChecked(): #enabling keep sketch only if override is True 
+                    override_pcb = True
+                    keep_pcb_sketch = True
             pull_sketch = True
         else:
             print('Cancel')
@@ -7585,6 +7591,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                 stepM_name='Step_Models'+fname_sfx
                 stepV_name='Step_Virtual_Models'+fname_sfx
                 pcb_name='Pcb'+fname_sfx
+                sketch_name_sfx = 'PCB_Sketch'+fname_sfx
                 board_name='Board'+fname_sfx
                 boardG_name='Board_Geoms'+fname_sfx
                 #say(fname_sfx)
@@ -7617,6 +7624,8 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                         override_pcb = False
                     elif override_pcb == True:
                         if doc.getObject(boardG_name) in doc.Objects: #if 1: #try:
+                            if keep_pcb_sketch==True:
+                                doc.getObject(boardG_name).removeObject(doc.getObject(sketch_name_sfx)) #keep sketck & constrains
                             removesubtree([doc.getObject(boardG_name)])
                             #doc.recompute()
                             sayw('old Pcb removed')
@@ -7671,7 +7680,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                 #    ##off_x=-xp+xmin+(xMax-xmin)/2; off_y=-yp-(ymin+(yMax-ymin)/2)  #offset of the board & modules
                 #    off_x=-xp+center_x;off_y=-yp+center_y
                 #    #off_x=-xp;off_y=-yp
-                modules=DrawPCB(mypcb,SketchLayer,override_pcb)
+                modules=DrawPCB(mypcb,SketchLayer,override_pcb,keep_pcb_sketch)
                 if override_pcb == True:
                     if use_AppPart and not force_oldGroups and not use_LinkGroups:
                         doc.getObject(board_name).addObject(doc.getObject(boardG_name))
@@ -7834,7 +7843,16 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
             else:
                 zf= Timer (0.1,ZoomFitThread)
                 zf.start()
-
+            if keep_pcb_sketch == True:
+                #sayw(sketch_name_sfx+'001')
+                if doc.getObject(sketch_name_sfx+'001') in doc.Objects: #if 1: #try:
+                    doc.removeObject(sketch_name_sfx+'001') #keep sketck & constrains
+                    docG = FreeCADGui.ActiveDocument
+                    docG.getObject(sketch_name_sfx).Visibility=True
+            elif override_pcb == True:
+                if doc.getObject(sketch_name_sfx) in doc.Objects: #if 1: #try:
+                    docG = FreeCADGui.ActiveDocument
+                    docG.getObject(sketch_name_sfx).Visibility=True
             if not pull_sketch or load_models:
                 if use_AppPart and not force_oldGroups and not use_LinkGroups:
                     #sayw("creating hierarchy")
@@ -12191,7 +12209,7 @@ def OSCD2Dg_edgestofaces(edges,algo=3,eps=0.001):
 #
 
 ###
-def DrawPCB(mypcb,lyr=None,rmv_container=None):
+def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
     global start_time, use_AppPart, force_oldGroups, min_drill_size
     global addVirtual, load_sketch, off_x, off_y, aux_orig, grid_orig
     global running_time, conv_offs, use_Links, apply_edge_tolerance, simplifyComSolid
@@ -15276,16 +15294,16 @@ class Ui_STEP_Preferences(object):
 class Ui_LayerSelection(object):
     def setupUi(self, LayerSelection):
         LayerSelection.setObjectName("LayerSelection")
-        LayerSelection.resize(294, 168)
+        LayerSelection.resize(341, 232)
         LayerSelection.setWindowTitle("LayerSelection")
         LayerSelection.setToolTip("")
         self.buttonBoxLayer = QtWidgets.QDialogButtonBox(LayerSelection)
-        self.buttonBoxLayer.setGeometry(QtCore.QRect(10, 130, 271, 32))
+        self.buttonBoxLayer.setGeometry(QtCore.QRect(60, 190, 271, 32))
         self.buttonBoxLayer.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBoxLayer.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
         self.buttonBoxLayer.setObjectName("buttonBoxLayer")
         self.verticalLayoutWidget = QtWidgets.QWidget(LayerSelection)
-        self.verticalLayoutWidget.setGeometry(QtCore.QRect(10, 10, 271, 101))
+        self.verticalLayoutWidget.setGeometry(QtCore.QRect(10, 10, 325, 171))
         self.verticalLayoutWidget.setObjectName("verticalLayoutWidget")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.verticalLayoutWidget)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
@@ -15301,19 +15319,42 @@ class Ui_LayerSelection(object):
         self.comboBoxLayerSel = QtWidgets.QComboBox(self.verticalLayoutWidget)
         self.comboBoxLayerSel.setObjectName("comboBoxLayerSel")
         self.verticalLayout.addWidget(self.comboBoxLayerSel)
-        self.checkBox_replace = QtWidgets.QCheckBox(self.verticalLayoutWidget)
-        self.checkBox_replace.setToolTip("<html><head/><body><p>replace PCB in current document</p><p><span style=\" font-weight:600; color:#aa0000;\">N.B.</span> Sketch constrains will be deleted!</p></body></html>")
-        self.checkBox_replace.setText("replace PCB in current document")
-        self.checkBox_replace.setObjectName("checkBox_replace")
-        self.verticalLayout.addWidget(self.checkBox_replace)
+        self.radioBtn_newdoc = QtWidgets.QRadioButton(self.verticalLayoutWidget)
+        self.radioBtn_newdoc.setToolTip("open in new FreeCAD document")
+        self.radioBtn_newdoc.setText("open in new document")
+        self.radioBtn_newdoc.setChecked(True)
+        self.radioBtn_newdoc.setObjectName("radioBtn_newdoc")
+        self.verticalLayout.addWidget(self.radioBtn_newdoc)
+        self.radioBtn_replace_pcb = QtWidgets.QRadioButton(self.verticalLayoutWidget)
+        self.radioBtn_replace_pcb.setToolTip("<html><head/><body><p>replace PCB in current document</p><p><span style=\" font-weight:600; color:#aa0000;\">N.B.</span> Sketch constrains will be deleted!</p></body></html>")
+        self.radioBtn_replace_pcb.setText("replace PCB and Sketch in current document")
+        self.radioBtn_replace_pcb.setObjectName("radioBtn_replace_pcb")
+        self.verticalLayout.addWidget(self.radioBtn_replace_pcb)
+        self.radioBtn_keep_sketch = QtWidgets.QRadioButton(self.verticalLayoutWidget)
+        self.radioBtn_keep_sketch.setToolTip("<html><head/><body><p>keep Sketch in current document</p><p><span style=\" font-weight:600; color:#aa0000;\">N.B.</span> this option will keep Sketch &amp; constrains but replace the PCB</p><p>This could lead to a unsynced Skecth feature</p></body></html>")
+        self.radioBtn_keep_sketch.setText("replace PCB and keep Sketch in curr. doc")
+        self.radioBtn_keep_sketch.setObjectName("radioBtn_keep_sketch")
+        self.verticalLayout.addWidget(self.radioBtn_keep_sketch)
 
         self.retranslateUi(LayerSelection)
         self.buttonBoxLayer.accepted.connect(LayerSelection.accept)
         self.buttonBoxLayer.rejected.connect(LayerSelection.reject)
         QtCore.QMetaObject.connectSlotsByName(LayerSelection)
+#-------#-------------------------------------------------------------------------
+        self.comboBoxLayerSel.currentTextChanged.connect(self.on_combobox_changed) #addition
 
     def retranslateUi(self, LayerSelection):
         pass
+        
+    def on_combobox_changed(self, value):
+        print('combo change',value)
+        if value != 'Edge.Cuts':
+            self.radioBtn_newdoc.setChecked(True)
+            self.radioBtn_replace_pcb.setEnabled(False)
+            self.radioBtn_keep_sketch.setEnabled(False)
+        else:
+            self.radioBtn_replace_pcb.setEnabled(True)
+            self.radioBtn_keep_sketch.setEnabled(True)
 ##
 class Ui_LayerSelectionOut(object):
     def setupUi(self, LayerSelectionOut):
