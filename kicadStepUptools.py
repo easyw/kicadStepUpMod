@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.5.2.3"
+___ver___ = "9.5.2.4"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -10975,9 +10975,11 @@ def routineDrawFootPrint(content,name):
                 ##pad pos x,y; pad size x,y; drillcenter x,y; drill size x,y, layerobj=mypad
                 obj=mypad
                 if rot!=0 and not skip:
-                    rotateObj(obj, [xs, ys, -rot+180])
+                    rotateObj(obj, [xs, ys, +rot+180])
+                    #rotateObj(obj, [xs, ys, -rot+180])
                     if mypad2 is not None:
-                        rotateObj(mypad2, [xs, ys, -rot+180])
+                        rotateObj(mypad2, [xs, ys, +rot+180])
+                        #rotateObj(mypad2, [xs, ys, -rot+180])
                 if not skip:
                     BotPadList.append(obj)
                 if mypad2 is not None:
