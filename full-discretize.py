@@ -40,5 +40,11 @@ else:
             msg = """Open Vertexes found.<br>"""+str(openVtxs)
             reply = QtGui.QMessageBox.information(None,"info", msg)
     FreeCADGui.ActiveDocument.getObject(sel[0].Name).Visibility=False
+    shp = skt.Shape
+    for e in shp.Edges:
+        if 'Line' not in e.Curve.TypeId:
+            stop
+        print(e.Vertexes[0].Point.x,e.Vertexes[0].Point.y)
+        print(e.Vertexes[1].Point.x,e.Vertexes[1].Point.y)
     FreeCAD.ActiveDocument.commitTransaction()
-    
+
