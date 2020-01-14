@@ -41,10 +41,20 @@ else:
             reply = QtGui.QMessageBox.information(None,"info", msg)
     FreeCADGui.ActiveDocument.getObject(sel[0].Name).Visibility=False
     shp = skt.Shape
+    ofs=[0.0,0.0]
+    edge_width = 0.1 
+    layer = 'F.SilkS'
     for e in shp.Edges:
         if 'Line' not in e.Curve.TypeId:
             stop
-        print(e.Vertexes[0].Point.x,e.Vertexes[0].Point.y)
-        print(e.Vertexes[1].Point.x,e.Vertexes[1].Point.y)
+        e0x = e.Vertexes[0].Point.x
+        e0y = e.Vertexes[0].Point.y
+        e1x = e.Vertexes[1].Point.x
+        e1y = e.Vertexes[1].Point.y
+        print(e0x,e0y)
+        print(e1x,e1y)
+        k_edg = "  (gr_line (start {0:.3f} {1:.3f}) (end {2:.3f} {3:.3f}) (angle 90) (layer {5}) (width {4}))"\
+                        .format(e0x+ofs[0], -e0y+ofs[1], e1x+ofs[0], -e1y+ofs[1], edge_width, layer)
+        print(k_edg)
     FreeCAD.ActiveDocument.commitTransaction()
 
