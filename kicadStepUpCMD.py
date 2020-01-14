@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-__ksuCMD_version__='1.8.6'
+__ksuCMD_version__='1.8.7'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -1428,7 +1428,7 @@ class ksuToolsConstrainator:
                         sanitizeSkBsp(sel[0].Name, tol)
                     add_constraints(sel[0].Name, tol, constr)
                     skt = FreeCAD.ActiveDocument.getObject(sel[0].Name)
-                    if hasattr(skt, 'OpenVerices'):
+                    if hasattr(skt, 'OpenVertices'):
                         openVtxs = skt.OpenVertices
                         if len(openVtxs) >0:
                             FreeCAD.Console.PrintError("Open Vertexes found.\n")
