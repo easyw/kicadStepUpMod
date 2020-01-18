@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-__ksuCMD_version__='1.8.7'
+__ksuCMD_version__='1.8.8'
 
 
 precision = 0.1 # precision in spline or bezier conversion
