@@ -11,7 +11,18 @@ from PySide import QtGui, QtCore
 q_deflection = 0.005 #0.02 ##0.005
 tol = 0.01
 constr = 'coincident' #'all'
+from sys import platform as _platform
 
+# window GUI dimensions parameters
+if _platform == "linux" or _platform == "linux2":
+    # linux
+    filename="/home/mau/Downloads/out.txt"
+elif _platform == "darwin":
+    filename="/home/mau/Downloads/out.txt"
+else: #win
+    filename="C:/Users/userC/Downloads/out.txt"
+    
+    
 def distance(p0, p1):
     return math.sqrt((p0[0] - p1[0])**2 + (p0[1] - p1[1])**2)
 
@@ -108,6 +119,6 @@ else:
     fillzone+="    )"+os.linesep+"  )"+os.linesep #+")"+os.linesep
     print(fillzone)
     FreeCAD.ActiveDocument.commitTransaction()
-    with open("/home/mau/Downloads/out.txt", "wb") as f:
+    with open(filename, "wb") as f:
         f.write(fillzone.encode('utf-8'))
 

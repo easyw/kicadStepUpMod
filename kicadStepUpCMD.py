@@ -1430,11 +1430,18 @@ class ksuToolsConstrainator:
                     skt = FreeCAD.ActiveDocument.getObject(sel[0].Name)
                     if hasattr(skt, 'OpenVertices'):
                         openVtxs = skt.OpenVertices
+                        add_points = True
                         if len(openVtxs) >0:
                             FreeCAD.Console.PrintError("Open Vertexes found.\n")
                             FreeCAD.Console.PrintWarning(str(openVtxs)+'\n')
                             msg = """Open Vertexes found.<br>"""+str(openVtxs)
                             reply = QtGui.QMessageBox.information(None,"info", msg)
+                        if add_points:
+                            for v in openVtxs:
+                                FreeCAD.ActiveDocument.addObject('PartDesign::Point','DatumPoint')
+                                dp = FreeCAD.ActiveDocument.ActiveObject
+                                dp.Placement = FreeCAD.Placement (FreeCAD.Vector(v[0],v[1],0), FreeCAD.Rotation(0,0,0), FreeCAD.Vector(0,0,0))
+                                dp.Label = 'OpenVertexPointer'
                     FreeCAD.ActiveDocument.commitTransaction()
             else:
                 reply = QtGui.QMessageBox.information(None,"Warning", "select a Sketch to be Fix & Constrained")
