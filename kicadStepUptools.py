@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.5.2.6"
+___ver___ = "9.5.2.7"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -15412,8 +15412,21 @@ class Ui_LayerSelectionOut(object):
         self.buttonBoxLayer.rejected.connect(LayerSelectionOut.reject)
         QtCore.QMetaObject.connectSlotsByName(LayerSelectionOut)
 
+#-------#-------------------------------------------------------------------------
+        self.comboBoxLayerSel.currentTextChanged.connect(self.on_combobox_changed) #addition
+
     def retranslateUi(self, LayerSelectionOut):
         pass
+        
+    def on_combobox_changed(self, value):
+        print('combo change',value)
+        if 'Zone' in value:
+            self.lineEdit_width.setEnabled(False)
+            self.width_label.setEnabled(False)
+            #self.width_label.setText("-----:")
+        else:
+            self.lineEdit_width.setEnabled(True)
+            self.width_label.setEnabled(True)
 ##
 
 def PushPCB():
