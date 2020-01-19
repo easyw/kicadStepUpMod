@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.5.2.5"
+___ver___ = "9.5.2.6"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -15444,7 +15444,7 @@ def PushPCB():
                 #    last_3d_path=last_pcb_path
                 #    sayw(last_pcb_path)
                 #getSaveFileName(self,"saveFlle","Result.txt",filter ="txt (*.txt *.)")
-                layer_list = ['Edge.Cuts','Dwgs.User','Cmts.User','Eco1.User','Eco2.User','Margin', 'B.FillZone']
+                layer_list = ['Edge.Cuts','Dwgs.User','Cmts.User','Eco1.User','Eco2.User','Margin', 'B.FillZone', 'B.KeepOutZone']
                 LayerSelectionDlg = QtGui.QDialog()
                 ui = Ui_LayerSelectionOut()
                 ui.setupUi(LayerSelectionDlg)
@@ -19493,7 +19493,9 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                 ssklayer = 'Edge'
             else:
                 ssklayer = sklayer.split('.')[0]
-                if ssklayer == 'B':
+                if 'KeepOutZone' in sklayer:
+                    ssklayer = 'KeepOutZone'
+                elif 'FillZone' in sklayer:
                     ssklayer = 'FillZone'
                 print (ssklayer)
             edge_pcb_exists=False
@@ -19580,7 +19582,7 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                 offset = oft
                 gof=True
   
-            if edge_pcb_exists and ssklayer != 'FillZone':
+            if edge_pcb_exists and ssklayer != 'FillZone' and ssklayer != 'KeepOutZone':
                 #offset=[0,0]
                 doc=FreeCAD.ActiveDocument
                 ksu_found=False;skt_name='';pcb_found=False
@@ -19665,7 +19667,7 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                 newcontent = data[:k] 
             
             to_discretize = []; not_supported = []
-            if ssklayer != 'FillZone':
+            if ssklayer != 'FillZone' and ssklayer != 'KeepOutZone':
                 new_edge_list, not_supported, to_discretize, construction_geom = getBoardOutline()
                 #print (new_edge_list)
                 #stop
@@ -19773,17 +19775,21 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                 #stop
                 new_edge=new_border+os.linesep+')'+os.linesep
                 newcontent=newcontent+new_edge+u' '
+            elif ssklayer == 'FillZone':
+                newcontent=newcontent+pushFillZone(skname,offset)+os.linesep+')'+os.linesep+u' '
             else:
-                newcontent=newcontent+pushFillZone(offset)+os.linesep+')'+os.linesep+u' '
+                newcontent=newcontent+pushFillZone(skname,offset,True)+os.linesep+')'+os.linesep+u' '
             #print newcontent
             with codecs.open(fpath,'w', encoding='utf-8') as ofile:
                 ofile.write(newcontent)
                 ofile.close()        
             say_time()
-            if ssklayer != 'FillZone':
+            if ssklayer != 'FillZone' and ssklayer != 'KeepOutZone':
                 msg="""<b>new Edge pushed to kicad board!</b><br><br><br>"""
-            else:
+            elif ssklayer != 'FillZone':
                 msg="""<b>new FillZone pushed to kicad board!</b><br>Edit the properties of the new FillZone in pcbnew<br>"""
+            elif ssklayer != 'KeepOutZone':
+                msg="""<b>new KeepOutZone pushed to kicad board!</b><br>Edit the properties of the new KeepOutZone in pcbnew<br>"""
             msg+="<b>file saved to<br>"+fpath+"</b><br><br>"
             msg+="<i>backup file saved to<br>"+foname+"</i><br>"
             msgr="new Edge pushed to kicad board!\n"
@@ -19803,7 +19809,7 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                 
             say(msgr)
             say_info(msg)
-            if not edge_pcb_exists and ssklayer != 'FillZone':
+            if not edge_pcb_exists and ssklayer != 'FillZone' and ssklayer != 'KeepOutZone':
                 msg="<b>close your FC Sketch<br>and reload the kicad_pcb file</b>"
                 say_warning(msg)
             if origin_warn:
@@ -19846,13 +19852,18 @@ def find_sequence (elist,idx, min_dist):
         last_pnt = ep3
     return first_pnt, common_pnt, last_pnt
 ##
-def pushFillZone(ofs):
+def pushFillZone(skn, ofs, keepout=None):
     shapes = []
-    sel = FreeCADGui.Selection.getSelection()
     q_deflection = 0.005 #0.02 ##0.005
     tol = 0.01
     constr = 'coincident' #'all'
-    for selobj in sel:
+    if skn is None:
+        sel = FreeCADGui.Selection.getSelection()
+        for selobj in sel:
+            for e in selobj.Shape.Edges:
+                shapes.append(Part.makePolygon(e.discretize(QuasiDeflection=q_deflection)))
+    else:
+        selobj = FreeCAD.ActiveDocument.getObject(skn)
         for e in selobj.Shape.Edges:
             shapes.append(Part.makePolygon(e.discretize(QuasiDeflection=q_deflection)))
     Draft.makeSketch(shapes)
@@ -19881,11 +19892,19 @@ def pushFillZone(ofs):
     segments_nbr=len(edges)
     if segments_nbr<3:
         stop
-    fillzone = """  (zone (net 0) (net_name "") (layer B.Cu) (tstamp 0) (hatch edge 0.508)"""+os.linesep
-    fillzone+="""    (connect_pads (clearance 0.508))"""+os.linesep
-    fillzone+="""    (min_thickness 0.254)"""+os.linesep
-    fillzone+="""    (fill yes (arc_segments 32) (thermal_gap 0.508) (thermal_bridge_width 0.508))"""+os.linesep
-    fillzone+="""    (polygon"""+os.linesep
+    if keepout is None:
+        fillzone = """  (zone (net 0) (net_name "") (layer B.Cu) (tstamp 0) (hatch edge 0.508)"""+os.linesep
+        fillzone+="""    (connect_pads (clearance 0.508))"""+os.linesep
+        fillzone+="""    (min_thickness 0.254)"""+os.linesep
+        fillzone+="""    (fill yes (arc_segments 32) (thermal_gap 0.508) (thermal_bridge_width 0.508))"""+os.linesep
+        fillzone+="""    (polygon"""+os.linesep
+    else: #keepout zone
+        fillzone = """  (zone (net 0) (net_name "") (layers B.Cu) (tstamp 0) (hatch edge 0.508)"""+os.linesep
+        fillzone+="""    (connect_pads (clearance 0.508))"""+os.linesep
+        fillzone+="""    (min_thickness 0.254)"""+os.linesep
+        fillzone+="""    (keepout (tracks not_allowed) (vias not_allowed) (copperpour not_allowed))"""+os.linesep
+        fillzone+="""    (fill (arc_segments 32) (thermal_gap 0.508) (thermal_bridge_width 0.508))"""+os.linesep
+        fillzone+="""    (polygon"""+os.linesep
     i=0
     pts = "      (pts "+os.linesep
     first_pnt, common_pnt, last_pnt = find_sequence (edges,i,tol)
@@ -19907,7 +19926,7 @@ def pushFillZone(ofs):
     #with open(filename, "wb") as f:
     #    f.write(fillzone.encode('utf-8'))
     return fillzone
-
+##
 def pull3D2dsn(s,mdls,tsp,nMd,gof,pcbThickness):
     global start_time, aux_orig, grid_orig
     global board_base_point_x, board_base_point_y, real_board_pos_x, real_board_pos_y
