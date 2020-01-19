@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.5.2.4"
+___ver___ = "9.5.2.6"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -15444,7 +15444,7 @@ def PushPCB():
                 #    last_3d_path=last_pcb_path
                 #    sayw(last_pcb_path)
                 #getSaveFileName(self,"saveFlle","Result.txt",filter ="txt (*.txt *.)")
-                layer_list = ['Edge.Cuts','Dwgs.User','Cmts.User','Eco1.User','Eco2.User','Margin']
+                layer_list = ['Edge.Cuts','Dwgs.User','Cmts.User','Eco1.User','Eco2.User','Margin', 'B.FillZone', 'B.KeepOutZone']
                 LayerSelectionDlg = QtGui.QDialog()
                 ui = Ui_LayerSelectionOut()
                 ui.setupUi(LayerSelectionDlg)
@@ -19493,6 +19493,10 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                 ssklayer = 'Edge'
             else:
                 ssklayer = sklayer.split('.')[0]
+                if 'KeepOutZone' in sklayer:
+                    ssklayer = 'KeepOutZone'
+                elif 'FillZone' in sklayer:
+                    ssklayer = 'FillZone'
                 print (ssklayer)
             edge_pcb_exists=False
             mypcb = KicadPCB.load(fpath)
@@ -19578,7 +19582,7 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                 offset = oft
                 gof=True
   
-            if edge_pcb_exists:
+            if edge_pcb_exists and ssklayer != 'FillZone' and ssklayer != 'KeepOutZone':
                 #offset=[0,0]
                 doc=FreeCAD.ActiveDocument
                 ksu_found=False;skt_name='';pcb_found=False
@@ -19661,120 +19665,131 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                     FreeCADGui.SendMsgToActiveView("ViewFit")
                 k = data.rfind(")")  #removing latest ')'
                 newcontent = data[:k] 
-            new_edge_list, not_supported, to_discretize, construction_geom = getBoardOutline()
-            #print (new_edge_list)
-            #stop
             
-            #geoL=len(App.ActiveDocument.getObject("PCB_Sketch").Geometry)
-            if len(to_discretize)>0:
-                sel = FreeCADGui.Selection.getSelection()
-                if len (sel)==1:
-                    sk_name=sel[0].Name
-                    t_name=cpy_sketch(sk_name)
-                    ###t_sk=FreeCAD.ActiveDocument.copyObject(FreeCAD.ActiveDocument.getObject(sk_name))
-                    elist, to_dis=check_geom(t_name)
-                    #Draft.clone(FreeCAD.ActiveDocument.getObject(sk_name),copy=True)
-                    #clone_name=App.ActiveDocument.ActiveObject.Name
-                    remove_basic_geom(t_name, to_dis)
-                    ##remove_basic_geom(t_sk.Name, to_discretize)
-                    ##elist, to_dis=check_geom(t_sk.Name)
-                    #print elist
-                    #stop
-                obj_list_prev=[]
-                for obj in doc.Objects:
-                    #print obj.TypeId
-                    if (obj.TypeId=="Part::Feature") or (obj.TypeId=="Sketcher::SketchObject"):
-                        obj_list_prev.append(obj.Name)
-                #Draft.draftify(FreeCAD.ActiveDocument.getObject(t_name),delete=True)
-                #Draft.draftify(FreeCAD.ActiveDocument.getObject(t_name),delete=False)
-                b=FreeCAD.ActiveDocument.getObject(t_name)
-                shp1=b.Shape.copy()
-                Part.show(shp1)
-                FreeCAD.ActiveDocument.removeObject(t_name)
-                FreeCAD.ActiveDocument.recompute()
+            to_discretize = []; not_supported = []
+            if ssklayer != 'FillZone' and ssklayer != 'KeepOutZone':
+                new_edge_list, not_supported, to_discretize, construction_geom = getBoardOutline()
+                #print (new_edge_list)
                 #stop
-                obj_list_after=[]
-                for obj in doc.Objects:
-                    if (obj.TypeId=="Part::Feature") or (obj.TypeId=="Sketcher::SketchObject")\
-                       or (obj.TypeId=="Part::Part2DObjectPython"):
-                        if obj.Name not in obj_list_prev:
-                            obj_list_after.append(obj.Name)
-                #print obj_list_after #, obj_list_prev
-                sk_to_conv=[]
-                for obj in doc.Objects:
-                    if obj.Name in obj_list_after:
-                        if (obj.TypeId=="Part::Part2DObjectPython"):
-                            FreeCAD.ActiveDocument.removeObject(obj.Name)
-                            FreeCAD.ActiveDocument.recompute() 
-                        else:
-                           sk_to_conv.append(obj.Name)
-                keep_sketch_converted=False #False
-                for s in sk_to_conv:
-                    #sayerr(s) ## 
-                    ns=Discretize(s)
-                    offset1=[-FreeCAD.ActiveDocument.getObject(sk_name).Placement.Base[0],-FreeCAD.ActiveDocument.getObject(sk_name).Placement.Base[1]]
-                    elist, to_dis=check_geom(ns,offset1)
-                    new_edge_list=new_edge_list+elist
-                    if not keep_sketch_converted:
-                        FreeCAD.ActiveDocument.removeObject(ns)
+                
+                #geoL=len(App.ActiveDocument.getObject("PCB_Sketch").Geometry)
+                if len(to_discretize)>0:
+                    sel = FreeCADGui.Selection.getSelection()
+                    if len (sel)==1:
+                        sk_name=sel[0].Name
+                        t_name=cpy_sketch(sk_name)
+                        ###t_sk=FreeCAD.ActiveDocument.copyObject(FreeCAD.ActiveDocument.getObject(sk_name))
+                        elist, to_dis=check_geom(t_name)
+                        #Draft.clone(FreeCAD.ActiveDocument.getObject(sk_name),copy=True)
+                        #clone_name=App.ActiveDocument.ActiveObject.Name
+                        remove_basic_geom(t_name, to_dis)
+                        ##remove_basic_geom(t_sk.Name, to_discretize)
+                        ##elist, to_dis=check_geom(t_sk.Name)
+                        #print elist
+                        #stop
+                    obj_list_prev=[]
+                    for obj in doc.Objects:
+                        #print obj.TypeId
+                        if (obj.TypeId=="Part::Feature") or (obj.TypeId=="Sketcher::SketchObject"):
+                            obj_list_prev.append(obj.Name)
+                    #Draft.draftify(FreeCAD.ActiveDocument.getObject(t_name),delete=True)
+                    #Draft.draftify(FreeCAD.ActiveDocument.getObject(t_name),delete=False)
+                    b=FreeCAD.ActiveDocument.getObject(t_name)
+                    shp1=b.Shape.copy()
+                    Part.show(shp1)
+                    FreeCAD.ActiveDocument.removeObject(t_name)
                     FreeCAD.ActiveDocument.recompute()
-                    #print new_edge_list
+                    #stop
+                    obj_list_after=[]
+                    for obj in doc.Objects:
+                        if (obj.TypeId=="Part::Feature") or (obj.TypeId=="Sketcher::SketchObject")\
+                            or (obj.TypeId=="Part::Part2DObjectPython"):
+                                if obj.Name not in obj_list_prev:
+                                    obj_list_after.append(obj.Name)
+                    #print obj_list_after #, obj_list_prev
+                    sk_to_conv=[]
+                    for obj in doc.Objects:
+                        if obj.Name in obj_list_after:
+                            if (obj.TypeId=="Part::Part2DObjectPython"):
+                                FreeCAD.ActiveDocument.removeObject(obj.Name)
+                                FreeCAD.ActiveDocument.recompute() 
+                            else:
+                                sk_to_conv.append(obj.Name)
+                    keep_sketch_converted=False #False
+                    for s in sk_to_conv:
+                        #sayerr(s) ## 
+                        ns=Discretize(s)
+                        offset1=[-FreeCAD.ActiveDocument.getObject(sk_name).Placement.Base[0],-FreeCAD.ActiveDocument.getObject(sk_name).Placement.Base[1]]
+                        elist, to_dis=check_geom(ns,offset1)
+                        new_edge_list=new_edge_list+elist
+                        if not keep_sketch_converted:
+                            FreeCAD.ActiveDocument.removeObject(ns)
+                        FreeCAD.ActiveDocument.recompute()
+                        #print new_edge_list
+                    #stop
+                #if len (not_supported)>0:
+                #    Draft.downgrade(FreeCADGui.Selection.getSelection(),delete=False)
+                #    stop
+                #say (new_edge_list)
                 #stop
-            #if len (not_supported)>0:
-            #    Draft.downgrade(FreeCADGui.Selection.getSelection(),delete=False)
-            #    stop
-            #say (new_edge_list)
-            #stop
-            #sayerr(replace)
-            #replace = re.sub('\s\(gr_arc(.+?Edge)\)\)\r\n|\(gr_line(.+?Edge)\)\)\r|\(gr_line(.+?Edge)\)\)\n','',replace, flags=re.MULTILINE)
-            #replace = re.sub('\s\(gr_circle(.+?Edge)\)\)\r\n|\(gr_line(.+?Edge)\)\)\r|\(gr_line(.+?Edge)\)\)\n','',replace, flags=re.MULTILINE)
-            #newcontent = re.sub('^\)','ENDOFFILE',replace, flags=re.MULTILINE)
-            
-            #newcontent = re.sub('^\)','',replace, flags=re.MULTILINE) #end of file
-            #newcontent = re.sub('/\.(?=[^\(]*$)/','',replace, flags=re.MULTILINE) #end of file
-            #newcontent = newcontent.replace(/\((?=[^.]*$)/, "")
-            #newcontent = re.sub(r'(.*)\)', r'', replace, flags=re.MULTILINE)
-            new_border=''
-            #print new_edge_list
-            ## maxRadius # 4000 = 4m max lenght for KiCad
-            #edge_nbr=0
-            sanitized_edge_list=[]
-            for border in new_edge_list:
-                #print border # [0]
-                if 'arc' in border[0]:
-                    #print border[0]
-                    if abs(float(border[3])) > maxRadius:
-                        #print 'too big radius= ',border[3]
-                        #print 'border len= ', len(border)
-                        #points=border [10].x
-                        #p1x = float(border [10].x);p1y=float(border [10].y)
-                        p1x = float("{0:.3f}".format(border [10].x));p1y=float("{0:.3f}".format(border [10].y))
-                        #print p1x, ' ',p1y
-                        #p2x = float(border [11].x);p2y=float(border [11].y)
-                        p2x = float("{0:.3f}".format(border [11].x));p2y=float("{0:.3f}".format(border [11].y))
-                        #print '1st point ', border [10],' 2nd point ', border [11]
-                        sanitized_edge_list.append(['line',p1x,p1y,p2x,p2y])
+                #sayerr(replace)
+                #replace = re.sub('\s\(gr_arc(.+?Edge)\)\)\r\n|\(gr_line(.+?Edge)\)\)\r|\(gr_line(.+?Edge)\)\)\n','',replace, flags=re.MULTILINE)
+                #replace = re.sub('\s\(gr_circle(.+?Edge)\)\)\r\n|\(gr_line(.+?Edge)\)\)\r|\(gr_line(.+?Edge)\)\)\n','',replace, flags=re.MULTILINE)
+                #newcontent = re.sub('^\)','ENDOFFILE',replace, flags=re.MULTILINE)
+                
+                #newcontent = re.sub('^\)','',replace, flags=re.MULTILINE) #end of file
+                #newcontent = re.sub('/\.(?=[^\(]*$)/','',replace, flags=re.MULTILINE) #end of file
+                #newcontent = newcontent.replace(/\((?=[^.]*$)/, "")
+                #newcontent = re.sub(r'(.*)\)', r'', replace, flags=re.MULTILINE)
+                new_border=''
+                #print new_edge_list
+                ## maxRadius # 4000 = 4m max lenght for KiCad
+                #edge_nbr=0
+                sanitized_edge_list=[]
+                for border in new_edge_list:
+                    #print border # [0]
+                    if 'arc' in border[0]:
+                        #print border[0]
+                        if abs(float(border[3])) > maxRadius:
+                            #print 'too big radius= ',border[3]
+                            #print 'border len= ', len(border)
+                            #points=border [10].x
+                            #p1x = float(border [10].x);p1y=float(border [10].y)
+                            p1x = float("{0:.3f}".format(border [10].x));p1y=float("{0:.3f}".format(border [10].y))
+                            #print p1x, ' ',p1y
+                            #p2x = float(border [11].x);p2y=float(border [11].y)
+                            p2x = float("{0:.3f}".format(border [11].x));p2y=float("{0:.3f}".format(border [11].y))
+                            #print '1st point ', border [10],' 2nd point ', border [11]
+                            sanitized_edge_list.append(['line',p1x,p1y,p2x,p2y])
+                        else:
+                            sanitized_edge_list.append(border)
                     else:
                         sanitized_edge_list.append(border)
-                else:
-                    sanitized_edge_list.append(border)
-                #edge_nbr=edge_nbr+1
-            #print sanitized_edge_list
-            #stop
-            #for border in new_edge_list:
-            for border in sanitized_edge_list:
-                new_border=new_border+os.linesep+createEdge(border,offset,sklayer)
-                #sayw(createEdge(border))
-            #stop
-            new_edge=new_border+os.linesep+')'+os.linesep
-            newcontent=newcontent+new_edge+u' '
-                
+                    #edge_nbr=edge_nbr+1
+                #print sanitized_edge_list
+                #stop
+                #for border in new_edge_list:
+                for border in sanitized_edge_list:
+                    new_border=new_border+os.linesep+createEdge(border,offset,sklayer)
+                    #sayw(createEdge(border))
+                #stop
+                new_edge=new_border+os.linesep+')'+os.linesep
+                newcontent=newcontent+new_edge+u' '
+            elif ssklayer == 'FillZone':
+                newcontent=newcontent+pushFillZone(skname,offset)+os.linesep+')'+os.linesep+u' '
+            else:
+                newcontent=newcontent+pushFillZone(skname,offset,True)+os.linesep+')'+os.linesep+u' '
             #print newcontent
             with codecs.open(fpath,'w', encoding='utf-8') as ofile:
                 ofile.write(newcontent)
                 ofile.close()        
             say_time()
-            msg="""<b>new Edge pushed to kicad board!</b><br><br>"""
+            if ssklayer != 'FillZone' and ssklayer != 'KeepOutZone':
+                msg="""<b>new Edge pushed to kicad board!</b><br><br><br>"""
+            elif ssklayer != 'FillZone':
+                msg="""<b>new FillZone pushed to kicad board!</b><br>Edit the properties of the new FillZone in pcbnew<br>"""
+            elif ssklayer != 'KeepOutZone':
+                msg="""<b>new KeepOutZone pushed to kicad board!</b><br>Edit the properties of the new KeepOutZone in pcbnew<br>"""
             msg+="<b>file saved to<br>"+fpath+"</b><br><br>"
             msg+="<i>backup file saved to<br>"+foname+"</i><br>"
             msgr="new Edge pushed to kicad board!\n"
@@ -19794,7 +19809,7 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                 
             say(msgr)
             say_info(msg)
-            if not edge_pcb_exists:
+            if not edge_pcb_exists and ssklayer != 'FillZone' and ssklayer != 'KeepOutZone':
                 msg="<b>close your FC Sketch<br>and reload the kicad_pcb file</b>"
                 say_warning(msg)
             if origin_warn:
@@ -19812,6 +19827,105 @@ def export_pcb(fname=None,sklayer=None,skname=None):
     #def precision(self, value):
     #    return "%.2f" % float(value)
     
+##
+def find_sequence (elist,idx, min_dist):
+    """find point sequence in two edges"""
+    ep0 = elist[idx].Vertexes[0].Point
+    ep1 = elist[idx].Vertexes[1].Point
+    ep2 = elist[idx+1].Vertexes[0].Point
+    ep3 = elist[idx+1].Vertexes[1].Point
+    if distance(ep0,ep2) < min_dist:
+        first_pnt = ep1
+        common_pnt = ep0
+        last_pnt = ep3
+    elif distance(ep0,ep3) < min_dist:
+        first_pnt = ep1
+        common_pnt = ep3
+        last_pnt = ep2
+    elif distance(ep1,ep3) < min_dist:
+        first_pnt = ep0
+        common_pnt = ep1
+        last_pnt = ep2
+    elif distance(ep1,ep2) < min_dist:
+        first_pnt = ep0
+        common_pnt = ep1
+        last_pnt = ep3
+    return first_pnt, common_pnt, last_pnt
+##
+def pushFillZone(skn, ofs, keepout=None):
+    shapes = []
+    q_deflection = 0.005 #0.02 ##0.005
+    tol = 0.01
+    constr = 'coincident' #'all'
+    if skn is None:
+        sel = FreeCADGui.Selection.getSelection()
+        for selobj in sel:
+            for e in selobj.Shape.Edges:
+                shapes.append(Part.makePolygon(e.discretize(QuasiDeflection=q_deflection)))
+    else:
+        selobj = FreeCAD.ActiveDocument.getObject(skn)
+        for e in selobj.Shape.Edges:
+            shapes.append(Part.makePolygon(e.discretize(QuasiDeflection=q_deflection)))
+    Draft.makeSketch(shapes)
+    sk_d = FreeCAD.ActiveDocument.ActiveObject
+    if sk_d is not None:
+        FreeCADGui.ActiveDocument.getObject(sk_d.Name).LineColor = (1.00,1.00,1.00)
+        FreeCADGui.ActiveDocument.getObject(sk_d.Name).PointColor = (1.00,1.00,1.00)
+        max_geo_admitted = 1500 # after this number, no recompute is applied
+        if len (sk_d.Geometry) < max_geo_admitted:
+            FreeCAD.ActiveDocument.recompute()
+    import constrainator
+    constrainator.add_constraints(sk_d.Name, tol, constr)
+    skt = FreeCAD.ActiveDocument.getObject(sk_d.Name)
+    if hasattr(skt, 'OpenVertices'):
+        openVtxs = skt.OpenVertices
+        if len(openVtxs) >0:
+            FreeCAD.Console.PrintError("Open Vertexes found.\n")
+            FreeCAD.Console.PrintWarning(str(openVtxs)+'\n')
+            msg = """Open Vertexes found.<br>"""+str(openVtxs)
+            reply = QtGui.QMessageBox.information(None,"info", msg)
+    #FreeCADGui.ActiveDocument.getObject(sel[0].Name).Visibility=False
+    shp = skt.Shape
+    #ofs=[0.0,0.0]
+    edge_width = 0.1 
+    edges = shp.Edges
+    segments_nbr=len(edges)
+    if segments_nbr<3:
+        stop
+    if keepout is None:
+        fillzone = """  (zone (net 0) (net_name "") (layer B.Cu) (tstamp 0) (hatch edge 0.508)"""+os.linesep
+        fillzone+="""    (connect_pads (clearance 0.508))"""+os.linesep
+        fillzone+="""    (min_thickness 0.254)"""+os.linesep
+        fillzone+="""    (fill yes (arc_segments 32) (thermal_gap 0.508) (thermal_bridge_width 0.508))"""+os.linesep
+        fillzone+="""    (polygon"""+os.linesep
+    else: #keepout zone
+        fillzone = """  (zone (net 0) (net_name "") (layers B.Cu) (tstamp 0) (hatch edge 0.508)"""+os.linesep
+        fillzone+="""    (connect_pads (clearance 0.508))"""+os.linesep
+        fillzone+="""    (min_thickness 0.254)"""+os.linesep
+        fillzone+="""    (keepout (tracks not_allowed) (vias not_allowed) (copperpour not_allowed))"""+os.linesep
+        fillzone+="""    (fill (arc_segments 32) (thermal_gap 0.508) (thermal_bridge_width 0.508))"""+os.linesep
+        fillzone+="""    (polygon"""+os.linesep
+    i=0
+    pts = "      (pts "+os.linesep
+    first_pnt, common_pnt, last_pnt = find_sequence (edges,i,tol)
+    i+=1
+    for e in edges[1:-1]:
+        if 'Line' not in str(e.Curve):
+            stop
+        first_pnt, common_pnt, last_pnt = find_sequence (edges,i,tol)
+        if i < segments_nbr:
+            pts=pts+"         (xy {0:.3f} {1:.3f}) (xy {2:.3f} {3:.3f})".format(first_pnt.x+ofs[0], -first_pnt.y+ofs[1], common_pnt.x+ofs[0], -common_pnt.y+ofs[1])+os.linesep
+        i=i+1
+    pts=pts+"         (xy {0:.3f} {1:.3f})".format(last_pnt.x+ofs[0], -last_pnt.y+ofs[1])+os.linesep+"      )"+os.linesep
+    fillzone += pts
+    fillzone+="    )"+os.linesep+"  )"+os.linesep #+")"+os.linesep
+    if sk_d is not None:
+        FreeCAD.ActiveDocument.removeObject(sk_d.Name)
+    #print(fillzone)
+    #FreeCAD.ActiveDocument.commitTransaction()
+    #with open(filename, "wb") as f:
+    #    f.write(fillzone.encode('utf-8'))
+    return fillzone
 ##
 def pull3D2dsn(s,mdls,tsp,nMd,gof,pcbThickness):
     global start_time, aux_orig, grid_orig
