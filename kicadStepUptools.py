@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.5.2.7"
+___ver___ = "9.5.2.8"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -19863,6 +19863,10 @@ def find_sequence (elist,idx, min_dist):
         first_pnt = ep0
         common_pnt = ep1
         last_pnt = ep3
+    else:
+        msg="""<b><font color='red'>to push a FillZone or a KeepOutZone<br>you need a single closed Sketch!</font></b>"""
+        say_warning(msg)
+        stop
     return first_pnt, common_pnt, last_pnt
 ##
 def pushFillZone(skn, ofs, keepout=None):
