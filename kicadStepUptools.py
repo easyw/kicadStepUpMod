@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.5.2.8"
+___ver___ = "9.5.2.9"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -19901,6 +19901,13 @@ def pushFillZone(skn, ofs, keepout=None):
             FreeCAD.Console.PrintWarning(str(openVtxs)+'\n')
             msg = """Open Vertexes found.<br>"""+str(openVtxs)
             reply = QtGui.QMessageBox.information(None,"info", msg)
+            add_points=True
+            if add_points:
+                for v in openVtxs:
+                    FreeCAD.ActiveDocument.addObject('PartDesign::Point','DatumPoint')
+                    dp = FreeCAD.ActiveDocument.ActiveObject
+                    dp.Placement = FreeCAD.Placement (FreeCAD.Vector(v[0],v[1],0), FreeCAD.Rotation(0,0,0), FreeCAD.Vector(0,0,0))
+                    dp.Label = 'OpenVertexPointer'
     #FreeCADGui.ActiveDocument.getObject(sel[0].Name).Visibility=False
     shp = skt.Shape
     #ofs=[0.0,0.0]

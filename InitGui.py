@@ -14,7 +14,7 @@ ksu_wb_version='v 10.0.5'
 global myurlKWB, ksuWBpath
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=374 #v10.0.5
+mycommitsKWB=375 #v10.0.5
 
 import FreeCAD, FreeCADGui, Part, os, sys
 import re, time
