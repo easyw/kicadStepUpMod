@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>CDialog</class>
+ <widget class="QDialog" name="CDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>317</width>
+    <height>302</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>Sketcher_LockAll.png</normaloff>Sketcher_LockAll.png</iconset>
+  </property>
+  <property name="toolTip">
+   <string notr="true"/>
+  </property>
+  <property name="statusTip">
+   <string notr="true"/>
+  </property>
+  <property name="whatsThis">
+   <string notr="true"/>
+  </property>
+  <widget class="QDialogButtonBox" name="buttonBox">
+   <property name="geometry">
+    <rect>
+     <x>8</x>
+     <y>255</y>
+     <width>207</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+   <property name="standardButtons">
+    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+   </property>
+  </widget>
+  <widget class="QLabel" name="Label_howto">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>5</y>
+     <width>265</width>
+     <height>61</height>
+    </rect>
+   </property>
+   <property name="toolTip">
+    <string notr="true">Select a Sketch and Parameters
+to constraint the sketch
+NB the Sketch will be modified!</string>
+   </property>
+   <property name="statusTip">
+    <string notr="true"/>
+   </property>
+   <property name="whatsThis">
+    <string notr="true"/>
+   </property>
+   <property name="text">
+    <string notr="true">&lt;b&gt;Select a Sketch and Parameters to&lt;br&gt;constrain the sketch.&lt;br&gt;NB the Sketch will be modified!&lt;/b&gt;</string>
+   </property>
+  </widget>
+  <widget class="QGroupBox" name="Constraints">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>70</y>
+     <width>145</width>
+     <height>166</height>
+    </rect>
+   </property>
+   <property name="toolTip">
+    <string notr="true"/>
+   </property>
+   <property name="statusTip">
+    <string notr="true"/>
+   </property>
+   <property name="whatsThis">
+    <string notr="true"/>
+   </property>
+   <property name="title">
+    <string notr="true">Constraints</string>
+   </property>
+   <widget class="QWidget" name="verticalLayoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>12</x>
+      <y>20</y>
+      <width>125</width>
+      <height>137</height>
+     </rect>
+    </property>
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="QRadioButton" name="all_constraints">
+       <property name="minimumSize">
+        <size>
+         <width>92</width>
+         <height>64</height>
+        </size>
+       </property>
+       <property name="toolTip">
+        <string notr="true">Lock Coincident, Horizontal
+and Vertical</string>
+       </property>
+       <property name="text">
+        <string notr="true"/>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>Sketcher_LockAll.png</normaloff>Sketcher_LockAll.png</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>48</width>
+         <height>48</height>
+        </size>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="coincident">
+       <property name="minimumSize">
+        <size>
+         <width>92</width>
+         <height>64</height>
+        </size>
+       </property>
+       <property name="toolTip">
+        <string notr="true">Lock Coincident</string>
+       </property>
+       <property name="text">
+        <string notr="true"/>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>Sketcher_LockCoincident.png</normaloff>Sketcher_LockCoincident.png</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>48</width>
+         <height>48</height>
+        </size>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QGroupBox" name="Tolerance">
+   <property name="geometry">
+    <rect>
+     <x>166</x>
+     <y>70</y>
+     <width>141</width>
+     <height>91</height>
+    </rect>
+   </property>
+   <property name="toolTip">
+    <string notr="true"/>
+   </property>
+   <property name="statusTip">
+    <string notr="true"/>
+   </property>
+   <property name="whatsThis">
+    <string notr="true"/>
+   </property>
+   <property name="title">
+    <string notr="true">Tolerance</string>
+   </property>
+   <widget class="QWidget" name="verticalLayoutWidget_2">
+    <property name="geometry">
+     <rect>
+      <x>8</x>
+      <y>20</y>
+      <width>125</width>
+      <height>57</height>
+     </rect>
+    </property>
+    <layout class="QVBoxLayout" name="verticalLayout_2">
+     <item>
+      <widget class="QLabel" name="label">
+       <property name="toolTip">
+        <string notr="true">mm</string>
+       </property>
+       <property name="statusTip">
+        <string notr="true"/>
+       </property>
+       <property name="whatsThis">
+        <string notr="true"/>
+       </property>
+       <property name="text">
+        <string notr="true">tolerance in mm</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="tolerance">
+       <property name="minimumSize">
+        <size>
+         <width>64</width>
+         <height>22</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>64</width>
+         <height>22</height>
+        </size>
+       </property>
+       <property name="toolTip">
+        <string notr="true">Tolerance on Constraints</string>
+       </property>
+       <property name="statusTip">
+        <string notr="true"/>
+       </property>
+       <property name="whatsThis">
+        <string notr="true"/>
+       </property>
+       <property name="inputMethodHints">
+        <set>Qt::ImhPreferNumbers</set>
+       </property>
+       <property name="inputMask">
+        <string/>
+       </property>
+       <property name="text">
+        <string notr="true">0.1</string>
+       </property>
+       <property name="placeholderText">
+        <string notr="true"/>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QCheckBox" name="rmvXGeo">
+   <property name="geometry">
+    <rect>
+     <x>170</x>
+     <y>180</y>
+     <width>141</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="toolTip">
+    <string notr="true">remove duplicated geometries</string>
+   </property>
+   <property name="statusTip">
+    <string/>
+   </property>
+   <property name="text">
+    <string notr="true">rmv xtr geo</string>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>CDialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>248</x>
+     <y>254</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>CDialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>316</x>
+     <y>260</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>
