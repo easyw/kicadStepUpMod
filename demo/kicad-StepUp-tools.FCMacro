@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.5.2.9"
+___ver___ = "9.5.3.0"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -4263,7 +4263,8 @@ def Display_info(blacklisted_models):
     global bbox_all, bbox_list, fusion, show_messages, last_pcb_path
     global height_minimum, volume_minimum, idf_to_origin, ksu_config_fname
     global board_base_point_x, board_base_point_y, real_board_pos_x, real_board_pos_y
-    global animate_result, apply_reflex, apply_reflex_all, addVirtual
+    global animate_result, apply_reflex, apply_reflex_all, addVirtual, fname_sfx
+    
     say('info message')
     if blacklisted_model_elements != '':
         sayw("black-listed module \n"+ ''.join(map(str, blacklisted_models)))
@@ -4300,12 +4301,18 @@ def Display_info(blacklisted_models):
     if addVirtual==0:
         msg+="<br><b>Virtual models skipped</b>"
     #msg+="<br>kicad StepUp config file in:<br><b>"+ksu_config_fname+"</b><br>location."
+    doc = FreeCAD.ActiveDocument
+    pcb_name=u'Pcb'+fname_sfx
+    pcb_bbx = doc.getObject(pcb_name).Shape.BoundBox
+    msg+="<br>pcb dimensions: ("+"{0:.2f}".format(pcb_bbx.XLength)+";"+"{0:.2f}".format(pcb_bbx.YLength)+";"+"{0:.2f}".format(pcb_bbx.ZLength)+")"
     msg+="<br>StepUp configuration options are located in the preferences system of FreeCAD."
     if (grid_orig==1):
         say("Board Placed @ "+"{0:.2f}".format(board_base_point_x)+";"+"{0:.2f}".format(board_base_point_y)+";0.0")
     else:
         say("Board Placed @ "+"{0:.2f}".format(new_pos_x)+";"+"{0:.2f}".format(new_pos_y)+";0.0")
     say("kicad pcb pos: ("+"{0:.2f}".format(real_board_pos_x)+";"+"{0:.2f}".format(real_board_pos_y)+";"+"{0:.2f}".format(0)+")")      
+    say("pcb dimensions: ("+"{0:.2f}".format(pcb_bbx.XLength)+";"+"{0:.2f}".format(pcb_bbx.YLength)+";"+"{0:.2f}".format(pcb_bbx.ZLength)+")")          
+
     if (show_messages==True):
         QtGui.QApplication.restoreOverrideCursor()
         #RotateXYZGuiClass().setGeometry(25, 250, 500, 500)
@@ -13629,7 +13636,8 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
         #pcb_sk=FreeCAD.ActiveDocument.PCB_Sketch
         #grp.addObject(pcb_sk)
         #grp.addObject(doc_outline)      
-            
+        pcb_bbx = doc.getObject(pcb_name).Shape.BoundBox
+        say("pcb dimensions: ("+"{0:.2f}".format(pcb_bbx.XLength)+";"+"{0:.2f}".format(pcb_bbx.YLength)+";"+"{0:.2f}".format(pcb_bbx.ZLength)+")")          
     say_time()
     FreeCADGui.activeDocument().activeView().viewAxometric()
     if (zfit):
