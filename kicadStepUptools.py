@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.5.3.0"
+___ver___ = "9.5.3.1"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -3659,8 +3659,11 @@ def exportStep(objs, ffPathName):
         #print(fullFilePathNameStep)
         #stop
         if fullFilePathNameStep.endswith('stpZ'):
-            import stepZ
-            stepZ.export(newobj_list,fullFilePathNameStep)
+            try:
+                import stepZ
+                stepZ.export(newobj_list,fullFilePathNameStep)
+            except:
+                sayerr('.stpZ not supported!')
         else:
             ImportGui.export(newobj_list,fullFilePathNameStep)
         #del __objs__ 
@@ -15201,7 +15204,7 @@ def Import3DModelF():
         sayw(last_pcb_path)
     Filter=""
     name, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Import 3D File...",
-         make_unicode(last_3d_path), "*.step *.stp *.iges *.igs *.FCStd")
+         make_unicode(last_3d_path), "*.step *.stp *.stpZ *.iges *.igs *.FCStd")
     #say(name)
     if name:
         ext = os.path.splitext(os.path.basename(name))[1]
@@ -15229,7 +15232,14 @@ def Import3DModelF():
             FreeCAD.setActiveDocument(doc.Name)
             FreeCAD.ActiveDocument=FreeCAD.getDocument(doc.Name)
             FreeCADGui.ActiveDocument=FreeCADGui.getDocument(doc.Name)
-            ImportGui.insert(name, doc.Name)
+            if name.lower().endswith('stpz'):
+                try:
+                    import stepZ
+                    stepZ.insert(name,doc.Name)
+                except:
+                    sayerr('.stpZ not supported!')
+            else:
+                ImportGui.insert(name, doc.Name)
             
             #enable_ReadShapeCompoundMode=False
             if enable_ReadShapeCompoundMode:
