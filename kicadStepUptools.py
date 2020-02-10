@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.5.3.1"
+___ver___ = "9.5.3.2"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -5996,7 +5996,7 @@ def Load_models(pcbThickness,modules):
                     say("error missing "+ make_string(module_container))
                     #test = missing_models.find(make_string(step_module))
                     test = missing_models.find(make_string(module_container))
-                    if test is -1:
+                    if test == -1:
                         #missing_models += make_string(models3D_prefix)+make_string(step_module)+'\r\n' #matched        
                         # missing_models += make_string(step_module)+'\r\n' #matched  
                         missing_models += make_string(module_container)+' (.stp or .step)\r\n' #matched 
@@ -8024,7 +8024,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                     #for e in mod3d:
                     #    print e #.decode("utf-8")
                     #if mod3d[5] is not None:
-                    if mod3d[5] is not "":
+                    if mod3d[5] != "":
                         say(mod3d[0]);sayw(" error: reset"+mod3d[5])
                         #stop 
                         #msg+=""+mod3d[0].decode("utf-8")+" error: "+mod3d[5]+"<br>"
@@ -15058,7 +15058,7 @@ def Export3DStepF():
             cfg_read_all()
             pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
             last_3d_path = pg.GetString("last_3d_path") 
-            if len(last_3d_path) is 0:
+            if len(last_3d_path) == 0:
                 last_3d_path=last_pcb_path
                 sayw(last_pcb_path)
             #getSaveFileName(self,"saveFlle","Result.txt",filter ="txt (*.txt *.)")
