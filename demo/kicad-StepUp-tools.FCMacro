@@ -480,7 +480,7 @@ from threading import Timer
 if FreeCAD.GuiUp:
     from PySide import QtCore, QtGui
 
-import OpenSCADFeatures
+# import OpenSCADFeatures
 import DraftGeomUtils
 #from DraftGeomUtils import *
 
@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.5.3.2"
+___ver___ = "9.5.3.3"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'

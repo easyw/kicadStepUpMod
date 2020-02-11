@@ -13,7 +13,7 @@
 import FreeCAD, FreeCADGui, Part
 from FreeCAD import Base
 import imp, os, sys, tempfile, re
-import Draft, DraftGeomUtils, OpenSCAD2Dgeom
+import Draft, DraftGeomUtils  #, OpenSCAD2Dgeom
 from PySide import QtGui, QtCore
 QtWidgets = QtGui
 

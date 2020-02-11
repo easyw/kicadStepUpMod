@@ -21,7 +21,7 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 from kicadStepUptools import KicadPCB,SexpList
 
-__kicad_parser_version__ = '1.1.2'
+__kicad_parser_version__ = '1.1.3'
 print('kicad_parser_version '+__kicad_parser_version__)
 
 
@@ -121,6 +121,37 @@ def make_rect(size,params=None):
     _ = params 
     return Part.makePolygon([product(size,Vector(*v))
         for v in ((-0.5,-0.5),(0.5,-0.5),(0.5,0.5),(-0.5,0.5),(-0.5,-0.5))])
+
+def make_trapezoid(size,params):
+    pts = [product(size,Vector(*v)) \
+            for v in ((-0.5,-0.5),(0.5,-0.5),(0.5,0.5),(-0.5,0.5))]
+    try:
+        delta = params.rect_delta[0]
+        if delta:
+            # horizontal
+            idx = 1
+            length = size[1]
+        else:
+            # vertical
+            delta = params.rect_delta[1]
+            idx = 0
+            length = size[0]
+        if delta <= -length:
+            pts = pts[1:]
+            pts[0][idx] = 0.0
+        elif delta >= length:
+            pts = pts[:-1]
+            pts[-1][idx] = 0.0
+        else:
+            pts[0][idx] -= delta*0.5
+            pts[1][idx] += delta*0.5
+            pts[2][idx] -= delta*0.5
+            pts[3][idx] += delta*0.5
+    except Exception:
+        logger.warning('trapezoid pad has no rect_delta')
+
+    pts.append(pts[0])
+    return Part.makePolygon(pts)
 
 def make_circle(size,params=None):
     _ = params
@@ -1052,9 +1083,9 @@ class KicadFcad:
                     continue
                 shape = p[2]
                 #print(shape)
-                if shape == 'trapezoid': #maui
-                    shape= 'rect'
-                    logger.warning('trapezoid pad converted to rect')
+                #if shape == 'trapezoid': #maui
+                #    shape= 'rect'
+                #    logger.warning('trapezoid pad converted to rect')
                 try:
                     make_shape = globals()['make_{}'.format(shape)]
                 except KeyError:
@@ -1062,6 +1093,11 @@ class KicadFcad:
                             'pad shape {} not implemented\n'.format(shape))
 
                 w = make_shape(Vector(*p.size),p)
+
+                # kicad put pad shape offset inside drill element? Why? maui drill offset 
+                if 'drill' in p and 'offset' in p.drill:
+                    w.translate(makeVect(p.drill.offset))
+
                 at,angle = getAt(p.at)
                 angle -= m_angle;
                 if not isZero(angle):
