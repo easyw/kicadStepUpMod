@@ -21,7 +21,7 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 from kicadStepUptools import KicadPCB,SexpList
 
-__kicad_parser_version__ = '1.1.3'
+__kicad_parser_version__ = '1.1.4'
 print('kicad_parser_version '+__kicad_parser_version__)
 
 
@@ -374,9 +374,14 @@ class KicadFcad:
         self.sketch_constraint = True
         self.sketch_align_constraint = False
         self.merge_holes = not debug
-        self.merge_pads = not debug
+        # self.merge_pads = not debug
         self.merge_vias = not debug
         self.zone_merge_holes = not debug
+        
+        # merging pads may cause problem in case of overlapping edges, needs
+        # further analysis. See tests/flex.kicad_pcb  #maui
+        self.merge_pads = False
+        
         self.add_feature = True
         ## self.part_path = getKicadPath() # maui not used
         self.hole_size_offset = 0.001
@@ -616,7 +621,7 @@ class KicadFcad:
         if not isinstance(obj,(list,tuple)):
             obj = (obj,)
 
-        if self.add_feature:
+        if self.add_feature and len (obj) > 0: #maui
 
             if not force and obj[0].TypeId == 'Path::FeatureArea' and (
                 obj[0].Operation == op or len(obj[0].Sources)==1) and \
