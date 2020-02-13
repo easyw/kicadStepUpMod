@@ -21,7 +21,7 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 from kicadStepUptools import KicadPCB,SexpList
 
-__kicad_parser_version__ = '1.1.4'
+__kicad_parser_version__ = '1.1.5'
 print('kicad_parser_version '+__kicad_parser_version__)
 
 
@@ -124,7 +124,7 @@ def make_rect(size,params=None):
 
 def make_trapezoid(size,params):
     pts = [product(size,Vector(*v)) \
-            for v in ((-0.5,-0.5),(0.5,-0.5),(0.5,0.5),(-0.5,0.5))]
+            for v in ((-0.5,0.5),(-0.5,-0.5),(0.5,-0.5),(0.5,0.5))]
     try:
         delta = params.rect_delta[0]
         if delta:
@@ -137,16 +137,19 @@ def make_trapezoid(size,params):
             idx = 0
             length = size[0]
         if delta <= -length:
-            pts = pts[1:]
-            pts[0][idx] = 0.0
+            collapse = 1
+            delta = -length;
         elif delta >= length:
-            pts = pts[:-1]
-            pts[-1][idx] = 0.0
+            collapse = -1
+            delta = length
         else:
-            pts[0][idx] -= delta*0.5
-            pts[1][idx] += delta*0.5
-            pts[2][idx] -= delta*0.5
-            pts[3][idx] += delta*0.5
+            collapse = 0
+        pts[0][idx] += delta*0.5
+        pts[1][idx] -= delta*0.5
+        pts[2][idx] += delta*0.5
+        pts[3][idx] -= delta*0.5
+        if collapse:
+            del pts[collapse]
     except Exception:
         logger.warning('trapezoid pad has no rect_delta')
 
