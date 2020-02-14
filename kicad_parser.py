@@ -21,7 +21,8 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 from kicadStepUptools import KicadPCB,SexpList
 
-__kicad_parser_version__ = '1.1.5'
+__kicad_parser_version__ = '1.1.6'
+# https://github.com/realthunder/fcad_pcb/issues/20#issuecomment-586042341
 print('kicad_parser_version '+__kicad_parser_version__)
 
 
@@ -221,7 +222,8 @@ def make_custom(size,params):
     except Exception:
         raise RuntimeError('Cannot find polyline points in custom pad')
 
-    wire = Part.makePolygon([makeVect(p) for p in points])
+    # KiCAD polygon runs in clockwise, but FreeCAD wants CCW, so must reverse. #maui
+    wire = Part.makePolygon([makeVect(p) for p in reversed(points)])
     if width:
         wire = Path.Area(Offset=width*0.5).add(wire).getShape()
     return wire
@@ -383,11 +385,17 @@ class KicadFcad:
         
         # merging pads may cause problem in case of overlapping edges, needs
         # further analysis. See tests/flex.kicad_pcb  #maui
-        self.merge_pads = False
+        #self.merge_pads = False
+        self.merge_pads = not debug
         
         self.add_feature = True
         ## self.part_path = getKicadPath() # maui not used
         self.hole_size_offset = 0.001
+        self.pad_inflate = 0
+        self.zone_inflate = 0
+        # maui try set the following parameter and try again.
+        #pcb.pad_inflate = 0.0001
+
         if filename is None:
             filename = '/home/thunder/pwr.kicad_pcb'
         if not os.path.isfile(filename):
@@ -1043,7 +1051,8 @@ class KicadFcad:
         self._pushLog('making pads...',prefix=prefix)
 
         def _wire(obj,name,label=None,fill=False):
-            return self._makeWires(obj,name,fill=fill,label=label)
+            #return self._makeWires(obj,name,fill=fill,label=label)
+            return self._makeWires(obj,name,fill=fill,label=label,offset=self.pad_inflate)
 
         def _face(obj,name,label=None):
             return _wire(obj,name,label,True)
@@ -1258,17 +1267,18 @@ class KicadFcad:
             # related to some setup parameter? I am guessing this is half the
             # zone.min_thickness setting here.
 
+            offset = self.zone_inflate + z.min_thickness
             if not zone_holes or (
               self.add_feature and self.make_sketch and self.zone_merge_holes):
                 obj = [obj]+zone_holes
             elif zone_holes:
                 obj = (self._makeWires(obj,'zone_outline', label=z.net_name),
                        self._makeWires(zone_holes,'zone_hole',label=z.net_name))
-                return self._makeArea(obj,'zone',offset=z.min_thickness*0.5,
+                return self._makeArea(obj,'zone',offset=offset,
                         op=1, fill=fill,label=z.net_name)
 
             return self._makeWires(obj,'zone',fill=fill,
-                            offset=z.min_thickness*0.5,label=z.net_name)
+                            offset=offset,label=z.net_name)
 
 
         def _face(obj):
