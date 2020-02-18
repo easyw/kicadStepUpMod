@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.5.3.3"
+___ver___ = "9.5.3.4"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -5116,6 +5116,14 @@ def Load_models(pcbThickness,modules):
             step_module= re.sub('\${.*?}/', '', step_module)
             #step_module=step_module.decode("utf-8").replace(u'${}/', u'')
             step_module=step_module.replace(u'${}/', u'')
+            step_module=step_module.replace(u'"', u'')  # name with spaces
+            encoded=1
+            say('adjusting 2nd Local Path')
+            say('step-module-replaced '+step_module)      
+        elif (step_module.find('$(')!=-1) and encoded==0:  #extra local $(ENV) 3D path
+            step_module= re.sub('\$(.*?)/', '', step_module)
+            #step_module=step_module.decode("utf-8").replace(u'${}/', u'')
+            step_module=step_module.replace(u'$()/', u'')
             step_module=step_module.replace(u'"', u'')  # name with spaces
             encoded=1
             say('adjusting 2nd Local Path')
