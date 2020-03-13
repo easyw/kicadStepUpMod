@@ -6061,7 +6061,8 @@ def Load_models(pcbThickness,modules):
         last_pcb_path_local = re.sub("\\\\", "/", last_pcb_path)
         last_pcb_path_local_U = make_unicode(last_pcb_path_local)
         say("missing models");say (missing_models)
-        say("searching path");say(models3D_prefix_U);say (models3D_prefix2_U)
+        #say("searching path");say(models3D_prefix_U);say (models3D_prefix2_U)
+        say("searching path");say(models3D_prefix);say (models3D_prefix2)
         say(last_pcb_path_local_U)
         missings=[]
         missings=missing_models.split('\r\n')
@@ -6069,8 +6070,10 @@ def Load_models(pcbThickness,modules):
         #if len (missings) > n_rpt_max: #warning_nbr =-1 for skipping the test
         wmsg="""... missing module(s)<br>"""
         wmsg+="""... searching path:<br>"""
-        wmsg+=models3D_prefix_U+"""<br>"""
-        wmsg+=models3D_prefix2_U+"""<br>"""
+        #wmsg+=models3D_prefix_U+"""<br>"""
+        #wmsg+=models3D_prefix2_U+"""<br>"""
+        wmsg+=models3D_prefix+"""<br>"""
+        wmsg+=models3D_prefix2+"""<br>"""
         wmsg+=last_pcb_path_local_U+"""<br>"""
         wmsg+="""... missing module(s) '.step' or '.stp' or .iges' or '.igs'<br>"""
         for i in range(min(len (missings),n_rpt_max)):
