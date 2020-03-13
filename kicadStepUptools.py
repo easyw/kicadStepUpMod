@@ -5022,6 +5022,220 @@ def check_wrl_transparency(step_module):
                 sayerr('wrz transparency NOT supported')
     return step_transparency
 ##
+
+def findModelPath(step_module, pathStr):     # Find module in all paths specified
+	module_path='not-found'
+	step_module=step_module.replace(u'"', u'')  # name with spaces
+	step_module2=step_module[:-4]+u'stp'
+	step_module3=step_module[:-4]+u'iges'
+	step_module4=step_module[:-4]+u'igs'
+	step_module5=step_module[:-4]+u'stpz'
+	# sayerr(step_module+' TEST')
+	#step_module=step_module.replace('"', '')  # name with spaces
+	#step_module=step_module.decode("utf-8").replace(u'"', u'')  # name with spaces
+	#step_module=step_module.encode("utf-8")
+	#sayw(models3D_prefix+step_module)
+	# removing 'backslash' for unicode_escape
+	## new utf-8 test
+	pathList=pathStr.split("\n")
+	if (len(pathList) == 1):
+		pathList=pathStr.split(',')
+	for _path in pathList:
+		models3D_prefix = re.sub("\\\\", "/", _path)
+		models3D_prefix_U = models3D_prefix
+		#if isinstance(models3D_prefix, str):
+		#    models3D_prefix_U = models3D_prefix.decode('unicode_escape')
+		#else:
+		#    models3D_prefix_U = models3D_prefix
+		step_module = re.sub("\\\\", "/", step_module)
+		#if isinstance(step_module, str):
+		#    step_module = step_module.decode('unicode_escape')
+		#else:
+		#    step_module = step_module.encode('utf-8')
+		#utf_path=os.path.join(models3D_prefix,step_module)
+		#print(type(step_module))  #maui test py3
+		utf_path=os.path.join(make_unicode(models3D_prefix_U),make_unicode(step_module))
+		sayw(utf_path)
+		#utf_path=os.path.join(models3D_prefix,step_module)
+		##adding 2nd 3Dprefix support to step
+		#utf_path2=os.path.join(models3D_prefix2,step_module)
+		## new utf-8 test
+		sayw("Checking path: " + utf_path)
+		if os.path.exists(utf_path):
+			#module_path=models3D_prefix+step_module
+			module_path=utf_path
+			sayw("found! "+module_path)
+		else:
+			sayw("Checking path: " + step_module);
+			if os.path.exists(step_module): # absolute path
+				module_path=step_module
+				sayw("found! "+module_path)
+		#.STEP
+		if (module_path=='not-found'):
+			pos=utf_path.rfind('.')
+			rel_pos=len(utf_path)-pos
+			utf_path=utf_path[:-rel_pos+1]+u'STEP'
+			sayw("Checking path: " + utf_path)
+			if os.path.exists(utf_path):
+				#module_path=models3D_prefix+step_module
+				module_path=utf_path
+				sayw("found! "+module_path)
+			else:
+				pos=step_module.rfind('.')
+				rel_pos=len(step_module)-pos
+				step_module_t=step_module[:-rel_pos+1]+u'STEP'
+				sayw("Checking path: " + step_module_t)
+				if os.path.exists(step_module_t): # absolute path
+					module_path=step_module_t
+					sayw("found! "+module_path)
+		#adding .stp support
+		#if isinstance(step_module2, str):
+		#    step_module = step_module2.decode('unicode_escape')
+		utf_path=os.path.join(make_unicode(models3D_prefix_U),make_unicode(step_module2))
+		#sayerr(step_module2)
+		#sayerr(utf_path)
+		## new utf-8 test
+		if (module_path=='not-found'):
+			sayw("Checking path: " + utf_path)
+			if os.path.exists(utf_path):
+			#if os.path.exists(models3D_prefix+step_module2) and (module_path=='not-found'):
+				#module_path=models3D_prefix+step_module2
+				module_path=utf_path
+				sayw("found! "+module_path)
+			else:
+				sayw("Checking path: " + step_module2)
+				if os.path.exists(step_module2): # absolute path
+					module_path=step_module2
+					sayw("found! "+module_path)
+		#sayerr(module_path)
+		#stop
+		#.STP
+		if (module_path=='not-found'):
+			pos=utf_path.rfind('.')
+			rel_pos=len(utf_path)-pos
+			utf_path=utf_path[:-rel_pos+1]+u'STP'
+			sayw("Checking path: " + utf_path)
+			if os.path.exists(utf_path):
+				#module_path=models3D_prefix+step_module
+				module_path=utf_path
+				sayw("found! "+module_path)
+			else:
+				pos=step_module.rfind('.')
+				rel_pos=len(step_module2)-pos
+				step_module_t=step_module2[:-rel_pos+1]+u'STP'
+				sayw("Checking path: " + step_module_t)
+				if os.path.exists(step_module_t): # absolute path
+					module_path=step_module_t
+					sayw("found! "+module_path)
+		#adding .iges support
+		#if isinstance(step_module3, str):
+		#    step_module = step_module3.decode('unicode_escape')
+		utf_path=os.path.join(make_unicode(models3D_prefix_U),make_unicode(step_module3))
+		## new utf-8 test
+		if (module_path=='not-found'):
+			sayw("Checking path: " + utf_path)
+			if os.path.exists(utf_path):
+			#if os.path.exists(models3D_prefix+step_module3) and (module_path=='not-found'):
+				#module_path=models3D_prefix_U+step_module3
+				module_path=utf_path
+				sayw("found! "+module_path)
+			else:
+				sayw("Checking path: " + step_module3)
+				if os.path.exists(step_module3): # absolute path
+					module_path=step_module3
+					sayw("found3! "+module_path)
+		#.IGES
+		if (module_path=='not-found'):
+			pos=utf_path.rfind('.')
+			rel_pos=len(utf_path)-pos
+			utf_path=utf_path[:-rel_pos+1]+u'IGES'
+			sayw("Checking path: " + utf_path)
+			if os.path.exists(utf_path):
+				#module_path=models3D_prefix+step_module
+				module_path=utf_path
+				sayw("found! "+module_path)
+			else:
+				pos=step_module.rfind('.')
+				rel_pos=len(step_module3)-pos
+				step_module_t=step_module3[:-rel_pos+1]+u'IGES'
+				sayw("Checking path: " + step_module_t)
+				if os.path.exists(step_module_t): # absolute path
+					module_path=step_module_t
+					sayw("found! "+module_path)
+		#if (module_path!='not-found'):
+		#    sayerr(module_path)
+		#    stop
+		#adding .igs support
+		utf_path=os.path.join(make_unicode(models3D_prefix_U),make_unicode(step_module4))
+		## new utf-8 test
+		if (module_path=='not-found'):
+			sayw("Checking path: " + utf_path)
+			if os.path.exists(utf_path):
+			#if os.path.exists(models3D_prefix+step_module4) and (module_path=='not-found'):
+				#module_path=models3D_prefix_U+step_module4
+				module_path=utf_path
+				sayw("found! "+module_path)
+			else:
+				sayw("Checking path: " + step_module5)
+				if os.path.exists(step_module5): # absolute path
+					module_path=step_module5
+					sayw("found! "+module_path)
+		#.IGS
+		if (module_path=='not-found'):
+			pos=utf_path.rfind('.')
+			rel_pos=len(utf_path)-pos
+			utf_path=utf_path[:-rel_pos+1]+u'IGS'
+			sayw("Checking path: " + utf_path)
+			if os.path.exists(utf_path):
+				#module_path=models3D_prefix+step_module
+				module_path=utf_path
+				sayw("found! "+module_path)
+			else:
+				pos=step_module.rfind('.')
+				rel_pos=len(step_module4)-pos
+				step_module_t=step_module4[:-rel_pos+1]+u'IGS'
+				sayw("Checking path: " + step_module_t)
+				if os.path.exists(step_module_t): # absolute path
+					module_path=step_module_t
+					sayw("found! "+module_path)
+		#.stpZ
+		if (module_path=='not-found'):
+			pos=utf_path.rfind('.')
+			rel_pos=len(utf_path)-pos
+			utf_path=utf_path[:-rel_pos+1]+u'stpZ'
+			sayw("Checking path: " + utf_path)
+			if os.path.exists(utf_path):
+				#module_path=models3D_prefix+step_module
+				module_path=utf_path
+				sayw("found! "+module_path)
+			else:
+				pos=step_module.rfind('.')
+				rel_pos=len(step_module5)-pos
+				step_module_t=step_module5[:-rel_pos+1]+u'stpZ'
+				sayw("Checking path: " + step_module_t)
+				if os.path.exists(step_module_t): # absolute path
+					module_path=step_module_t
+					sayw("found! "+module_path)
+		#.stpz
+		if (module_path=='not-found'):
+			pos=utf_path.rfind('.')
+			rel_pos=len(utf_path)-pos
+			utf_path=utf_path[:-rel_pos+1]+u'stpz'
+			sayw("Checking path: " + utf_path)
+			if os.path.exists(utf_path):
+				#module_path=models3D_prefix+step_module
+				module_path=utf_path
+				sayw("found! "+module_path)
+			else:
+				pos=step_module.rfind('.')
+				rel_pos=len(step_module5)-pos
+				step_module_t=step_module5[:-rel_pos+1]+u'stpz'
+				sayw("Checking path: " + step_module_t)
+				if os.path.exists(step_module_t): # absolute path
+					module_path=step_module_t
+					sayw("found! "+module_path)
+	return module_path
+###
 def Load_models(pcbThickness,modules):
     global off_x, off_y, volume_minimum, height_minimum, bbox_all, bbox_list
     global whitelisted_model_elements, models3D_prefix, models3D_prefix2, last_pcb_path, full_placement
@@ -5220,240 +5434,9 @@ def Load_models(pcbThickness,modules):
                 if model_name=="box_mcad" or model_name=="cylV_mcad" or model_name=="cylH_mcad":
                     createScaledObjs=True
                 if not createScaledObjs:
-                    module_path='not-found'
-                    step_module=step_module.replace(u'"', u'')  # name with spaces
-                    # sayerr(step_module+' TEST')
-                    #step_module=step_module.replace('"', '')  # name with spaces
-                    #step_module=step_module.decode("utf-8").replace(u'"', u'')  # name with spaces
-                    #step_module=step_module.encode("utf-8")
-                    #sayw(models3D_prefix+step_module)
-                    # removing 'backslash' for unicode_escape
-                    ## new utf-8 test
-                    models3D_prefix = re.sub("\\\\", "/", models3D_prefix)
-                    models3D_prefix_U = models3D_prefix
-                    #if isinstance(models3D_prefix, str):
-                    #    models3D_prefix_U = models3D_prefix.decode('unicode_escape')
-                    #else:
-                    #    models3D_prefix_U = models3D_prefix
-                    step_module = re.sub("\\\\", "/", step_module)
-                    #if isinstance(step_module, str):
-                    #    step_module = step_module.decode('unicode_escape')
-                    #else:
-                    #    step_module = step_module.encode('utf-8')
-                    #utf_path=os.path.join(models3D_prefix,step_module)
-                    #print(type(step_module))  #maui test py3
-                    utf_path=os.path.join(make_unicode(models3D_prefix_U),make_unicode(step_module))
-                    #sayw(utf_path)
-                    #utf_path=os.path.join(models3D_prefix,step_module)
-                    ##adding 2nd 3Dprefix support to step
-                    #utf_path2=os.path.join(models3D_prefix2,step_module)
-                    ## new utf-8 test
-                    models3D_prefix2 = re.sub("\\\\", "/", models3D_prefix2)
-                    #if isinstance(models3D_prefix2, str):
-                    #    models3D_prefix2_U = models3D_prefix2.decode('unicode_escape')
-                    #else:
-                    #    models3D_prefix2_U = models3D_prefix2
-                    models3D_prefix2_U = models3D_prefix2
-                    utf_path2=os.path.join(make_unicode(models3D_prefix2_U),make_unicode(step_module)) # utf-8 chars
-                    #print(utf_path)
-                    #print(utf_path2)
-                    #print(step_module)
-                    #.step
-                    if os.path.exists(utf_path):
-                        #module_path=models3D_prefix+step_module
-                        module_path=utf_path
-                        #sayw("found! "+module_path)
-                    else:
-                        if os.path.exists(step_module): # absolute path
-                            module_path=step_module
-                        else:
-                            if os.path.exists(utf_path2):
-                                module_path=utf_path2
-                    #.STEP
+                    module_path=findModelPath(step_module, models3D_prefix)
                     if (module_path=='not-found'):
-                        pos=utf_path.rfind('.')
-                        rel_pos=len(utf_path)-pos
-                        utf_path=utf_path[:-rel_pos+1]+u'STEP'
-                        if os.path.exists(utf_path):
-                            #module_path=models3D_prefix+step_module
-                            module_path=utf_path
-                            #sayw("found! "+module_path)
-                        else:
-                            pos=step_module.rfind('.')
-                            rel_pos=len(step_module)-pos
-                            step_module_t=step_module[:-rel_pos+1]+u'STEP'
-                            if os.path.exists(step_module_t): # absolute path
-                                module_path=step_module_t
-                            else:
-                                pos=utf_path2.rfind('.')
-                                rel_pos=len(utf_path2)-pos
-                                utf_path2=utf_path2[:-rel_pos+1]+u'STEP'
-                                if os.path.exists(utf_path2):
-                                    module_path=utf_path2
-                    #adding .stp support
-                    #if isinstance(step_module2, str):
-                    #    step_module = step_module2.decode('unicode_escape')
-                    utf_path=os.path.join(make_unicode(models3D_prefix_U),make_unicode(step_module2))
-                    utf_path2=os.path.join(make_unicode(models3D_prefix2_U),make_unicode(step_module2))
-                    #sayerr(step_module2)
-                    #sayerr(utf_path)
-                    #sayerr(utf_path2)
-                    ## new utf-8 test
-                    if (module_path=='not-found'):
-                        if os.path.exists(utf_path):
-                        #if os.path.exists(models3D_prefix+step_module2) and (module_path=='not-found'):
-                            #module_path=models3D_prefix+step_module2
-                            module_path=utf_path
-                            #sayw("found! "+module_path)
-                        else:
-                            if os.path.exists(step_module2): # absolute path
-                                module_path=step_module2
-                            else:
-                                if os.path.exists(utf_path2):
-                                    module_path=utf_path2
-                    #sayerr(module_path)
-                    #stop
-                    #.STP
-                    if (module_path=='not-found'):
-                        pos=utf_path.rfind('.')
-                        rel_pos=len(utf_path)-pos
-                        utf_path=utf_path[:-rel_pos+1]+u'STP'
-                        if os.path.exists(utf_path):
-                            #module_path=models3D_prefix+step_module
-                            module_path=utf_path
-                            #sayw("found! "+module_path)
-                        else:
-                            pos=step_module.rfind('.')
-                            rel_pos=len(step_module2)-pos
-                            step_module_t=step_module2[:-rel_pos+1]+u'STP'
-                            if os.path.exists(step_module_t): # absolute path
-                                module_path=step_module_t
-                            else:
-                                pos=utf_path2.rfind('.')
-                                rel_pos=len(utf_path2)-pos
-                                utf_path2=utf_path2[:-rel_pos+1]+u'STP'
-                                if os.path.exists(utf_path2):
-                                    module_path=utf_path2
-                    #adding .iges support
-                    #if isinstance(step_module3, str):
-                    #    step_module = step_module3.decode('unicode_escape')
-                    utf_path=os.path.join(make_unicode(models3D_prefix_U),make_unicode(step_module3))
-                    utf_path2=os.path.join(make_unicode(models3D_prefix2_U),make_unicode(step_module3))
-                    ## new utf-8 test
-                    if (module_path=='not-found'):
-                        if os.path.exists(utf_path):
-                        #if os.path.exists(models3D_prefix+step_module3) and (module_path=='not-found'):
-                            #module_path=models3D_prefix_U+step_module3
-                            module_path=utf_path
-                        else:
-                            if os.path.exists(step_module3): # absolute path
-                                module_path=step_module3
-                                #sayw("found3! "+module_path)
-                            else:
-                                if os.path.exists(utf_path2):
-                                    module_path=utf_path2
-                    #.IGES
-                    if (module_path=='not-found'):
-                        pos=utf_path.rfind('.')
-                        rel_pos=len(utf_path)-pos
-                        utf_path=utf_path[:-rel_pos+1]+u'IGES'
-                        if os.path.exists(utf_path):
-                            #module_path=models3D_prefix+step_module
-                            module_path=utf_path
-                            #sayw("found! "+module_path)
-                        else:
-                            pos=step_module.rfind('.')
-                            rel_pos=len(step_module3)-pos
-                            step_module_t=step_module3[:-rel_pos+1]+u'IGES'
-                            if os.path.exists(step_module_t): # absolute path
-                                module_path=step_module_t
-                            else:
-                                pos=utf_path2.rfind('.')
-                                rel_pos=len(utf_path2)-pos
-                                utf_path2=utf_path2[:-rel_pos+1]+u'IGES'
-                                if os.path.exists(utf_path2):
-                                    module_path=utf_path2
-                    #if (module_path!='not-found'):
-                    #    sayerr(module_path)
-                    #    stop
-                    #adding .igs support
-                    utf_path=os.path.join(make_unicode(models3D_prefix_U),make_unicode(step_module4))
-                    utf_path2=os.path.join(make_unicode(models3D_prefix2_U),make_unicode(step_module4))
-                    ## new utf-8 test
-                    if (module_path=='not-found'):
-                        if os.path.exists(utf_path):
-                        #if os.path.exists(models3D_prefix+step_module4) and (module_path=='not-found'):
-                            #module_path=models3D_prefix_U+step_module4
-                            module_path=utf_path
-                        else:
-                            if os.path.exists(step_module5): # absolute path
-                                module_path=step_module5
-                            else:
-                                if os.path.exists(utf_path2):
-                                    module_path=utf_path2
-                    #.IGS
-                    if (module_path=='not-found'):
-                        pos=utf_path.rfind('.')
-                        rel_pos=len(utf_path)-pos
-                        utf_path=utf_path[:-rel_pos+1]+u'IGS'
-                        if os.path.exists(utf_path):
-                            #module_path=models3D_prefix+step_module
-                            module_path=utf_path
-                            #sayw("found! "+module_path)
-                        else:
-                            pos=step_module.rfind('.')
-                            rel_pos=len(step_module4)-pos
-                            step_module_t=step_module4[:-rel_pos+1]+u'IGS'
-                            if os.path.exists(step_module_t): # absolute path
-                                module_path=step_module_t
-                            else:
-                                pos=utf_path2.rfind('.')
-                                rel_pos=len(utf_path2)-pos
-                                utf_path2=utf_path2[:-rel_pos+1]+u'IGS'
-                                if os.path.exists(utf_path2):
-                                    module_path=utf_path2
-                    #.stpZ
-                    if (module_path=='not-found'):
-                        pos=utf_path.rfind('.')
-                        rel_pos=len(utf_path)-pos
-                        utf_path=utf_path[:-rel_pos+1]+u'stpZ'
-                        if os.path.exists(utf_path):
-                            #module_path=models3D_prefix+step_module
-                            module_path=utf_path
-                            #sayw("found! "+module_path)
-                        else:
-                            pos=step_module.rfind('.')
-                            rel_pos=len(step_module5)-pos
-                            step_module_t=step_module5[:-rel_pos+1]+u'stpZ'
-                            if os.path.exists(step_module_t): # absolute path
-                                module_path=step_module_t
-                            else:
-                                pos=utf_path2.rfind('.')
-                                rel_pos=len(utf_path2)-pos
-                                utf_path2=utf_path2[:-rel_pos+1]+u'stpZ'
-                                if os.path.exists(utf_path2):
-                                    module_path=utf_path2
-                    #.stpz
-                    if (module_path=='not-found'):
-                        pos=utf_path.rfind('.')
-                        rel_pos=len(utf_path)-pos
-                        utf_path=utf_path[:-rel_pos+1]+u'stpz'
-                        if os.path.exists(utf_path):
-                            #module_path=models3D_prefix+step_module
-                            module_path=utf_path
-                            #sayw("found! "+module_path)
-                        else:
-                            pos=step_module.rfind('.')
-                            rel_pos=len(step_module5)-pos
-                            step_module_t=step_module5[:-rel_pos+1]+u'stpz'
-                            if os.path.exists(step_module_t): # absolute path
-                                module_path=step_module_t
-                            else:
-                                pos=utf_path2.rfind('.')
-                                rel_pos=len(utf_path2)-pos
-                                utf_path2=utf_path2[:-rel_pos+1]+u'stpz'
-                                if os.path.exists(utf_path2):
-                                    module_path=utf_path2
+                    	module_path=findModelPath(step_module, models3D_prefix2)
                 else:
                     scale_vrml=modules[i][8]
                     #sayw(scale_vrml)

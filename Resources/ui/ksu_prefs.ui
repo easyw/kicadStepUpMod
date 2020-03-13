@@ -103,7 +103,7 @@
          <item>
           <widget class="QLabel" name="label_prefix3d_2">
            <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;your &lt;span style=&quot; font-weight:600;&quot;&gt;ALIAS&lt;/span&gt; 3D&lt;/p&gt;&lt;p&gt;model prefix path&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;your &lt;span style=&quot; font-weight:600;&quot;&gt;ALIAS&lt;/span&gt; 3D&lt;/p&gt;&lt;p&gt;model prefix path&lt;/p&gt;&lt;p&gt;Can be a comma-separated list of paths to search.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>secondary 3D folder loc
