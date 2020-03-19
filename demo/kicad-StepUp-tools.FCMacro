@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.5.3.4"
+___ver___ = "9.5.3.5"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -4840,8 +4840,6 @@ def create_compound(count,modelnm):  #create compound function when a multipart 
             #FreeCADGui.Selection.addSelection(FreeCAD.activeDocument().ActiveObject)
             FreeCAD.ActiveDocument.recompute()
             #simple_copy(FreeCAD.activeDocument().ActiveObject)
-        
-        
         elif 'App::Part' in objs_to_remove[lotr-1].TypeId:  #from FC 0.17-12090 multipart STEPs are loded as App::Part and have a list inverted
             sc_list=[]
             recurse_node(objs_to_remove[lotr-1],objs_to_remove[lotr-1].Placement, sc_list)
@@ -4918,6 +4916,13 @@ def create_compound(count,modelnm):  #create compound function when a multipart 
         removesubtree([mycompound])
         ## reference mode for labels
         mynewObj.Label=modelnm_norm
+        #sayerr('HERE')
+        #workaround to remove all extra objects instead of searching for top level container
+        for o in objs_to_remove:
+            try:
+                FreeCAD.ActiveDocument.removeObject(o.Name)
+            except:
+                pass
         #App.ActiveDocument.getObject(FreeCADGui.Selection.getSelection()[0].Name).removeObjectsFromDocument()
         #App.ActiveDocument.removeObject(FreeCADGui.Selection.getSelection()[0].Name)
         #removesubtree(mycompound.Name)
@@ -5481,11 +5486,14 @@ def Load_models(pcbThickness,modules):
                         #module_path_n = re.sub("/", "\\\\", module_path)
                         #sayerr(module_path_n)
                         #ImportGui.insert(module_path_n,FreeCAD.ActiveDocument.Name)
-                        try: #tobefixed
+                        try: #tobefixed HERE
                             # support for stpZ files
                             if module_path.lower().endswith('stpz'):
                                 import stepZ
                                 stepZ.insert(module_path,FreeCAD.ActiveDocument.Name)
+                            elif module_path.lower().endswith('iges') or module_path.lower().endswith('igs'):
+                                sayerr("bug for ImportGui *.iges ... using Part.insert")
+                                Part.insert(module_path,FreeCAD.ActiveDocument.Name)
                             else:
                                 ImportGui.insert(module_path,FreeCAD.ActiveDocument.Name)
                             #FreeCADGui.Selection.clearSelection()
