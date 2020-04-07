@@ -8103,7 +8103,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                 FCV_date = str(FreeCAD.Version()[4])
                 FCV_date = FCV_date[0:FCV_date.find(' ')]
                 say('FreeCAD build date: '+FCV_date)
-                if FCV_date >= '2020/03/27':
+                if FCV_date >= '2020/06/27':
                     STEP_UseAppPart_available = True #new STEP import export mode available
                     say('STEP UseAppPart available')
             if hasattr(prefs, 'GetBools'):
