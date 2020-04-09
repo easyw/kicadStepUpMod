@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.5.3.6"
+___ver___ = "9.5.3.7"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -15750,7 +15750,7 @@ def PushMoved():
             testing=False #True
             if not testing:
                 Filter=""
-                fname, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Push Sketch PCB Edge to KiCad board ...",
+                fname, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Push 3D PCB position(s) to KiCad board ...",
                     make_unicode(last_pcb_path), "*.kicad_pcb")
             else:
                 fname='c:/Temp/demo/test-rot.kicad_pcb'
@@ -15893,8 +15893,10 @@ def PushMoved():
                             say_warning(msg)
                     else:
                         msg="""To update 3D model Position(s) in <b>an EXISTING KiCad pcb file</b><br>the KiCAD pcbnew board file must have assigned \'Grid Origin\' or<br>\'Aux Origin\' (Drill and Place offset)!"""
+                        msg+="""<br>Moreover in FC StepUP preferences you must have<br>\'PCB Settings\'->\'PCB Placement\'<br>set to \'Grid Origin\' or \'Aux Origin\'"""
                         say_warning(msg)
                         msg="To update 3D model Position(s) in an EXISTING KiCad pcb file\nthe KiCAD pcbnew board file must have assigned \'Grid Origin\' or \'Aux Origin\' (Drill and Place offset)!"
+                        msg+="\nMoreover in FC StepUP preferences you must have\n\'PCB Settings\'->\'PCB Placement\'\nset to \'Grid Origin\' or \'Aux Origin\'"
                         sayerr(msg)
                 else:
                     msg="""Save to <b>an EXISTING KiCad pcb file</b> to update your 3D model position!"""
@@ -16107,7 +16109,7 @@ def PullMoved():
             testing=False #True
             if not testing:
                 Filter=""
-                fname, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Open File...",
+                fname, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Pull 3D model position(s) from pcbnew File...",
                     make_unicode(last_pcb_path), "*.kicad_pcb")
             else:
                 fname='c:/Temp/demo/test-rot.kicad_pcb'
@@ -16251,8 +16253,10 @@ def PullMoved():
                             say_warning(msg)
                     else:
                         msg="""To update 3D model Position(s) from <b>an EXISTING KiCad pcb file</b><br>the KiCAD pcbnew board file must have assigned \'Grid Origin\' or<br>\'Aux Origin\' (Drill and Place offset)!"""
+                        msg+="""<br>Moreover in FC StepUP preferences you must have<br>\'PCB Settings\'->\'PCB Placement\'<br>set to \'Grid Origin\' or \'Aux Origin\'"""
                         say_warning(msg)
                         msg="To update 3D model Position(s) from an EXISTING KiCad pcb file\nthe KiCAD pcbnew board file must have assigned \'Grid Origin\' or \'Aux Origin\' (Drill and Place offset)!"
+                        msg+="\nMoreover in FC StepUP preferences you must have \n\'PCB Settings\'->\'PCB Placement\'\nset to \'Grid Origin\' or \'Aux Origin\'"
                         sayerr(msg)
                 else:
                     msg="""Load from <b>an EXISTING KiCad pcb file</b> to update your 3D model position!"""
