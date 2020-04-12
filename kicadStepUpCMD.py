@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-__ksuCMD_version__='1.8.8'
+__ksuCMD_version__='1.8.9'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -2071,7 +2071,7 @@ class ksuToolsSimpleCopy:
                     msg="Select at least one object with Shape to be copied!\n"
                     reply = QtGui.QMessageBox.information(None,"Warning", msg)
                     FreeCAD.Console.PrintWarning(msg)             
-            elif (sel[0].TypeId != 'PartDesign::Body'):
+            else: #sel[0].TypeId != 'PartDesign::Body'):
                 for obj_tocopy in sel:
                 #obj_tocopy=sel[0]
                     cp_label=mk_str(obj_tocopy.Label)+u'_sc'
@@ -2122,10 +2122,6 @@ class ksuToolsSimpleCopy:
                         FreeCAD.ActiveDocument.recompute()
                     #else:
                     #    FreeCAD.Console.PrintWarning("Select object with a \"Shape\" to be copied!\n")             
-            else:
-                #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
-                reply = QtGui.QMessageBox.information(None,"Warning", "Select at least one object with Shape to be copied!\nBody PDN not allowed.")
-                FreeCAD.Console.PrintWarning("Select at least one object with Shape to be copied!\nBody PDN not allowed.")             
         else:
             #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
             reply = QtGui.QMessageBox.information(None,"Warning", "Select at least one object with Shape to be copied!")
