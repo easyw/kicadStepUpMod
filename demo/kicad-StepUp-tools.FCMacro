@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.5.3.7"
+___ver___ = "9.6.0.1"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -12271,6 +12271,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
     PCB = []
     PCB_Models = []
     PCB_Geo = []
+    FpEdges_Geo = []
     edges=[]
     PCBs = []
     #print (mypcb.general) #maui errorchecking
@@ -12557,6 +12558,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
         FreeCAD.ActiveDocument.recompute()
     
     make_face = True #getting PCB from Sketch
+    use_PCB_Sketch_E = False #getting PCB from Sketch and Fp Edges
     dont_use_constraints = False
     create_pcb_from_edges = False
     create_pcb_basic = False
@@ -12593,91 +12595,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
         #get_time()
         #say('adding Geo time ' +str(running_time-t0))
         #FreeCAD.ActiveDocument.addObject("Part::Face", "Face").Sources = (FreeCAD.ActiveDocument.getObject(new_skt.Name), )
-    if lyr == 'Edge.Cuts':
-        if make_face:
-            if len(FreeCAD.ActiveDocument.PCB_Sketch_draft.Geometry)>0:
-                if addConstraints!='none' and not dont_use_constraints:
-                    say('start adding constraints to pcb sketch')
-                    get_time()
-                    t0=(running_time)
-                    if hasattr (FreeCAD.ActiveDocument.getObject("PCB_Sketch_draft"), "autoconstraint"):
-                        if addConstraints=='full':
-                            FreeCAD.ActiveDocument.getObject("PCB_Sketch_draft").autoconstraint(edge_tolerance*5,0.01)
-                        else:
-                            add_constraints("PCB_Sketch_draft")
-                    else:
-                        add_constraints("PCB_Sketch_draft")
-                    get_time()
-                    #say('adding constraints time ' +str(running_time-t0))
-                    say('adding constraints time ' + "{0:.3f}".format(running_time-t0))
-                if 0: #dont_use_constraints:
-                    sayw('adding missing geometry')
-                    add_missing_geo("PCB_Sketch_draft")
-                    #stop
-                    
-                make_face_mode = 1
-                FreeCAD.ActiveDocument.recompute()
-                if make_face_mode == 1:  ## face creation method
-                    shsk = FreeCAD.ActiveDocument.PCB_Sketch_draft.Shape.copy()
-                    #Part.show(shsk)
-                    edgs = shsk.Edges
-                    #print(edgs)
-                    if len(edgs)== 0:
-                        sayerr('No edges found for pcb!!!')
-                        stop
-                    if 1:
-                        s_PCB_Sketch_draft = OSCD2Dg_edgestofaces(edgs,3 , edge_tolerance)
-                    if 0:
-                        import OpenSCAD2Dgeom
-                        s_PCB_Sketch_draft = OpenSCAD2Dgeom.edgestofaces(Part.__sortEdges__(edgs))
-                    Part.show(s_PCB_Sketch_draft)
-                    Face_PCB_Sketch_draft = FreeCAD.ActiveDocument.ActiveObject
-                    s_PCB_Sketch_draft = Face_PCB_Sketch_draft.Shape.copy()
-                    ## OpenSCAD2Dgeom.edgestofaces(edgs)
-                    
-                else:
-                    FreeCAD.ActiveDocument.addObject("Part::Face", "Face_PCB_Sketch_draft").Sources = (FreeCAD.ActiveDocument.PCB_Sketch_draft, )
-                    FreeCAD.ActiveDocument.recompute()
-                    s_PCB_Sketch_draft = FreeCAD.ActiveDocument.getObject("Face_PCB_Sketch_draft").Shape.copy()
-                    
-                #s_PCB_Sketch_draft = s.copy()
-                sayw ('created PCB face w/ edge tolerance -> '+str(edge_tolerance)+' mm')
-                if aux_orig ==1 or grid_orig ==1:
-                    s_PCB_Sketch_draft.translate((off_x, off_y,0))
-                #else:
-                #    s_PCB_Sketch_draft.translate(xs, ys,0)
-                #if use_Links:
-                #Part.show(s_PCB_Sketch_draft)
-                if make_face_mode == 1:  ## face creation method
-                    FreeCAD.ActiveDocument.removeObject(Face_PCB_Sketch_draft.Name)
-                    FreeCAD.ActiveDocument.recompute()
-                else:
-                    FreeCAD.ActiveDocument.removeObject("Face_PCB_Sketch_draft")
-                    FreeCAD.ActiveDocument.recompute()
-                
-                #FreeCAD.ActiveDocument.addObject("Part::Face", "Face").Sources = (FreeCAD.ActiveDocument.PCB_Sketch_draft001, )
-                if (zfit):
-                    FreeCADGui.SendMsgToActiveView("ViewFit")
-                cut_base = s_PCB_Sketch_draft
-            else:
-                sayerr('empty sketch; module edge board: creating PCB from Footprint Edge.Cuts')
-                create_pcb_from_edges = True
-    
-    LCS = None
-    #if aux_orig ==1 or grid_orig ==1:
-    if origin is not None: #adding LCS only on aux or grid origin
-        try:
-            FreeCAD.ActiveDocument.addObject('PartDesign::CoordinateSystem','Local_CS'+fname_sfx)
-            LCS = FreeCAD.ActiveDocument.ActiveObject
-            FreeCADGui.ActiveDocument.getObject(LCS.Name).Visibility = False
-            FreeCADGui.Selection.clearSelection()
-            #FreeCADGui.Selection.addSelection(LCS)
-            #FreeCADGui.runCommand('Std_HideSelection',0)
-            #FreeCADGui.runCommand('Std_ToggleVisibility',0)
-            #FreeCADGui.Selection.clearSelection()
-        except:
-            sayw('LCS not supported')
-    
+
     #FreeCADGui.SendMsgToActiveView("ViewFit")
     #stop
     if lyr == 'Edge.Cuts':
@@ -12923,6 +12841,10 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                     line1=Part.Edge(PLine(Base.Vector(x1,y1,0), Base.Vector(x2,y2,0)))
                     edges.append(line1);
                     EdgeCuts.append(line1)
+                    if aux_orig ==1 or grid_orig ==1:
+                        FpEdges_Geo.append(PLine(Base.Vector(x1-off_x,y1-off_y,0), Base.Vector(x2-off_x,y2-off_y,0)))
+                    else:
+                        FpEdges_Geo.append(PLine(Base.Vector(x1,y1,0), Base.Vector(x2,y2,0)))
                     PCB.append(['Line', x1, y1, x2, y2])
                     if show_border:
                         Part.show(line1)
@@ -12946,6 +12868,10 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                 say('2d circle closed path')
                 PCBs.append(circle1)
                 EdgeCuts.append(circle2)
+                if aux_orig ==1 or grid_orig ==1:
+                    FpEdges_Geo.append(Part.Circle(Base.Vector(xs-off_x, ys-off_y,0), Base.Vector(0, 0, 1), radius))
+                else:
+                    FpEdges_Geo.append(Part.Circle(Base.Vector(xs, ys,0), Base.Vector(0, 0, 1), radius))
                 PCB.append(['Circle', x1, y1, radius])
                 #mod_circles.append (['Circle', x1, y1, e[2]])
                 #PCB.append(['Circle', x1, y1, radius])
@@ -12967,23 +12893,139 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                 arc1=Part.Edge(Part.Arc(Base.Vector(x2,y2,0),mid_point(Base.Vector(x2,y2,0),Base.Vector(x1,y1,0),curve),Base.Vector(x1,y1,0)))
                 edges.append(arc1)
                 EdgeCuts.append(arc1)
+                sa,ea = arcAngles2(arc1,curve)
+                Cntr = arc1.Curve.Center
+                cx=Cntr.x;cy=Cntr.y
+                #print cx,cy
+                r = arc1.Curve.Radius
+                if aux_orig ==1 or grid_orig ==1:
+                    FpEdges_Geo.append(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx-off_x,cy-off_y,0),FreeCAD.Vector(0,0,1),r),sa,ea))
+                else:
+                    FpEdges_Geo.append(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx,cy,0),FreeCAD.Vector(0,0,1),r),sa,ea))
                 if show_border:
                     Part.show(arc1)
                 PCB.append(['Arc', x1, y1, x2, y2, curve])         
 
-        if len(EdgeCuts) >0 and not create_pcb_from_edges:
-            try:
-                s_PCB_Cuts = OSCD2Dg_edgestofaces(EdgeCuts,3 , edge_tolerance)
-                HoleList.append(s_PCB_Cuts)
-            except:
-                sayerr('error in making footprint Edge Cuts')
-        elif len(EdgeCuts) > 0:
-            try:
-                s_PCB_Cuts = OSCD2Dg_edgestofaces(EdgeCuts,3 , edge_tolerance)
-                #Part.show(s_PCB_Cuts)
-            except:
-                sayerr('error in making PCB from footprint Edge Cuts')
-        
+        if 0: #this is not needed anymoore because we have built a PCB_Sketch_draft from Edges
+            if len(EdgeCuts) >0 and not create_pcb_from_edges:
+                try:
+                    s_PCB_Cuts = OSCD2Dg_edgestofaces(EdgeCuts,3 , edge_tolerance)
+                    HoleList.append(s_PCB_Cuts)
+                except:
+                    sayerr('error in making footprint Edge Cuts')
+            elif len(EdgeCuts) > 0:
+                try:
+                    s_PCB_Cuts = OSCD2Dg_edgestofaces(EdgeCuts,3 , edge_tolerance)
+                    #Part.show(s_PCB_Cuts)
+                except:
+                    sayerr('error in making PCB from footprint Edge Cuts')
+                    #creating a sketch with fp edges
+        if len(EdgeCuts) > 0:
+            PCB_Sketch_draft_E= FreeCAD.activeDocument().addObject('Sketcher::SketchObject','PCB_Sketch_draft_E')
+            FreeCAD.activeDocument().PCB_Sketch_draft_E.Placement = FreeCAD.Placement(FreeCAD.Vector(0.000000,0.000000,0.000000),FreeCAD.Rotation(0.000000,0.000000,0.000000,1.000000))            
+            FreeCAD.ActiveDocument.PCB_Sketch_draft_E.Geometry=PCB_Geo+FpEdges_Geo
+            use_PCB_Sketch_E = True
+
+    if lyr == 'Edge.Cuts':
+        if make_face: #creation pcb from PCB sketch draft
+            if use_PCB_Sketch_E:
+                PCB2Sketch=FreeCAD.ActiveDocument.PCB_Sketch_draft_E
+            else:
+                PCB2Sketch=FreeCAD.ActiveDocument.PCB_Sketch_draft
+            if len(PCB2Sketch.Geometry)>0:
+                if addConstraints!='none' and not dont_use_constraints:
+                    say('start adding constraints to pcb sketch')
+                    get_time()
+                    t0=(running_time)
+                    if hasattr (FreeCAD.ActiveDocument.getObject(PCB2Sketch.Name), "autoconstraint"):
+                        if addConstraints=='full':
+                            FreeCAD.ActiveDocument.getObject("PCB_Sketch_draft").autoconstraint(edge_tolerance*5,0.01)
+                            if use_PCB_Sketch_E:
+                                FreeCAD.ActiveDocument.getObject("PCB_Sketch_draft_E").autoconstraint(edge_tolerance*5,0.01)
+                        else:
+                            add_constraints("PCB_Sketch_draft")
+                            if use_PCB_Sketch_E:
+                                add_constraints("PCB_Sketch_draft_E")
+                    else:
+                        add_constraints("PCB_Sketch_draft")
+                        if use_PCB_Sketch_E:
+                            add_constraints("PCB_Sketch_draft_E")
+                    get_time()
+                    #say('adding constraints time ' +str(running_time-t0))
+                    say('adding constraints time ' + "{0:.3f}".format(running_time-t0))
+                if 0: #dont_use_constraints:
+                    sayw('adding missing geometry')
+                    add_missing_geo("PCB_Sketch_draft")
+                    #stop
+                    
+                make_face_mode = 1
+                FreeCAD.ActiveDocument.recompute()
+                if make_face_mode == 1:  ## face creation method
+                    shsk = PCB2Sketch.Shape.copy()
+                    #Part.show(shsk)
+                    edgs = shsk.Edges
+                    #print(edgs)
+                    if len(edgs)== 0:
+                        sayerr('No edges found for pcb!!!')
+                        stop
+                    if 1:
+                        s_PCB_Sketch_draft = OSCD2Dg_edgestofaces(edgs,3 , edge_tolerance)
+                    if 0:
+                        import OpenSCAD2Dgeom
+                        s_PCB_Sketch_draft = OpenSCAD2Dgeom.edgestofaces(Part.__sortEdges__(edgs))
+                    Part.show(s_PCB_Sketch_draft)
+                    Face_PCB_Sketch_draft = FreeCAD.ActiveDocument.ActiveObject
+                    s_PCB_Sketch_draft = Face_PCB_Sketch_draft.Shape.copy()
+                    ## OpenSCAD2Dgeom.edgestofaces(edgs)
+                    
+                else:
+                    FreeCAD.ActiveDocument.addObject("Part::Face", "Face_PCB_Sketch_draft").Sources = (PCB2Sketch, ) #(FreeCAD.ActiveDocument.PCB_Sketch_draft, )
+                    FreeCAD.ActiveDocument.recompute()
+                    s_PCB_Sketch_draft = FreeCAD.ActiveDocument.getObject("Face_PCB_Sketch_draft").Shape.copy()
+                    
+                #s_PCB_Sketch_draft = s.copy()
+                sayw ('created PCB face w/ edge tolerance -> '+str(edge_tolerance)+' mm')
+                if aux_orig ==1 or grid_orig ==1:
+                    s_PCB_Sketch_draft.translate((off_x, off_y,0))
+                #else:
+                #    s_PCB_Sketch_draft.translate(xs, ys,0)
+                #if use_Links:
+                #Part.show(s_PCB_Sketch_draft)
+                if make_face_mode == 1:  ## face creation method
+                    #if 0:
+                    FreeCAD.ActiveDocument.removeObject(Face_PCB_Sketch_draft.Name)
+                    if use_PCB_Sketch_E:
+                        FreeCAD.ActiveDocument.removeObject(PCB_Sketch_draft_E.Name)
+                    FreeCAD.ActiveDocument.recompute()
+                else:
+                    FreeCAD.ActiveDocument.removeObject("Face_PCB_Sketch_draft")
+                    if use_PCB_Sketch_E:
+                        FreeCAD.ActiveDocument.removeObject(PCB_Sketch_draft_E.Name)
+                    FreeCAD.ActiveDocument.recompute()
+                    
+                #FreeCAD.ActiveDocument.addObject("Part::Face", "Face").Sources = (FreeCAD.ActiveDocument.PCB_Sketch_draft001, )
+                if (zfit):
+                    FreeCADGui.SendMsgToActiveView("ViewFit")
+                cut_base = s_PCB_Sketch_draft
+            else:
+                sayerr('empty sketch; module edge board: creating PCB from Footprint Edge.Cuts')
+                create_pcb_from_edges = True
+    
+    LCS = None
+    #if aux_orig ==1 or grid_orig ==1:
+    if origin is not None: #adding LCS only on aux or grid origin
+        try:
+            FreeCAD.ActiveDocument.addObject('PartDesign::CoordinateSystem','Local_CS'+fname_sfx)
+            LCS = FreeCAD.ActiveDocument.ActiveObject
+            FreeCADGui.ActiveDocument.getObject(LCS.Name).Visibility = False
+            FreeCADGui.Selection.clearSelection()
+            #FreeCADGui.Selection.addSelection(LCS)
+            #FreeCADGui.runCommand('Std_HideSelection',0)
+            #FreeCADGui.runCommand('Std_ToggleVisibility',0)
+            #FreeCADGui.Selection.clearSelection()
+        except:
+            sayw('LCS not supported')
+    
         if 0:
             Part.show(s_PCB_Cuts)
             fc_PCB_Cuts = FreeCAD.ActiveDocument.ActiveObject
