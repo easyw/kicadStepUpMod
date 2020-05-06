@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.6.0.1"
+___ver___ = "9.6.0.2"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -12598,6 +12598,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
 
     #FreeCADGui.SendMsgToActiveView("ViewFit")
     #stop
+    HoleList=[]
     if lyr == 'Edge.Cuts':
         TopPadList=[]
         BotPadList=[]
@@ -13558,147 +13559,154 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                 FreeCAD.ActiveDocument.recompute()
                 #stop
                 #say_time()
-            else:
-                #face = cut_base
-                cut_base = cut_base
+            #else:
+            #    #face = cut_base
+            #    try:
+            #        cut_base = cut_base
+            #    except:
+            #        cut_base = FreeCAD.ActiveDocument.getObject('PCB_Sketch_draft') #s_PCB_Sketch_draft
+                    #if lyr != 'Edge.Cuts':
+                    #    cut_base.Label=lyr+'-Sketch'
+                        #FreeCADGui.SendMsgToActiveView("ViewFit")
         #    ##if len(HoleList)>0:
         #    ##    #face = cut_base.cut(Part.makeCompound(HoleList))
         #    ##    cut_base = cut_base.cut(Part.makeCompound(HoleList))   ###VERY fast but failing when overlapping of pads
         get_time()
         say('cutting time ' +str(round(running_time-t1,3)))
         
-        pcb_name=u'Pcb'+fname_sfx
-        #doc_outline=doc.addObject("Part::Feature","Pcb")
-        doc_outline=doc.addObject("Part::Feature",pcb_name)
-        pcb_name=FreeCAD.ActiveDocument.ActiveObject.Name
-        pcb_board=FreeCAD.ActiveDocument.ActiveObject
-        try:
-            #doc_outline.Shape=cut_base.extrude(Base.Vector(0,0,-totalHeight))
-            f0 = cut_base.Faces[0]
-            s0 = f0.extrude(Base.Vector(0,0,-totalHeight))
-            s = s0
-            for f in cut_base.Faces[1:]:
-                #f0 = f0.union(f)
-                s1 = f.extrude(Base.Vector(0,0,-totalHeight))
-                s = s.fuse(s1)
-            doc_outline.Shape=s
-            #doc_outline.Shape=f0.extrude(Base.Vector(0,0,-totalHeight))
-            #doc_outline.Shape=cut_base.Faces[0].extrude(Base.Vector(0,0,-totalHeight))
-        except:
-            #doc.removeObject("Pcb")
-            doc.removeObject(pcb_name)
-            say("*** omitting PCBs because there was a not closed loop in your edge lines ***")
-            say('pcb edge not closed')
-            QtGui.QApplication.restoreOverrideCursor()
-            diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
-                                    'Error in creating Board Edge                                                                ."+"\r\n"',
-                                    """<b>pcb edge not closed<br>review your Board Edges in Kicad!<br>or try to fix it with Constrainator""")
-            diag.setWindowModality(QtCore.Qt.ApplicationModal)
-            diag.exec_()
-            FreeCADGui.activeDocument().activeView().viewTop()
-            if (zfit):
-                FreeCADGui.SendMsgToActiveView("ViewFit")
-            stop #maui                        
-        #stop
-        #tobechecked
-        #try:
-        #    FreeCAD.activeDocument().removeObject('Shape') #removing base shape
-        #except:
-        #    sayw('Shape already removed')
-        #cut_base=cut_base.extrude(Base.Vector(0,0,-pcbThickness))
-        #Part.show(cut_base)
-        if simplifyComSolid:
-            faces=[]
-            for f in pcb_board.Shape.Faces:
-                faces.append(f) 
+        if lyr == 'Edge.Cuts':
+            pcb_name=u'Pcb'+fname_sfx
+            #doc_outline=doc.addObject("Part::Feature","Pcb")
+            doc_outline=doc.addObject("Part::Feature",pcb_name)
+            pcb_name=FreeCAD.ActiveDocument.ActiveObject.Name
+            pcb_board=FreeCAD.ActiveDocument.ActiveObject
             try:
-                _ = Part.Shell(faces)
-                _=Part.Solid(_)
-                FreeCAD.ActiveDocument.removeObject(pcb_name)
-                #doc.addObject('Part::Feature','Pcb').Shape=_
-                doc.addObject('Part::Feature',pcb_name).Shape=_
-                pcb_name=FreeCAD.ActiveDocument.ActiveObject.Name
-                pcb_board=FreeCAD.ActiveDocument.ActiveObject
+                #doc_outline.Shape=cut_base.extrude(Base.Vector(0,0,-totalHeight))
+                f0 = cut_base.Faces[0]
+                s0 = f0.extrude(Base.Vector(0,0,-totalHeight))
+                s = s0
+                for f in cut_base.Faces[1:]:
+                    #f0 = f0.union(f)
+                    s1 = f.extrude(Base.Vector(0,0,-totalHeight))
+                    s = s.fuse(s1)
+                doc_outline.Shape=s
+                #doc_outline.Shape=f0.extrude(Base.Vector(0,0,-totalHeight))
+                #doc_outline.Shape=cut_base.Faces[0].extrude(Base.Vector(0,0,-totalHeight))
             except:
-                sayerr('error in simplifying compsolid')
-        
-        # simple_pcb=doc.addObject("Part::Feature","simple_Pcb")
-        # simple_pcb.Shape=pcb_board.Shape
-        # spcb=pcb_board.Shape
-        # Part.show(spcb)
-        
-        #FreeCAD.ActiveDocument.ActiveObject.Label ="Pcb"
-        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (colr,colg,colb)
-        #FreeCADGui.ActiveDocument.ActiveObject.Transparency = 20
-        #if remove_pcbPad==True:
-        #    FreeCAD.activeDocument().removeObject(cut_base_name)
-            #FreeCAD.activeDocument().removeObject(Holes_name)
-        boardG_name='Board_Geoms'+fname_sfx
-        board_name='Board'+fname_sfx
-        if use_AppPart and not force_oldGroups and not use_LinkGroups:
-            ## to evaluate to add App::Part hierarchy
-            #sayw("creating hierarchy")
-            doc.Tip = doc.addObject('App::Part',boardG_name)
-            boardG= doc.ActiveObject
-            boardG.Label = boardG_name
-            try:
-                boardG.License = ''
-                boardG.LicenseURL = ''
-            except:
-                pass
-            grp=boardG
-            if rmv_container is None or rmv_container is False:
-                doc.Tip = doc.addObject('App::Part',board_name)
-                board= doc.ActiveObject
-                board.Label = board_name
-                #FreeCAD.ActiveDocument.getObject("Step_Virtual_Models").addObject(impPart)
-                doc.getObject(board_name).addObject(doc.getObject(boardG_name))
-            try:
-                doc.getObject(boardG_name).addObject(LCS)
-            except:
-                pass
-            doc.getObject(boardG_name).addObject(doc.getObject(pcb_name))
-            #FreeCADGui.activeView().setActiveObject('Board_Geoms', doc.Board_Geoms)
-            ## end hierarchy
-        elif use_LinkGroups:
-            doc.Tip = doc.addObject('App::LinkGroup',boardG_name)
-            boardG= doc.ActiveObject
-            boardG.Label = boardG_name
-            grp=boardG_name
-            if rmv_container is None or rmv_container is False:
-                doc.Tip = doc.addObject('App::LinkGroup',board_name)
-                board= doc.ActiveObject
-                board.Label = board_name
-                #FreeCAD.ActiveDocument.getObject("Step_Virtual_Models").addObject(impPart)
-                # doc.getObject("Board").addObject(doc.Board_Geoms)
-                #doc.getObject('Board_Geoms').adjustRelativeLinks(doc.getObject('Board'))
-                doc.getObject(board_name).ViewObject.dropObject(doc.getObject(boardG_name),None,'',[])
-            FreeCADGui.Selection.clearSelection()
-            #grp.addObject(pcb_board)
-            #doc.getObject('Pcb').adjustRelativeLinks(doc.getObject('Board_Geoms'))
-            #doc.getObject('Board_Geoms').ViewObject.dropObject(doc.getObject('Pcb'),None,'',[])
-            doc.getObject(boardG_name).ViewObject.dropObject(doc.getObject(pcb_name),None,'',[])
-            try:
-                #LCS.adjustRelativeLinks(doc.getObject('Board_Geoms'))
-                doc.getObject(boardG_name).ViewObject.dropObject(LCS,None,'',[])
+                #doc.removeObject("Pcb")
+                doc.removeObject(pcb_name)
+                say("*** omitting PCBs because there was a not closed loop in your edge lines ***")
+                say('pcb edge not closed')
+                QtGui.QApplication.restoreOverrideCursor()
+                diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
+                                        'Error in creating Board Edge                                                                ."+"\r\n"',
+                                        """<b>pcb edge not closed<br>review your Board Edges in Kicad!<br>or try to fix it with Constrainator""")
+                diag.setWindowModality(QtCore.Qt.ApplicationModal)
+                diag.exec_()
+                FreeCADGui.activeDocument().activeView().viewTop()
+                if (zfit):
+                    FreeCADGui.SendMsgToActiveView("ViewFit")
+                stop #maui                        
+            #stop
+            #tobechecked
+            #try:
+            #    FreeCAD.activeDocument().removeObject('Shape') #removing base shape
+            #except:
+            #    sayw('Shape already removed')
+            #cut_base=cut_base.extrude(Base.Vector(0,0,-pcbThickness))
+            #Part.show(cut_base)
+            if simplifyComSolid:
+                faces=[]
+                for f in pcb_board.Shape.Faces:
+                    faces.append(f) 
+                try:
+                    _ = Part.Shell(faces)
+                    _=Part.Solid(_)
+                    FreeCAD.ActiveDocument.removeObject(pcb_name)
+                    #doc.addObject('Part::Feature','Pcb').Shape=_
+                    doc.addObject('Part::Feature',pcb_name).Shape=_
+                    pcb_name=FreeCAD.ActiveDocument.ActiveObject.Name
+                    pcb_board=FreeCAD.ActiveDocument.ActiveObject
+                except:
+                    sayerr('error in simplifying compsolid')
+            
+            # simple_pcb=doc.addObject("Part::Feature","simple_Pcb")
+            # simple_pcb.Shape=pcb_board.Shape
+            # spcb=pcb_board.Shape
+            # Part.show(spcb)
+            
+            #FreeCAD.ActiveDocument.ActiveObject.Label ="Pcb"
+            FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (colr,colg,colb)
+            #FreeCADGui.ActiveDocument.ActiveObject.Transparency = 20
+            #if remove_pcbPad==True:
+            #    FreeCAD.activeDocument().removeObject(cut_base_name)
+                #FreeCAD.activeDocument().removeObject(Holes_name)
+            boardG_name='Board_Geoms'+fname_sfx
+            board_name='Board'+fname_sfx
+            if use_AppPart and not force_oldGroups and not use_LinkGroups:
+                ## to evaluate to add App::Part hierarchy
+                #sayw("creating hierarchy")
+                doc.Tip = doc.addObject('App::Part',boardG_name)
+                boardG= doc.ActiveObject
+                boardG.Label = boardG_name
+                try:
+                    boardG.License = ''
+                    boardG.LicenseURL = ''
+                except:
+                    pass
+                grp=boardG
+                if rmv_container is None or rmv_container is False:
+                    doc.Tip = doc.addObject('App::Part',board_name)
+                    board= doc.ActiveObject
+                    board.Label = board_name
+                    #FreeCAD.ActiveDocument.getObject("Step_Virtual_Models").addObject(impPart)
+                    doc.getObject(board_name).addObject(doc.getObject(boardG_name))
+                try:
+                    doc.getObject(boardG_name).addObject(LCS)
+                except:
+                    pass
+                doc.getObject(boardG_name).addObject(doc.getObject(pcb_name))
+                #FreeCADGui.activeView().setActiveObject('Board_Geoms', doc.Board_Geoms)
+                ## end hierarchy
+            elif use_LinkGroups:
+                doc.Tip = doc.addObject('App::LinkGroup',boardG_name)
+                boardG= doc.ActiveObject
+                boardG.Label = boardG_name
+                grp=boardG_name
+                if rmv_container is None or rmv_container is False:
+                    doc.Tip = doc.addObject('App::LinkGroup',board_name)
+                    board= doc.ActiveObject
+                    board.Label = board_name
+                    #FreeCAD.ActiveDocument.getObject("Step_Virtual_Models").addObject(impPart)
+                    # doc.getObject("Board").addObject(doc.Board_Geoms)
+                    #doc.getObject('Board_Geoms').adjustRelativeLinks(doc.getObject('Board'))
+                    doc.getObject(board_name).ViewObject.dropObject(doc.getObject(boardG_name),None,'',[])
                 FreeCADGui.Selection.clearSelection()
-                FreeCADGui.Selection.addSelection(LCS)
-                FreeCADGui.runCommand('Std_ToggleVisibility',0)
-                #stop
-            except:
-                pass
-            FreeCADGui.Selection.clearSelection()
-            #FreeCADGui.activeView().setActiveObject('Board_Geoms', doc.Board_Geoms)
-            ## end hierarchy        
-        else:
-            #sayw("creating flat groups")
-            grp=doc.addObject("App::DocumentObjectGroup", boardG_name)
-            grp.addObject(pcb_board)
-        #pcb_sk=FreeCAD.ActiveDocument.PCB_Sketch
-        #grp.addObject(pcb_sk)
-        #grp.addObject(doc_outline)      
-        pcb_bbx = doc.getObject(pcb_name).Shape.BoundBox
-        say("pcb dimensions: ("+"{0:.2f}".format(pcb_bbx.XLength)+";"+"{0:.2f}".format(pcb_bbx.YLength)+";"+"{0:.2f}".format(pcb_bbx.ZLength)+")")          
+                #grp.addObject(pcb_board)
+                #doc.getObject('Pcb').adjustRelativeLinks(doc.getObject('Board_Geoms'))
+                #doc.getObject('Board_Geoms').ViewObject.dropObject(doc.getObject('Pcb'),None,'',[])
+                doc.getObject(boardG_name).ViewObject.dropObject(doc.getObject(pcb_name),None,'',[])
+                try:
+                    #LCS.adjustRelativeLinks(doc.getObject('Board_Geoms'))
+                    doc.getObject(boardG_name).ViewObject.dropObject(LCS,None,'',[])
+                    FreeCADGui.Selection.clearSelection()
+                    FreeCADGui.Selection.addSelection(LCS)
+                    FreeCADGui.runCommand('Std_ToggleVisibility',0)
+                    #stop
+                except:
+                    pass
+                FreeCADGui.Selection.clearSelection()
+                #FreeCADGui.activeView().setActiveObject('Board_Geoms', doc.Board_Geoms)
+                ## end hierarchy        
+            else:
+                #sayw("creating flat groups")
+                grp=doc.addObject("App::DocumentObjectGroup", boardG_name)
+                grp.addObject(pcb_board)
+            #pcb_sk=FreeCAD.ActiveDocument.PCB_Sketch
+            #grp.addObject(pcb_sk)
+            #grp.addObject(doc_outline)      
+            pcb_bbx = doc.getObject(pcb_name).Shape.BoundBox
+            say("pcb dimensions: ("+"{0:.2f}".format(pcb_bbx.XLength)+";"+"{0:.2f}".format(pcb_bbx.YLength)+";"+"{0:.2f}".format(pcb_bbx.ZLength)+")")          
     say_time()
     FreeCADGui.activeDocument().activeView().viewAxometric()
     if (zfit):
