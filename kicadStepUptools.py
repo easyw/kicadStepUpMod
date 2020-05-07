@@ -18053,13 +18053,13 @@ def createFpPad(pad,offset,tp, _drills=None):
             ptype="rect"
             sayerr('rect pad nbr.'+str(pad_nbr))
             px=(pad[0][1]+pad[0][3])/2;py=(pad[1][2]+pad[1][4])/-2;
-            if abs(pad[0][1]-pad[0][3]) >0:
+            if abs(pad[0][1]-pad[0][3]) > edge_tolerance:
                 sx=abs(pad[0][1]-pad[0][3])
                 px=(pad[0][1]+pad[0][3])/2
             else:
                 sx=abs(pad[1][1]-pad[1][3])
                 px=(pad[1][1]+pad[1][3])/2
-            if abs(pad[1][2]-pad[1][4]) >0:
+            if abs(pad[1][2]-pad[1][4]) > edge_tolerance:
                 sy=abs(pad[1][2]-pad[1][4])
                 py=(pad[1][2]+pad[1][4])/-2;
             else:
