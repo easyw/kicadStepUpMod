@@ -10,11 +10,13 @@
 #*  Kicad STEPUP (TM) is a TradeMark and cannot be freely useable           *
 #*                                                                          *
 
-ksu_wb_version='v 10.0.5'
+ksu_wb_version='v 10.0.6'
 global myurlKWB, ksuWBpath
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=394 #v10.0.5
+mycommitsKWB=395 #v10.0.6
+global verKSU
+verKSU="9.6.0.2"
 
 import FreeCAD, FreeCADGui, Part, os, sys
 import re, time
@@ -40,7 +42,8 @@ main_ksu_Icon = os.path.join( ksuWB_icons_path , 'kicad-StepUp-tools-WB.svg')
 from PySide import QtGui
 
 import hlp
-help_t = hlp.help_txt
+header_txt="""<font color=GoldenRod><b>kicad StepUp version """+verKSU+"""</font></b><br>"""
+help_t = header_txt+hlp.help_txt
 
 #try:
 #    from FreeCADGui import Workbench
@@ -69,8 +72,10 @@ class kSU_MainPrefPage:
         import os, hlp
         global ksuWBpath
         print ("Created kSU Auxiliar Pref page")
-        help_t = hlp.help_txt        
-        
+        #help_t = hlp.help_txt
+        header_txt="""<font color=GoldenRod><b>kicad StepUp version """+verKSU+"""</font></b><br>"""
+        help_t = header_txt+hlp.help_txt
+
         self.form = QtGui.QWidget()
         self.form.setWindowTitle("kSU \'Help Tips\'")
         self.form.verticalLayoutWidget = QtGui.QWidget(self.form)
@@ -114,7 +119,7 @@ class kSU_MainPrefPage:
         print(FreeCAD.getUserAppDataDir())
 ##
 class KiCadStepUpWB ( Workbench ):
-    global main_ksu_Icon, ksu_wb_version, myurlKWB, mycommitsKWB
+    global main_ksu_Icon, ksu_wb_version, myurlKWB, mycommitsKWB, verKSU
     global ksuWB_ui_path, kSU_MainPrefPage, ksuWB_icons_path
     
     "KiCadStepUp WB object"
