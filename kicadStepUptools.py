@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.6.0.2"
+___ver___ = "9.6.1.0"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -3973,26 +3973,78 @@ def cfg_read_all():
     #elif len(bbox_opt) > 0:
         
     bbox=0;blacklisted_model_elements=''
-    volume_minimum=0 #0.8  ##1 #mm^3, 0 skipped #global var default
-    height_minimum=0 #0.8  ##1 #mm, 0 skipped   #global var default
+    volume_minimum=0. #0.8  ##1 #mm^3, 0 skipped #global var default
+    height_minimum=0. #0.8  ##1 #mm, 0 skipped   #global var default
     bklist = prefs.GetString('blacklist')
+    bkl_none=False
     if bklist.lower().find('none') !=-1 or len(bklist) == 0:
         blacklisted_model_elements=''
-    elif bklist.lower().find('volume') !=-1:
+        bkl_none=True
+    if bklist.lower().find('volume=') !=-1 and not bkl_none:
         vval=bklist.strip('\r\n')
-        vvalue=vval.split("=")
-        volume_minimum=float(vvalue[1])
-        #reply = QtGui.QMessageBox.information(None,"info ...","volume "+str(volume_minimum))
-    elif bklist.lower().find('height') !=-1:
-        vval=bklist.strip('\r\n')
-        vvalue=vval.split("=")
-        height_minimum=float(vvalue[1])
+        bklist_s=bklist
+        vvalst=vval.split(";")
+        #print(vvalst)
+        for l in vvalst:
+            #print(l)
+            if l.lower().find('volume=') !=-1:
+                vvalue=l.split("=")
+                volume_minimum=float(vvalue[1].replace(',','.'))
+                #print(height_minimum)
+                bklist_s=bklist.strip(l)
+                #if l.lower().find(';height=') !=-1: 
+                #    bklist=bklist.strip(';'+l)
+                #else:
+                #    bklist=bklist.strip(l+';')
+        #print(bklist)
+        bklist_n=[x for x in bklist_s.split(";") if x]
+        #print('bklist_n',bklist_n)
+        ##removing empty elements
+        bklist=''
+        for bm in bklist_n:
+            bklist+=bm+';'
+        #vvalue=vval.split("=")
+        #height_minimum=float(vvalue[1])
         #reply = QtGui.QMessageBox.information(None,"info ...","height "+str(height_minimum))
-    else:
+        #vvalue=vval.split("=")
+        #volume_minimum=float(vvalue[1])
+        #reply = QtGui.QMessageBox.information(None,"info ...","volume "+str(volume_minimum))
+    #print('bklist 1',bklist)
+    if bklist.lower().find('height=') !=-1 and not bkl_none:
+        vval=bklist.strip('\r\n')
+        bklist_s=bklist
+        vvalst=vval.split(";")
+        #print(vvalst)
+        for l in vvalst:
+            #print(l)
+            if l.lower().find('height=') !=-1:
+                vvalue=l.split("=")
+                height_minimum=float(vvalue[1].replace(',','.'))
+                #print(height_minimum)
+                bklist_s=bklist.strip(l)
+                #if l.lower().find(';height=') !=-1: 
+                #    bklist=bklist.strip(';'+l)
+                #else:
+                #    bklist=bklist.strip(l+';')
+        #print(bklist)
+        bklist_n=[x for x in bklist.split(";") if x]
+        #print(bklist_n)
+        ##removing empty elements
+        bklist=''
+        for bm in bklist_n:
+            bklist+=bm+';'
+        #vvalue=vval.split("=")
+        #height_minimum=float(vvalue[1])
+        #reply = QtGui.QMessageBox.information(None,"info ...","height "+str(height_minimum))
+    if bklist.find(';') !=-1 and not bkl_none:
         blacklisted_model_elements=bklist.strip('\r\n')
         #say(bklist);
-        blacklisted_models=blacklisted_model_elements.split(",")
+        bklist_m=[x for x in blacklisted_model_elements.split(";") if x]
+        ##removing empty elements
+        #blacklisted_models=blacklisted_model_elements.split(";")
+        blacklisted_models= bklist_m
         #say(blacklisted_models)
+    #print('bklist',bklist,'height_minimum',height_minimum,'volume_minimum',volume_minimum)
     pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
     dock_mode = pg.GetInt("dockingMode")
     if dock_mode == 0:
