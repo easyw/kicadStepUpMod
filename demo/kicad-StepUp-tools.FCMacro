@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.7.0.0"
+___ver___ = "9.7.1.0"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -11101,10 +11101,18 @@ def routineDrawFootPrint(content,name):
         x2 = i[2] #+ X1
         y2 = i[3] #+ Y1
         obj = addLine_2(x1, y1, x2, y2, i[4])
-        #layerNew.changeSide(obj, X1, Y1, warst)
-        #layerNew.rotateObj(obj, [X1, Y1, ROT])
-        #layerNew.addObject(obj)
         FCrtYd.append(addLine_2(x1, y1, x2, y2, i[4]))
+    for i in getLine('F.CrtYd', content, 'fp_rect'):
+        #say("here3")
+        x1 = i[0] #+ X1
+        y1 = i[1] #+ Y1
+        x2 = i[2] #+ X1
+        y2 = i[3] #+ Y1
+        obj = addLine_2(x1, y1, x2, y2, i[4])
+        FCrtYd.append(addLine_2(x1, y1, x2, y1, i[4]))
+        FCrtYd.append(addLine_2(x2, y1, x2, y2, i[4]))
+        FCrtYd.append(addLine_2(x2, y2, x1, y2, i[4]))
+        FCrtYd.append(addLine_2(x1, y2, x1, y1, i[4]))
     for i in getLine('F.Fab', content, 'fp_line'):
         #say("here3")
         x1 = i[0] #+ X1
@@ -11112,10 +11120,18 @@ def routineDrawFootPrint(content,name):
         x2 = i[2] #+ X1
         y2 = i[3] #+ Y1
         obj = addLine_2(x1, y1, x2, y2, i[4])
-        #layerNew.changeSide(obj, X1, Y1, warst)
-        #layerNew.rotateObj(obj, [X1, Y1, ROT])
-        #layerNew.addObject(obj)
         FFab.append(addLine_2(x1, y1, x2, y2, i[4]))
+    for i in getLine('F.Fab', content, 'fp_rect'):
+        #say("here3")
+        x1 = i[0] #+ X1
+        y1 = i[1] #+ Y1
+        x2 = i[2] #+ X1
+        y2 = i[3] #+ Y1
+        obj = addLine_2(x1, y1, x2, y2, i[4])
+        FFab.append(addLine_2(x1, y1, x2, y1, i[4]))
+        FFab.append(addLine_2(x2, y1, x2, y2, i[4]))
+        FFab.append(addLine_2(x2, y2, x1, y2, i[4]))
+        FFab.append(addLine_2(x1, y2, x1, y1, i[4]))
     for i in getLine('F.SilkS', content, 'fp_line'):
         #say("here3")
         x1 = i[0] #+ X1
@@ -11127,7 +11143,17 @@ def routineDrawFootPrint(content,name):
         #layerNew.rotateObj(obj, [X1, Y1, ROT])
         #layerNew.addObject(obj)
         FrontSilk.append(addLine_2(x1, y1, x2, y2, i[4]))
-
+    for i in getLine('F.SilkS', content, 'fp_rect'):
+        #say("here3")
+        x1 = i[0] #+ X1
+        y1 = i[1] #+ Y1
+        x2 = i[2] #+ X1
+        y2 = i[3] #+ Y1
+        obj = addLine_2(x1, y1, x2, y2, i[4])
+        FrontSilk.append(addLine_2(x1, y1, x2, y1, i[4]))
+        FrontSilk.append(addLine_2(x2, y1, x2, y2, i[4]))
+        FrontSilk.append(addLine_2(x2, y2, x1, y2, i[4]))
+        FrontSilk.append(addLine_2(x1, y2, x1, y1, i[4]))
     for i in getLine('Edge.Cuts', content, 'fp_line'):
         #say("here3")
         x1 = i[0] #+ X1
@@ -11135,10 +11161,18 @@ def routineDrawFootPrint(content,name):
         x2 = i[2] #+ X1
         y2 = i[3] #+ Y1
         obj = addLine_2(x1, y1, x2, y2, i[4])
-        #layerNew.changeSide(obj, X1, Y1, warst)
-        #layerNew.rotateObj(obj, [X1, Y1, ROT])
-        #layerNew.addObject(obj)
         EdgeCuts.append(addLine_2(x1, y1, x2, y2, i[4]))
+    for i in getLine('Edge.Cuts', content, 'fp_rect'):
+        #say("here3")
+        x1 = i[0] #+ X1
+        y1 = i[1] #+ Y1
+        x2 = i[2] #+ X1
+        y2 = i[3] #+ Y1
+        obj = addLine_2(x1, y1, x2, y2, i[4])
+        EdgeCuts.append(addLine_2(x1, y1, x2, y1, i[4]))
+        EdgeCuts.append(addLine_2(x2, y1, x2, y2, i[4]))
+        EdgeCuts.append(addLine_2(x2, y2, x1, y2, i[4]))
+        EdgeCuts.append(addLine_2(x1, y2, x1, y1, i[4]))
 
     # circle
     for i in getCircle('F.CrtYd', content, 'fp_circle'):

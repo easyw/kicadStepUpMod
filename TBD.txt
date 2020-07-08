@@ -1,4 +1,3 @@
 TBD:
 
-- implement fp_rect for footprint loading
 - implement fp_rect for hole board loading
