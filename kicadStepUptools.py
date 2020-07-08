@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.6.1.0"
+___ver___ = "9.7.0.0"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -1598,6 +1598,7 @@ class KicadPCB_module(SexpParser):
 class KicadPCB(SexpParser):
 
     # To make sure the following key exists, and is of type SexpList
+    ## TBD holes from fp_rect
     _defaults =('net',
                 ('net_class',
                     'add_net'),
@@ -1608,6 +1609,7 @@ class KicadPCB(SexpParser):
                 'gr_arc',
                 'gr_poly',
                 'gr_curve',
+                'gr_rect',
                 'segment',
                 'via',
                 ('module',
@@ -1615,6 +1617,7 @@ class KicadPCB(SexpParser):
                     'fp_line',
                     'fp_circle',
                     'fp_arc',
+                    'fp_rect',
                     'pad',
                     'model'),
                 ('zone',
@@ -12376,6 +12379,12 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
             for p in bs.pts.xy:
                 edg_segms+=1
             #edg_segms+=1
+    for r in mypcb.gr_rect:
+        if lyr in r.layer:
+            #sayerr(bs.layer)
+            edg_segms+=4
+            #edg_segms+=1
+    
     sayw(str(edg_segms)+' edge segments')
     #for lp in mypcb.gr_poly: #pcb polylines
     #    if lp.layer != 'Edge.Cuts':
@@ -12417,6 +12426,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
         #xp=mypcb.setup.aux_axis_origin[0]; yp=-mypcb.setup.aux_axis_origin[1]
     else:
         say('grid origin not set\ndefault value on top left corner')
+        origin = 'aux origin'  #temp workaround for kv6 missing aux origin
     #if hasattr(mypcb.setup, 'aux origin'):
     #    say('aux origin' + str(mypcb.setup.aux_axis_origin))
     #else:
@@ -12444,6 +12454,56 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
             PCB.append(['Line', l.start[0], -l.start[1], l.end[0], -l.end[1]])
             if show_border:
                 Part.show(line1)
+
+    for r in mypcb.gr_rect: #pcb lines from rect
+        #if l.layer != 'Edge.Cuts':
+        if lyr not in r.layer:
+            continue
+        #segms = [r.start[0],r.start[1]][r.end[0],r.start[1]]
+        line1=Part.Edge(PLine(Base.Vector(r.start[0],-r.start[1],0), Base.Vector(r.end[0],-r.start[1],0)))
+        if load_sketch:
+            if aux_orig ==1 or grid_orig ==1:
+                PCB_Geo.append(PLine(Base.Vector(r.start[0]-off_x,-r.start[1]-off_y,0), Base.Vector(r.end[0]-off_x,-r.start[1]-off_y,0)))
+            else:
+                PCB_Geo.append(PLine(Base.Vector(r.start[0],-r.start[1],0), Base.Vector(r.end[0],-r.start[1],0)))
+        edges.append(line1);
+        PCB.append(['Line', r.end[0], -r.start[1], r.end[0], -r.end[1]])
+        if show_border:
+            Part.show(line1)
+        #segms = [r.end[0],r.start[1]][r.end[0],r.end[1]]
+        line1=Part.Edge(PLine(Base.Vector(r.end[0],-r.start[1],0), Base.Vector(r.end[0],-r.end[1],0)))
+        if load_sketch:
+            if aux_orig ==1 or grid_orig ==1:
+                PCB_Geo.append(PLine(Base.Vector(r.end[0]-off_x,-r.start[1]-off_y,0), Base.Vector(r.end[0]-off_x,-r.end[1]-off_y,0)))
+            else:
+                PCB_Geo.append(PLine(Base.Vector(r.end[0],-r.start[1],0), Base.Vector(r.end[0],-r.end[1],0)))
+        edges.append(line1);
+        PCB.append(['Line', r.end[0], -r.start[1], r.end[0], -r.end[1]])
+        if show_border:
+            Part.show(line1)
+        #segms = [r.end[0],r.end[1]][r.start[0],r.end[1]]
+        line1=Part.Edge(PLine(Base.Vector(r.end[0],-r.end[1],0), Base.Vector(r.start[0],-r.end[1],0)))
+        if load_sketch:
+            if aux_orig ==1 or grid_orig ==1:
+                PCB_Geo.append(PLine(Base.Vector(r.end[0]-off_x,-r.end[1]-off_y,0), Base.Vector(r.start[0]-off_x,-r.end[1]-off_y,0)))
+            else:
+                PCB_Geo.append(PLine(Base.Vector(r.end[0],-r.end[1],0), Base.Vector(r.start[0],-r.end[1],0)))
+        edges.append(line1);
+        PCB.append(['Line', r.end[0], -r.end[1], r.start[0], -r.end[1]])
+        if show_border:
+            Part.show(line1)
+        #segms = [r.start[0],r.end[1]][r.start[0],r.start[1]]
+        line1=Part.Edge(PLine(Base.Vector(r.start[0],-r.end[1],0), Base.Vector(r.start[0],-r.start[1],0)))
+        if load_sketch:
+            if aux_orig ==1 or grid_orig ==1:
+                PCB_Geo.append(PLine(Base.Vector(r.start[0]-off_x,-r.end[1]-off_y,0), Base.Vector(r.start[0]-off_x,-r.start[1]-off_y,0)))
+            else:
+                PCB_Geo.append(PLine(Base.Vector(r.start[0],-r.end[1],0), Base.Vector(r.start[0],-r.start[1],0)))
+        edges.append(line1);
+        PCB.append(['Line', r.start[0], -r.end[1], r.start[0], -r.start[1]])
+        if show_border:
+            Part.show(line1)
+
     for lp in mypcb.gr_poly: #pcb polylines
         if lyr not in lp.layer:
         # if lp.layer != 'Edge.Cuts':
@@ -13441,7 +13501,6 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                 #Part.show(w_pcb)
                 
         say_time()
-        #stop
         
         #cut_base = cut_base.extrude(Base.Vector(0,0,totalHeight)) # test_face
         #Part.show(cut_base) #test Sketch
