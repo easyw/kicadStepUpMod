@@ -15642,7 +15642,7 @@ class Ui_LayerSelectionOut(object):
         QtCore.QMetaObject.connectSlotsByName(LayerSelectionOut)
 
 #-------#-------------------------------------------------------------------------
-        self.comboBoxLayerSel.currentTextChanged.connect(self.on_combobox_changed) #addition
+        self.comboBoxLayerSel.editextChanged.connect(self.on_combobox_changed) #addition
 
     def retranslateUi(self, LayerSelectionOut):
         pass
