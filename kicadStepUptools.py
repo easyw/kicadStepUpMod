@@ -9584,7 +9584,7 @@ def getModName(source):
     model = ''.join(source)
     #sayw("here")#;
     #sayw("here test2")
-    model_name = re.search(r'\(module\s+(.+?)\(layer', model, re.MULTILINE|re.DOTALL).groups(0)[0]
+    model_name = re.search(r'((\(module\s)|(\(footprint\s))+(.+?)\(layer', model, re.MULTILINE|re.DOTALL).groups(0)[0]
 
     return model_name
 ###
