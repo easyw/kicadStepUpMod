@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.7.2.2"
+___ver___ = "9.7.2.3"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -1616,6 +1616,8 @@ class KicadPCB(SexpParser):
     _module = ['fp_text',
                'fp_circle',
                'fp_arc',
+               'fp_line',
+               'fp_rect',
                'pad',
                'model']
 
