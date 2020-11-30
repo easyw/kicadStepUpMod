@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.7.2.0"
+___ver___ = "9.7.2.2"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -1235,6 +1235,20 @@ class SexpParser(Sexp):
             if k not in self._value:
                 self._value[k] = SexpDefaultTrue(k,False)
 
+        for alias, key in getattr(self, '_alias_keys', {}).items():
+            va = self._value.get(alias, None)
+            if not va:
+                continue
+            v = self._value.get(key, None)
+            if not v:
+                self._value[key] = va
+            elif isinstance(v,SexpList):
+                v._append(va)
+            else:
+                v = SexpList([v])
+                v._append(v)
+                self._value[key] = v
+
         defs = getattr(self,'_defaults',[])
         for d in (defs if isinstance(defs,(tuple,list)) else (defs,)):
             self._addDefaults(d)
@@ -1599,6 +1613,12 @@ class KicadPCB(SexpParser):
 
     # To make sure the following key exists, and is of type SexpList
     ## TBD holes from fp_rect
+    _module = ['fp_text',
+               'fp_circle',
+               'fp_arc',
+               'pad',
+               'model']
+
     _defaults =('net',
                 ('net_class',
                     'add_net'),
@@ -1612,18 +1632,14 @@ class KicadPCB(SexpParser):
                 'gr_rect',
                 'segment',
                 'via',
-                ('module',
-                    'fp_text',
-                    'fp_line',
-                    'fp_circle',
-                    'fp_arc',
-                    'fp_rect',
-                    'pad',
-                    'model'),
+                ['module'] + _module,
+                ['footprint'] + _module,
                 ('zone',
                     'filled_polygon'))
 
+    _alias_keys = {'footprint' : 'module'}
     _parse_module = KicadPCB_module
+    _parse_footprint = KicadPCB_module
     _parse_gr_text = KicadPCB_gr_text
 
     def export(self, out, indent='  '):
