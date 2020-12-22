@@ -9032,12 +9032,12 @@ def routineCollisions():
                             label_a,
                             label_b,
                             common.Volume))
-                    reduntant=False
+                    redundant=False
                     for o in FreeCAD.ActiveDocument.Objects:
                         if make_string(o.Label) == 'Collisions ({} - {})'.format(label_a, label_b):
-                            sayw('collision redudant')
-                            redudant=True
-                    if not reduntant:
+                            sayw('collision redundant')
+                            redundant=True
+                    if not redundant:
                         intersection_object = FreeCAD.ActiveDocument.addObject(
                             'Part::Feature')
                         intersection_object.Label = 'Collisions ({} - {})'.format(
