@@ -7,7 +7,7 @@
 #*  Copyright (c) 2015                                                      *
 #*  Maurice easyw@katamail.com                                              *
 #*                                                                          *
-#*  Kicad STEPUP (TM) is a TradeMark and cannot be freely useable           *
+#*  Kicad STEPUP (TM) is a TradeMark and cannot be freely usable            *
 #*                                                                          *
 
 import FreeCAD, FreeCADGui, Part
@@ -1181,7 +1181,7 @@ class ksuToolsGeneratePositions:
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'File_Positions.svg') , # the name of a svg file available in the resources
                      'MenuText': "ksu tools Generate 3D models Positions" ,
-                     'ToolTip' : "Generate 3D models Positions\nData for Active Document\n[MCAD Syncronize]"}
+                     'ToolTip' : "Generate 3D models Positions\nData for Active Document\n[MCAD Synchronize]"}
  
     def IsActive(self):
         if FreeCAD.ActiveDocument is None:
@@ -1208,7 +1208,7 @@ class ksuToolsComparePositions:
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Compare_Positions.svg') , # the name of a svg file available in the resources
                      'MenuText': "ksu tools Compare 3D models Positions" ,
-                     'ToolTip' : "Compare 3D models Positions\nData with the Active Document\n[MCAD Syncronize]"}
+                     'ToolTip' : "Compare 3D models Positions\nData with the Active Document\n[MCAD Synchronize]"}
  
     def IsActive(self):
         if FreeCAD.ActiveDocument is None:
@@ -1498,7 +1498,7 @@ class ksuToolsEdges2Sketch:
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Edges2Sketch.svg') , # the name of a svg file available in the resources
                      'MenuText': "ksu Edges to Sketch" ,
-                     'ToolTip' : "Select coplanar edge(s) or Face(s) or \na single Vertex of a coplanar outline \nto get a corrensponding Sketch"}
+                     'ToolTip' : "Select coplanar edge(s) or Face(s) or \na single Vertex of a coplanar outline \nto get a corresponding Sketch"}
  
     def IsActive(self):
         sel = FreeCADGui.Selection.getSelection()
@@ -1732,7 +1732,7 @@ class ksuTools2D2Sketch:
                             # sk = FreeCAD.ActiveDocument.addObject('Sketcher::SketchObject','Sketch_bsp')
                             # sk.addGeometry(e.Curve, False)
                             sketch.addGeometry(e.Curve, False)
-                            # Sketcher magic fonction :
+                            # Sketcher magic function :
                         for i in range(0, len(sketch.Geometry)):
                             try: 
                                 if 'BSpline' in str(sketch.Geometry[i]):
@@ -1752,7 +1752,7 @@ class ksuTools2D2Sketch:
                                 # sk = FreeCAD.ActiveDocument.addObject('Sketcher::SketchObject','Sketch_bsp')
                                 # sk.addGeometry(e.Curve, False)
                                 sketch.addGeometry(e.Curve, False)
-                                # Sketcher magic fonction :
+                                # Sketcher magic function :
                                 for i in range(0, len(sketch.Geometry)):
                                     try: 
                                         if 'BSpline' in str(sketch.Geometry[i]):
@@ -2319,7 +2319,7 @@ def copy_subobject(doc, o,suffix='(copy)'):
     return copied_object
 
 def get_recursive_inverse_placement(o):
-    # We browse the parent in reverse order so we have to multipy the inverse
+    # We browse the parent in reverse order so we have to multiply the inverse
     # placements and return the inverse placement.
     # Note that we cannot rely on o.InListRecursive because the order there is
     # not reliable.

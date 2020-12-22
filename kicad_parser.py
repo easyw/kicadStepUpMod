@@ -1416,7 +1416,7 @@ class KicadFcad:
             objs.append(obj)
 
         if shape_type=='solid':
-            self._log("makeing solid")
+            self._log("making solid")
             obj = self._makeCompound(objs,'copper')
             self._log("done solid")
         else:
@@ -1424,7 +1424,7 @@ class KicadFcad:
             if 0: # maui not coloring compound
                 self.setColor(obj,'copper')
             if solid:
-                self._log("makeing solid")
+                self._log("making solid")
                 obj = self._makeSolid(obj,'copper',thickness)
                 self._log("done solid")
                 if 0: # maui not coloring compound

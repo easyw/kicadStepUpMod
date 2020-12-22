@@ -116,7 +116,7 @@
         </sizepolicy>
        </property>
        <property name="title">
-        <string>Working directory gerneral FEM solver frame work</string>
+        <string>Working directory general FEM solver frame work</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>

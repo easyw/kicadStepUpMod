@@ -15,7 +15,7 @@ kicadStepUp-starter-Guide.pdf
 
 *Copyright*
 -----------
-This document and kicad StepUp scripts are Copyright © 2015 by Maurice.
+This document and kicad StepUp scripts are Copyright ï¿½ 2015 by Maurice.
 You may distribute it and/or modify it under the terms of either
 the GNU Affero General Public License as published by the Free Software Foundation
 to ensure cooperation with the community in the case of network server software;             *
@@ -23,7 +23,7 @@ for detail see the LICENCE text file.
 http://www.gnu.org/licenses/agpl-3.0.en.html
 Moreover you have to include the original author copyright.
 All trademarks within this guide belong to their legitimate owners.
-Kicad STEPUP (TM) is a TradeMark and cannot be freely useable
+Kicad STEPUP (TM) is a TradeMark and cannot be freely usable
 
 Risk disclaimer
 ---------------
@@ -74,7 +74,7 @@ Changelog
 - because of hole sovrapposition prob...
 - cutting hole by hole instead of hole compound
 - added holes_solid var
-- to have holes as solid to garantee cutting
+- to have holes as solid to guarantee cutting
 - handled single circle 
 - used OpenSCAD2Dgeom instead of wire + face (best option)
 - http://www.freecadweb.org/wiki/index.php?title=Macro_Creating_faces_from_a_DXF_file
@@ -194,7 +194,7 @@ Changelog
 - removed Move X,Y,Z buttons
 - resetP always enabled
 - collision cb, virtual cb, expstep cb, reset placement cb, setGeometry
-- textEdit -> textBrowser for html links ro tutorials
+- textEdit -> textBrowser for html links to tutorials
 - link to local config file on disk
 - moved to icon based GUI
 - minor dock fixing
