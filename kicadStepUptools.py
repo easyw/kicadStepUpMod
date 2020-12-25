@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.7.3.1"
+___ver___ = "9.7.3.2"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -19487,9 +19487,9 @@ def remove_basic_geom(c_name, to_disc):
         #print str(s.Geometry[i]), ';;' 
         if str(s.Geometry[i]) not in to_disc_str:
             if hasattr(s,'GeometryFacadeList'):
-                    Gm = s.GeometryFacadeList
-                else:
-                    Gm = s.Geometry
+                Gm = s.GeometryFacadeList
+            else:
+                Gm = s.Geometry
             if hasattr(Gm[i],'Construction'):
                 if not Gm[i].Construction:
                     #print FreeCAD.ActiveDocument.getObject(c_name).Geometry[i]
