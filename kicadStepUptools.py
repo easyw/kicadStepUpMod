@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.7.2.4"
+___ver___ = "9.7.3.1"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -16722,14 +16722,27 @@ def simplify_sketch():
         # new_edge_list, not_supported, to_discretize, construction_geom = getBoardOutline()
         to_discretize = []
         new_edge_list = []
-        for g in sel[0].Geometry:
-            if 'BSplineCurve object' in str(g):
-                to_discretize.append(g)
-            elif 'Ellipse' in str(g) or 'Parabola' in str(g) or 'Hyperbola' in str(g):
-                to_discretize.append(g)
-            else:
-                if not g.Construction: # adding only non construction geo
-                    new_edge_list.append(g)
+        if hasattr(sel[0],'GeometryFacadeList'):
+            Gm = sel[0].GeometryFacadeList
+            for g in Gm:
+                if 'BSplineCurve object' in str(g.Geometry):
+                    to_discretize.append(g.Geometry)
+                elif 'Ellipse' in str(g.Geometry) or 'Parabola' in str(g.Geometry) or 'Hyperbola' in str(g.Geometry):
+                    to_discretize.append(g.Geometry)
+                else:
+                    if not g.Construction: # adding only non construction geo
+                        new_edge_list.append(g.Geometry)
+        else:
+            Gm = sel[0].Geometry
+            for g in Gm:
+                if 'BSplineCurve object' in str(g):
+                    to_discretize.append(g)
+                elif 'Ellipse' in str(g) or 'Parabola' in str(g) or 'Hyperbola' in str(g):
+                    to_discretize.append(g)
+                else:
+                    if not g.Construction: # adding only non construction geo
+                        new_edge_list.append(g)
+        #for g in sel[0].Geometry:
         ## support for arcs, lines and bsplines in F_Silks
         sel = FreeCADGui.Selection.getSelection()
         sk_name=None
@@ -17165,17 +17178,32 @@ def export_footprint(fname=None):
                 edge_thick=float(lyr.split('_')[2])
                 #print (lyr)
                 sk = FreeCAD.ActiveDocument.getObjectsByLabel(lyr)[0]
-                for g in sk.Geometry:
-                    if g.Construction:
-                        if 'Circle' in type(g).__name__ and not 'ArcOfCircle' in type(g).__name__:
-                            sk_ge=g.toShape()  #needed to fix some issue on sketch geometry building
-                            pgeomG.append([
-                                'circle',
-                                sk_ge.Edges[0].Curve.Radius,
-                                sk_ge.Edges[0].Curve.Center.x,
-                                sk_ge.Edges[0].Curve.Center.y,
-                                sk.Label
-                            ])
+                if hasattr(sk,'GeometryFacadeList'):
+                    Gm = sk.GeometryFacadeList
+                    for g in Gm:
+                        if g.Construction:
+                            if 'Circle' in type(g.Geometry).__name__ and not 'ArcOfCircle' in type(g.Geometry).__name__:
+                                sk_ge=g.Geometry.toShape()  #needed to fix some issue on sketch geometry building
+                                pgeomG.append([
+                                    'circle',
+                                    sk_ge.Edges[0].Curve.Radius,
+                                    sk_ge.Edges[0].Curve.Center.x,
+                                    sk_ge.Edges[0].Curve.Center.y,
+                                    sk.Label
+                                ])
+                else:
+                    Gm = sk.Geometry
+                    for g in Gm:
+                        if g.Construction:
+                            if 'Circle' in type(g).__name__ and not 'ArcOfCircle' in type(g).__name__:
+                                sk_ge=g.toShape()  #needed to fix some issue on sketch geometry building
+                                pgeomG.append([
+                                    'circle',
+                                    sk_ge.Edges[0].Curve.Radius,
+                                    sk_ge.Edges[0].Curve.Center.x,
+                                    sk_ge.Edges[0].Curve.Center.y,
+                                    sk.Label
+                                ])
                 #lyr=u'Pads_Geom'
                 pgeom.append(border)
                 #print (pgeom);print(pgeomG)
@@ -18806,8 +18834,12 @@ def getBoardOutline():
                         #print(type(j.Geometry[k]).__name__)
                         bezier_list  = []
                         bezier_list_tmp  = []
-                        if hasattr(j.Geometry[k],'Construction'):
-                            if j.Geometry[k].Construction:
+                        if hasattr(j,'GeometryFacadeList'):
+                            Gm = j.GeometryFacadeList
+                        else:
+                            Gm = j.Geometry
+                        if hasattr(Gm[k],'Construction'):
+                            if Gm[k].Construction:
                                 construction_geom.append(k)
                                 sayw('construction skipped')
                                 continue
@@ -19454,8 +19486,12 @@ def remove_basic_geom(c_name, to_disc):
         #else:
         #print str(s.Geometry[i]), ';;' 
         if str(s.Geometry[i]) not in to_disc_str:
-            if hasattr(s.Geometry[i],'Construction'):
-                if not s.Geometry[i].Construction:
+            if hasattr(s,'GeometryFacadeList'):
+                    Gm = s.GeometryFacadeList
+                else:
+                    Gm = s.Geometry
+            if hasattr(Gm[i],'Construction'):
+                if not Gm[i].Construction:
                     #print FreeCAD.ActiveDocument.getObject(c_name).Geometry[i]
                     FreeCAD.ActiveDocument.getObject(c_name).delGeometry(i)
     FreeCAD.ActiveDocument.recompute()
@@ -19486,8 +19522,12 @@ def split_basic_geom(c_name, to_disc):
         #else:
         #print str(s.Geometry[i]), ';;' 
         if str(s.Geometry[i]) not in to_disc_str:
-            if hasattr(s.Geometry[i],'Construction'):
-                if not s.Geometry[i].Construction:
+            if hasattr(s,'GeometryFacadeList'):
+                Gm = s.GeometryFacadeList
+            else:
+                Gm = s.Geometry
+            if hasattr(Gm[i],'Construction'):
+                if not Gm[i].Construction:
                     #print FreeCAD.ActiveDocument.getObject(c_name).Geometry[i]
                     geoB.append(FreeCAD.ActiveDocument.getObject(c_name).Geometry[i])
                     FreeCAD.ActiveDocument.getObject(c_name).delGeometry(i)
@@ -19510,9 +19550,13 @@ def check_geom(sk_name, ofs=None):
     for k in range(len(j.Geometry)):
         foundGeo=False
         #print(type(j.Geometry[k]).__name__)
-        if hasattr(j.Geometry[k],'Construction'):
+        if hasattr(j,'GeometryFacadeList'):
+            Gm = j.GeometryFacadeList
+        else:
+            Gm = j.Geometry
+        if hasattr(Gm[k],'Construction'):
             sayw('construnction skipped')
-            if j.Geometry[k].Construction:
+            if Gm[k].Construction:
                 #sayerr('construction skipped')
                 continue
         if 'Point' in type(j.Geometry[k]).__name__:  #skipping points

@@ -6,7 +6,7 @@
 # App.Rotation(10,20,30) = Euler Angle 
 ## https://forum.freecadweb.org/viewtopic.php?t=11799
 
-__version_exchPos__ = "1.1.0"
+__version_exchPos__ = "1.2.1"
 
 
 import FreeCAD, FreeCADGui,sys, os 
@@ -283,11 +283,19 @@ def expPos(doc=None):  ## export positions
                 sketch_content_header.append(line+'\n')
                 print('Sketch geometry -------------------')
                 if hasattr(o,'Geometry'):
-                    for e in o.Geometry:
-                        if not e.Construction:
-                            line=str(roundEdge(e))
-                            sketch_content.append(line+'\n')
-                            #print (e) 
+                    if hasattr(o,'GeometryFacadeList'):
+                        Gm = o.GeometryFacadeList
+                        for e in Gm:
+                            if not e.Construction:
+                                line=str(roundEdge(e.Geometry))
+                                sketch_content.append(line+'\n')
+                                #print (e) 
+                    else:
+                        for e in o.Geometry:
+                            if not e.Construction:
+                                line=str(roundEdge(e))
+                                sketch_content.append(line+'\n')
+                                #print (e) 
                 sketch_content.sort()
                 sketch_content[:0] = sketch_content_header
                 line='-----------------------------------'
@@ -388,11 +396,21 @@ def cmpPos(doc=None):  ## compare exported positions with the selected doc
             sketch_content_header.append(line+'\n')
             #print('Sketch geometry -------------------')
             if hasattr(o,'Geometry'):
-                    for e in o.Geometry:
-                        if not e.Construction:
-                            line=str(roundEdge(e))
-                            sketch_content.append(line+'\n')
-                            #print (e) 
+                if hasattr(o,'Geometry'):
+                    if hasattr(o,'GeometryFacadeList'):
+                        Gm = o.GeometryFacadeList
+                        for e in Gm:
+                            if not e.Construction:
+                                line=str(roundEdge(e.Geometry))
+                                sketch_content.append(line+'\n')
+                                #print (e) 
+                    else:
+                        Gm = o.Geometry
+                        for e in Gm:
+                            if not e.Construction:
+                                line=str(roundEdge(e))
+                                sketch_content.append(line+'\n')
+                                #print (e) 
             sketch_content.sort()
             sketch_content[:0] = sketch_content_header
             #sketch_content_header.extend(sketch_content)

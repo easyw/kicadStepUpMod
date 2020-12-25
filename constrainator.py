@@ -13,7 +13,7 @@ import FreeCAD, Part, Sketcher
 from FreeCAD import Base
 from math import sqrt
 
-__ksuConstrainator_version__='1.1.6'
+__ksuConstrainator_version__='1.2.1'
 
 def sk_distance(p0, p1):
     return sqrt((p0[0] - p1[0])**2 + (p0[1] - p1[1])**2)
@@ -183,7 +183,14 @@ def add_constraints(s_name, edge_tolerance, add_Constraints):
     #print len((s.Geometry))
     #stop
     for geom_index in range(len((s.Geometry))):
-        if not(s.Geometry[geom_index].Construction):
+        if hasattr(s,'GeometryFacadeList'):
+            Gm = s.GeometryFacadeList.Geometry
+            Gc = s.GeometryFacadeList
+        else:
+            Gm = s.Geometry
+            Gc = s.Geometry
+        #if not(s.Geometry[geom_index].Construction):
+        if not(Gc[geom_index].Construction):
             point_indexes = g_geom_points[type(s.Geometry[geom_index])]
             #sayerr(point_indexes), say (geom_index)
             #if 'Line' in type(PCB_Sketch.Geometry[geom_index]).__name__:
