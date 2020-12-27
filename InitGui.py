@@ -7,7 +7,7 @@
 #*  Copyright (c) 2015                                                      *
 #*  Maurice easyw@katamail.com                                              *
 #*                                                                          *
-#*  Kicad STEPUP (TM) is a TradeMark and cannot be freely useable           *
+#*  Kicad STEPUP (TM) is a TradeMark and cannot be freely usable            *
 #*                                                                          *
 
 ksu_wb_version='v 10.1.5'
@@ -71,7 +71,7 @@ class kSU_MainPrefPage:
         from PySide import QtGui, QtCore
         import os, hlp
         global ksuWBpath
-        print ("Created kSU Auxiliar Pref page")
+        print ("Created kSU Auxiliary Pref page")
         #help_t = hlp.help_txt
         header_txt="""<font color=GoldenRod><b>kicad StepUp version """+verKSU+"""</font></b><br>"""
         help_t = header_txt+hlp.help_txt

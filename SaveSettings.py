@@ -7,7 +7,7 @@
 #*  Copyright (c) 2015                                                      *
 #*  Maurice easyw@katamail.com                                              *
 #*                                                                          *
-#*  Kicad STEPUP (TM) is a TradeMark and cannot be freely useable           *
+#*  Kicad STEPUP (TM) is a TradeMark and cannot be freely usable            *
 #*                                                                          *
 import FreeCAD, sys, os, re
     

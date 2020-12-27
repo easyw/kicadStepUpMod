@@ -8,7 +8,7 @@
 #*  Copyright (c) 2015                                                      *
 #*  Maurice easyw@katamail.com                                              *
 #*                                                                          *
-#*  Kicad STEPUP (TM) is a TradeMark and cannot be freely useable           *
+#*  Kicad STEPUP (TM) is a TradeMark and cannot be freely usable            *
 #*                                                                          *
 #*   code partially based on:                                               *
 #*      Printed Circuit Board Workbench for FreeCAD  FreeCAD-PCB            *
@@ -20,7 +20,7 @@
 #*      and (c) hyOzd ecad-3d-model-generator                               *
 #*                                                                          *
 #*   this macro rotates, translates and scales one object                   *
-#*   scale for VRML export and open footprint for easy alignement           *
+#*   scale for VRML export and open footprint for easy alignment            *
 #*   this sw is a part of kicad StepUp code                                 *
 #*   all credits and licence details in kicad StepUp code                   *
 #*   Macro_Move_Rotate_Scale                                                *
@@ -30,7 +30,7 @@
 #*                                                                          *
 #*     Collisions routines from Highlight Common parts Macro                *
 #*     author JMG, galou and other contributors                             *
-#*     from FreeCAD OpenSCAD Workbench - 2D helper fuctions                 *
+#*     from FreeCAD OpenSCAD Workbench - 2D helper functions                *
 #*     __author__ = "Sebastian Hoogen"                                      *
 #*                                                                          *
 #*     semantic parser from __author__ = "Zheng, Lei"  fcad_pcb             *
@@ -114,7 +114,7 @@
 # because of hole sovrapposition prob...
 # cutting hole by hole instead of hole compound
 # added holes_solid var
-# to have holes as solid to garantee cutting
+# to have holes as solid to guarantee cutting
 # handled single circle 
 # used OpenSCAD2Dgeom instead of wire + face (best option)
 # http://www.freecadweb.org/wiki/index.php?title=Macro_Creating_faces_from_a_DXF_file
@@ -234,7 +234,7 @@
 # removed Move X,Y,Z buttons
 # resetP always enabled
 # collision cb, virtual cb, expstep cb, reset placement cb, setGeometry
-# textEdit -> textBrowser for html links ro tutorials
+# textEdit -> textBrowser for html links to tutorials
 # link to local config file on disk
 # moved to icon based GUI
 # minor dock fixing
@@ -776,7 +776,7 @@ else:
 '''
 S-Expression parser written in Python
 
-This module provides a generic parser `SexpParser` that coverts a python
+This module provides a generic parser `SexpParser` that converts a python
 list-based S-Expression into a python object model.  Each expression in the
 list-based S-Expression is defined as a recursive ``list`` representation in
 the form of ::
@@ -785,7 +785,7 @@ the form of ::
 
 where there may be none or multiple ``<values>`` of either an atom or another
 list based S-Expression. The class `Sexp` is top class for objects
-representing a parsed expresion
+representing a parsed expression
 
 function `parseSexp()` can be used to convert plain text form S-Expression into
 the list-based representation
@@ -961,7 +961,7 @@ class Sexp(object):
         '''Export self to an S-epression and write to output stream
             Args: 
                 out: output stream, only needs to implement ``out.write(string)``
-                prefix(string): prefixing spaces for output formating 
+                prefix(string): prefixing spaces for output formatting 
                 indent(string): incremental prefix for sub levels
         '''
 
@@ -995,7 +995,7 @@ class Sexp(object):
             out.write(')')
 
     def _exportValue(self,out,value,prefix,indent):
-        '''Called by `_export()` to export each indivdual value
+        '''Called by `_export()` to export each individual value
 
             It tries ``value._export()`` before fallback to str(value) Subclass
             can override this method to customize the behavior
@@ -1012,14 +1012,14 @@ class Sexp(object):
             Arg:
                 defs (string|Sexp|tuple)
 
-            Retruns: the value with the first key in ``defs``.
+            Returns: the value with the first key in ``defs``.
 
             ``defs`` maybe a string or a tuple of strings. The first string
             specifies the key of the default value. The following strings
             defines the keys of the sub values. The following strings can be
             tuples, too, for recursive setting of the default value. The string
             specifies that if the corresponding key is missing or has only one
-            insance, it will be converted to a ``SexpList`` of either zero or
+            instance, it will be converted to a ``SexpList`` of either zero or
             one child. This makes it easy to traverse the object model without
             constant need of sanity checking.
 
@@ -1144,13 +1144,13 @@ class SexpParser(Sexp):
             `SexpValueDict`
 
             The constructor will dispatch keyword parsing to lower level
-            parsers grouped by ``self`` here. User impelements semantic check
+            parsers grouped by ``self`` here. User implements semantic check
             by subclassing this class, and provides, for each sub-keys, a
             sub-parser as callable attributes. The search is done in the
             following order,
 
             * Sub-parsers named as ``_pos<index>`` are called to handle
-              positional based expression, ``<index>`` is the occurance index of
+              positional based expression, ``<index>`` is the occurrence index of
               this sub-expression inside the parent expression
 
             * Sub-parses named as ``_parse1_<subkey>`` demand that the
@@ -1283,7 +1283,7 @@ class SexpBool(Sexp):
             'no', 'No', 'false', 'False'
 
         The actual text representation is stored in ``_value``, and boolean
-        value is computed at runtime by checking agains the ``_yes_values``
+        value is computed at runtime by checking against the ``_yes_values``
     '''
 
     __slots__ = ()
@@ -1457,7 +1457,7 @@ def parseAtomFloat(obj,sexp):
     return parseAtom(obj,sexp,float)
 
 def parseCopy(obj,sexp,checkLen,ftype=None):
-    """Returns the value and check the length, optionally conver to another
+    """Returns the value and check the length, optionally convert to another
     type"""
     if len(sexp)!=checkLen+2:
         raise ValueError('len={}, expects {}'.format(len(sexp),checkLen+2))
@@ -1485,7 +1485,7 @@ def parseFloat4(obj,sexp):
     return parseCopy(obj,sexp,4,float)
 
 def parseSexp(sexp):
-    """Parses S-expressions and return a ``list`` represention
+    """Parses S-expressions and return a ``list`` representation
         
         Code borrowed from: http://rosettacode.org/wiki/S-Expressions, with
         the following modifications,
@@ -1565,11 +1565,11 @@ def getSexpError(sexp):
 '''
 ``kicad_pcb`` parser using `sexp_parser.SexpParser`
 
-The parser `KicadPCB` demostrates the usage of a more gernal S-expression
+The parser `KicadPCB` demonstrates the usage of a more general S-expression
 parser of class `sexp_parser.SexpParser`. Check out the source to see how easy
 it is to implement a parser in an almost declarative way.
 
-A usage demostration is avaiable in `test.py`
+A usage demonstration is available in `test.py`
 '''
 
 ## from sexp_parser import *
@@ -3164,14 +3164,14 @@ def export(componentObjs, fullfilePathName, scale=None):
         for obj in componentObjs:
             shape1=obj.Shape
             single_color=Diffuse_color[i];
-            #check lenght color
+            #check length color
             #say("len color")
             #say(len(single_color))
             #colors less then faces
             if(len(single_color)!=len(shape1.Faces)):
                 applyDiffuse=0;
                 #copy color to all faces
-            #else copy singolar colors for faces
+            #else copy singular colors for faces
             else:
                 applyDiffuse=1;
                 for color in single_color:
@@ -3595,7 +3595,7 @@ def exportStep(objs, ffPathName):
             for obj in newobj_list: #objs:
                 shape1=obj.Shape
                 single_color=FreeCADGui.ActiveDocument.getObject(obj.Name).DiffuseColor
-                #check lenght color
+                #check length color
                 #say("len color")
                 #say(len(single_color))
                 #say((single_color))
@@ -3604,7 +3604,7 @@ def exportStep(objs, ffPathName):
                 if(len(single_color)!=len(shape1.Faces)):
                     applyDiffuse=0;
                     #copy color to all faces
-                #else copy singolar colors for faces
+                #else copy singular colors for faces
                 else:
                     applyDiffuse=1;
                 for color in single_color:
@@ -4414,7 +4414,7 @@ def Display_info(blacklisted_models):
                     if show_data:
                         say(FreeCADGui.ActiveDocument.getObject(obj.Name).ShapeMaterial.DiffuseColor)
                     #copy color to all faces
-                #else copy singolar colors for faces
+                #else copy singular colors for faces
                 else:
                     applyDiffuse=1;
                     if show_data:
@@ -7236,7 +7236,7 @@ def sanitizeSketch(s_name):
             j+=1
 ##
 def add_constraints(s_name):
-    """ adding coincident points constaints """
+    """ adding coincident points constraints """
     global addConstraints, edge_tolerance
     
     s=FreeCAD.ActiveDocument.getObject(s_name)
@@ -8921,7 +8921,7 @@ def routineCollisions():
             label_a = make_string(object_a.Label)
             label_b = make_string(object_b.Label)
             try:
-                ## find the real position of the Part inside App::Part, then chek collisions
+                ## find the real position of the Part inside App::Part, then check collisions
                 if use_AppPart:
                     #print object_a.InListRecursive
                     #print object_b.InListRecursive
@@ -8988,7 +8988,7 @@ def routineCollisions():
                     FreeCAD.ActiveDocument.recompute()
                 #stop
             ##try:
-            ##    ## find the real position of the Part inside App::Part, then chek collisions
+            ##    ## find the real position of the Part inside App::Part, then check collisions
             ##    ## print object_a.InListRecursive
             ##    ## 
             ##    #b=App.ActiveDocument.addObject("Part::Box","Box")
@@ -9032,12 +9032,12 @@ def routineCollisions():
                             label_a,
                             label_b,
                             common.Volume))
-                    reduntant=False
+                    redundant=False
                     for o in FreeCAD.ActiveDocument.Objects:
                         if make_string(o.Label) == 'Collisions ({} - {})'.format(label_a, label_b):
-                            sayw('collision redudant')
-                            redudant=True
-                    if not reduntant:
+                            sayw('collision redundant')
+                            redundant=True
+                    if not redundant:
                         intersection_object = FreeCAD.ActiveDocument.addObject(
                             'Part::Feature')
                         intersection_object.Label = 'Collisions ({} - {})'.format(
@@ -11525,7 +11525,7 @@ def routineDrawFootPrint(content,name):
         FreeCAD.ActiveDocument.ActiveObject.Label ="Pcb-base"
         FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.664,0.664,0.496)
         FreeCADGui.ActiveDocument.ActiveObject.Transparency = 80
-        #say("cutted")
+        #say("cut")
         pcb=FreeCAD.ActiveDocument.ActiveObject
         fp_group.addObject(pcb)
         #say("added")
@@ -11595,7 +11595,7 @@ def routineDrawIDF(doc,filename):
     say(msg)
     #emnfile=pythonopen(filename, "r")
     emnfile=pythonopen(filename, "rb")
-    emn_unit=1.0 #presume milimeter like emn unit
+    emn_unit=1.0 #presume millimeter like emn unit
     emn_version=2 #presume emn_version 2
     board_thickness=0 #presume 0 board height
     board_outline=[] #no outline
@@ -11748,7 +11748,7 @@ def Process_board_outline(doc,board_outline,drills,board_thickness):
 def split_records(line_record):
     """split_records(line_record)-> list of strings(records)
        
-       standard separator list separator is space, records containting encapsulated by " """
+       standard separator list separator is space, records containing encapsulated by " """
     split_result=[]
     quote_pos=line_record.find('"')
     while quote_pos!=-1:
@@ -12064,7 +12064,7 @@ def OSCD2Dg_superWireReverse(debuglist,closed=False):
     '''superWireReverse(debuglist,[closed]): forces a wire between edges
     that don't necessarily have coincident endpoints. If closed=True, wire
     will always be closed. debuglist has a tuple for every edge.The first
-    entry is the edge, the second is the flag 'does not nedd to be inverted'
+    entry is the edge, the second is the flag 'does not need to be inverted'
     '''
     #taken from draftlibs
     sayerr('edges not closed... trying to solve it')
@@ -12145,7 +12145,7 @@ def OSCD2Dg_superWireReverse(debuglist,closed=False):
 #
 def OSCD2Dg_endpointdistance(edges):
     '''return the distance of of vertices in path (list of edges) as
-    maximum, mininum and distance between start and endpoint
+    maximum, minimum and distance between start and endpoint
     it expects the edges to be traversed forward from starting from Vertex 0'''
     numedges=len(edges)
     if numedges == 1 and len(edges[0].Vertexes) == 1:
@@ -12161,7 +12161,7 @@ def OSCD2Dg_endpointdistance(edges):
 
 def OSCD2Dg_endpointdistancedebuglist(debuglist):
     '''return the distance of of vertices in path (list of edges) as
-    maximum, mininum and distance between start and endpoint
+    maximum, minimum and distance between start and endpoint
     it it expects a 'not reversed' flag for every edge'''
     numedges=len(debuglist)
     if numedges == 1 and len(debuglist[0][0].Vertexes) == 1:
@@ -12327,7 +12327,7 @@ def OSCD2Dg_edgestofaces(edges,algo=3,eps=0.001):
                 comp=Part.Compound(edges2)
                 w = comp.connectEdgesToWires(False,eps).Wires[0]
         facel.append(Part.Face(w))
-        #if w.isValid: #debuging
+        #if w.isValid: #debugging
         #    facel.append(Part.Face(w))
         #else:
         #    Part.show(w)
@@ -15863,7 +15863,7 @@ def Sync3DModel():
                                                 else:
                                                     mmodel=''
                                                 if len (ts) != 8 or sel[0].Label.rfind('_') == -1:
-                                                    msg="TimeStap not found!\nAdding & Syncing Ref & TimeStamp"
+                                                    msg="TimeStamp not found!\nAdding & Syncing Ref & TimeStamp"
                                                     sayw(msg)
                                                     if len (mmodel)>0:
                                                         sel[0].Label=Ref+'_'+mmodel.replace('.','')+'_'+matching_TimeStamp+nbrModel
@@ -17030,7 +17030,7 @@ def export_footprint(fname=None):
   
         new_border=u''
         #print new_edge_list
-        ## maxRadius # 4000 = 4m max lenght for KiCad
+        ## maxRadius # 4000 = 4m max length for KiCad
         #edge_nbr=0
         sanitized_edge_list=[]
         for border in new_edge_list:
@@ -18973,7 +18973,7 @@ def getBoardOutline():
                         #      or 'Ellipse' in type(j.Geometry[k]).__name__): 
                         elif (accept_spline) and ('Parabol' in type(j.Geometry[k]).__name__ or 'Hyperbol' in type(j.Geometry[k]).__name__): 
                         ## discretizing
-                         # or 'Ellipse' in type(j.Geometry[k]).__name__  ## Elipses are not well approximated by Splines
+                         # or 'Ellipse' in type(j.Geometry[k]).__name__  ## Ellipses are not well approximated by Splines
                             gd = j.Geometry[k]
                             gds = gd.toShape()
                             pl = gds.discretize(QuasiDeflection=dqd)
@@ -19007,7 +19007,7 @@ def getBoardOutline():
                         #      or 'Ellipse' in type(j.Geometry[k]).__name__): 
                         elif (not use_discretize) and (accept_spline) and ('Ellipse' in type(j.Geometry[k]).__name__): 
                         ## toBiArcs 
-                         # or 'Ellipse' in type(j.Geometry[k]).__name__  ## Elipses are not well approximated by Splines
+                         # or 'Ellipse' in type(j.Geometry[k]).__name__  ## Ellipses are not well approximated by Splines
                             gk = j.Geometry[k]
                             bs = gk.toBSpline() # (tolerance, maxSegments, maxDegree)
                             gds = bs.toBiArcs(precision)
@@ -19053,7 +19053,7 @@ def getBoardOutline():
                                 ])
 
                         #elif (accept_spline) and ('Parabola' in type(j.Geometry[k]).__name__ or 'Hyperbola' in type(j.Geometry[k]).__name__): 
-                        # # or 'Ellipse' in type(j.Geometry[k]).__name__  ## Elipses are not well approximated by Splines
+                        # # or 'Ellipse' in type(j.Geometry[k]).__name__  ## Ellipses are not well approximated by Splines
                         #    bs = j.Geometry[k]
                         #    bs = bs.approximateBSpline(edge_tolerance,maxSegment,maxDegree) # (tolerance, maxSegments, maxDegree) 
                         #    bezier_list_tmp.extend(bs.toBezier()) 
@@ -20051,7 +20051,7 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                 #newcontent = re.sub(r'(.*)\)', r'', replace, flags=re.MULTILINE)
                 new_border=''
                 #print new_edge_list
-                ## maxRadius # 4000 = 4m max lenght for KiCad
+                ## maxRadius # 4000 = 4m max length for KiCad
                 #edge_nbr=0
                 sanitized_edge_list=[]
                 for border in new_edge_list:

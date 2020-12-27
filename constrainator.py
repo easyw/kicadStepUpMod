@@ -149,7 +149,7 @@ def sanitizeSk(s_name, edg_tol):
             j+=1
 ##
 def add_constraints(s_name, edge_tolerance, add_Constraints):
-    """ adding coincident points constaints """
+    """ adding coincident points constraints """
     
     s=FreeCAD.ActiveDocument.getObject(s_name)
     
