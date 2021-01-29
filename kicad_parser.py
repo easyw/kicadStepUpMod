@@ -21,7 +21,7 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 from kicadStepUptools import KicadPCB,SexpList
 
-__kicad_parser_version__ = '1.1.6'
+__kicad_parser_version__ = '1.1.7'
 # https://github.com/realthunder/fcad_pcb/issues/20#issuecomment-586042341
 print('kicad_parser_version '+__kicad_parser_version__)
 
@@ -1267,7 +1267,7 @@ class KicadFcad:
             # related to some setup parameter? I am guessing this is half the
             # zone.min_thickness setting here.
 
-            offset = self.zone_inflate + z.min_thickness
+            offset = self.zone_inflate + z.min_thickness*0.5
             if not zone_holes or (
               self.add_feature and self.make_sketch and self.zone_merge_holes):
                 obj = [obj]+zone_holes
