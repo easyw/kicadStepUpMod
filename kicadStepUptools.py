@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.7.3.3"
+___ver___ = "9.7.3.5"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -5626,8 +5626,10 @@ def Load_models(pcbThickness,modules):
                                 FreeCADGui.ActiveDocument.ActiveObject.Transparency=FreeCADGui.ActiveDocument.getObject(newStep.Name).Transparency
                                 FreeCAD.ActiveDocument.removeObject(newStep.Name)
                             else: #use Label for timestamp
-                                myReference=str(modules[i][11])
+                                myReference=str(modules[i][11]).rstrip('"').lstrip('"')
                                 myTimeStamp=str(modules[i][10])
+                                if len(myTimeStamp)> 8:
+                                    myTimeStamp=myTimeStamp[-12:]
                                 myModelNbr=(modules[i][12])
                                 #print (myModelNbr)#;stop
                                 if myModelNbr == 1:
@@ -5799,7 +5801,9 @@ def Load_models(pcbThickness,modules):
                                         impPart.Label = 'REF_'+loaded_model_objs[idxO].Label + '_' + myTimeStamp
                                 else:
                                     myTimeStamp=str(modules[i][10])
-                                    myReference=str(modules[i][11])
+                                    if len(myTimeStamp)> 8:
+                                        myTimeStamp=myTimeStamp[-12:]
+                                    myReference=str(modules[i][11]).rstrip('"').lstrip('"')
                                     myModelNbr=(modules[i][12])
                                     #print (myModelNbr);stop
                                     if myModelNbr == 1:
@@ -15834,7 +15838,7 @@ def Sync3DModel():
                                     for m in mypcb.module:
                                         Ref = m.fp_text[0][1]
                                         #print(Ref);print(len(Ref))
-                                        if Ref == matching_Reference:
+                                        if Ref.lstrip('"').rstrip('"') == matching_Reference:
                                             say ('found Reference:  '+Ref)
                                             ref_found=True
                                             if hasattr(m,'tstamp'):
@@ -15862,7 +15866,7 @@ def Sync3DModel():
                                                         mmodel=mmodel[mmodel.rfind('\\')+1:mmodel.rfind('.')]
                                                 else:
                                                     mmodel=''
-                                                if len (ts) != 8 or sel[0].Label.rfind('_') == -1:
+                                                if ((len (ts) != 8) and (len (ts) != 12)) or sel[0].Label.rfind('_') == -1:
                                                     msg="TimeStamp not found!\nAdding & Syncing Ref & TimeStamp"
                                                     sayw(msg)
                                                     if len (mmodel)>0:
@@ -15870,10 +15874,12 @@ def Sync3DModel():
                                                     else:
                                                         sel[0].Label=Ref+'_'+sel[0].Label+'_'+matching_TimeStamp+nbrModel
                                                 else:
+                                                    if len(matching_TimeStamp) > 8:
+                                                        matching_TimeStamp=matching_TimeStamp[-12:]
                                                     if len (mmodel)>0:
-                                                        sel[0].Label=Ref+'_'+mmodel.replace('.','')+'_'+matching_TimeStamp+nbrModel
+                                                        sel[0].Label=Ref.lstrip('"').rstrip('"')+'_'+mmodel.replace('.','')+'_'+matching_TimeStamp+nbrModel
                                                     else:
-                                                        sel[0].Label=Ref+sel[0].Label[sel[0].Label.find('_'):sel[0].Label.rfind('_')+1]+matching_TimeStamp+nbrModel
+                                                        sel[0].Label=Ref.lstrip('"').rstrip('"')+sel[0].Label[sel[0].Label.find('_'):sel[0].Label.rfind('_')+1]+matching_TimeStamp+nbrModel
                                                     msg="Adding & Syncing Ref & TimeStamp"
                                                     say(msg)                                                    
                                                 #sel[0].Label=Ref+sel[0].Label[sel[0].Label.index('_'):sel[0].Label.rindex('_')+1]+matching_TimeStamp
@@ -15943,7 +15949,7 @@ def PushMoved():
                     ts = s.Label[s.Label.rfind('_')+1:s.Label.rfind('[')]
                 else:
                     ts = s.Label[s.Label.rfind('_')+1:]
-                if len (ts) == 8:
+                if len (ts) == 8 or len (ts) == 12:
                     #print(ts);stop
                     check_ok=True
                     #stop
@@ -16064,7 +16070,7 @@ def PushMoved():
                                     ts = s.Label[s.Label.rfind('_')+1:s.Label.rfind('[')]
                                 else:
                                     ts = s.Label[s.Label.rfind('_')+1:]
-                                if len (ts) == 8:
+                                if len (ts) == 8 or len (ts) == 12:
                                     mdp+=1
                                     #print(ts);stop
                                     content = push3D2pcb(s,content,ts)
@@ -16302,7 +16308,7 @@ def PullMoved():
                     ts = s.Label[s.Label.rfind('_')+1:s.Label.rfind('[')]
                 else:
                     ts = s.Label[s.Label.rfind('_')+1:]
-                if len (ts) == 8:
+                if len (ts) == 8 or len (ts) == 12:
                     #print(ts);stop
                     check_ok=True
                     #stop
@@ -16429,7 +16435,7 @@ def PullMoved():
                                     ts = s.Label[s.Label.rfind('_')+1:s.Label.rfind('[')]
                                 else:
                                     ts = s.Label[s.Label.rfind('_')+1:]
-                                if len (ts) == 8:
+                                if len (ts) == 8 or len (ts) == 12:
                                     #print (s.Label) #;stop
                                     nbrModel = None
                                     if s.Label.rfind('_') < s.Label.rfind('['):
@@ -20331,7 +20337,8 @@ def push3D2pcb(s,cnt,tsp):
     tstamp_found=False
     #if len(re.findall('\s\(tstamp(.+?)\)',data, re.MULTILINE|re.DOTALL))>0:
     #if len(re.findall('\s\(tstamp(\s'+s.TimeStamp+'.+?)\)',data, re.MULTILINE|re.DOTALL))>0:
-    if len(re.findall('\s\(tstamp(\s'+tsp+'.+?)\)',data, re.MULTILINE|re.DOTALL))>0:
+    #if len(re.findall('\s\(tstamp(\s'+tsp+'.+?)\)',data, re.MULTILINE|re.DOTALL))>0:
+    if len(re.findall('\s\(tstamp(\s.+?'+tsp+'.+?)\)',data, re.MULTILINE|re.DOTALL))>0:
         tstamp_found=True
         #old_pos=re.findall('\s\(tstamp(\s'+sel[0].TimeStamp+'.+?'+'\(at'+'\s.+?)\)',data, re.MULTILINE|re.DOTALL)[0]
         #print (old_pos)
@@ -20369,9 +20376,11 @@ def push3D2pcb(s,cnt,tsp):
         idxF=-1
         for i,ln in enumerate (cnt):
             #if '(tstamp '+s.TimeStamp in ln:
-            if '(tstamp '+tsp in ln:
-                idxF=i
-                #print(ln)
+            #if '(tstamp '+tsp in ln:
+            if '(tstamp ' in ln:
+                if tsp in ln:
+                    idxF=i
+                    #print(ln)
         FLayer=1.
         if idxF>=0:
             print(s.Label)
