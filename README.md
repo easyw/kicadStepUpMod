@@ -5,6 +5,11 @@ kicadStepUp-WB
 
 [![forthebadge made-with-python](http://ForTheBadge.com/images/badges/made-with-python.svg)](https://www.python.org/)
 
+This fork (from easyw/kicadStepUpMod) provides the following:
+- Imports the KiCAD preferences environment paths to better integrate 3D model paths with your KiCAD environment
+- Modifies the function of the 'main 3D folder' and 'secondary 3D folder' preferences to allow virtually unlimited number of paths specified in each field (currently only comma-separated lists).
+- - Currently multiple paths must be **manually entered** (each separated by comma) since the file select button allows only 1 selection.
+
 KiCad **StepUp tools** are a FreeCAD Macro and a FreeCAD WorkBench to help in **Mechanical Collaboration** between **KiCad EDA** and **FreeCAD** or a **Mechanical CAD**.
 
 **KiCad StepUp features:** 
