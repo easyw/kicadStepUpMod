@@ -14,9 +14,9 @@ ksu_wb_version='v 10.1.8'
 global myurlKWB, ksuWBpath
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=419 #v10.1.0
+mycommitsKWB=420 #v10.1.8
 global verKSU
-verKSU="9.7.3.6"
+verKSU="9.7.3.8"
 
 import FreeCAD, FreeCADGui, Part, os, sys
 import re, time
@@ -153,7 +153,7 @@ class KiCadStepUpWB ( Workbench ):
                            #, "ksuToolsPushMoved","ksuToolsSync3DModels"])
         self.appendToolbar("ksu Sketching", ["ksuTools3D2D", "ksuTools2D2Sketch", "ksuTools2DtoFace",\
                            "ksuToolsLoopSelection","ksuToolsEdges2Sketch","ksuToolsOffset2D","ksuToolsExtrude","ksuToolsMergeSketches",\
-                           "ksuToolsSimplifySketck", "ksuToolsBsplineNormalize", "ksuToolsConstrainator", "ksuToolsSkValidate", "ksuToolsDiscretize"])
+                           "ksuToolsSimplifySketck", "ksuToolsBsplineNormalize", "ksuToolsConstrainator", "ksuToolsSkValidate", "ksuToolsDiscretize", "ksuToolsEdges2Poly"])
                            #, "ksuToolsPushMoved","ksuToolsSync3DModels"])
         ksuTB = ["ksuToolsOpenBoard","ksuToolsPushPCB","ksuToolsPushMoved","ksuToolsSync3DModels","ksuToolsPullPCB","ksuToolsPullMoved","ksuAsm2Part",\
                  "Separator","ksuToolsGeneratePositions","ksuToolsComparePositions",\

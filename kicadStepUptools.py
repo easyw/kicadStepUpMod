@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.7.3.5"
+___ver___ = "9.7.3.8"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -15716,7 +15716,7 @@ def PushPCB():
                 reply=LayerSelectionDlg.exec_()
                 if reply==1: # ok
                     SketchLayer=str(ui.comboBoxLayerSel.currentText())
-                    if 'Edge' not in SketchLayer:
+                    if 1: #'Edge' not in SketchLayer:
                         edge_width=float(ui.lineEdit_width.text().replace(',','.'))
                     print(SketchLayer)
                     skname=sel[0].Name

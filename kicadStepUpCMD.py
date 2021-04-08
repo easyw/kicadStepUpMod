@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-__ksuCMD_version__='1.8.9'
+__ksuCMD_version__='1.9.1'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -528,6 +528,69 @@ class ksuTools:
         #import kicadStepUptools
  
 FreeCADGui.addCommand('ksuTools',ksuTools())
+##
+class ksuToolsEdges2Poly:
+    "ksu tools Edges Selection to PolyLine Sketch"
+    
+    def GetResources(self):
+        mybtn_tooltip ="ksu tools \'RF PolyLined Sketch\'\nSelection\'s Edges to PolyLine Sketch"
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Sketcher_CreatePolyline-RF.svg') , # the name of a svg file available in the resources
+                     'MenuText': mybtn_tooltip ,
+                     'ToolTip' : mybtn_tooltip}
+ 
+    def __init__(self):
+        self.obj = None
+        self.sub = []
+        self.active = False
+
+    def IsActive(self):
+        if bool(FreeCADGui.Selection.getSelection()) is False:
+            return False
+        return True
+        
+    def Activated(self):
+        import segments2poly
+        doc=FreeCAD.ActiveDocument
+        docG = FreeCADGui.ActiveDocument
+        selEx=FreeCADGui.Selection.getSelectionEx()
+        dwglines =[]
+        dqd = 0.02 #discretize(QuasiDeflection=d) => gives a list of points with a maximum deflection 'd' to the edge (faster)
+        class XYline:
+            def __init__(self, xs, ys, xe, ye):
+                self.start = [xs, ys]
+                self.end   = [xe, ye]
+        if len (selEx) > 0:
+            doc.openTransaction('e2skd')
+            for selEdge in selEx:
+                FreeCADGui.ActiveDocument.getObject(selEdge.Object.Name).Visibility = False
+                w = Part.Wire(selEdge.Object.Shape.Edges)
+                Part.show(w)
+                w_name=FreeCAD.ActiveDocument.ActiveObject.Name
+                wn=FreeCAD.ActiveDocument.getObject(w_name)
+                l=wn.Shape.copy().discretize(QuasiDeflection=dqd)
+                f=Part.makePolygon(l)
+                #Part.show(f)
+                sh_name=FreeCAD.ActiveDocument.ActiveObject.Name
+                FreeCAD.ActiveDocument.removeObject(w_name)
+                FreeCAD.ActiveDocument.recompute() 
+                for edge in f.Edges:
+                    line = XYline (edge.Vertexes[0].X,edge.Vertexes[0].Y,edge.Vertexes[1].X,edge.Vertexes[1].Y)
+                    dwglines.append(line)
+        poly = segments2poly.Lines2Polygon(dwglines)
+        #print (poly)
+        FreeCAD.ActiveDocument.addObject('Sketcher::SketchObject', 'Sketch_PolyLined')
+        skd_name=FreeCAD.ActiveDocument.ActiveObject.Name
+        FreeCAD.ActiveDocument.getObject(skd_name).Placement = FreeCAD.Placement(FreeCAD.Vector(0.000000, 0.000000, 0.000000), FreeCAD.Rotation(0.000000, 0.000000, 0.000000, 1.000000))
+        FreeCAD.ActiveDocument.getObject(skd_name).MapMode = "Deactivated"
+        FreeCADGui.runCommand('Sketcher_CreatePolyline',0)
+        for idx,l in enumerate(poly):
+            if idx < len(poly)-1:
+                FreeCAD.ActiveDocument.getObject(skd_name).addGeometry(Part.LineSegment(FreeCAD.Vector(poly[idx][0],poly[idx][1],0),FreeCAD.Vector(poly[idx+1][0],poly[idx+1][1],0)),False)
+        doc.commitTransaction()
+        FreeCAD.ActiveDocument.recompute()
+#
+if FreeCAD.GuiUp:
+    FreeCADGui.addCommand('ksuToolsEdges2Poly',ksuToolsEdges2Poly())
 ##
 class ksuToolsOffset2D:
     "ksu tools Offset2D"
