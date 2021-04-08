@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-__ksuCMD_version__='1.9.1'
+__ksuCMD_version__='1.9.2'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -554,7 +554,7 @@ class ksuToolsEdges2Poly:
         docG = FreeCADGui.ActiveDocument
         selEx=FreeCADGui.Selection.getSelectionEx()
         dwglines =[]
-        dqd = 0.02 #discretize(QuasiDeflection=d) => gives a list of points with a maximum deflection 'd' to the edge (faster)
+        dqd = 0.01 #discretize(QuasiDeflection=d) => gives a list of points with a maximum deflection 'd' to the edge (faster)
         class XYline:
             def __init__(self, xs, ys, xe, ye):
                 self.start = [xs, ys]
