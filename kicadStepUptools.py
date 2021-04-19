@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.7.3.8"
+___ver___ = "9.7.3.9"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -9710,8 +9710,22 @@ def getPadsList(content):
     #say(model_name)
 
     found = re.findall(r'\(pad .*', model, re.MULTILINE|re.DOTALL)
+    zones = re.findall(r'\(zone .*', model, re.MULTILINE|re.DOTALL)
+    if len(zones):
+        zones = zones[0].strip().split('(zone ')
+        ## TBD create sketch for zones
+        #print(zones)
+        #for z in zones:
+        #    if z != '':
     if len(found):
-        found = found[0].strip().split('(pad')
+        found = found[0].strip().split('(pad ')
+        #removing extra keepout zones
+        for count, p in enumerate(found):
+            if '(zone ' in p:
+                print (len(p))
+                idx = p.index("(zone ")
+                z = p[0:idx]
+                found[count] = z
         for j in found:
             if j != '':
                 [x, y, rot] = re.search(r'\(at\s+([0-9\.-]*?)\s+([0-9\.-]*?)(\s+[0-9\.-]*?|)\)', j).groups()
