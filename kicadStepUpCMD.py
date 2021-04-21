@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-__ksuCMD_version__='1.9.2'
+__ksuCMD_version__='1.9.3'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -1608,6 +1608,7 @@ class ksuToolsResetPartPlacement:
             FreeCAD.Console.Print("No Active Document found")
             return
         else:
+            FreeCAD.ActiveDocument.openTransaction("Absolufy") #open a transaction for undo management
             currState = {} #initialize a dictionary to store current object placements
             sel = FreeCADGui.Selection.getSelection()
             for obj in sel: ## App.ActiveDocument.Objects: #going through active document objects
@@ -1627,7 +1628,7 @@ class ksuToolsResetPartPlacement:
                             print(plc)
                             currState[o] = plc
                             
-            FreeCAD.ActiveDocument.openTransaction("Absolufy") #open a transaction for undo management
+            # FreeCAD.ActiveDocument.openTransaction("Absolufy") #open a transaction for undo management
             
             for obj, plac in currState.items(): #going through all moveable objects
                 if obj.isDerivedFrom("App::Part"): #if object is a part container
@@ -1665,8 +1666,10 @@ class ksuToolsResetPlacement:
             reply = QtGui.QMessageBox.information(None,"Warning", "select one single object to Reset its Placement")
             FreeCAD.Console.PrintError('select one single object to Reset its Placement\n')
         else:
+            FreeCAD.ActiveDocument.openTransaction("Absolufy") #open a transaction for undo management
             import kicadStepUptools
             kicadStepUptools.routineResetPlacement(keepWB=True)
+            FreeCAD.ActiveDocument.commitTransaction()
 
 FreeCADGui.addCommand('ksuToolsResetPlacement',ksuToolsResetPlacement())
 ##

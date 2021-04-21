@@ -1,4 +1,5 @@
 TBD:
 
 - implement fp_rect for hole board loading
-- implement keepout zones for footprints
+- implement keepout zones load/save for footprints
+- implement edgecut load for footprints
