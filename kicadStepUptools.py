@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.7.4.1"
+___ver___ = "9.7.4.2"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -18534,12 +18534,12 @@ def createFpPad(pad,offset,tp, _drills=None):
                 ### OFFSET
                 if found_drill:
                     if d[2]!=d[3]:
-                        drill_str="(drill oval "+str(d[2])+" "+str(d[3]) #+")"
+                        drill_str="(drill oval "+"{0:.3f}".format(d[2])+" "+"{0:.3f}".format(d[3]) #+")"
                     else:
-                        drill_str="(drill "+str(d[2]) #+")"
+                        drill_str="(drill "+"{0:.3f}".format(d[2]) #+")"
                     if abs(d[0]-cx)>edge_tolerance or abs(d[1]-cy)>edge_tolerance:
                     #if d[0] != cx or d[1] != cy:
-                        drill_str=drill_str+" (offset "+str(cx-d[0])+" "+str(cy-d[1])+"))" #+")"
+                        drill_str=drill_str+" (offset "+"{0:.3f}".format(cx-d[0])+" "+"{0:.3f}".format(cy-d[1])+"))" #+")"
                         cx=d[0];cy=d[1]
                     else:
                         drill_str=drill_str+")"
@@ -18547,7 +18547,7 @@ def createFpPad(pad,offset,tp, _drills=None):
                     drill_str="" #"(drill 0)"
                     if tp=='NPTH':
                         ptp="np_thru_hole"; pad_layers=" (layers *.Cu *.Mask))"
-                        drill_str="(drill "+str(sx) +")"
+                        drill_str="(drill "+"{0:.3f}".format(sx) +")"
                         #drill_str="(drill oval "+str(d[2])+" "+str(d[3]) #"(drill 0)"
                     else:
                         if 0: #'B_Cu' in tp:
@@ -18558,7 +18558,7 @@ def createFpPad(pad,offset,tp, _drills=None):
             else:
                 if tp=='NPTH':
                     ptp="np_thru_hole"; pad_layers=" (layers *.Cu *.Mask))"
-                    drill_str="(drill "+str(sx) +")"
+                    drill_str="(drill "+"{0:.3f}".format(sx) +")"
                     #drill_str="(drill oval "+str(d[2])+" "+str(d[3]) #"(drill 0)"
                 else:
                     if 0: #'B_Cu' in tp:
@@ -18571,7 +18571,7 @@ def createFpPad(pad,offset,tp, _drills=None):
             else:
                 pshp='oval'
             #pdl ="  (pad "+str(pad_nbr)+" "+ptp+" "+pshp+" (at "+str(cx)+" "+str(cy)+") (size "+str(sx)+" "+str(sy)+") "+drill_str+pad_layers
-            pdl ="  (pad # "+ptp+" "+pshp+" (at "+str(cx)+" "+str(cy)+") (size "+str(sx)+" "+str(sy)+") "+drill_str+pad_layers
+            pdl ="  (pad # "+ptp+" "+pshp+" (at "+"{0:.3f}".format(cx)+" "+"{0:.3f}".format(cy)+") (size "+"{0:.3f}".format(sx)+" "+"{0:.3f}".format(sy)+") "+drill_str+pad_layers
             pad_nbr=pad_nbr+1
             #say(pad)
             return pdl
@@ -18608,11 +18608,11 @@ def createFpPad(pad,offset,tp, _drills=None):
                 ### OFFSET
                 if found_drill:
                     if d[2]!=d[3]:
-                        drill_str="(drill oval "+str(d[2])+" "+str(d[3]) #+")"
+                        drill_str="(drill oval "+"{0:.3f}".format(d[2])+" "+"{0:.3f}".format(d[3]) #+")"
                     else:
-                        drill_str="(drill "+str(d[2]) #+")"
+                        drill_str="(drill "+"{0:.3f}".format(d[2]) #+")"
                     if abs(d[0]-px)>edge_tolerance or abs(d[1]-py)>edge_tolerance:
-                        drill_str=drill_str+" (offset "+str(px-d[0])+" "+str(py-d[1])+"))" #+")"
+                        drill_str=drill_str+" (offset "+"{0:.3f}".format(px-d[0])+" "+"{0:.3f}".format(py-d[1])+"))" #+")"
                         px=d[0];py=d[1]
                     else:
                         drill_str=drill_str+")"
@@ -18622,10 +18622,10 @@ def createFpPad(pad,offset,tp, _drills=None):
                         sayerr('Error: NPTH rectangular pad WITHOUT drill -> correcting to oval/circle pad')
                         ptp="np_thru_hole"; pad_layers=" (layers *.Cu *.Mask))"
                         if sx==sy:
-                            drill_str="(drill "+str(sx) +")"
+                            drill_str="(drill "+"{0:.3f}".format(sx) +")"
                             ptype="circle"
                         else:
-                            drill_str="(drill oval "+str(sx)+" "+str(sy)+")" #"(drill 0)"
+                            drill_str="(drill oval "+"{0:.3f}".format(sx)+" "+"{0:.3f}".format(sy)+")" #"(drill 0)"
                             ptype="oval"
                     else:
                         ptp="smd"; pad_layers=" (layers F.Cu F.Paste F.Mask))"
@@ -18634,10 +18634,10 @@ def createFpPad(pad,offset,tp, _drills=None):
                 if tp=='NPTH':
                     ptp="np_thru_hole"; pad_layers=" (layers *.Cu *.Mask))"
                     if sx==sy:
-                        drill_str="(drill "+str(sx) +")"
+                        drill_str="(drill "+"{0:.3f}".format(sx) +")"
                         ptype="circle"
                     else:
-                        drill_str="(drill oval "+str(sx)+" "+str(sy)+")" #"(drill 0)"
+                        drill_str="(drill oval "+"{0:.3f}".format(sx)+" "+"{0:.3f}".format(sy)+")" #"(drill 0)"
                         ptype="oval"
                 else:
                     if 0: #'B_Cu' in tp:
@@ -18647,7 +18647,7 @@ def createFpPad(pad,offset,tp, _drills=None):
                     drill_str="" #"(drill 0)"
 
                 #pdl ="  (pad "+str(pad_nbr)+" "+ptp+" rect (at "+str(px)+" "+str(py)+") (size "+str(sx)+" "+str(sy)+") "+drill_str+pad_layers
-            pdl ="  (pad # "+ptp+" "+ptype+" (at "+str(px)+" "+str(py)+") (size "+str(sx)+" "+str(sy)+") "+drill_str+pad_layers
+            pdl ="  (pad # "+ptp+" "+ptype+" (at "+"{0:.3f}".format(px)+" "+"{0:.3f}".format(py)+") (size "+"{0:.3f}".format(sx)+" "+"{0:.3f}".format(sy)+") "+drill_str+pad_layers
             #pdl ="  (pad "+str(pad_nbr)+" thru_hole rect (at "+str(px)+" "+str(py)+") (size "+str(sx)+" "+str(sy)+") (layers F.Cu F.Paste F.Mask))"
             pad_nbr=pad_nbr+1
             #say(pad);sayw(pdl)
@@ -18682,11 +18682,11 @@ def createFpPad(pad,offset,tp, _drills=None):
                 ### OFFSET
                 if found_drill:
                     if d[2]!=d[3]:
-                        drill_str="(drill oval "+str(d[2])+" "+str(d[3]) #+")"
+                        drill_str="(drill oval "+"{0:.3f}".format(d[2])+" "+"{0:.3f}".format(d[3]) #+")"
                     else:
-                        drill_str="(drill "+str(d[2]) #+")"
+                        drill_str="(drill "+"{0:.3f}".format(d[2]) #+")"
                     if abs(d[0]-px)>edge_tolerance or abs(d[1]-py)>edge_tolerance:
-                        drill_str=drill_str+" (offset "+str(px-d[0])+" "+str(py-d[1])+"))" #+")"
+                        drill_str=drill_str+" (offset "+"{0:.3f}".format(px-d[0])+" "+"{0:.3f}".format(py-d[1])+"))" #+")"
                         px=d[0];py=d[1]
                     else:
                         drill_str=drill_str+")"
@@ -18694,9 +18694,9 @@ def createFpPad(pad,offset,tp, _drills=None):
                     if tp=='NPTH':
                         ptp="np_thru_hole"; pad_layers=" (layers *.Cu *.Mask))"
                         if sx==sy:
-                            drill_str="(drill "+str(sx) +")"
+                            drill_str="(drill "+"{0:.3f}".format(sx) +")"
                         else:
-                            drill_str="(drill oval "+str(sx)+" "+str(sy)+")" #"(drill 0)"
+                            drill_str="(drill oval "+"{0:.3f}".format(sx)+" "+"{0:.3f}".format(sy)+")" #"(drill 0)"
                         #drill_str="(drill oval "+str(d[2])+" "+str(d[3]) #"(drill 0)"
                     else:
                         ptp="smd"; pad_layers=" (layers F.Cu F.Paste F.Mask))"
@@ -18705,9 +18705,9 @@ def createFpPad(pad,offset,tp, _drills=None):
                 if tp=='NPTH':
                     ptp="np_thru_hole"; pad_layers=" (layers *.Cu *.Mask))"
                     if sx==sy:
-                        drill_str="(drill "+str(sx) +")"
+                        drill_str="(drill "+"{0:.3f}".format(sx) +")"
                     else:
-                        drill_str="(drill oval "+str(sx)+" "+str(sy)+")" #"(drill 0)"
+                        drill_str="(drill oval "+"{0:.3f}".format(sx)+" "+"{0:.3f}".format(sy)+")" #"(drill 0)"
                     #drill_str="(drill oval "+str(d[2])+" "+str(d[3]) #"(drill 0)"
                 else:
                     if 0: #'B_Cu' in tp:
@@ -18717,7 +18717,7 @@ def createFpPad(pad,offset,tp, _drills=None):
                     drill_str="" #"(drill 0)"
 
             #pdl ="  (pad "+str(pad_nbr)+" "+ptp+" oval (at "+str(px)+" "+str(py)+") (size "+str(sx)+" "+str(sy)+") "+drill_str+pad_layers
-            pdl ="  (pad # "+ptp+" oval (at "+str(px)+" "+str(py)+") (size "+str(sx)+" "+str(sy)+") "+drill_str+pad_layers
+            pdl ="  (pad # "+ptp+" oval (at "+"{0:.3f}".format(px)+" "+"{0:.3f}".format(py)+") (size "+"{0:.3f}".format(sx)+" "+"{0:.3f}".format(sy)+") "+drill_str+pad_layers
             #pdl ="  (pad "+str(pad_nbr)+" "+ptp+" oval (at "+str(cx)+" "+str(cy)+") (size "+str(sx)+" "+str(sy)+") (layers F.Cu F.Paste F.Mask))"
             pad_nbr=pad_nbr+1
             #say(pad);sayw(pdl)
@@ -18796,11 +18796,11 @@ def createFpPad(pad,offset,tp, _drills=None):
                 ### OFFSET
                 if found_drill:
                     if d[2]!=d[3]:
-                        drill_str="(drill oval "+str(abs(d[2]))+" "+str(abs(d[3])) #+")"
+                        drill_str="(drill oval "+"{0:.3f}".format(abs(d[2]))+" "+"{0:.3f}".format(abs(d[3])) #+")"
                     else:
-                        drill_str="(drill "+str(abs(d[2])) #+")"
+                        drill_str="(drill "+"{0:.3f}".format(abs(d[2])) #+")"
                     if abs(d[0]-px)>edge_tolerance or abs(-d[1]-py)>edge_tolerance:
-                        drill_str=drill_str+" (offset "+str(px-d[0])+" "+str(-py-d[1])+"))" #+")"
+                        drill_str=drill_str+" (offset "+"{0:.3f}".format(px-d[0])+" "+"{0:.3f}".format(-py-d[1])+"))" #+")"
                         px=d[0];py=d[1]
                     else:
                         drill_str=drill_str+")"
@@ -18849,8 +18849,8 @@ def createFpPad(pad,offset,tp, _drills=None):
             #     p_layers='(layers F.Cu F.Paste F.Mask)'
             #rratio=0.25  ### TBD
             #pdl ="  (pad "+str(pad_nbr)+" "+ptp+" roundrect (at "+str(cx)+" "+str(cy)+") (size "+\
-            pdl ="  (pad # "+ptp+" roundrect (at "+str(px)+" "+str(py)+") (size "+\
-                 str(sx)+" "+str(sy)+") "+drill_str+" "+pad_layers+" (roundrect_rratio "+str(rratio)+"))"
+            pdl ="  (pad # "+ptp+" roundrect (at "+"{0:.3f}".format(px)+" "+"{0:.3f}".format(py)+") (size "+\
+                 "{0:.3f}".format(sx)+" "+"{0:.3f}".format(sy)+") "+drill_str+" "+pad_layers+" (roundrect_rratio "+str(rratio)+"))"
             #pdl ="  (pad "+str(pad_nbr)+" thru_hole rect (at "+str(px)+" "+str(py)+") (size "+str(sx)+" "+str(sy)+") (layers F.Cu F.Paste F.Mask))"
             pad_nbr=pad_nbr+1
             #say(pad);sayw(pdl)
@@ -18936,9 +18936,9 @@ def createFpPad(pad,offset,tp, _drills=None):
             i=1
             for lines in pad:
                 if i<segments_nbr:
-                    pts=pts+"         (xy "+str(lines[1])+" "+str(-1*lines[2])+") (xy "+str(lines[3])+" "+str(-1*lines[4])+")"+os.linesep
+                    pts=pts+"         (xy "+"{0:.3f}".format(lines[1])+" "+"{0:.3f}".format(-1*lines[2])+") (xy "+"{0:.3f}".format(lines[3])+" "+"{0:.3f}".format(-1*lines[4])+")"+os.linesep
                 else:
-                    pts=pts+"         (xy "+str(lines[1])+" "+str(-1*lines[2])+")) (width 0))"+os.linesep
+                    pts=pts+"         (xy "+"{0:.3f}".format(lines[1])+" "+"{0:.3f}".format(-1*lines[2])+")) (width 0))"+os.linesep
                 i=i+1
             #pad_ref="  (pad "+str(pad_nbr)+" smd custom (at "+str(d[0])+" "+str(d[1])+" ) (size "+str(d[2])+" "+str(d[2])+") (layers F.Cu F.Paste F.Mask)"+os.linesep
             # pad_ref="  (pad # smd custom (at "+str(0.0)+" "+str(0.0)+" ) (size "+str(0)+" "+str(0)+") (layers F.Cu F.Paste F.Mask)"+os.linesep
@@ -19062,11 +19062,15 @@ def createFpPad(pad,offset,tp, _drills=None):
                         for i,e in enumerate(cluster): #w.Edges):
                             if i < len(cluster)-1: 
                                 #if (e.Vertexes[0].X == clusters[i-1].Vertexes[0].X) and (e.Vertexes[0].Y == clusters[i-1].Vertexes[0].Y):
-                                    pts=pts+"         (xy "+str(e.Vertexes[0].X)+" "+str(-1*(e.Vertexes[0].Y))+") (xy "+str(e.Vertexes[1].X)+" "+str(-1*(e.Vertexes[1].Y))+")"+os.linesep
+                                    #pts=pts+"         (xy "+str(e.Vertexes[0].X)+" "+str(-1*(e.Vertexes[0].Y))+") (xy "+str(e.Vertexes[1].X)+" "+str(-1*(e.Vertexes[1].Y))+")"+os.linesep
+                                    pts=pts+"         (xy "+"{0:.3f}".format(e.Vertexes[0].X)+" "+"{0:.3f}".format(-1*(e.Vertexes[0].Y))+") (xy "+"{0:.3f}".format(e.Vertexes[1].X)+" "+"{0:.3f}".format(-1*(e.Vertexes[1].Y))+")"+os.linesep
+                                    #float("{0:.3f}".format(value))
                                 #else:
                                 #   pts=pts+"         (xy "+str(e.Vertexes[1].X)+" "+str(-1*(e.Vertexes[1].Y))+") (xy "+str(e.Vertexes[0].X)+" "+str(-1*(e.Vertexes[0].Y))+")"+os.linesep
                             else:
-                                pts=pts+"         (xy "+str(e.Vertexes[0].X)+" "+str(-1*(e.Vertexes[0].Y))+")) (layer "+padLayer+") (width 0))"+os.linesep
+                                #"{0:.3f}".format(
+                                pts=pts+"         (xy "+"{0:.3f}".format(e.Vertexes[0].X)+" "+"{0:.3f}".format(-1*(e.Vertexes[0].Y))+")) (layer "+padLayer+") (width 0))"+os.linesep
+                                #pts=pts+"         (xy "+str(e.Vertexes[0].X)+" "+str(-1*(e.Vertexes[0].Y))+")) (layer "+padLayer+") (width 0))"+os.linesep
                 #i=1
                 #for lines in pad:
                 #    if i<segments_nbr:
@@ -19112,7 +19116,7 @@ def createFpPad(pad,offset,tp, _drills=None):
                 pts = pts + pts.replace('.Cu','.Mask')
                 #pad_ref="  (pad "+str(pad_nbr)+" smd custom (at "+str(d[0])+" "+str(d[1])+" ) (size "+str(d[2])+" "+str(d[2])+") (layers F.Cu F.Paste F.Mask)"+os.linesep
                 if found_drill:
-                    pad_ref="  (pad # smd circle (at "+str("{0:.3f}".format(d[0]))+" "+str("{0:.3f}".format(d[1]))+" ) (size "+str("{0:.3f}".format(d[2]))+" "+str("{0:.3f}".format(d[2]))+") (layers "+padLayer+" "+padLayer.rstrip('Cu')+"Mask))"+os.linesep
+                    pad_ref="  (pad # smd circle (at "+"{0:.3f}".format(d[0])+" "+"{0:.3f}".format(d[1])+" ) (size "+"{0:.3f}".format(d[2])+" "+"{0:.3f}".format(d[2])+") (layers "+padLayer+" "+padLayer.rstrip('Cu')+"Mask))"+os.linesep
                     #if 0: #'B_Cu' in tp:
                     #    #pad_ref="  (pad # smd custom (at "+str("{0:.3f}".format(d[0]))+" "+str("{0:.3f}".format(d[1]))+" ) (size "+str("{0:.3f}".format(d[2]))+" "+str("{0:.3f}".format(d[2]))+") (layers B.Cu B.Paste B.Mask)"+os.linesep
                     #    pad_ref="  (pad # smd circle (at "+str("{0:.3f}".format(d[0]))+" "+str("{0:.3f}".format(d[1]))+" ) (size "+str("{0:.3f}".format(d[2]))+" "+str("{0:.3f}".format(d[2]))+") (layers B.Cu B.Mask))"+os.linesep
@@ -19194,15 +19198,15 @@ def createFpPad(pad,offset,tp, _drills=None):
                         for i,e in enumerate(cluster): #w.Edges):
                             if i < len(cluster)-1: 
                                 #if (e.Vertexes[0].X == clusters[i-1].Vertexes[0].X) and (e.Vertexes[0].Y == clusters[i-1].Vertexes[0].Y):
-                                    pts=pts+"         (xy "+str(e.Vertexes[0].X-d[0])+" "+str(-1*(e.Vertexes[0].Y)-d[1])+") (xy "+str(e.Vertexes[1].X-d[0])+" "+str(-1*(e.Vertexes[1].Y)-d[1])+")"+os.linesep
+                                    pts=pts+"         (xy "+"{0:.3f}".format(e.Vertexes[0].X-d[0])+" "+"{0:.3f}".format(-1*(e.Vertexes[0].Y)-d[1])+") (xy "+"{0:.3f}".format(e.Vertexes[1].X-d[0])+" "+"{0:.3f}".format(-1*(e.Vertexes[1].Y)-d[1])+")"+os.linesep
                                 #else:
                                 #   pts=pts+"         (xy "+str(e.Vertexes[1].X)+" "+str(-1*(e.Vertexes[1].Y))+") (xy "+str(e.Vertexes[0].X)+" "+str(-1*(e.Vertexes[0].Y))+")"+os.linesep
                             else:
-                                pts=pts+"         (xy "+str(e.Vertexes[0].X-d[0])+" "+str(-1*(e.Vertexes[0].Y)-d[1])+")) (layer "+padLayer+") (width 0))"+os.linesep
+                                pts=pts+"         (xy "+"{0:.3f}".format(e.Vertexes[0].X-d[0])+" "+"{0:.3f}".format(-1*(e.Vertexes[0].Y)-d[1])+")) (layer "+padLayer+") (width 0))"+os.linesep
                 #pts = pts + pts.replace('F.Cu','F.Mask')
                 #pad_ref="  (pad "+str(pad_nbr)+" smd custom (at "+str(d[0])+" "+str(d[1])+" ) (size "+str(d[2])+" "+str(d[2])+") (layers F.Cu F.Paste F.Mask)"+os.linesep
                 if found_drill:
-                    pad_ref="  (pad # smd custom (at "+str("{0:.3f}".format(d[0]))+" "+str("{0:.3f}".format(d[1]))+" ) (size "+str("{0:.3f}".format(d[2]))+" "+str("{0:.3f}".format(d[2]))+") (layers "+padLayer+" "+padLayer.rstrip('Cu')+"Mask)"+os.linesep
+                    pad_ref="  (pad # smd custom (at "+"{0:.3f}".format(d[0])+" "+"{0:.3f}".format(d[1])+" ) (size "+"{0:.3f}".format(d[2])+" "+"{0:.3f}".format(d[2])+") (layers "+padLayer+" "+padLayer.rstrip('Cu')+"Mask)"+os.linesep
                     #if 'B_Cu' in lyr:
                     #    pad_ref="  (pad # smd custom (at "+str("{0:.3f}".format(d[0]))+" "+str("{0:.3f}".format(d[1]))+" ) (size "+str("{0:.3f}".format(d[2]))+" "+str("{0:.3f}".format(d[2]))+") (layers B.Cu B.Paste B.Mask)"+os.linesep
                     #    #pad_ref="  (pad # smd custom (at "+str("{0:.3f}".format(d[0]))+" "+str("{0:.3f}".format(d[1]))+" ) (size "+str("{0:.3f}".format(d[2]))+" "+str("{0:.3f}".format(d[2]))+") (layers B.Cu B.Mask)"+os.linesep
@@ -19324,7 +19328,7 @@ def createFpPad(pad,offset,tp, _drills=None):
         elif pad[0][0]=='circle':
             print (pad)
             wd_="{0:.3f}".format(float(pad[0][4].split('_')[2]))
-            pts="      (gr_circle (center "+str("{0:.3f}".format(pad[0][2]-d[0]))+" "+str("{0:.3f}".format(-1*pad[0][3]-d[1]))+") (end "+str("{0:.3f}".format(pad[0][2]-d[0]+pad[0][1]))+" "+str("{0:.3f}".format(-1*pad[0][3]-d[1]))+") (width "+str(wd_)+"))"+os.linesep
+            pts="      (gr_circle (center "+"{0:.3f}".format(pad[0][2]-d[0])+" "+"{0:.3f}".format(-1*pad[0][3]-d[1])+") (end "+"{0:.3f}".format(pad[0][2]-d[0]+pad[0][1])+" "+"{0:.3f}".format(-1*pad[0][3]-d[1])+") (width "+"{0:.3f}".format(wd_)+"))"+os.linesep
             say(pts)
             if found_drill:
                 #pad_ref="  (pad "+str(pad_nbr)+" smd custom (at "+str(d[0])+" "+str(d[1])+" ) (size "+str(d[2])+" "+str(d[2])+") (layers F.Cu F.Paste F.Mask)"+os.linesep
