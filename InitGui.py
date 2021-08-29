@@ -14,7 +14,7 @@ ksu_wb_version='v 10.2.2'
 global myurlKWB, ksuWBpath
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=427 #v10.1.9
+mycommitsKWB=429 #v10.1.9
 global verKSU
 verKSU="9.7.4.3"
 
