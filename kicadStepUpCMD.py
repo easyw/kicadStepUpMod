@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-__ksuCMD_version__='1.9.3'
+ksuCMD_version__='1.9.5'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -80,6 +80,18 @@ def P_Line(prm1,prm2):
     else:
         return Part.Line(prm1, prm2)
 
+def fuse_objs(GuiObjSel):
+    objList= []
+    for s in GuiObjSel:
+        objList.append(s.Object)
+    FreeCAD.ActiveDocument.addObject("Part::MultiFuse","MultiFuse")
+    MultiFuseName = FreeCAD.ActiveDocument.ActiveObject.Name
+    FreeCAD.ActiveDocument.getObject(MultiFuseName).Shapes = objList
+    # [App.activeDocument().Part__Feature002,App.activeDocument().Part__Feature003,App.activeDocument().Part__Feature004,App.activeDocument().Part__Feature005,App.activeDocument().Part__Feature006,App.activeDocument().Part__Feature007,App.activeDocument().Part__Feature008,App.activeDocument().Part__Feature009,App.activeDocument().Part__Feature010,App.activeDocument().Part__Feature011,]
+    FreeCAD.ActiveDocument.recompute()
+    return MultiFuseName
+#
+
 def rmvsubtree(objs):
     def addsubobjs(obj,toremoveset):
         toremove.add(obj)
@@ -104,7 +116,20 @@ def rmvsubtree(objs):
         except:
             pass
 ###
-
+def info_msg(msg):
+        QtGui.QApplication.restoreOverrideCursor()
+        # msg="""Select <b>a Compound</b> or <br><b>a Part Design group</b><br>or <b>more than one Part</b> object !<br>"""
+        spc="""<font color='white'>*******************************************************************************</font><br>
+        """
+        msg1="Info ..."
+        QtGui.QApplication.restoreOverrideCursor()
+        #RotateXYZGuiClass().setGeometry(25, 250, 500, 500)
+        diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Information,
+                                msg1,
+                                msg)
+        diag.setWindowModality(QtCore.Qt.ApplicationModal)
+        diag.exec_()
+##
 
 ksuWBpath = os.path.dirname(ksu_locator.__file__)
 #sys.path.append(ksuWB + '/Gui')
@@ -529,11 +554,12 @@ class ksuTools:
  
 FreeCADGui.addCommand('ksuTools',ksuTools())
 ##
-class ksuToolsEdges2Poly:
-    "ksu tools Edges Selection to PolyLine Sketch"
+
+class ksuToolsContour2Poly:
+    "ksu tools Shapes Selection to PolyLine Sketch"
     
     def GetResources(self):
-        mybtn_tooltip ="ksu tools \'RF PolyLined Sketch\'\nSelection\'s Edges to PolyLine Sketch"
+        mybtn_tooltip ="ksu tools \'RF PolyLined Sketch\'\nSelection\'s Shapes to PolyLine Sketch"
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Sketcher_CreatePolyline-RF.svg') , # the name of a svg file available in the resources
                      'MenuText': mybtn_tooltip ,
                      'ToolTip' : mybtn_tooltip}
@@ -549,7 +575,9 @@ class ksuToolsEdges2Poly:
         return True
         
     def Activated(self):
-        import segments2poly
+        #import segments2poly
+        #import wires2poly
+        import Draft
         doc=FreeCAD.ActiveDocument
         docG = FreeCADGui.ActiveDocument
         selEx=FreeCADGui.Selection.getSelectionEx()
@@ -561,36 +589,85 @@ class ksuToolsEdges2Poly:
                 self.end   = [xe, ye]
         if len (selEx) > 0:
             doc.openTransaction('e2skd')
-            for selEdge in selEx:
-                FreeCADGui.ActiveDocument.getObject(selEdge.Object.Name).Visibility = False
-                w = Part.Wire(selEdge.Object.Shape.Edges)
-                Part.show(w)
-                w_name=FreeCAD.ActiveDocument.ActiveObject.Name
-                wn=FreeCAD.ActiveDocument.getObject(w_name)
-                l=wn.Shape.copy().discretize(QuasiDeflection=dqd)
-                f=Part.makePolygon(l)
-                #Part.show(f)
-                sh_name=FreeCAD.ActiveDocument.ActiveObject.Name
-                FreeCAD.ActiveDocument.removeObject(w_name)
-                FreeCAD.ActiveDocument.recompute() 
-                for edge in f.Edges:
-                    line = XYline (edge.Vertexes[0].X,edge.Vertexes[0].Y,edge.Vertexes[1].X,edge.Vertexes[1].Y)
-                    dwglines.append(line)
-        poly = segments2poly.Lines2Polygon(dwglines)
-        #print (poly)
-        FreeCAD.ActiveDocument.addObject('Sketcher::SketchObject', 'Sketch_PolyLined')
-        skd_name=FreeCAD.ActiveDocument.ActiveObject.Name
-        FreeCAD.ActiveDocument.getObject(skd_name).Placement = FreeCAD.Placement(FreeCAD.Vector(0.000000, 0.000000, 0.000000), FreeCAD.Rotation(0.000000, 0.000000, 0.000000, 1.000000))
-        FreeCAD.ActiveDocument.getObject(skd_name).MapMode = "Deactivated"
-        FreeCADGui.runCommand('Sketcher_CreatePolyline',0)
-        for idx,l in enumerate(poly):
-            if idx < len(poly)-1:
-                FreeCAD.ActiveDocument.getObject(skd_name).addGeometry(Part.LineSegment(FreeCAD.Vector(poly[idx][0],poly[idx][1],0),FreeCAD.Vector(poly[idx+1][0],poly[idx+1][1],0)),False)
+            if len(selEx)>1:
+                mFuseNm = fuse_objs(selEx)
+                FuseWires = FreeCAD.ActiveDocument.getObject(mFuseNm).Shape.Wires
+                Vol = FreeCAD.ActiveDocument.getObject(mFuseNm).Shape.Volume
+            else:
+                FuseWires = FreeCAD.ActiveDocument.getObject(selEx[0].Object.Name).Shape.Wires
+                Vol = FreeCAD.ActiveDocument.getObject(selEx[0].Object.Name).Shape.Volume
+                mFuseNm = selEx[0].Object.Name
+            if Vol == 0:
+                EdgesContour = []
+                idx2rmv = []
+                for w in FuseWires:
+                    for ew in w.Edges:
+                        if 'Line object' in str(ew.Curve):
+                            foundE = False
+                            for i,e in enumerate (EdgesContour):
+                                if (e.Vertexes[0].Point == ew.Vertexes[0].Point) and (e.Vertexes[1].Point == ew.Vertexes[1].Point):
+                                #if (_Equal(e.start[0], ew.end[0]) and _Equal(e.start[1], ew.end[1])):
+                                    foundE = True
+                                    idx2rmv.append(i)
+                                    print('found edge',i)
+                                #elif (_Equal(e.start[1], ew.end[0]) and _Equal(e.start[0], ew.end[1])):
+                                elif (e.Vertexes[1].Point == ew.Vertexes[0].Point) and (e.Vertexes[0].Point == ew.Vertexes[1].Point):
+                                    foundE = True
+                                    idx2rmv.append(i)
+                                    print('found edge',i)
+                            if foundE == False:
+                                EdgesContour.append(ew)
+                        else:
+                            EdgesContour.append (ew)
+                print(len(EdgesContour))
+                print(idx2rmv,len(idx2rmv))
+                EdgesContourCleaned = []
+                for j,e in enumerate (EdgesContour):
+                    if j not in idx2rmv:
+                        EdgesContourCleaned.append (e)
+                sk = Draft.makeSketch(EdgesContourCleaned, autoconstraints=True)
+                sk.Label = 'Pads_Poly'
+                if len(selEx)>1:
+                    FreeCAD.ActiveDocument.removeObject(mFuseNm)
+            else:
+                FreeCAD.ActiveDocument.addObject('Part::Refine','Refined').Source=FreeCAD.ActiveDocument.getObject(mFuseNm)
+                RefName = FreeCAD.ActiveDocument.ActiveObject.Name
+                FreeCAD.ActiveDocument.recompute()
+                sv0 = Draft.makeShape2DView(FreeCAD.ActiveDocument.getObject(RefName), FreeCAD.Vector(-0.0, -0.0, 1.0))
+                FreeCAD.ActiveDocument.recompute()
+                FreeCADGui.Selection.clearSelection()
+                FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.Name,sv0.Name)
+                sk = Draft.makeSketch(FreeCADGui.Selection.getSelection(), autoconstraints=True)
+                sk.Label = 'Pads_Poly'
+                if 1:
+                    ### Begin command Std_Delete
+                    FreeCAD.ActiveDocument.removeObject(RefName)
+                    FreeCAD.ActiveDocument.removeObject(sv0.Name)
+                    #FreeCAD.ActiveDocument.recompute()
+                if len(selEx)>1:
+                    FreeCAD.ActiveDocument.removeObject(mFuseNm)
+            FreeCAD.ActiveDocument.recompute()
+            #creating an edge ordered sketch
+            sv0 = Draft.makeShape2DView(FreeCAD.ActiveDocument.getObject(sk.Name), FreeCAD.Vector(-0.0, -0.0, 1.0))
+            FreeCAD.ActiveDocument.recompute()
+            FreeCAD.ActiveDocument.removeObject(sk.Name)
+            FreeCADGui.Selection.clearSelection()
+            FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.Name,sv0.Name)
+            sk = Draft.makeSketch(FreeCADGui.Selection.getSelection(), autoconstraints=True)
+            FreeCAD.ActiveDocument.removeObject(sv0.Name)
+            sk.Label = 'Pads_Poly'
+            FreeCAD.ActiveDocument.recompute()
+            
+            
         doc.commitTransaction()
-        FreeCAD.ActiveDocument.recompute()
+        msg="""PolyLine Contour generated<br><br>"""
+        msg+="<b>Please add \'circles\' inside each closed polyline</b><br>"
+        info_msg(msg)
+        #stop
+        #FreeCAD.ActiveDocument.recompute()
 #
 if FreeCAD.GuiUp:
-    FreeCADGui.addCommand('ksuToolsEdges2Poly',ksuToolsEdges2Poly())
+    FreeCADGui.addCommand('ksuToolsContour2Poly',ksuToolsContour2Poly())
 ##
 class ksuToolsOffset2D:
     "ksu tools Offset2D"
