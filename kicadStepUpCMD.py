@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='1.9.5'
+ksuCMD_version__='1.9.6'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -609,18 +609,18 @@ class ksuToolsContour2Poly:
                                 #if (_Equal(e.start[0], ew.end[0]) and _Equal(e.start[1], ew.end[1])):
                                     foundE = True
                                     idx2rmv.append(i)
-                                    print('found edge',i)
+                                    #print('found edge',i)
                                 #elif (_Equal(e.start[1], ew.end[0]) and _Equal(e.start[0], ew.end[1])):
                                 elif (e.Vertexes[1].Point == ew.Vertexes[0].Point) and (e.Vertexes[0].Point == ew.Vertexes[1].Point):
                                     foundE = True
                                     idx2rmv.append(i)
-                                    print('found edge',i)
+                                    #print('found edge',i)
                             if foundE == False:
                                 EdgesContour.append(ew)
                         else:
                             EdgesContour.append (ew)
-                print(len(EdgesContour))
-                print(idx2rmv,len(idx2rmv))
+                #print(len(EdgesContour))
+                #print(idx2rmv,len(idx2rmv))
                 EdgesContourCleaned = []
                 for j,e in enumerate (EdgesContour):
                     if j not in idx2rmv:
@@ -654,6 +654,8 @@ class ksuToolsContour2Poly:
             FreeCADGui.Selection.clearSelection()
             FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.Name,sv0.Name)
             sk = Draft.makeSketch(FreeCADGui.Selection.getSelection(), autoconstraints=True)
+            FreeCADGui.ActiveDocument.getObject(sk.Name).LineColor = (1.000,1.000,1.000)
+            FreeCADGui.ActiveDocument.getObject(sk.Name).PointColor = (1.000,1.000,1.000)
             FreeCAD.ActiveDocument.removeObject(sv0.Name)
             sk.Label = 'Pads_Poly'
             FreeCAD.ActiveDocument.recompute()
@@ -661,7 +663,7 @@ class ksuToolsContour2Poly:
             
         doc.commitTransaction()
         msg="""PolyLine Contour generated<br><br>"""
-        msg+="<b>Please add \'circles\' inside each closed polyline</b><br>"
+        msg+="<b>For PolyLine Pads, please add \'circles\' inside each closed polyline</b><br>"
         info_msg(msg)
         #stop
         #FreeCAD.ActiveDocument.recompute()
