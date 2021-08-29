@@ -14,7 +14,7 @@ ksu_wb_version='v 10.2.2'
 global myurlKWB, ksuWBpath
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=429 #v10.1.9
+mycommitsKWB=430 #v10.1.9
 global verKSU
 verKSU="9.7.4.3"
 
@@ -141,7 +141,8 @@ class KiCadStepUpWB ( Workbench ):
                    'footprint-template.FCStd', 'footprint-Edge-template.FCStd', 'footprint-template-roundrect-polylines.FCStd',\
                    'footprint-RF-antenna.FCStd', 'footprint-RF-antenna-w-solder-Mask.FCStd', 'RF-antenna-dxf.dxf', \
                    'complex-Polyline-footprint.FCStd', 'footprint-complex-arc-pads.FCStd', \
-                   'footprint-SPU0410LR5H.FCStd',\
+                   'footprint-SPU0410LR5H.FCStd','WaveguideAntenna-RF-fp.FCStd', 'Notch-RF-filter-wNT-fp.FCStd', \
+                   'Microstrip-RF-filter-fp.FCStd', 'Splitter-RF-fp.FCStd', \
                    'kicadStepUp-cheat-sheet.pdf', 'kicad-3D-to-MCAD.pdf', 'Generating-a-KiCAD-footprint-and-Model-from-3D-Step-Data.pdf' ]
         dirs = self.ListDemos()
 
