@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.7.4.2"
+___ver___ = "9.7.4.3"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -16651,11 +16651,15 @@ def PushFootprint():
                                             centers.append(g.Center);rads.append(g.Radius)
                                 #print(len(centers), centers)
                                 if 'NPTH_Drills' not in o.Label:
-                                    skLabel = 'Sketch_Pads_TH_SMD_tmp'
+                                    if '_padNbr=' in o.Label:
+                                        skLabel = 'Sketch_Pads_TH_SMD'+o.Label[o.Label.index('_padNbr='):]+'_tmp'
+                                    else:
+                                        skLabel = 'Sketch_Pads_TH_SMD_tmp'
                                 else:
                                     skLabel = 'Sketch_Pads_NPTH_tmp'
                                 FreeCAD.ActiveDocument.addObject('Sketcher::SketchObject', skLabel)
                                 skd_name=FreeCAD.ActiveDocument.ActiveObject.Name
+                                FreeCAD.ActiveDocument.ActiveObject.Label = skLabel #workaround to keep '=' in Label
                                 sk_temp.append(FreeCAD.ActiveDocument.ActiveObject)
                                 #FreeCAD.ActiveDocument.getObject(skd_name).Placement = FreeCAD.Placement(FreeCAD.Vector(0.000000, 0.000000, 0.000000), FreeCAD.Rotation(0.000000, 0.000000, 0.000000, 1.000000))
                                 #FreeCAD.ActiveDocument.getObject(skd_name).MapMode = "Deactivated"
@@ -17691,6 +17695,7 @@ def export_footprint(fname=None):
         pad_nbr=1
         found_arc=False
         for pad in pth:
+            #print(pad)
             if pad[0]=='circle':
                 npad=npad+os.linesep+createFpPad(pad,offset,u'TH', drill_pos)
             elif pad[0]=='line' and not found_arc:
@@ -18517,9 +18522,13 @@ def createFpPad(pad,offset,tp, _drills=None):
             ptp='thru_hole'
         else:
             ptp='np_thru_hole'
-        #sayw (tp)
+        #sayw (pad)
         found_drill=False
         if pad[0]=='circle':
+            if '_padNbr=' in pad[-1]:
+                padNbr='"'+pad[-1][pad[-1].index('_padNbr='):].replace('_padNbr=','').replace('_tmp','')+'"'
+            else:
+                padNbr='"#"'
             sayerr('circle pad nbr.'+str(pad_nbr))
             cx=pad[2];cy=pad[3]*-1;sx=2*pad[1];sy=2*pad[1]
             if len(_drills)>0:
@@ -18571,7 +18580,7 @@ def createFpPad(pad,offset,tp, _drills=None):
             else:
                 pshp='oval'
             #pdl ="  (pad "+str(pad_nbr)+" "+ptp+" "+pshp+" (at "+str(cx)+" "+str(cy)+") (size "+str(sx)+" "+str(sy)+") "+drill_str+pad_layers
-            pdl ="  (pad # "+ptp+" "+pshp+" (at "+"{0:.3f}".format(cx)+" "+"{0:.3f}".format(cy)+") (size "+"{0:.3f}".format(sx)+" "+"{0:.3f}".format(sy)+") "+drill_str+pad_layers
+            pdl ="  (pad "+padNbr+" "+ptp+" "+pshp+" (at "+"{0:.3f}".format(cx)+" "+"{0:.3f}".format(cy)+") (size "+"{0:.3f}".format(sx)+" "+"{0:.3f}".format(sy)+") "+drill_str+pad_layers
             pad_nbr=pad_nbr+1
             #say(pad)
             return pdl
