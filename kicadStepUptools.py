@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.7.5.0"
+___ver___ = "9.7.5.1"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -9850,7 +9850,9 @@ def getPolyList(content):
     fp_pnts = []
     found = re.findall(r'\(fp_poly .*', model, re.MULTILINE|re.DOTALL)
     if len(found):
+        found = found[0].strip().split('(fp_poly ')
         for j in found:
+            print('j',j)
             if j != '':
                 try:
                     layers = re.search(r'\(layer\s+(.+?)\)', j).groups(0)[0]  #
@@ -9860,14 +9862,15 @@ def getPolyList(content):
                     sayerr('NO LAYER on NetTie') #test utf-8 test pads
                 # print(layers)
                 # stop
-                pnts = re.search(r'\(fp_poly\s\(pts(.*?)\)\s\(width', j, re.MULTILINE|re.DOTALL)
+                #pnts = re.search(r'\(fp_poly\s\(pts(.*?)\)\s\(width', j, re.MULTILINE|re.DOTALL)
+                pnts = re.search(r'\(pts(.*?)\)\s\(width', j, re.MULTILINE|re.DOTALL)
                 #pnts_nt = re.search(r'\(fp_poly\s\(pts(.*?)\)\s\(width', j, re.MULTILINE|re.DOTALL)
                 #if pnts_nt is not None:
                 #    pnts = pnts_nt #re.search(r'\(fp_poly\s\(pts(.*?)\)\s\(width', j, re.MULTILINE|re.DOTALL)
                 #    pShape = 'NetTie'
                 fp_pnts.append({'layers': layers, 'points': pnts})
 
-    #say(pads)
+    say(fp_pnts)
     #
     return fp_pnts
 ###
