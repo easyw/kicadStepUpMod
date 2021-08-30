@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.7.4.3"
+___ver___ = "9.7.5.0"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -11043,7 +11043,8 @@ def routineDrawFootPrint(content,name):
                 #mypad=addPadLong(x1, y1, dx, dy, perc, 0, 0)
                 mypad2 = None
                 skip = False
-                if (pShape=='custom' or pShape=='NetTie') and pGeomC is None:
+                if pShape=='custom' and pGeomC is None:
+                #if (pShape=='custom' or pShape=='NetTie') and pGeomC is None:
                     #sayw(pnts.groups(0)[0].split('(xy'))
                     #print(pGeomC)
                     try:
@@ -16635,110 +16636,134 @@ def PushFootprint():
         sel = FreeCADGui.Selection.getSelection()
         if len (sel) >= 1:
             #sayw(doc.Name)
-            to_discretize=False;sk_to_discr=[];sk_temp=[]
+            to_discretize=False;sk_to_discr=[];sk_temp=[];sk_to_convert=[];sk_to_reselect=[]
             #annular=0.125
             if "Sketch" in sel[0].TypeId or "Group" in sel[0].TypeId:
                 if "Group" in sel[0].TypeId:
-                    for o in FreeCAD.ActiveDocument.Objects:
+                    #print(FreeCAD.ActiveDocument.getObject(sel[0].Name).OutList,'g.OutList')
+                    #for o in FreeCAD.ActiveDocument.Objects:
                     #print((sel[0].Name))
-                    #for o in sel[0].Outlist:
-                        if sel[0] in o.InList:
-                            if 'PTH_Drills' in o.Label:
-                                centers=[];rads=[]
-                                for idx,g in enumerate(o.Geometry):
-                                    if 'ArcOfCircle' in str(g) and not isConstruction(g): #o.getConstruction(idx): #g.Construction:
-                                        if not (g.Center in centers and g.Radius in rads):
-                                            centers.append(g.Center);rads.append(g.Radius)
-                                #print(len(centers), centers)
-                                if 'NPTH_Drills' not in o.Label:
-                                    if '_padNbr=' in o.Label:
-                                        skLabel = 'Sketch_Pads_TH_SMD'+o.Label[o.Label.index('_padNbr='):]+'_tmp'
-                                    else:
-                                        skLabel = 'Sketch_Pads_TH_SMD_tmp'
+                    for o in FreeCAD.ActiveDocument.getObject(sel[0].Name).OutList:
+                        #if sel[0] in o.InList:
+                        #print(o.Label)
+                        if 'PTH_Drills' in o.Label:
+                            centers=[];rads=[]
+                            for idx,g in enumerate(o.Geometry):
+                                if 'ArcOfCircle' in str(g) and not isConstruction(g): #o.getConstruction(idx): #g.Construction:
+                                    if not (g.Center in centers and g.Radius in rads):
+                                        centers.append(g.Center);rads.append(g.Radius)
+                            #print(len(centers), centers)
+                            if 'NPTH_Drills' not in o.Label:
+                                if '_padNbr=' in o.Label:
+                                    skLabel = 'Sketch_Pads_TH_SMD'+o.Label[o.Label.index('_padNbr='):]+'_tmp'
                                 else:
-                                    skLabel = 'Sketch_Pads_NPTH_tmp'
-                                FreeCAD.ActiveDocument.addObject('Sketcher::SketchObject', skLabel)
-                                skd_name=FreeCAD.ActiveDocument.ActiveObject.Name
-                                FreeCAD.ActiveDocument.ActiveObject.Label = skLabel #workaround to keep '=' in Label
-                                sk_temp.append(FreeCAD.ActiveDocument.ActiveObject)
-                                #FreeCAD.ActiveDocument.getObject(skd_name).Placement = FreeCAD.Placement(FreeCAD.Vector(0.000000, 0.000000, 0.000000), FreeCAD.Rotation(0.000000, 0.000000, 0.000000, 1.000000))
-                                #FreeCAD.ActiveDocument.getObject(skd_name).MapMode = "Deactivated"
-                                #print(centers)
-                                for i,c in enumerate(centers):
-                                    FreeCAD.ActiveDocument.getObject(skd_name).addGeometry(Part.Circle(FreeCAD.Vector(c[0], c[1]), FreeCAD.Vector(0, 0, 1), rads[i]))
-                                    if 'Pads_NPTH' not in FreeCAD.ActiveDocument.getObject(skd_name).Label:
-                                        FreeCAD.ActiveDocument.getObject(skd_name).addGeometry(Part.Circle(FreeCAD.Vector(c[0], c[1]), FreeCAD.Vector(0, 0, 1), rads[i]*1.4)) # annular = 40% of radius
-                                FreeCAD.ActiveDocument.recompute()
-                                FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.getObject(skd_name))
+                                    skLabel = 'Sketch_Pads_TH_SMD_tmp'
+                            else:
+                                skLabel = 'Sketch_Pads_NPTH_tmp'
+                            FreeCAD.ActiveDocument.addObject('Sketcher::SketchObject', skLabel)
+                            skd_name=FreeCAD.ActiveDocument.ActiveObject.Name
+                            FreeCAD.ActiveDocument.ActiveObject.Label = skLabel #workaround to keep '=' in Label
+                            sk_temp.append(FreeCAD.ActiveDocument.ActiveObject)
+                            #FreeCAD.ActiveDocument.getObject(skd_name).Placement = FreeCAD.Placement(FreeCAD.Vector(0.000000, 0.000000, 0.000000), FreeCAD.Rotation(0.000000, 0.000000, 0.000000, 1.000000))
+                            #FreeCAD.ActiveDocument.getObject(skd_name).MapMode = "Deactivated"
+                            #print(centers)
+                            for i,c in enumerate(centers):
+                                FreeCAD.ActiveDocument.getObject(skd_name).addGeometry(Part.Circle(FreeCAD.Vector(c[0], c[1]), FreeCAD.Vector(0, 0, 1), rads[i]))
+                                if 'Pads_NPTH' not in FreeCAD.ActiveDocument.getObject(skd_name).Label:
+                                    FreeCAD.ActiveDocument.getObject(skd_name).addGeometry(Part.Circle(FreeCAD.Vector(c[0], c[1]), FreeCAD.Vector(0, 0, 1), rads[i]*1.4)) # annular = 40% of radius
+                            FreeCAD.ActiveDocument.recompute()
+                            FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.getObject(skd_name))
+                            sk_to_convert.append(FreeCAD.ActiveDocument.getObject(skd_name))
+                            sk_to_reselect.append(o)
                         if 'F_Silks' in o.Label or 'F_Fab' in o.Label or 'F_CrtYd' in o.Label \
-                               or 'Pads_TH' in o.Label or 'Pads_NPTH' in o.Label or 'Edge_Cuts' in o.Label\
-                               or 'Pads_Round_Rect' in o.Label or 'Pads_Poly' in o.Label or 'NetTie_Poly' in o.Label or 'FZ_' in o.Label\
-                               or 'Pads_Geom' in o.Label:
-                            FreeCADGui.Selection.addSelection(o)
+                            or 'Pads_TH' in o.Label or 'Pads_NPTH' in o.Label or 'Edge_Cuts' in o.Label\
+                            or 'Pads_Round_Rect' in o.Label or 'FZ_' in o.Label\
+                            or 'Pads_Geom' in o.Label:
+                            #or 'Pads_Round_Rect' in o.Label or 'Pads_Poly' in o.Label or 'NetTie_Poly' in o.Label or 'FZ_' in o.Label\
+                            #print('adding selection ',o.Label)
+                            FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.getObject(o.Name))
+                            sk_to_convert.append(o)
+                            #print(o.Label,'sk added')
                         if hasattr(o,"LabelText"):
                             sayerr(o.LabelText)
                             if 'Ref' in o.Label or 'Val' in o.Label:
-                                FreeCADGui.Selection.addSelection(o)
+                                FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.getObject(o.Name))
+                                sk_to_convert.append(o)
                         ## checking Pads_Poly for ArcOfCircle to be discretized
                         to_discretize=False
                         if 'NetTie_Poly' in o.Label: 
                             if hasattr(o,"Geometry"):
                                 for g in o.Geometry:
-                                    if 'ArcOfCircle' in str(g): # and not g.Construction:
+                                    if 'ArcOfCircle' in str(g) and not isConstruction(g):
                                         FreeCAD.Console.PrintWarning('need to discretize Arcs\n')
                                         to_discretize=True
                                 if to_discretize:
                                     sk_to_discr.append(o)
                                     FreeCADGui.Selection.removeSelection(o)
+                                else:
+                                    #print(o.Label,'sk added')
+                                    sk_to_convert.append(o)
+                        to_discretize=False
                         if 'Pads_Poly' in o.Label: 
                             if hasattr(o,"Geometry"):
                                 for g in o.Geometry:
-                                    if 'ArcOfCircle' in str(g): # and not g.Construction:
+                                    if 'ArcOfCircle' in str(g) and not isConstruction(g):
                                         FreeCAD.Console.PrintWarning('need to discretize Arcs\n')
                                         to_discretize=True
                                 if to_discretize:
                                     sk_to_discr.append(o)
                                     FreeCADGui.Selection.removeSelection(o)
+                                else:
+                                    #print(o.Label,'sk added')
+                                    sk_to_convert.append(o)
                 else:
-                    to_discretize=False
-                    if 'PTH_Drills' in sel[0].Label:
-                        o= sel[0]
-                        centers=[];rads=[]
-                        for idx,g in enumerate(o.Geometry):
-                            if 'ArcOfCircle' in str(g) and not isConstruction(g): # o.getConstruction(idx): #g.Construction:
-                                if not (g.Center in centers and g.Radius in rads):
-                                    centers.append(g.Center);rads.append(g.Radius)
-                        #print(len(centers), centers)
-                        if 'NPTH_Drills' not in sel[0].Label:
-                            skLabel = 'Sketch_Pads_TH_SMD_tmp'
-                        else:
-                            skLabel = 'Sketch_Pads_NPTH_tmp'
-                        FreeCAD.ActiveDocument.addObject('Sketcher::SketchObject', skLabel)
-                        skd_name=FreeCAD.ActiveDocument.ActiveObject.Name
-                        sk_temp.append(FreeCAD.ActiveDocument.ActiveObject)
-                        #FreeCAD.ActiveDocument.getObject(skd_name).Placement = FreeCAD.Placement(FreeCAD.Vector(0.000000, 0.000000, 0.000000), FreeCAD.Rotation(0.000000, 0.000000, 0.000000, 1.000000))
-                        #FreeCAD.ActiveDocument.getObject(skd_name).MapMode = "Deactivated"
-                        for i,c in enumerate(centers):
-                            FreeCAD.ActiveDocument.getObject(skd_name).addGeometry(Part.Circle(FreeCAD.Vector(c[0], c[1]), FreeCAD.Vector(0, 0, 1), rads[i]))
-                            if 'NPTH_Drills' not in sel[0].Label:
-                                FreeCAD.ActiveDocument.getObject(skd_name).addGeometry(Part.Circle(FreeCAD.Vector(c[0], c[1]), FreeCAD.Vector(0, 0, 1), rads[i]*1.4)) # annular = 40% of radius # +annular))
-                        FreeCAD.ActiveDocument.recompute()
-                    elif 'NetTie_Poly' in sel[0].Label: 
-                        for g in sel[0].Geometry:
-                            if 'ArcOfCircle' in str(g):
-                                FreeCAD.Console.PrintWarning('need to discretize Arcs\n')
-                                to_discretize=True
-                        if to_discretize:
-                            sk_to_discr.append(sel[0])
-                            FreeCADGui.Selection.removeSelection(sel[0])
-                    elif 'Pads_Poly' in sel[0].Label: 
-                        for g in sel[0].Geometry:
-                            if 'ArcOfCircle' in str(g):
-                                FreeCAD.Console.PrintWarning('need to discretize Arcs\n')
-                                to_discretize=True
-                        if to_discretize:
-                            sk_to_discr.append(sel[0])
-                            FreeCADGui.Selection.removeSelection(sel[0])
+                    for o in sel:
+                        to_discretize=False
+                        if 'PTH_Drills' in o.Label:
+                            #o= sel[0]
+                            centers=[];rads=[]
+                            for idx,g in enumerate(o.Geometry):
+                                if 'ArcOfCircle' in str(g) and not isConstruction(g): # o.getConstruction(idx): #g.Construction:
+                                    if not (g.Center in centers and g.Radius in rads):
+                                        centers.append(g.Center);rads.append(g.Radius)
+                            #print(len(centers), centers)
+                            if 'NPTH_Drills' not in o.Label:
+                                skLabel = 'Sketch_Pads_TH_SMD_tmp'
+                            else:
+                                skLabel = 'Sketch_Pads_NPTH_tmp'
+                            FreeCAD.ActiveDocument.addObject('Sketcher::SketchObject', skLabel)
+                            skd_name=FreeCAD.ActiveDocument.ActiveObject.Name
+                            sk_temp.append(FreeCAD.ActiveDocument.ActiveObject)
+                            #FreeCAD.ActiveDocument.getObject(skd_name).Placement = FreeCAD.Placement(FreeCAD.Vector(0.000000, 0.000000, 0.000000), FreeCAD.Rotation(0.000000, 0.000000, 0.000000, 1.000000))
+                            #FreeCAD.ActiveDocument.getObject(skd_name).MapMode = "Deactivated"
+                            for i,c in enumerate(centers):
+                                FreeCAD.ActiveDocument.getObject(skd_name).addGeometry(Part.Circle(FreeCAD.Vector(c[0], c[1]), FreeCAD.Vector(0, 0, 1), rads[i]))
+                                if 'NPTH_Drills' not in o.Label:
+                                    FreeCAD.ActiveDocument.getObject(skd_name).addGeometry(Part.Circle(FreeCAD.Vector(c[0], c[1]), FreeCAD.Vector(0, 0, 1), rads[i]*1.4)) # annular = 40% of radius # +annular))
+                            FreeCAD.ActiveDocument.recompute()
+                        elif 'NetTie_Poly' in o.Label: 
+                            for g in sel[0].Geometry:
+                                if 'ArcOfCircle' in str(g):
+                                    FreeCAD.Console.PrintWarning('need to discretize Arcs\n')
+                                    to_discretize=True
+                            if to_discretize:
+                                sk_to_discr.append(o)
+                                FreeCADGui.Selection.removeSelection(o)
+                            else:
+                                #print(o.Label,'sk added')
+                                sk_to_convert.append(o)
+                        elif 'Pads_Poly' in o.Label: 
+                            to_discretize=False
+                            for g in o.Geometry:
+                                if 'ArcOfCircle' in str(g):
+                                    FreeCAD.Console.PrintWarning('need to discretize Arcs\n')
+                                    to_discretize=True
+                            if to_discretize:
+                                sk_to_discr.append(o)
+                                FreeCADGui.Selection.removeSelection(o)
+                            else:
+                                print(o.Label,'sk added')
+                                sk_to_convert.append(o)
                 for sk in sk_to_discr:
                     ws=sk.Shape.copy()
                     #Part.show(ws)    
@@ -16748,7 +16773,12 @@ def PushFootprint():
                     for e in ws.Edges:
                         if hasattr(e.Curve,'Radius'):
                             if not e.Closed:  # Arc and not Circle
-                                wn.append(Part.makePolygon(e.discretize(QuasiDeflection=q_deflection)))
+                                #print(e.discretize(QuasiDeflection=q_deflection))
+                                sh=Part.makePolygon(e.discretize(QuasiDeflection=q_deflection))
+                                for ed in sh.Edges:
+                                    wn.append(ed)
+                                #Part.show(sh)
+                                sayw('added discretized polygon')
                             else:
                                 #wn.append(Part.Wire(e))
                                 wnc.append(Part.Wire(e))
@@ -16760,16 +16790,82 @@ def PushFootprint():
                     for s in wn:
                         for e in s.Edges:
                             edgs.append(e)
-                    wns = Part.Wire(Part.__sortEdges__(edgs))
-                    #Part.show(wnc[0])
-                    #print (wns);print(wnc[0])
+                            #print (e,e.TypeId)
+                    #wns = Part.Wire(Part.__sortEdges__(edgs))
+                    #lines = []
+                    #points = []
+                    #p_coords = []
+                    #for wire in wn:
+                    #    #points = []
+                    #    for vert in wire.Vertexes:
+                    #        points.append(vert.Point)
+                    #        p_coords.append((vert.Point.x,vert.Point.y))
+                    #print(points)
+                    #print(p_coords)
+                    # p=p_coords
+                    # import functools
+                    # import math
+                    # center = functools.reduce(lambda a, b: (a[0] + b[0], a[1] + b[1]), p, (0, 0))
+                    # center = (center[0] / len(p), (center[1] / len(p)))
+                    # p.sort(key = lambda a: math.atan2(a[1] - center[1], a[0] - center[0]))
+                    # contour=p
+                    # #print(p)
+                    # #print(sort_to_form_plist(p_coords))
+                    # #stop
+                    # #import numpy as np
+                    # #vstack_ = np.vstack(p_coords)
+                    # ##print(vstack_)
+                    # ##contours = np.vstack(p_coords).squeeze()
+                    # #contours = np.vstack(points).squeeze()
+                    # ##contours= [ np.array(contours) ]
+                    # #print(contours)
+                    # v_contour=[]
+                    # #for p in contours:
+                    # #    print(Base.Vector(p[0],p[1],p[2]))
+                    # #    v_contour.append(Base.Vector(p[0],p[1],p[2]))
+                    # for p in contour:
+                    #     print(Base.Vector(p[0],p[1],0.0))
+                    #     v_contour.append(Base.Vector(p[0],p[1],0.0))
+                    # sh1 = Part.makePolygon(v_contour)
+                    # Part.show(sh1)
+                    # stop
+
                     if len (wnc)>0:
-                        sk_d=Draft.makeSketch([wns,wnc[0]])
-                    else:
-                        sk_d=Draft.makeSketch(wns)
+                        edgs.append(wnc[0].Edges[0])
+                    sk_d=Draft.makeSketch(edgs, autoconstraints=True)
+                    FreeCAD.ActiveDocument.recompute()
+                    ### creating an edge ordered sketch
+                    ### Begin command Part_CompJoinFeatures
+                    import PartGui
+                    from PartGui import BOPTools
+                    j = BOPTools.JoinFeatures.makeConnect(name='Connect')
+                    j.Objects = [sk_d]
+                    j.Proxy.execute(j)
+                    j.purgeTouched()
+                    for obj in j.ViewObject.Proxy.claimChildren():
+                        obj.ViewObject.hide()
+                    ### End command Part_CompJoinFeatures
+                    Connect = FreeCAD.ActiveDocument.ActiveObject
+                    sv0 = Draft.makeShape2DView(FreeCAD.ActiveDocument.getObject(Connect.Name), FreeCAD.Vector(-0.0, -0.0, 1.0))
+                    FreeCAD.ActiveDocument.recompute()
+                    FreeCAD.ActiveDocument.removeObject(Connect.Name)
+                    FreeCAD.ActiveDocument.removeObject(sk_d.Name)
+                    #FreeCADGui.Selection.clearSelection()
+                    #FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.Name,sv0.Name)
+                    sk_d = Draft.makeSketch(FreeCAD.ActiveDocument.getObject(sv0.Name), autoconstraints=True)
+                    FreeCAD.ActiveDocument.removeObject(sv0.Name)
+                    FreeCAD.ActiveDocument.recompute()
+                    #stop
+                    #ws=sk_d.Shape.copy()
+                    #sk_do = Draft.makeSketch(ws)
+                    #Part.makePolygon(ws.Edges)
+                    #FreeCAD.ActiveDocument.removeObject(sk_d.Name)
                     sk_d.Label=sk.Label+'_'
                     FreeCADGui.Selection.addSelection(sk_d)
+                    sk_to_convert.append(sk_d)
                     sk_temp.append(sk_d)
+                #stop
+                FreeCAD.ActiveDocument.recompute()
                 #stop
                 #if "Group" in sel[0].TypeId:
                 #    for o in FreeCAD.ActiveDocument.Objects:
@@ -16782,6 +16878,11 @@ def PushFootprint():
                     #sayw(last_pcb_path)
                 #getSaveFileName(self,"saveFlle","Result.txt",filter ="txt (*.txt *.)")
                 testing=False #False
+                for s in sk_to_convert:
+                    FreeCADGui.Selection.addSelection(s)
+                    #print(s.Label,'added')
+                for s in sk_to_discr:
+                    FreeCADGui.Selection.removeSelection(s)
                 if not testing:
                     Filter=""
                     name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Push Footprint to KiCad module ...",
@@ -16801,6 +16902,9 @@ def PushFootprint():
                     export_footprint(name)
                     for s in sk_to_discr:
                         FreeCADGui.Selection.addSelection(s)
+                    for s in sk_to_reselect:
+                        FreeCADGui.Selection.addSelection(s)
+                    #stop
                 if not testing:
                     for s in sk_temp:
                         FreeCAD.ActiveDocument.removeObject(s.Name)
@@ -17334,11 +17438,11 @@ def export_footprint(fname=None):
         header=header+"  )"
 
         ## import kicadStepUptools; reload(kicadStepUptools)
-        
         for border in sanitized_edge_list:
             #print (border)
             lyr=border[(len(border)-1):][0]
             lyr_splt = lyr.split('_')
+            #print(lyr)
             if 'CrtYd' in lyr and len(lyr_splt)>=3:
                 edge_thick=float(lyr.split('_')[len(lyr_splt)-1])
                 lyr=u'F.CrtYd'
@@ -17833,7 +17937,7 @@ def export_footprint(fname=None):
             #sayerr(drill)
             if circ_pad[0]=='circle':
                 #ret=createFpPad(drill,offset,u'Drills')
-                #♦sayw(circ_pad)
+                #sayw(circ_pad)
                 polypad_pos.append(createFpPad(circ_pad,offset,u'Drills'))
             # elif drill[0]=='line' and not found_arc:
             #     mdrills.append(drill)
@@ -17862,12 +17966,14 @@ def export_footprint(fname=None):
         poly_closed=False
         for pad in pply:
             #sayerr(pad)
+            #print('pad',pad)
             #if pad[0]=='circle':
             #    npad=npad+os.linesep+createFpPad(pad,offset,u'NPTH', drill_pos)
             if pad[0]=='line':
                 mpad.append(pad)
                 if len(mpad)>1:
                     if abs(mpad[0][1]-pad[3])<edge_tolerance and abs(mpad[0][2]-pad[4])<edge_tolerance:
+                        #print(mpad[0][1],pad[3],mpad[0][2],pad[4])
                         sayerr('poly closed')
                         poly_closed=True
                         nline=1
@@ -17876,7 +17982,8 @@ def export_footprint(fname=None):
                     nline=nline+1
             if poly_closed:
                 #print npad
-                #print 'mpad';print mpad
+                #print ('mpad', mpad)
+                #print ('polypad_pos', polypad_pos)
                 poly_closed=False
                 if 0: #'B_Cu' in lyr:
                     npad=npad+os.linesep+createFpPad(mpad,offset,u'Poly_B_Cu', polypad_pos)
@@ -19184,13 +19291,14 @@ def createFpPad(pad,offset,tp, _drills=None):
             shape= FreeCAD.ActiveDocument.ActiveObject.Shape
             if len(_drills)>0:
                 for d in _drills:
-                    #print d
+                    #print (d)
                     point=FreeCAD.Vector(d[0],-1*d[1],0)
                     if shape.isInside(point,0,True):
                         sayw('pad in poly found! '+str(d[0])+','+str(-1*d[1]))
                         found_drill=True
                         break
             FreeCAD.ActiveDocument.removeObject(shpName)
+            #stop
             #if 1:
             if found_drill:
                 i=1
@@ -19336,7 +19444,7 @@ def createFpPad(pad,offset,tp, _drills=None):
             sayw('line is not supported')
         elif pad[0][0]=='circle':
             print (pad)
-            wd_="{0:.3f}".format(float(pad[0][4].split('_')[2]))
+            wd_=float(pad[0][4].split('_')[2])
             pts="      (gr_circle (center "+"{0:.3f}".format(pad[0][2]-d[0])+" "+"{0:.3f}".format(-1*pad[0][3]-d[1])+") (end "+"{0:.3f}".format(pad[0][2]-d[0]+pad[0][1])+" "+"{0:.3f}".format(-1*pad[0][3]-d[1])+") (width "+"{0:.3f}".format(wd_)+"))"+os.linesep
             say(pts)
             if found_drill:
