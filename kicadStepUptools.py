@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.7.5.1"
+___ver___ = "9.7.5.2"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -9852,7 +9852,7 @@ def getPolyList(content):
     if len(found):
         found = found[0].strip().split('(fp_poly ')
         for j in found:
-            print('j',j)
+            #print('j',j)
             if j != '':
                 try:
                     layers = re.search(r'\(layer\s+(.+?)\)', j).groups(0)[0]  #
@@ -9870,7 +9870,7 @@ def getPolyList(content):
                 #    pShape = 'NetTie'
                 fp_pnts.append({'layers': layers, 'points': pnts})
 
-    say(fp_pnts)
+    #say(fp_pnts)
     #
     return fp_pnts
 ###
@@ -11182,11 +11182,14 @@ def routineDrawFootPrint(content,name):
         #print(layers)
         pShape = 'NetTie'
         skip = False
-        if 'F.Cu' in layers:
+        if 'B.Cu' in layers or 'B.Mask' in layers:
+            lyr = 'bot'
+        elif 'F.Cu' in layers:
             lyr = 'top'
         else:
-            lyr = 'bot'
-        if pnts is not None: # minimal closed shape points
+            lyr = None
+            sayw('geometry unsupported')
+        if pnts is not None and lyr is not None: # minimal closed shape points
             #sayw(pnts.groups(0)[0].split('(xy'))
             #print(pGeomC)
             try:
@@ -11495,7 +11498,7 @@ def routineDrawFootPrint(content,name):
         #BotPads = Part.makeCompound(BotPadList)
         #Part.show(BotPads)
         BotPads = FreeCAD.ActiveDocument.addObject("Part::FeaturePython","BotPads")
-        BotPads.Label="BotPads"
+        #BotPads.Label="BotPads"
         BotPads_name=BotPads.Name
         BotPads.addProperty("App::PropertyBool","fixedPosition","importPart")
         BotPads.Shape = Part.makeCompound(BotPadList) #TopPadsBase.Shape.copy()
@@ -11596,14 +11599,6 @@ def routineDrawFootPrint(content,name):
         fp_group.addObject(obj_4)
         list.append(BotNetTie_name)
 
-    if len(HoleList)>0:
-        obj5 = FreeCAD.ActiveDocument.getObject(Holes_name)
-        fp_group.addObject(obj5)
-        list.append(Holes_name)
-        obj6 = FreeCAD.ActiveDocument.getObject(THPs_name)
-        fp_group.addObject(obj6)
-        list.append(THPs_name)
-
     #objFp=Part.makeCompound(list)
     #Part.show(objFp)
     #say(list)
@@ -11649,7 +11644,7 @@ def routineDrawFootPrint(content,name):
             #hole_name=FreeCAD.ActiveDocument.ActiveObject.Name
             #cutter = FreeCAD.ActiveDocument.getObject(hole_name).Shape
             cut_base=cut_base.cut(hole)
-        Part.show(cut_base) 
+        Part.show(cut_base)
         pcb_name=FreeCAD.ActiveDocument.ActiveObject.Name
         FreeCAD.ActiveDocument.ActiveObject.Label ="Pcb-base"
         FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.664,0.664,0.496)
@@ -11660,7 +11655,80 @@ def routineDrawFootPrint(content,name):
         #say("added")
         #FreeCAD.activeDocument().recompute()
         FreeCAD.ActiveDocument.removeObject(pcb_solid_name)
+        if len(TopPadList)>0:
+            FreeCAD.ActiveDocument.getObject(TopPads_name).Label = "TopPads_"
+            cut_base = FreeCAD.ActiveDocument.getObject(TopPads_name).Shape
+            holes=FreeCAD.ActiveDocument.getObject(Holes_name)
+            cut_base=cut_base.cut(holes.Shape)
+            Part.show(cut_base)
+            Pads_top_name=FreeCAD.ActiveDocument.ActiveObject.Name
+            FreeCAD.ActiveDocument.ActiveObject.Label = "TopPads"
+            FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.664,0.664,0.496)
+            FreeCADGui.ActiveDocument.ActiveObject.Transparency = 80
+            #say("cut")
+            Pads_top=FreeCAD.ActiveDocument.ActiveObject
+            fp_group.addObject(Pads_top)
+            #say("added")
+            #FreeCAD.activeDocument().recompute()
+            FreeCAD.ActiveDocument.removeObject(TopPads_name)
+        if len(BotPadList)>0:
+            cut_base = FreeCAD.ActiveDocument.getObject(BotPads_name).Shape
+            FreeCAD.ActiveDocument.getObject(BotPads_name).Label = "BotPads_"
+            holes=FreeCAD.ActiveDocument.getObject(Holes_name)
+            cut_base=cut_base.cut(holes.Shape)
+            Part.show(cut_base)
+            Pads_bot_name=FreeCAD.ActiveDocument.ActiveObject.Name
+            FreeCAD.ActiveDocument.ActiveObject.Label = "BotPads"
+            FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.664,0.664,0.496)
+            FreeCADGui.ActiveDocument.ActiveObject.Transparency = 80
+            #say("cut")
+            Pads_bot=FreeCAD.ActiveDocument.ActiveObject
+            fp_group.addObject(Pads_bot)
+            #say("added")
+            #FreeCAD.activeDocument().recompute()
+            FreeCAD.ActiveDocument.removeObject(BotPads_name)
+
+        if len(TopNetTieList)>0:
+            FreeCAD.ActiveDocument.getObject(TopNetTie_name).Label = "TopNetTie_"
+            cut_base = FreeCAD.ActiveDocument.getObject(TopNetTie_name).Shape
+            holes=FreeCAD.ActiveDocument.getObject(Holes_name)
+            cut_base=cut_base.cut(holes.Shape)
+            Part.show(cut_base)
+            NetTie_top_name=FreeCAD.ActiveDocument.ActiveObject.Name
+            FreeCAD.ActiveDocument.ActiveObject.Label = "TopNetTie"
+            FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.664,0.664,0.496)
+            FreeCADGui.ActiveDocument.ActiveObject.Transparency = 80
+            #say("cut")
+            NetTie_top=FreeCAD.ActiveDocument.ActiveObject
+            fp_group.addObject(NetTie_top)
+            #say("added")
+            #FreeCAD.activeDocument().recompute()
+            FreeCAD.ActiveDocument.removeObject(TopNetTie_name)
+        if len(BotNetTieList)>0:
+            FreeCAD.ActiveDocument.getObject(BotNetTie_name).Label = "BotNetTie_"
+            cut_base = FreeCAD.ActiveDocument.getObject(BotNetTie_name).Shape
+            holes=FreeCAD.ActiveDocument.getObject(Holes_name)
+            cut_base=cut_base.cut(holes.Shape)
+            Part.show(cut_base)
+            NetTie_bot_name=FreeCAD.ActiveDocument.ActiveObject.Name
+            FreeCAD.ActiveDocument.ActiveObject.Label = "BotNetTie"
+            FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.664,0.664,0.496)
+            FreeCADGui.ActiveDocument.ActiveObject.Transparency = 80
+            #say("cut")
+            NetTie_bot=FreeCAD.ActiveDocument.ActiveObject
+            fp_group.addObject(NetTie_bot)
+            #say("added")
+            #FreeCAD.activeDocument().recompute()
+            FreeCAD.ActiveDocument.removeObject(BotNetTie_name)
+
+        obj5 = FreeCAD.ActiveDocument.getObject(Holes_name)
+        fp_group.addObject(obj5)
+        list.append(Holes_name)
+        obj6 = FreeCAD.ActiveDocument.getObject(THPs_name)
+        fp_group.addObject(obj6)
+        list.append(THPs_name)
         FreeCAD.ActiveDocument.removeObject(Holes_name)
+
     else:
         pcb=FreeCAD.ActiveDocument.ActiveObject    
     # copying pcb to FeaturePython to assign fixedPosition for assembly2
@@ -16652,7 +16720,8 @@ def PushFootprint():
                         if 'PTH_Drills' in o.Label:
                             centers=[];rads=[]
                             for idx,g in enumerate(o.Geometry):
-                                if 'ArcOfCircle' in str(g) and not isConstruction(g): #o.getConstruction(idx): #g.Construction:
+                                #if 'ArcOfCircle' in str(g) and not isConstruction(g): #o.getConstruction(idx): #g.Construction:
+                                if 'Circle' in str(g) and not isConstruction(g):
                                     if not (g.Center in centers and g.Radius in rads):
                                         centers.append(g.Center);rads.append(g.Radius)
                             #print(len(centers), centers)
@@ -16726,7 +16795,7 @@ def PushFootprint():
                             #o= sel[0]
                             centers=[];rads=[]
                             for idx,g in enumerate(o.Geometry):
-                                if 'ArcOfCircle' in str(g) and not isConstruction(g): # o.getConstruction(idx): #g.Construction:
+                                if 'Circle' in str(g) and not isConstruction(g):
                                     if not (g.Center in centers and g.Radius in rads):
                                         centers.append(g.Center);rads.append(g.Radius)
                             #print(len(centers), centers)
