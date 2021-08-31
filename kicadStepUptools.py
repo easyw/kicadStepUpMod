@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.7.5.4"
+___ver___ = "9.7.5.5"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -11732,7 +11732,7 @@ def routineDrawFootPrint(content,name):
         obj6 = FreeCAD.ActiveDocument.getObject(THPs_name)
         fp_group.addObject(obj6)
         list.append(THPs_name)
-        #FreeCAD.ActiveDocument.removeObject(Holes_name)
+        FreeCAD.ActiveDocument.removeObject(Holes_name)
 
     else:
         pcb=FreeCAD.ActiveDocument.ActiveObject    
