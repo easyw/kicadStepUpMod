@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global tracks_version
-tracks_version = '1.1'
+tracks_version = '1.2'
 
 import kicad_parser
 #import kicad_parser; import importlib; importlib.reload(kicad_parser)
@@ -163,6 +163,62 @@ def mkColor(*color):
 #           'copper':{0:makeColor(200,117,51)},
 #        }
 
+def cut_out_tracks (pcbsk,tracks,tname_sfx):
+    
+    # import tracks; import importlib;importlib.reload(tracks)
+    FreeCAD.ActiveDocument.addObject('Part::Extrusion','Extrude')
+    extrude = FreeCAD.ActiveDocument.ActiveObject
+    #f = FreeCAD.ActiveDocument.getObject('Extrude')
+    print (pcbsk.Name)
+    extrude.Base = pcbsk
+    extrude.DirMode = "Custom"
+    extrude.Dir = (0.000, 0.000, 1.000)
+    extrude.DirLink = None
+    extrude.LengthFwd = 5.0
+    extrude.LengthRev = 0.0
+    extrude.Solid = True
+    extrude.Reversed = False
+    extrude.Symmetric = True
+    extrude.TaperAngle = 0.000000000000000
+    extrude.TaperAngleRev = 0.000000000000000
+    extrude.ViewObject.ShapeColor=getattr(pcbsk.getLinkedObject(True).ViewObject,'ShapeColor',extrude.ViewObject.ShapeColor)
+    extrude.ViewObject.LineColor=getattr(pcbsk.getLinkedObject(True).ViewObject,'LineColor',extrude.ViewObject.LineColor)
+    extrude.ViewObject.PointColor=getattr(pcbsk.getLinkedObject(True).ViewObject,'PointColor',extrude.ViewObject.PointColor)
+    pcbsk.Visibility = False
+    FreeCAD.ActiveDocument.recompute()
+    FreeCAD.ActiveDocument.addObject("Part::MultiCommon","Common_Top")
+    Common_Top = FreeCAD.ActiveDocument.ActiveObject
+    Common_Top.Shapes = [tracks,extrude,]
+    FreeCADGui.ActiveDocument.getObject(tracks.Name).Visibility=False
+    FreeCADGui.ActiveDocument.getObject(extrude.Name).Visibility=False
+    FreeCAD.ActiveDocument.recompute()
+    
+    # placing inside te container
+    if len (FreeCAD.ActiveDocument.getObjectsByLabel('Board_Geoms'+tname_sfx)) > 0:
+        extrude.adjustRelativeLinks(FreeCAD.ActiveDocument.getObject('Board_Geoms'+tname_sfx))
+        FreeCAD.ActiveDocument.getObject('Board_Geoms'+tname_sfx).addObject(extrude)
+    # simple copy
+    FreeCAD.ActiveDocument.addObject('Part::Feature',tracks.Label+'_').Shape=FreeCAD.ActiveDocument.getObject(Common_Top.Name).Shape
+    tracks_ct = FreeCAD.ActiveDocument.ActiveObject
+    tracks_ctV = FreeCADGui.ActiveDocument.ActiveObject
+    new_label=tracks.Label #+'_n'
+    FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.getObject(Common_Top.Name).ShapeColor
+    FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.getObject(Common_Top.Name).ShapeColor
+    FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(Common_Top.Name).LineColor
+    FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(Common_Top.Name).PointColor
+    FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.getObject(Common_Top.Name).DiffuseColor
+    FreeCADGui.ActiveDocument.ActiveObject.Transparency=FreeCADGui.ActiveDocument.getObject(Common_Top.Name).Transparency
+    FreeCAD.ActiveDocument.ActiveObject.Label=new_label
+    tracks_ct_Name = FreeCAD.ActiveDocument.ActiveObject.Name
+    FreeCAD.ActiveDocument.removeObject(Common_Top.Name)
+    FreeCAD.ActiveDocument.removeObject(tracks.Name)
+    FreeCAD.ActiveDocument.removeObject(extrude.Name)
+    FreeCAD.ActiveDocument.getObject(tracks_ct_Name).Label = new_label
+    FreeCAD.ActiveDocument.recompute()
+    
+    return tracks_ct_Name
+##
+
 from kicadStepUptools import removesubtree, cfg_read_all
 from kicadStepUptools import KicadPCB, make_unicode, make_string
 #filename="C:/Cad/Progetti_K/ksu-test/pic_smart_switch.kicad_pcb"
@@ -265,8 +321,16 @@ def addtracks(fname = None):
         topTracks.Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,deltaz),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
         #if hasattr(doc.Pcb, 'Shape'):
         #if len (doc.getObjectsByLabel('Pcb')) >0:
+        #import tracks; import importlib;importlib.reload(tracks)
         if len (doc.getObjectsByLabel('Pcb'+ftname_sfx)) >0:
+            #PCB_Sketch_5737
+            pcb_sk = doc.getObject('PCB_Sketch'+ftname_sfx)
+            ### check if BBOx pcb > BBOx tracks
             topTracks.Placement = doc.getObject('Pcb'+ftname_sfx).Placement
+            if (topTracks.Shape.BoundBox.XLength > pcb_sk.Shape.BoundBox.XLength) or \
+             (topTracks.Shape.BoundBox.YLength > pcb_sk.Shape.BoundBox.YLength):
+                topTracks_cut_Name = cut_out_tracks(pcb_sk,topTracks,ftname_sfx)
+                topTracks = doc.getObject(topTracks_cut_Name)
             topTracks.Placement.Base.z+=deltaz
             if len (doc.getObjectsByLabel('Board_Geoms'+ftname_sfx)) > 0:
                 if use_AppPart and not use_LinkGroups:
@@ -315,9 +379,22 @@ def addtracks(fname = None):
         removesubtree(FreeCADGui.Selection.getSelection())
         #if hasattr(doc.Pcb, 'Shape'):
         if len (doc.getObjectsByLabel('Pcb'+ftname_sfx)) > 0:
+            pcb_sk = doc.getObject('PCB_Sketch'+ftname_sfx)
+            shift_plcm = False
             botTracks.Placement = doc.getObject('Pcb'+ftname_sfx).Placement
+            if (botTracks.Shape.BoundBox.XLength > pcb_sk.Shape.BoundBox.XLength) or \
+             (botTracks.Shape.BoundBox.YLength > pcb_sk.Shape.BoundBox.YLength):
+                botTracks_cut_Name = cut_out_tracks(pcb_sk,botTracks,ftname_sfx)
+                botTracks = doc.getObject(botTracks_cut_Name)
+                shift_plcm = True
+            #botTracks.Placement = doc.getObject('Pcb'+ftname_sfx).Placement
             #botTracks.Placement = doc.Pcb.Placement
+            #if shift_plcm:
+            #    #botTracks.Placement.Base.z-=pcbThickness+deltaz
+            #    botTracks.Placement.Base.z+=pcbThickness/2+deltaz
+            #else:
             botTracks.Placement.Base.z-=pcbThickness+deltaz
+                #print('not moved')
             if len (doc.getObjectsByLabel('Board_Geoms'+ftname_sfx)) > 0:
                 if use_AppPart and not use_LinkGroups:
                     doc.getObject('Board_Geoms'+ftname_sfx).addObject(botTracks)
