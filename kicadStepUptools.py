@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.7.5.2"
+___ver___ = "9.7.5.3"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -9616,8 +9616,13 @@ def getModName(source):
     model = ''.join(source)
     #sayw("here")#;
     #sayw("here test2")
-    model_name = re.search(r'((\(module\s)|(\(footprint\s))+(.+?)\(layer', model, re.MULTILINE|re.DOTALL).groups(0)[0]
-
+    match = re.search(r'((\(module\s)|(\(footprint\s))+(.+?)\(layer', model, re.MULTILINE|re.DOTALL)
+    if match is not None:
+        model_name = match.groups(0)[3]
+        if ' (version' in model_name:
+            model_name = model_name[:model_name.index(' (version')]
+        model_name = model_name.replace('"','').rstrip()+'-'
+    
     return model_name
 ###
 def getwrlData(source):
@@ -11524,11 +11529,11 @@ def routineDrawFootPrint(content,name):
         BotNetTie.Label="BotNetTie"
         BotNetTie_name=BotNetTie.Name
         BotNetTie.addProperty("App::PropertyBool","fixedPosition","importPart")
-        BotNetTie.Shape = Part.makeCompound(BotPadList) #TopPadsBase.Shape.copy()
+        BotNetTie.Shape = Part.makeCompound(BotNetTieList) #TopPadsBase.Shape.copy()
         BotNetTie.ViewObject.Proxy=0
         BotNetTie.fixedPosition = True
         FreeCAD.ActiveDocument.ActiveObject.Label="BotNetTie"
-        BotPads_name=FreeCAD.ActiveDocument.ActiveObject.Name
+        BotNetTie_name=FreeCAD.ActiveDocument.ActiveObject.Name
         FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.81,0.71,0.23) #(0.85,0.53,0.10)
         FreeCADGui.ActiveDocument.ActiveObject.Transparency = 60
     #
