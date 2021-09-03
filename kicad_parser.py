@@ -5,7 +5,7 @@
 from __future__ import (absolute_import, division,
         print_function, unicode_literals)
 #from builtins import *
-# from future.utils import iteritems
+from future.utils import iteritems
 
 from collections import defaultdict
 from math import sqrt, atan2, degrees, sin, cos, radians, pi, hypot
@@ -21,7 +21,7 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 from kicadStepUptools import KicadPCB,SexpList
 
-__kicad_parser_version__ = '1.1.7'
+__kicad_parser_version__ = '1.2.2'
 # https://github.com/realthunder/fcad_pcb/issues/20#issuecomment-586042341
 print('kicad_parser_version '+__kicad_parser_version__)
 
@@ -208,6 +208,23 @@ def make_roundrect(size,params):
             Part.makeCircle(r,Vector(sx-r,r-sy),n,270,360),
             Part.makeLine(Vector(sx,r-sy),Vector(sx,sy-r))])
 
+def make_gr_poly(params,width=None):
+
+    #width = 0
+    try:
+        if 'width' in params:
+            width = params.width
+        points = SexpList(params.pts.xy)
+        # print(width,'wd')
+        # close the polygon
+        points._append(params.pts.xy._get(0))
+        logger.info('gr_polyline points: {}'.format(len(points)))
+        # KiCAD polygon runs in clockwise, but FreeCAD wants CCW, so must reverse. #maui
+        wire = Part.makePolygon([makeVect(p) for p in reversed(points)])
+        return wire
+    except Exception:
+        raise RuntimeError('Cannot find gr_polyline points in custom pad')
+
 def make_custom(size,params):
     _ = size
     width = 0
@@ -287,6 +304,20 @@ def getFaceCompound(shape,wire=False):
     if not objs:
         raise ValueError('null shape')
     return Part.makeCompound(objs)
+
+def makePrimitve(key, params):
+    try:
+        width = getattr(params,'width',0)
+        if width and key == 'gr_circle':
+            return make_gr_circle(params, width), 0
+        elif width and key == 'gr_poly':
+            return make_gr_poly(params, width), 0
+        else:
+            make_shape = globals()['make_{}'.format(key)]
+            return make_shape(params), width
+    except KeyError:
+        logger.warning('Unknown primitive {} in custom pad'.format(key))
+        return None, None
 
 
 def unpack(obj):
@@ -379,6 +410,7 @@ class KicadFcad:
         self.sketch_constraint = True
         self.sketch_align_constraint = False
         self.merge_holes = not debug
+        self.merge_tracks = not debug
         # self.merge_pads = not debug
         self.merge_vias = not debug
         self.zone_merge_holes = not debug
@@ -387,7 +419,8 @@ class KicadFcad:
         # further analysis. See tests/flex.kicad_pcb  #maui
         #self.merge_pads = False
         self.merge_pads = not debug
-        
+        self.arc_fit_accuracy = 0.0005
+                
         self.add_feature = True
         ## self.part_path = getKicadPath() # maui not used
         self.hole_size_offset = 0.001
@@ -645,6 +678,11 @@ class KicadFcad:
                 if name != 'copper':  #maui to avoid makefacebullseye
                     ret = self._makeObject('Path::FeatureArea',
                                             '{}_area'.format(name),label)
+                    ret.Accuracy = self.arc_fit_accuracy
+                    ret.Sources = obj
+                    ret.Operation = op
+                    ret.Fill = fill
+
                     ret.Sources = obj
                     ret.Operation = op
                     ret.Fill = fill
@@ -672,7 +710,9 @@ class KicadFcad:
                     ret = FreeCAD.activeDocument().ActiveObject
             recomputeObj(ret)
         else:
-            ret = Path.Area(Fill=fill,FitArcs=fit_arcs,Coplanar=0)
+            # ret = Path.Area(Fill=fill,FitArcs=fit_arcs,Coplanar=0)
+            ret = Path.Area(Fill=fill,FitArcs=fit_arcs,Coplanar=0,
+                    Accurarcy=self.arc_fit_accuracy)
             if workplane:
                 ret.setPlane(self.work_plane)
             for o in obj:
@@ -1044,6 +1084,23 @@ class KicadFcad:
         objs = (self._makeCompound(objs,name,label=label),holes)
         return self._makeArea(objs,name,op=1,label=label,fit_arcs=fit_arcs)
 
+    def _makeCustomPad(self, params):
+        wires = []
+        for key in params.primitives:
+            wire,width = makePrimitve(key, getattr(params.primitives, key))
+            if not width:
+                if isinstance(wire, Part.Edge):
+                    wire = Part.Wire(wire)
+                wires.append(wire)
+            else:
+                wire = Path.Area(Accuracy=self.arc_fit_accuracy,Thicken=wire.isClosed(),
+                            Offset=width*0.5).add(wire).getShape()
+                wires += wire.Wires
+        if not wires:
+            return
+        if len(wires) == 1:
+            return wires[0]
+        return Part.makeCompound(wires)
 
     def makePads(self,shape_type='face',thickness=0.05,holes=False,
             fit_arcs=True,prefix=''):
@@ -1103,13 +1160,24 @@ class KicadFcad:
                 #if shape == 'trapezoid': #maui
                 #    shape= 'rect'
                 #    logger.warning('trapezoid pad converted to rect')
-                try:
-                    make_shape = globals()['make_{}'.format(shape)]
-                except KeyError:
-                    raise NotImplementedError(
-                            'pad shape {} not implemented\n'.format(shape))
+                
+                # try:
+                #     make_shape = globals()['make_{}'.format(shape)]
+                # except KeyError:
+                #     raise NotImplementedError(
+                #             'pad shape {} not implemented\n'.format(shape))
 
-                w = make_shape(Vector(*p.size),p)
+                if shape == 'custom':
+                    w = self._makeCustomPad(p)
+                else:
+                    try:
+                        make_shape = globals()['make_{}'.format(shape)]
+                    except KeyError:
+                        raise NotImplementedError(
+                                'pad shape {} not implemented\n'.format(shape))
+                    w = make_shape(Vector(*p.size),p)
+
+                #w = make_shape(Vector(*p.size),p)
 
                 # kicad put pad shape offset inside drill element? Why? maui drill offset 
                 if 'drill' in p and 'offset' in p.drill:
@@ -1212,28 +1280,99 @@ class KicadFcad:
         except KeyError:
             raise ValueError('invalid shape type: {}'.format(shape_type))
 
-        tracks = defaultdict(list)
+        #tracks = defaultdict(list)
+        tracks = defaultdict(lambda: defaultdict(list))
         count = 0
-        for s in self.pcb.segment:
-            if s.layer == self.layer:
-                tracks[s.width].append(s)
-                count += 1
+        #for s in self.pcb.segment:
+        #    if s.layer == self.layer:
+        #        tracks[s.width].append(s)
+        #        count += 1
+        for tp,ss in (('segment',self.pcb.segment), ('arc',getattr(self.pcb, 'arc', []))):
+            for s in ss:
+                if s.layer == self.layer:
+                #if unquote(s.layer) == self.layer:
+                    #if self.filterNets(s):
+                    #    continue
+                    #print(s.width,tp,s)
+                    if self.merge_tracks:
+                        tracks[''][s.width].append((tp,s))
+                # if self.filterNets(s):
+                #     continue
+                # if unquote(s.layer) == self.layer:
+                    #if self.merge_tracks:
+                    #    tracks[''][s.width].append((tp,s))
+                    #else:
+                    #    tracks[self.netName(s)][s.width].append((tp,s))
+                    count += 1
 
         objs = []
         i = 0
-        for (width,ss) in dict.items(tracks): #iteritems(tracks): #maui
-            self._log('making {} tracks of width {:.2f}, ({}/{})',
-                    len(ss),width,i,count)
-            i+=len(ss)
-            edges = []
-            for s in ss:
-                if s.start != s.end:
-                    edges.append(Part.makeLine(
-                        makeVect(s.start),makeVect(s.end)))
+#for (width,ss) in dict.items(tracks): #iteritems(tracks): #maui
+#    self._log('making {} tracks of width {:.2f}, ({}/{})',
+#            len(ss),width,i,count)
+#    i+=len(ss)
+#    edges = []
+#    #for s in ss:
+#    #    if s.start != s.end:
+#    #        edges.append(Part.makeLine(
+#    #            makeVect(s.start),makeVect(s.end)))
+#    for tp,s in ss:
+#        if tp == 'segment':
+#            if s.start != s.end:
+#                edges.append(Part.makeLine(
+#                    makeVect(s.start),makeVect(s.end)))
+#            else:
+#                self._log('Line (Track) through identical points {}',
+#                        s.start, level="warning")
+#        elif tp == 'arc':
+#            if s.start == s.mid:
+#                self._log('Arc (Track) with invalid point {}', s, level="warning")
+#            elif s.start != s.end:
+#                edges.append(Part.ArcOfCircle(
+#                    makeVect(s.end), makeVect(s.mid), makeVect(s.start)).toShape())
+#            else:
+#                start = makeVect(s.start)
+#                middle = makeVect(s.mid)
+#                r = start.distanceToPoint(middle)
+#                edges.append(Part.makeCircle(r, (middle-start)/2))
+#    else:
+#            self._log('Line (Track) through identical points {}',
+#                    s.start, level="warning")
+#    objs.append(func(edges))
+#
+        for (name,sss) in iteritems(tracks):
+            for (width,ss) in iteritems(sss):
+                self._log('making {} tracks {} of width {:.2f}, ({}/{})',
+                        len(ss),name,width,i,count)
+                i+=len(ss)
+                edges = []
+                for tp,s in ss:
+                    if tp == 'segment':
+                        if s.start != s.end:
+                            edges.append(Part.makeLine(
+                                makeVect(s.start),makeVect(s.end)))
+                        else:
+                            self._log('Line (Track) through identical points {}',
+                                    s.start, level="warning")
+                    elif tp == 'arc':
+                        if s.start == s.mid:
+                            self._log('Arc (Track) with invalid point {}', s, level="warning")
+                        elif s.start != s.end:
+                            edges.append(Part.ArcOfCircle(
+                                makeVect(s.end), makeVect(s.mid), makeVect(s.start)).toShape())
+                        else:
+                            start = makeVect(s.start)
+                            middle = makeVect(s.mid)
+                            r = start.distanceToPoint(middle)
+                            edges.append(Part.makeCircle(r, (middle-start)/2))
+                    else:
+                        self._log('Unknown track type: {}', tp, level='warning')
+                if self.merge_tracks:
+                    label = '{}'.format(width)
                 else:
-                    self._log('Line (Track) through identical points {}',
-                            s.start, level="warning")
-            objs.append(func(edges))
+                    label = '{}#{}'.format(width,name)
+                #objs.append(func(edges,label=label))
+                objs.append(func(edges))
 
         if objs:
             objs = self._cutHoles(objs,holes,'tracks',fit_arcs=fit_arcs)

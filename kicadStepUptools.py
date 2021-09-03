@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.7.5.5"
+___ver___ = "9.7.5.6"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -1643,6 +1643,7 @@ class KicadPCB(SexpParser):
                 'gr_curve',
                 'gr_rect',
                 'segment',
+                'arc',
                 'via',
                 ['module'] + _module,
                 ['footprint'] + _module,
@@ -13195,6 +13196,27 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                         HoleList.append(obj)   
                     ##pads.append({'x': x, 'y': y, 'rot': rot, 'padType': pType, 'padShape': pShape, 'rx': drill_x, 'ry': drill_y, 'dx': dx, 'dy': dy, 'holeType': hType, 'xOF': xOF, 'yOF': yOF, 'layers': layers})        
                     #stop
+             #if hasattr(m, 'fp_poly'):
+             #    for lp in m.fp_poly:
+             #        # if ml.layer != 'Edge.Cuts':
+             #        if lp.layer != 'F.Cu':
+             #        #if lyr not in ml.layer:
+             #            continue
+             #        #print ml.start,ml.end
+             #        ind = 0
+             #        l = len(lp.pts.xy)
+             #        for p in lp.pts.xy:
+             #            if ind == 0:
+             #                line1=Part.Edge(PLine(Base.Vector(lp.pts.xy[l-1][0],-lp.pts.xy[l-1][1],0), Base.Vector(lp.pts.xy[0][0],-lp.pts.xy[0][1],0)))
+             #                edges.append(line1);
+             #            else:
+             #                line1=Part.Edge(PLine(Base.Vector(lp.pts.xy[ind-1][0],-lp.pts.xy[ind-1][1],0), Base.Vector(lp.pts.xy[ind][0],-lp.pts.xy[ind][1],0)))
+             #                edges.append(line1);
+             #            ind+=1
+             #        #closing edge
+             #            if 1: #SHOW POLY BORDER
+             #                Part.show(line1)
+
             for ml in m.fp_line:
                 # if ml.layer != 'Edge.Cuts':
                 if lyr not in ml.layer:
