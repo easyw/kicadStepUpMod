@@ -21,7 +21,7 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 from kicadStepUptools import KicadPCB,SexpList
 
-__kicad_parser_version__ = '1.2.2'
+__kicad_parser_version__ = '1.2.3'
 # https://github.com/realthunder/fcad_pcb/issues/20#issuecomment-586042341
 print('kicad_parser_version '+__kicad_parser_version__)
 
@@ -224,6 +224,15 @@ def make_gr_poly(params,width=None):
         return wire
     except Exception:
         raise RuntimeError('Cannot find gr_polyline points in custom pad')
+
+def make_gr_circle(params, width=0):
+    center = makeVect(params.center)
+    end = makeVect(params.end)
+    r = center.distanceToPoint(end)
+    if not width or r <= width*0.5:
+        return Part.makeCircle(r+width*0.5, center)
+    return Part.makeCompound([Part.Wire(Part.makeCircle(r+width*0.5,center)),
+                              Part.Wire(Part.makeCircle(r-width*0.5,center,Vector(0,0,-1)))])
 
 def make_custom(size,params):
     _ = size
@@ -712,7 +721,7 @@ class KicadFcad:
         else:
             # ret = Path.Area(Fill=fill,FitArcs=fit_arcs,Coplanar=0)
             ret = Path.Area(Fill=fill,FitArcs=fit_arcs,Coplanar=0,
-                    Accurarcy=self.arc_fit_accuracy)
+                    Accuracy=self.arc_fit_accuracy)
             if workplane:
                 ret.setPlane(self.work_plane)
             for o in obj:
