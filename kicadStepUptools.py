@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.7.5.6"
+___ver___ = "9.7.5.7"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -16934,21 +16934,28 @@ def PushFootprint():
                     sk_d=Draft.makeSketch(edgs, autoconstraints=True)
                     FreeCAD.ActiveDocument.recompute()
                     ### creating an edge ordered sketch
-                    ### Begin command Part_CompJoinFeatures
-                    import PartGui
-                    from PartGui import BOPTools
-                    j = BOPTools.JoinFeatures.makeConnect(name='Connect')
-                    j.Objects = [sk_d]
-                    j.Proxy.execute(j)
-                    j.purgeTouched()
-                    for obj in j.ViewObject.Proxy.claimChildren():
-                        obj.ViewObject.hide()
-                    ### End command Part_CompJoinFeatures
-                    Connect = FreeCAD.ActiveDocument.ActiveObject
+                    del_sk_d = True
+                    try:
+                        ### Begin command Part_CompJoinFeatures
+                        import PartGui
+                        from PartGui import BOPTools
+                        j = BOPTools.JoinFeatures.makeConnect(name='Connect')
+                        j.Objects = [sk_d]
+                        j.Proxy.execute(j)
+                        j.purgeTouched()
+                        for obj in j.ViewObject.Proxy.claimChildren():
+                            obj.ViewObject.hide()
+                        ### End command Part_CompJoinFeatures
+                        Connect = FreeCAD.ActiveDocument.ActiveObject
+                    except:
+                        FreeCAD.ActiveDocument.removeObject(FreeCAD.ActiveDocument.ActiveObject.Name)
+                        Connect = sk_d
+                        del_sk_d = False
                     sv0 = Draft.makeShape2DView(FreeCAD.ActiveDocument.getObject(Connect.Name), FreeCAD.Vector(-0.0, -0.0, 1.0))
                     FreeCAD.ActiveDocument.recompute()
                     FreeCAD.ActiveDocument.removeObject(Connect.Name)
-                    FreeCAD.ActiveDocument.removeObject(sk_d.Name)
+                    if del_sk_d:
+                        FreeCAD.ActiveDocument.removeObject(sk_d.Name)
                     #FreeCADGui.Selection.clearSelection()
                     #FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.Name,sv0.Name)
                     sk_d = Draft.makeSketch(FreeCAD.ActiveDocument.getObject(sv0.Name), autoconstraints=True)
