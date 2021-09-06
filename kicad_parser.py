@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 #****************************************************************************
 
-from __future__ import (absolute_import, division,
-        print_function, unicode_literals)
+## from __future__ import (absolute_import, division,
+##         print_function, unicode_literals)
 #from builtins import *
-from future.utils import iteritems
+# from future.utils import iteritems
 
 from collections import defaultdict
 from math import sqrt, atan2, degrees, sin, cos, radians, pi, hypot
@@ -21,7 +21,7 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 from kicadStepUptools import KicadPCB,SexpList
 
-__kicad_parser_version__ = '1.2.3'
+__kicad_parser_version__ = '1.2.4'
 # https://github.com/realthunder/fcad_pcb/issues/20#issuecomment-586042341
 print('kicad_parser_version '+__kicad_parser_version__)
 
@@ -1349,8 +1349,8 @@ class KicadFcad:
 #                    s.start, level="warning")
 #    objs.append(func(edges))
 #
-        for (name,sss) in iteritems(tracks):
-            for (width,ss) in iteritems(sss):
+        for (name,sss) in tracks.items(): #iteritems(tracks):
+            for (width,ss) in sss.items(): #iteritems(sss):
                 self._log('making {} tracks {} of width {:.2f}, ({}/{})',
                         len(ss),name,width,i,count)
                 i+=len(ss)
