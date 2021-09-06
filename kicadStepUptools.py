@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.7.5.8"
+___ver___ = "9.7.5.9"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -11048,6 +11048,12 @@ def routineDrawFootPrint(content,name):
                 bot=True
             if 'B.Cu' in numberOfLayers:
                 bot=True
+            # print(numberOfLayers)
+            pattern = 'In+([0-9]*?).Cu'
+            result = re.search(pattern, str(numberOfLayers))
+            if result is not None:
+                sayerr('internal layers not supported!')
+                sayw(result.group())
             if top==True:
                 #mypad=addPadLong(x1, y1, dx, dy, perc, 0, 0)
                 mypad2 = None
@@ -11568,227 +11574,234 @@ def routineDrawFootPrint(content,name):
 
     fp_group=FreeCAD.ActiveDocument.addObject("App::DocumentObjectGroup", footprint_name+'fp')
     say(fp_group.Label)
+    some_element = False
     list=[]
     if len(FCrtYd)>0:
         obj6 = FreeCAD.ActiveDocument.getObject(FCrtYd_name)
         list.append(FCrtYd_name)
         fp_group.addObject(obj6)
+        some_element = True
     if len(FFab)>0:
         obj7 = FreeCAD.ActiveDocument.getObject(FFab_name)
         list.append(FFab_name)
         fp_group.addObject(obj7)
+        some_element = True
     if len(FrontSilk)>0:
         obj2 = FreeCAD.ActiveDocument.getObject(FSilk_name)
         list.append(FSilk_name)
         fp_group.addObject(obj2)
-
+        some_element = True
     if len(EdgeCuts)>0:
         obj2 = FreeCAD.ActiveDocument.getObject(ECuts_name)
         list.append(ECuts_name)
         fp_group.addObject(obj2)
-
+        some_element = True
     if len(TopPadList)>0:
         obj3 = FreeCAD.ActiveDocument.getObject(TopPads_name)
         fp_group.addObject(obj3)
         list.append(TopPads_name)
+        some_element = True
     if len(BotPadList)>0:
         obj4 = FreeCAD.ActiveDocument.getObject(BotPads_name)
         fp_group.addObject(obj4)
         list.append(BotPads_name)
-
+        some_element = True
     if len(TopNetTieList)>0:
         obj_3 = FreeCAD.ActiveDocument.getObject(TopNetTie_name)
         fp_group.addObject(obj_3)
         list.append(TopNetTie_name)
+        some_element = True
     if len(BotNetTieList)>0:
         obj_4 = FreeCAD.ActiveDocument.getObject(BotNetTie_name)
         fp_group.addObject(obj_4)
         list.append(BotNetTie_name)
-
+        some_element = True
     #objFp=Part.makeCompound(list)
     #Part.show(objFp)
     #say(list)
-    doc=FreeCAD.ActiveDocument
-    fp_objs=[]
-    list1=[]
-    for obj in fp_group.Group:
-        #if (obj.Label==fp_group.Label):
-        #FreeCADGui.Selection.addSelection(obj)
-        shape=obj.Shape.copy()
-        #shape_name=FreeCAD.ActiveDocument.ActiveObject.Name
-        list1.append(shape)
-        #Part.show(shape)
-        fp_objs.append(obj)
-        #say("added")
-        #
-    #fp_objs.copy
-    #objFp=Part.makeCompound(shape)
-    objFp=Part.makeCompound(list1)
-    Part.show(objFp)
+    if some_element:    
+        doc=FreeCAD.ActiveDocument
+        fp_objs=[]
+        list1=[]
+        for obj in fp_group.Group:
+            #if (obj.Label==fp_group.Label):
+            #FreeCADGui.Selection.addSelection(obj)
+            shape=obj.Shape.copy()
+            #shape_name=FreeCAD.ActiveDocument.ActiveObject.Name
+            list1.append(shape)
+            #Part.show(shape)
+            fp_objs.append(obj)
+            #say("added")
+            #
+        #fp_objs.copy
+        #objFp=Part.makeCompound(shape)
+        objFp=Part.makeCompound(list1)
+        Part.show(objFp)
+        
+        obj = FreeCAD.ActiveDocument.ActiveObject
+        #say("h")
+        FreeCADGui.Selection.addSelection(obj)            # select the object
+        createSolidBBox2(obj)
+        bbox=FreeCAD.ActiveDocument.ActiveObject
+        FreeCAD.ActiveDocument.ActiveObject.Label ="Pcb_solid"
+        pcb_solid_name=FreeCAD.ActiveDocument.ActiveObject.Name
+        FreeCAD.ActiveDocument.removeObject(obj.Name)
     
-    obj = FreeCAD.ActiveDocument.ActiveObject
-    #say("h")
-    FreeCADGui.Selection.addSelection(obj)            # select the object
-    createSolidBBox2(obj)
-    bbox=FreeCAD.ActiveDocument.ActiveObject
-    FreeCAD.ActiveDocument.ActiveObject.Label ="Pcb_solid"
-    pcb_solid_name=FreeCAD.ActiveDocument.ActiveObject.Name
-    FreeCAD.ActiveDocument.removeObject(obj.Name)
-
-    #FreeCADGui.ActiveDocument.getObject(bbox.Name).BoundingBox = True
-    FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.664,0.664,0.496)
-    FreeCADGui.ActiveDocument.ActiveObject.Transparency = 80
-    #obj6 = FreeCAD.ActiveDocument.getObject(bbox.Name)
-    fp_group.addObject(bbox)
-    
-    if len(HoleList)>0:
-        cut_base = FreeCAD.ActiveDocument.getObject(pcb_solid_name).Shape
-        for drill in HoleList:
-            #Holes = Part.makeCompound(HoleList)
-            hole = Part.makeSolid(drill)
-            #Part.show(hole)
-            #hole_name=FreeCAD.ActiveDocument.ActiveObject.Name
-            #cutter = FreeCAD.ActiveDocument.getObject(hole_name).Shape
-            cut_base=cut_base.cut(hole)
-        Part.show(cut_base)
-        pcb_name=FreeCAD.ActiveDocument.ActiveObject.Name
-        FreeCAD.ActiveDocument.ActiveObject.Label ="Pcb-base"
+        #FreeCADGui.ActiveDocument.getObject(bbox.Name).BoundingBox = True
         FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.664,0.664,0.496)
         FreeCADGui.ActiveDocument.ActiveObject.Transparency = 80
-        #say("cut")
-        pcb=FreeCAD.ActiveDocument.ActiveObject
-        fp_group.addObject(pcb)
-        #say("added")
-        #FreeCAD.activeDocument().recompute()
-        FreeCAD.ActiveDocument.removeObject(pcb_solid_name)
-        if len(TopPadList)>0:
-            FreeCAD.ActiveDocument.getObject(TopPads_name).Label = "TopPads_"
-            cut_base = FreeCAD.ActiveDocument.getObject(TopPads_name).Shape
-            holes=FreeCAD.ActiveDocument.getObject(Holes_name)
-            cut_base=cut_base.cut(holes.Shape)
+        #obj6 = FreeCAD.ActiveDocument.getObject(bbox.Name)
+        fp_group.addObject(bbox)
+        
+        if len(HoleList)>0:
+            cut_base = FreeCAD.ActiveDocument.getObject(pcb_solid_name).Shape
+            for drill in HoleList:
+                #Holes = Part.makeCompound(HoleList)
+                hole = Part.makeSolid(drill)
+                #Part.show(hole)
+                #hole_name=FreeCAD.ActiveDocument.ActiveObject.Name
+                #cutter = FreeCAD.ActiveDocument.getObject(hole_name).Shape
+                cut_base=cut_base.cut(hole)
             Part.show(cut_base)
-            Pads_top_name=FreeCAD.ActiveDocument.ActiveObject.Name
-            FreeCAD.ActiveDocument.ActiveObject.Label = "TopPads"
+            pcb_name=FreeCAD.ActiveDocument.ActiveObject.Name
+            FreeCAD.ActiveDocument.ActiveObject.Label ="Pcb-base"
             FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.664,0.664,0.496)
             FreeCADGui.ActiveDocument.ActiveObject.Transparency = 80
             #say("cut")
-            Pads_top=FreeCAD.ActiveDocument.ActiveObject
-            fp_group.addObject(Pads_top)
+            pcb=FreeCAD.ActiveDocument.ActiveObject
+            fp_group.addObject(pcb)
             #say("added")
             #FreeCAD.activeDocument().recompute()
-            FreeCAD.ActiveDocument.removeObject(TopPads_name)
-        if len(BotPadList)>0:
-            cut_base = FreeCAD.ActiveDocument.getObject(BotPads_name).Shape
-            FreeCAD.ActiveDocument.getObject(BotPads_name).Label = "BotPads_"
-            holes=FreeCAD.ActiveDocument.getObject(Holes_name)
-            cut_base=cut_base.cut(holes.Shape)
-            Part.show(cut_base)
-            Pads_bot_name=FreeCAD.ActiveDocument.ActiveObject.Name
-            FreeCAD.ActiveDocument.ActiveObject.Label = "BotPads"
-            FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.664,0.664,0.496)
-            FreeCADGui.ActiveDocument.ActiveObject.Transparency = 80
-            #say("cut")
-            Pads_bot=FreeCAD.ActiveDocument.ActiveObject
-            fp_group.addObject(Pads_bot)
-            #say("added")
-            #FreeCAD.activeDocument().recompute()
-            FreeCAD.ActiveDocument.removeObject(BotPads_name)
-
-        if len(TopNetTieList)>0:
-            FreeCAD.ActiveDocument.getObject(TopNetTie_name).Label = "TopNetTie_"
-            cut_base = FreeCAD.ActiveDocument.getObject(TopNetTie_name).Shape
-            holes=FreeCAD.ActiveDocument.getObject(Holes_name)
-            cut_base=cut_base.cut(holes.Shape)
-            Part.show(cut_base)
-            NetTie_top_name=FreeCAD.ActiveDocument.ActiveObject.Name
-            FreeCAD.ActiveDocument.ActiveObject.Label = "TopNetTie"
-            FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.664,0.664,0.496)
-            FreeCADGui.ActiveDocument.ActiveObject.Transparency = 80
-            #say("cut")
-            NetTie_top=FreeCAD.ActiveDocument.ActiveObject
-            fp_group.addObject(NetTie_top)
-            #say("added")
-            #FreeCAD.activeDocument().recompute()
-            FreeCAD.ActiveDocument.removeObject(TopNetTie_name)
-        if len(BotNetTieList)>0:
-            FreeCAD.ActiveDocument.getObject(BotNetTie_name).Label = "BotNetTie_"
-            cut_base = FreeCAD.ActiveDocument.getObject(BotNetTie_name).Shape
-            holes=FreeCAD.ActiveDocument.getObject(Holes_name)
-            cut_base=cut_base.cut(holes.Shape)
-            Part.show(cut_base)
-            NetTie_bot_name=FreeCAD.ActiveDocument.ActiveObject.Name
-            FreeCAD.ActiveDocument.ActiveObject.Label = "BotNetTie"
-            FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.664,0.664,0.496)
-            FreeCADGui.ActiveDocument.ActiveObject.Transparency = 80
-            #say("cut")
-            NetTie_bot=FreeCAD.ActiveDocument.ActiveObject
-            fp_group.addObject(NetTie_bot)
-            #say("added")
-            #FreeCAD.activeDocument().recompute()
-            FreeCAD.ActiveDocument.removeObject(BotNetTie_name)
-
-        obj5 = FreeCAD.ActiveDocument.getObject(Holes_name)
-        fp_group.addObject(obj5)
-        list.append(Holes_name)
-        obj6 = FreeCAD.ActiveDocument.getObject(THPs_name)
-        fp_group.addObject(obj6)
-        list.append(THPs_name)
-        FreeCAD.ActiveDocument.removeObject(Holes_name)
-
-    else:
-        pcb=FreeCAD.ActiveDocument.ActiveObject    
-    # copying pcb to FeaturePython to assign fixedPosition for assembly2
-    Pcb_obj = FreeCAD.ActiveDocument.addObject("Part::FeaturePython","newPCB")
-    Pcb_obj.Label="Pcb"
-    Pcb_obj.addProperty("App::PropertyBool","fixedPosition","importPart")
-    Pcb_obj.Shape = pcb.Shape.copy()
-    Pcb_obj.ViewObject.Proxy=0
-    # for p in pcb.ViewObject.PropertiesList: #assuming that the user may change the appearance of parts differently depending on the assembly.
-    #     if hasattr(Pcb_obj.ViewObject, p) and p not in ['DiffuseColor']:
-    #         setattr(Pcb_obj.ViewObject, p, getattr(pcb.ViewObject, p))
-    Pcb_obj.ViewObject.DiffuseColor = pcb.ViewObject.DiffuseColor
-    Pcb_obj.fixedPosition = True
-    fp_group.addObject(Pcb_obj)
-    # workaround for FC 0.17 OCC 7 (double change transparency)
-    # FreeCADGui.ActiveDocument.getObject("newPCB").Transparency = 79
-    # FreeCADGui.ActiveDocument.getObject("newPCB").Transparency = 80
-    # workaround for FC 0.17 OCC 7 (double change transparency)
-    FreeCADGui.ActiveDocument.ActiveObject.Transparency = 79
-    FreeCADGui.ActiveDocument.ActiveObject.Transparency = 80
-    FreeCAD.ActiveDocument.removeObject(pcb.Name)
+            FreeCAD.ActiveDocument.removeObject(pcb_solid_name)
+            if len(TopPadList)>0:
+                FreeCAD.ActiveDocument.getObject(TopPads_name).Label = "TopPads_"
+                cut_base = FreeCAD.ActiveDocument.getObject(TopPads_name).Shape
+                holes=FreeCAD.ActiveDocument.getObject(Holes_name)
+                cut_base=cut_base.cut(holes.Shape)
+                Part.show(cut_base)
+                Pads_top_name=FreeCAD.ActiveDocument.ActiveObject.Name
+                FreeCAD.ActiveDocument.ActiveObject.Label = "TopPads"
+                FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.664,0.664,0.496)
+                FreeCADGui.ActiveDocument.ActiveObject.Transparency = 80
+                #say("cut")
+                Pads_top=FreeCAD.ActiveDocument.ActiveObject
+                fp_group.addObject(Pads_top)
+                #say("added")
+                #FreeCAD.activeDocument().recompute()
+                FreeCAD.ActiveDocument.removeObject(TopPads_name)
+            if len(BotPadList)>0:
+                cut_base = FreeCAD.ActiveDocument.getObject(BotPads_name).Shape
+                FreeCAD.ActiveDocument.getObject(BotPads_name).Label = "BotPads_"
+                holes=FreeCAD.ActiveDocument.getObject(Holes_name)
+                cut_base=cut_base.cut(holes.Shape)
+                Part.show(cut_base)
+                Pads_bot_name=FreeCAD.ActiveDocument.ActiveObject.Name
+                FreeCAD.ActiveDocument.ActiveObject.Label = "BotPads"
+                FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.664,0.664,0.496)
+                FreeCADGui.ActiveDocument.ActiveObject.Transparency = 80
+                #say("cut")
+                Pads_bot=FreeCAD.ActiveDocument.ActiveObject
+                fp_group.addObject(Pads_bot)
+                #say("added")
+                #FreeCAD.activeDocument().recompute()
+                FreeCAD.ActiveDocument.removeObject(BotPads_name)
     
-    list2=[]
-    list2_objs=[]
-    for obj in fp_group.Group:
-        # do what you want to automate
-        #if (obj.Label==fp_group.Label):
-        #FreeCADGui.Selection.addSelection(obj)
-        shape=obj.Shape.copy()
-        #shape_name=FreeCAD.ActiveDocument.ActiveObject.Name
-        list2.append(shape)
-        #Part.show(shape)
-        list2_objs.append(obj)
-        #say("added")
-    #say(list2)
-    #say('here1')
-
-    #Draft.rotate(list2_objs,90.0,FreeCAD.Vector(0.0,0.0,0.0),axis=FreeCAD.Vector(-0.0,-0.0,1.0),copy=False)
-    #say('here1')
-
-    rot=[0,0,rot_wrl]
-    rotateObjs(list2_objs, rot)
-
-    for obj in fp_group.Group:
-        FreeCADGui.Selection.removeSelection(obj)
-    #say('here2')
-    FreeCAD.activeDocument().recompute()
-    if len(sys.argv)<4:
-        #sayerr("view fitting3")
-        #sayerr(sys.argv)
-        if (zfit):
-            FreeCADGui.SendMsgToActiveView("ViewFit")
-    #pads_found=getPadsList(content)
-
+            if len(TopNetTieList)>0:
+                FreeCAD.ActiveDocument.getObject(TopNetTie_name).Label = "TopNetTie_"
+                cut_base = FreeCAD.ActiveDocument.getObject(TopNetTie_name).Shape
+                holes=FreeCAD.ActiveDocument.getObject(Holes_name)
+                cut_base=cut_base.cut(holes.Shape)
+                Part.show(cut_base)
+                NetTie_top_name=FreeCAD.ActiveDocument.ActiveObject.Name
+                FreeCAD.ActiveDocument.ActiveObject.Label = "TopNetTie"
+                FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.664,0.664,0.496)
+                FreeCADGui.ActiveDocument.ActiveObject.Transparency = 80
+                #say("cut")
+                NetTie_top=FreeCAD.ActiveDocument.ActiveObject
+                fp_group.addObject(NetTie_top)
+                #say("added")
+                #FreeCAD.activeDocument().recompute()
+                FreeCAD.ActiveDocument.removeObject(TopNetTie_name)
+            if len(BotNetTieList)>0:
+                FreeCAD.ActiveDocument.getObject(BotNetTie_name).Label = "BotNetTie_"
+                cut_base = FreeCAD.ActiveDocument.getObject(BotNetTie_name).Shape
+                holes=FreeCAD.ActiveDocument.getObject(Holes_name)
+                cut_base=cut_base.cut(holes.Shape)
+                Part.show(cut_base)
+                NetTie_bot_name=FreeCAD.ActiveDocument.ActiveObject.Name
+                FreeCAD.ActiveDocument.ActiveObject.Label = "BotNetTie"
+                FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.664,0.664,0.496)
+                FreeCADGui.ActiveDocument.ActiveObject.Transparency = 80
+                #say("cut")
+                NetTie_bot=FreeCAD.ActiveDocument.ActiveObject
+                fp_group.addObject(NetTie_bot)
+                #say("added")
+                #FreeCAD.activeDocument().recompute()
+                FreeCAD.ActiveDocument.removeObject(BotNetTie_name)
+    
+            obj5 = FreeCAD.ActiveDocument.getObject(Holes_name)
+            fp_group.addObject(obj5)
+            list.append(Holes_name)
+            obj6 = FreeCAD.ActiveDocument.getObject(THPs_name)
+            fp_group.addObject(obj6)
+            list.append(THPs_name)
+            FreeCAD.ActiveDocument.removeObject(Holes_name)
+    
+        else:
+            pcb=FreeCAD.ActiveDocument.ActiveObject    
+        # copying pcb to FeaturePython to assign fixedPosition for assembly2
+        Pcb_obj = FreeCAD.ActiveDocument.addObject("Part::FeaturePython","newPCB")
+        Pcb_obj.Label="Pcb"
+        Pcb_obj.addProperty("App::PropertyBool","fixedPosition","importPart")
+        Pcb_obj.Shape = pcb.Shape.copy()
+        Pcb_obj.ViewObject.Proxy=0
+        # for p in pcb.ViewObject.PropertiesList: #assuming that the user may change the appearance of parts differently depending on the assembly.
+        #     if hasattr(Pcb_obj.ViewObject, p) and p not in ['DiffuseColor']:
+        #         setattr(Pcb_obj.ViewObject, p, getattr(pcb.ViewObject, p))
+        Pcb_obj.ViewObject.DiffuseColor = pcb.ViewObject.DiffuseColor
+        Pcb_obj.fixedPosition = True
+        fp_group.addObject(Pcb_obj)
+        # workaround for FC 0.17 OCC 7 (double change transparency)
+        # FreeCADGui.ActiveDocument.getObject("newPCB").Transparency = 79
+        # FreeCADGui.ActiveDocument.getObject("newPCB").Transparency = 80
+        # workaround for FC 0.17 OCC 7 (double change transparency)
+        FreeCADGui.ActiveDocument.ActiveObject.Transparency = 79
+        FreeCADGui.ActiveDocument.ActiveObject.Transparency = 80
+        FreeCAD.ActiveDocument.removeObject(pcb.Name)
+        
+        list2=[]
+        list2_objs=[]
+        for obj in fp_group.Group:
+            # do what you want to automate
+            #if (obj.Label==fp_group.Label):
+            #FreeCADGui.Selection.addSelection(obj)
+            shape=obj.Shape.copy()
+            #shape_name=FreeCAD.ActiveDocument.ActiveObject.Name
+            list2.append(shape)
+            #Part.show(shape)
+            list2_objs.append(obj)
+            #say("added")
+        #say(list2)
+        #say('here1')
+    
+        #Draft.rotate(list2_objs,90.0,FreeCAD.Vector(0.0,0.0,0.0),axis=FreeCAD.Vector(-0.0,-0.0,1.0),copy=False)
+        #say('here1')
+    
+        rot=[0,0,rot_wrl]
+        rotateObjs(list2_objs, rot)
+    
+        for obj in fp_group.Group:
+            FreeCADGui.Selection.removeSelection(obj)
+        #say('here2')
+        FreeCAD.activeDocument().recompute()
+        if len(sys.argv)<4:
+            #sayerr("view fitting3")
+            #sayerr(sys.argv)
+            if (zfit):
+                FreeCADGui.SendMsgToActiveView("ViewFit")
+        #pads_found=getPadsList(content)
+    else:
+        sayerr('internal layers not supported or fotprint empty')
 ###
 
 def routineDrawIDF(doc,filename):
@@ -19243,16 +19256,25 @@ def createFpPad(pad,offset,tp, _drills=None):
             i=1
             layers = []
             #print(len(pad))
+            padNbr='"#"'
             for lines in pad:
                 #if i<segments_nbr:
                 #    pts=pts+"         (xy "+str(lines[1])+" "+str(-1*lines[2])+") (xy "+str(lines[3])+" "+str(-1*lines[4])+")"+os.linesep
                 #else:
                 #    pts=pts+"         (xy "+str(lines[1])+" "+str(-1*lines[2])+")) (width 0))"+os.linesep
                 wr.append(Part.makeLine((lines[1], lines[2],0.0),(lines[3], lines[4],0.0)))
+                pattern = '_In+([0-9]*?).Cu'
+                result = re.search(pattern, lines[5])
                 if 'B_Cu' in lines[5]:
                     layers.append('Poly_B_Cu')
+                elif result is not None:
+                    layers.append('Poly'+result.group())
                 else:
                     layers.append('Poly_F_Cu')
+                if '_padNbr=' in lines[5]:
+                    padNbr='"'+lines[5][lines[5].index('_padNbr='):].replace('_padNbr=','')+'"'
+                else:
+                    padNbr='"#"'
                 i=i+1
             ant=Part.Wire(wr)
             #sayw( ant.isClosed() )
@@ -19278,8 +19300,15 @@ def createFpPad(pad,offset,tp, _drills=None):
                 #print(len(ant.Wires))
                 i=1
                 for w in ant.Wires:
+                    pattern = '_In+([0-9]*?)_Cu'
+                    result = re.search(pattern, layers[i])
+                    add_maskLayer = True
                     if 'B_Cu' in layers[i]:
                         padLayer = 'B.Cu'
+                    elif result is not None:
+                        padLayer = result.group().replace('_Cu','.Cu')[1:]
+                        # print(padLayer)
+                        add_maskLayer = False
                     else:
                         padLayer = 'F.Cu'
                     i=i+1
@@ -19341,10 +19370,14 @@ def createFpPad(pad,offset,tp, _drills=None):
                 #        #pts=pts+"         (xy "+str(lines[1]-d[0])+" "+str(-1*lines[2]-d[1])+")) (width 0))"+os.linesep
                 #        pts=pts+"         (xy "+str(lines[1])+" "+str(-1*lines[2])+")) (layer F.Cu) (width 0))"+os.linesep
                 #    #i=i+1
-                pts = pts + pts.replace('.Cu','.Mask')
+                if add_maskLayer:
+                    pts = pts + pts.replace('.Cu','.Mask')
                 #pad_ref="  (pad "+str(pad_nbr)+" smd custom (at "+str(d[0])+" "+str(d[1])+" ) (size "+str(d[2])+" "+str(d[2])+") (layers F.Cu F.Paste F.Mask)"+os.linesep
                 if found_drill:
-                    pad_ref="  (pad # smd circle (at "+"{0:.3f}".format(d[0])+" "+"{0:.3f}".format(d[1])+" ) (size "+"{0:.3f}".format(d[2])+" "+"{0:.3f}".format(d[2])+") (layers "+padLayer+" "+padLayer.rstrip('Cu')+"Mask))"+os.linesep
+                    if add_maskLayer:
+                        pad_ref="  (pad "+padNbr+" smd circle (at "+"{0:.3f}".format(d[0])+" "+"{0:.3f}".format(d[1])+" ) (size "+"{0:.3f}".format(d[2])+" "+"{0:.3f}".format(d[2])+") (layers "+padLayer+" "+padLayer.rstrip('Cu')+"Mask))"+os.linesep
+                    else:
+                        pad_ref="  (pad "+padNbr+" smd circle (at "+"{0:.3f}".format(d[0])+" "+"{0:.3f}".format(d[1])+" ) (size "+"{0:.3f}".format(d[2])+" "+"{0:.3f}".format(d[2])+") (layers "+padLayer+"))"+os.linesep
                     #if 0: #'B_Cu' in tp:
                     #    #pad_ref="  (pad # smd custom (at "+str("{0:.3f}".format(d[0]))+" "+str("{0:.3f}".format(d[1]))+" ) (size "+str("{0:.3f}".format(d[2]))+" "+str("{0:.3f}".format(d[2]))+") (layers B.Cu B.Paste B.Mask)"+os.linesep
                     #    pad_ref="  (pad # smd circle (at "+str("{0:.3f}".format(d[0]))+" "+str("{0:.3f}".format(d[1]))+" ) (size "+str("{0:.3f}".format(d[2]))+" "+str("{0:.3f}".format(d[2]))+") (layers B.Cu B.Mask))"+os.linesep
@@ -19388,10 +19421,18 @@ def createFpPad(pad,offset,tp, _drills=None):
                 #else:
                 #    pts=pts+"         (xy "+str(lines[1])+" "+str(-1*lines[2])+")) (width 0))"+os.linesep
                 wr.append(Part.makeLine((lines[1], lines[2],0.0),(lines[3], lines[4],0.0)))
+                pattern = '_In+([0-9]*?).Cu'
+                result = re.search(pattern, lines[5])
                 if 'B_Cu' in lines[5]:
                     layers.append('Poly_B_Cu')
+                elif result is not None:
+                    layers.append('Poly'+result.group())
                 else:
                     layers.append('Poly_F_Cu')
+                if '_padNbr=' in lines[5]:
+                    padNbr='"'+lines[5][lines[5].index('_padNbr='):].replace('_padNbr=','')+'"'
+                else:
+                    padNbr='"#"'
                 i=i+1
             ant=Part.Wire(wr)
             #sayw( ant.isClosed() )
@@ -19415,9 +19456,16 @@ def createFpPad(pad,offset,tp, _drills=None):
             if found_drill:
                 i=1
                 for w in ant.Wires:
+                    pattern = '_In+([0-9]*?)_Cu'
+                    result = re.search(pattern, layers[i])
                     clusters = Part.sortEdges(w.Edges) #[0] 
+                    internalLayer = False
+                    print(layers[i])
                     if 'B_Cu' in layers[i]:
                         padLayer = 'B.Cu'
+                    elif result is not None:
+                        padLayer = result.group().replace('_Cu','.Cu')[1:]
+                        internalLayer = True
                     else:
                         padLayer = 'F.Cu'
                     i=i+1
@@ -19434,8 +19482,12 @@ def createFpPad(pad,offset,tp, _drills=None):
                                 pts=pts+"         (xy "+"{0:.3f}".format(e.Vertexes[0].X-d[0])+" "+"{0:.3f}".format(-1*(e.Vertexes[0].Y)-d[1])+")) (layer "+padLayer+") (width 0))"+os.linesep
                 #pts = pts + pts.replace('F.Cu','F.Mask')
                 #pad_ref="  (pad "+str(pad_nbr)+" smd custom (at "+str(d[0])+" "+str(d[1])+" ) (size "+str(d[2])+" "+str(d[2])+") (layers F.Cu F.Paste F.Mask)"+os.linesep
-                if found_drill:
-                    pad_ref="  (pad # smd custom (at "+"{0:.3f}".format(d[0])+" "+"{0:.3f}".format(d[1])+" ) (size "+"{0:.3f}".format(d[2])+" "+"{0:.3f}".format(d[2])+") (layers "+padLayer+" "+padLayer.rstrip('Cu')+"Mask)"+os.linesep
+                if found_drill: #ref pad found
+                    if internalLayer:
+                        pad_ref="  (pad "+padNbr+" smd custom (at "+"{0:.3f}".format(d[0])+" "+"{0:.3f}".format(d[1])+" ) (size "+"{0:.3f}".format(d[2])+" "+"{0:.3f}".format(d[2])+") (layers "+padLayer+")"+os.linesep
+                    else:
+                        pad_ref="  (pad "+padNbr+" smd custom (at "+"{0:.3f}".format(d[0])+" "+"{0:.3f}".format(d[1])+" ) (size "+"{0:.3f}".format(d[2])+" "+"{0:.3f}".format(d[2])+") (layers "+padLayer+" "+padLayer.rstrip('Cu')+"Mask)"+os.linesep
+                    
                     #if 'B_Cu' in lyr:
                     #    pad_ref="  (pad # smd custom (at "+str("{0:.3f}".format(d[0]))+" "+str("{0:.3f}".format(d[1]))+" ) (size "+str("{0:.3f}".format(d[2]))+" "+str("{0:.3f}".format(d[2]))+") (layers B.Cu B.Paste B.Mask)"+os.linesep
                     #    #pad_ref="  (pad # smd custom (at "+str("{0:.3f}".format(d[0]))+" "+str("{0:.3f}".format(d[1]))+" ) (size "+str("{0:.3f}".format(d[2]))+" "+str("{0:.3f}".format(d[2]))+") (layers B.Cu B.Mask)"+os.linesep
