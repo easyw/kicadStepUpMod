@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.7.5.7"
+___ver___ = "9.7.5.8"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -16937,8 +16937,12 @@ def PushFootprint():
                     del_sk_d = True
                     try:
                         ### Begin command Part_CompJoinFeatures
+                        say('importing BOPTools')
                         import PartGui
-                        from PartGui import BOPTools
+                        # from PartGui import BOPTools
+                        import BOPTools
+                        import BOPTools.JoinFeatures
+                        say('trying makeConnect')
                         j = BOPTools.JoinFeatures.makeConnect(name='Connect')
                         j.Objects = [sk_d]
                         j.Proxy.execute(j)
@@ -16946,8 +16950,10 @@ def PushFootprint():
                         for obj in j.ViewObject.Proxy.claimChildren():
                             obj.ViewObject.hide()
                         ### End command Part_CompJoinFeatures
+                        say('makeConnect done')
                         Connect = FreeCAD.ActiveDocument.ActiveObject
                     except:
+                        sayw('failed makeConnect')
                         FreeCAD.ActiveDocument.removeObject(FreeCAD.ActiveDocument.ActiveObject.Name)
                         Connect = sk_d
                         del_sk_d = False
