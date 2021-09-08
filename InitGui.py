@@ -10,13 +10,13 @@
 #*  Kicad STEPUP (TM) is a TradeMark and cannot be freely usable            *
 #*                                                                          *
 
-ksu_wb_version='v 10.3.2'
+ksu_wb_version='v 10.3.3'
 global myurlKWB, ksuWBpath
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=445 #v10.3.2
+mycommitsKWB=446 #v10.3.3
 global verKSU
-verKSU="9.7.6.0"
+verKSU="9.7.6.1"
 
 import FreeCAD, FreeCADGui, Part, os, sys
 import re, time
@@ -154,7 +154,8 @@ class KiCadStepUpWB ( Workbench ):
                            #, "ksuToolsPushMoved","ksuToolsSync3DModels"])
         self.appendToolbar("ksu Sketching", ["ksuTools3D2D", "ksuTools2D2Sketch", "ksuTools2DtoFace",\
                            "ksuToolsLoopSelection","ksuToolsEdges2Sketch","ksuToolsOffset2D","ksuToolsExtrude","ksuToolsMergeSketches",\
-                           "ksuToolsSimplifySketck", "ksuToolsBsplineNormalize", "ksuToolsConstrainator", "ksuToolsSkValidate", "ksuToolsDiscretize", "ksuToolsContour2Poly"])
+                           "ksuToolsSimplifySketck", "ksuToolsBsplineNormalize", "ksuToolsConstrainator", "ksuToolsSkValidate", "ksuToolsDiscretize",\
+                           "ksuToolsContour2Poly", "Arcs2Circles", "approximateCenter"])
                            #, "ksuToolsPushMoved","ksuToolsSync3DModels"])
         ksuTB = ["ksuToolsOpenBoard","ksuToolsPushPCB","ksuToolsPushMoved","ksuToolsSync3DModels","ksuToolsPullPCB","ksuToolsPullMoved","ksuAsm2Part",\
                  "Separator","ksuToolsGeneratePositions","ksuToolsComparePositions",\

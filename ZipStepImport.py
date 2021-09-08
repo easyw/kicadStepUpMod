@@ -21,7 +21,7 @@
 #*                                                                         *
 #***************************************************************************
 
-from __future__ import print_function
+# from __future__ import print_function
 __title__ =  "FreeCAD Zip STEP IGES importer"
 __author__ = "Maurice"
 __url__ =    "http://www.freecadweb.org"
@@ -29,7 +29,7 @@ __url__ =    "http://www.freecadweb.org"
 
 import os,zipfile,FreeCAD,tempfile,sys
 
-___ZipVersion___ = "1.0.3"
+___ZipVersion___ = "1.0.4"
 
 try:
     import __builtin__ as builtin #py2

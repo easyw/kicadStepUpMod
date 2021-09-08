@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='1.9.6'
+ksuCMD_version__='1.9.7'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -3629,3 +3629,155 @@ class Restore_Transparency():
         return True
 
 FreeCADGui.addCommand('Restore_Transparency',Restore_Transparency())
+
+class Arcs2Circles():
+    "ksu tools Convert Arcs to Circles in Sketch"
+
+    def GetResources(self):
+        mybtn_tooltip ="Convert Arcs to Circles in Sketch"
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'arc2circle.svg') , # the name of a svg file available in the resources
+                     'MenuText': mybtn_tooltip ,
+                     'ToolTip' : mybtn_tooltip}
+
+    def Activated(self):        
+        import kicadStepUptools
+        reload_lib( kicadStepUptools )
+        sel = FreeCADGui.Selection.getSelection()
+        o = sel[0]
+        centers=[];rads=[]
+        for idx,g in enumerate(o.Geometry):
+            if 'Circle' in str(g) and not kicadStepUptools.isConstruction(g):
+                if not (g.Center in centers and g.Radius in rads):
+                    centers.append(g.Center);rads.append(g.Radius)
+        #print(len(centers), centers)
+        skLabel = o.Label+"_circles"
+        FreeCAD.ActiveDocument.addObject('Sketcher::SketchObject', skLabel)
+        skd_name=FreeCAD.ActiveDocument.ActiveObject.Name
+        FreeCAD.ActiveDocument.ActiveObject.Label = skLabel #workaround to keep '=' in Label
+        #print(centers)
+        for i,c in enumerate(centers):
+            FreeCAD.ActiveDocument.getObject(skd_name).addGeometry(Part.Circle(FreeCAD.Vector(c[0], c[1]), FreeCAD.Vector(0, 0, 1), rads[i]))
+        FreeCADGui.ActiveDocument.getObject(o.Name).Visibility=False
+        FreeCAD.ActiveDocument.recompute()
+
+    def IsActive(self):
+        sel = FreeCADGui.Selection.getSelection()
+        if len (sel) == 1:
+            if sel[0].TypeId == 'Sketcher::SketchObject':
+                return True
+            else:
+                return False
+        else:
+            return False
+
+FreeCADGui.addCommand('Arcs2Circles',Arcs2Circles())
+
+class approximateCenter():
+    "ksu tools Create Center of Circle through 3 Vertices"
+
+    def GetResources(self):
+        mybtn_tooltip ="Create Center of Circle through 3 Vertices or Select two vertices to create a mid point or Select a Shape to create a center point"
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Three-Points-Center.svg') , # the name of a svg file available in the resources
+                     'MenuText': "Create Center of Circle through 3 Vertices" ,
+                     'ToolTip' : mybtn_tooltip}
+
+    def Activated(self):        
+        selt = FreeCADGui.Selection.getSelectionEx()
+        import Draft
+        import math
+        def circle_center(A, B, C):
+            '''Return the circumcenter of three 3D vertices'''
+            a2 = (B - C).Length**2
+            b2 = (C - A).Length**2
+            c2 = (A - B).Length**2
+            a  = (B - C).Length
+            b  = (C - A).Length
+            c  = (A - B).Length
+            if a2 * b2 * c2 == 0.0:
+                print('Three vertices must be distinct')
+                return
+            alpha = a2 * (b2 + c2 - a2)
+            beta = b2 * (c2 + a2 - b2)
+            gamma = c2 * (a2 + b2 - c2)
+            s = (a + b + c) / 2
+            radius = a*b*c / 4 / math.sqrt(s * (s - a) * (s - b) * (s - c))
+            return (alpha*A + beta * B + gamma * C)/(alpha + beta + gamma) , radius
+        
+        if len(selt) != 1:
+            #print('Len='+str(len(selt))+' Select three vertices to create a point in the center of approximate circle')
+            print('Select three vertices to create a point in the center of approximate circle')
+            print('Select two vertices to create a mid point')
+            print('Select a Shape to create a center point')
+        else:
+            to_process = False
+            to_process_center = False
+            debug=False
+            sel = selt[0]
+            if sel.HasSubObjects:
+                vv = sel.SubObjects
+                if len(vv) ==3 and vv[0].ShapeType == 'Vertex' and   vv[1].ShapeType == 'Vertex' and vv[2].ShapeType == 'Vertex':
+                    shift, rd = circle_center(vv[0].Point, vv[1].Point, vv[2].Point)
+                    suffix = '_center'
+                    to_process = True
+                    to_process_center = True
+                    print (rd)
+                    #print(shift)
+                elif len(vv) ==2 and vv[0].ShapeType == 'Vertex' and   vv[1].ShapeType == 'Vertex':
+                    halfedge = (vv[0].Point.sub(vv[1].Point)).multiply(.5)
+                    mid=FreeCAD.Vector.add(vv[1].Point,halfedge)
+                    shift = mid
+                    suffix = '_mid'
+                    # print (shift)
+                    to_process = True
+            elif hasattr(sel.Object, 'Shape'):
+                shape = sel.Object.Shape
+                if shape.ShapeType == 'Solid' or shape.ShapeType == 'Shell':
+                    shift = shape.CenterOfMass
+                    suffix = '_com'
+                    to_process = True
+                elif shape.ShapeType == 'Compound' or shape.ShapeType == 'CompSolid':
+                    print('Centering on Bounding Box of Compound '+sel.Object.Label)
+                    bb = shape.BoundBox
+                    shift = FreeCAD.Vector(bb.XLength/2+bb.XMin,bb.YLength/2+bb.YMin,bb.ZLength/2+bb.ZMin)
+                    suffix = '_bbc'
+                    to_process = True
+            if to_process:
+                FreeCAD.ActiveDocument.openTransaction('Undo Create Center')
+                nPt=Draft.makePoint(shift)
+                nPt.Label = sel.Object.Label+suffix
+                npt_Pl = nPt.Placement
+                FreeCADGui.ActiveDocument.getObject(nPt.Name).PointColor = (0.333,0.667,1.000) #(1.000,0.667,0.498)
+                FreeCADGui.ActiveDocument.getObject(nPt.Name).PointSize = 10.000
+                if to_process_center:
+                    circle = Draft.makeCircle(radius=rd, placement=npt_Pl, face=False, support=None)
+                    circle.Label = sel.Object.Label+'_circle'
+                    FreeCADGui.ActiveDocument.getObject(circle.Name).LineColor = (0.333,0.667,1.000)
+                if len(sel.Object.InList) == 0:
+                    FreeCAD.ActiveDocument.addObject('App::Part',sel.Object.Label+'_Part')
+                    nP = FreeCAD.ActiveDocument.ActiveObject.Parents[0][0]
+                else:
+                    nP = sel.Object.InList[0]
+                if debug:
+                    print(nP.Label);print(nP.Name);print(nPt.Label);print(nPt.Name)
+                    if len (sel.Object.InList) >= 1:
+                        print(sel.Object.InList[0].Label)
+                #FreeCAD.ActiveDocument.getObject(nPt.Name).adjustRelativeLinks(FreeCAD.ActiveDocument.getObject(nP.Name))
+                FreeCAD.ActiveDocument.getObject(nP.Name).addObject(FreeCAD.ActiveDocument.getObject(nPt.Name))
+                if to_process_center:
+                    FreeCAD.ActiveDocument.getObject(nP.Name).addObject(FreeCAD.ActiveDocument.getObject(circle.Name))
+                FreeCAD.ActiveDocument.getObject(nP.Name).addObject(FreeCAD.ActiveDocument.getObject(sel.Object.Name))
+                FreeCAD.ActiveDocument.recompute()
+                npt_Pl = nPt.Placement
+                if to_process_center:
+                    circle.Placement = npt_Pl
+                FreeCAD.ActiveDocument.commitTransaction()
+
+    def IsActive(self):
+        selt = FreeCADGui.Selection.getSelectionEx()
+        if len(selt) < 1:
+            return False
+        else:
+            return True
+
+FreeCADGui.addCommand('approximateCenter',approximateCenter())
+
