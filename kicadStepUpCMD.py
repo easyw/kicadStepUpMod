@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='1.9.7'
+ksuCMD_version__='1.9.8'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -707,6 +707,9 @@ class ksuToolsOffset2D:
                 f.Source = sel[0] #some object
                 f.Value = offset
                 f.Join=offset_method
+                doc.ActiveObject.ViewObject.LineColor = (0.00,0.0,1.0)
+                doc.ActiveObject.ViewObject.PointColor = (0.00,0.0,1.0)
+                sel[0].ViewObject.Visibility = False
                 doc.commitTransaction()
                 doc.recompute([f])
             else:
@@ -1923,6 +1926,8 @@ class ksuTools2D2Sketch:
                         stop
                     sk.Label = "Sketch_converted"
                     sname=FreeCAD.ActiveDocument.ActiveObject.Name
+                    FreeCAD.ActiveDocument.ActiveObject.ViewObject.LineColor = (1.00,1.00,1.00)
+                    FreeCAD.ActiveDocument.ActiveObject.ViewObject.PointColor = (1.00,1.00,1.00)
                     for i,g in enumerate (sk.Geometry):
                         if 'BSplineCurve object' in str(g):
                             sk.exposeInternalGeometry(i)
