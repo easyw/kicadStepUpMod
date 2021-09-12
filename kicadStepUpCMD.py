@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='1.9.8'
+ksuCMD_version__='2.0.1'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -151,6 +151,7 @@ def ksu_edges2sketch():
     docG = FreeCADGui.ActiveDocument
     en = None
     selEx=FreeCADGui.Selection.getSelectionEx()
+    import Draft
     if len (selEx) > 0:
         for selEdge in selEx:
             if not (conv_started):
@@ -241,11 +242,12 @@ def ksu_edges2sketch():
                             docG.getObject(selEdge.ObjectName).Visibility = False
                     
         if len (cp_edges_obj) >0: # (wires) >0:
-            FreeCAD.activeDocument().addObject('Sketcher::SketchObject','Sketch')
-            #FreeCAD.activeDocument().Sketch.MapMode = "ObjectXY"
-            #doc.recompute()
-            sketch = doc.ActiveObject
-            sketch.Label = "Sketch_converted"
+            if not (use_draft):
+                FreeCAD.activeDocument().addObject('Sketcher::SketchObject','Sketch')
+                #FreeCAD.activeDocument().Sketch.MapMode = "ObjectXY"
+                #doc.recompute()
+                sketch = doc.ActiveObject
+                sketch.Label = "Sketch_converted"
             if len (cp_edges_obj) > 1:
                 doc.addObject("Part::MultiFuse","union")
                 union = doc.ActiveObject
@@ -281,8 +283,31 @@ def ksu_edges2sketch():
             #print(plane)
             ## _makeSketch(plane,wires,addTo=sketch)
             #Draft.makeSketch(wires,addTo=sketch)
+            _objs_ = []
+            use_workaround = False
+            active_view = FreeCADGui.ActiveDocument.activeView()
+            rotation_view = active_view.getCameraOrientation()
+            top_rotation = FreeCAD.Rotation(0.0,0.0,0.0,1.0)
+            if rotation_view != top_rotation and len(union.Shape.Edges) < max_geo_admitted:
+                use_workaround = True
+            if use_workaround:
+                FreeCAD.Console.PrintWarning('workaround to avoid issues in Draft.makeSketch\n')
+                _objs_ = Draft.downgrade(FreeCAD.ActiveDocument.getObject('union'), delete=False)
+                FreeCAD.ActiveDocument.recompute()
+                _objs_ = []
+                _objs_ = Draft.upgrade(FreeCADGui.Selection.getSelection(), delete=True)
+                _objs_ = []
+                FreeCAD.ActiveDocument.recompute()
+                _objs_ = Draft.downgrade(FreeCADGui.Selection.getSelection(), delete=True)
+                sel_objs = FreeCADGui.Selection.getSelection()
             if use_draft:
-                Draft.makeSketch(union,addTo=sketch)
+                #Draft.makeSketch(union,addTo=sketch)
+                if use_workaround:
+                    Draft.makeSketch(FreeCADGui.Selection.getSelection(),autoconstraints=True) #,addTo=sketch)
+                else:
+                    Draft.makeSketch(union,autoconstraints=True) #,addTo=sketch)
+                sketch = doc.ActiveObject
+                sketch.Label = "Sketch_converted"
             else:
                 for _e in union.Shape.Edges:
                     if isinstance(_e.Curve,Part.Line) or isinstance(_e.Curve,Part.LineSegment):
@@ -295,6 +320,9 @@ def ksu_edges2sketch():
             #sk.Placement = union.Placement
             if remove_shapes:
                 rmvsubtree([union])
+                if use_workaround:
+                    for o in sel_objs:
+                        FreeCAD.ActiveDocument.removeObject(o.Name)
                 if create_plane:
                     rmvsubtree([newface])
             sketch.MapMode = 'Deactivated'
