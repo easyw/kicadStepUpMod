@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.0.1'
+ksuCMD_version__='2.0.2'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -284,14 +284,16 @@ def ksu_edges2sketch():
             ## _makeSketch(plane,wires,addTo=sketch)
             #Draft.makeSketch(wires,addTo=sketch)
             _objs_ = []
-            use_workaround = False
+            use_workaround_1 = False
+            use_workaround_2 = False
             active_view = FreeCADGui.ActiveDocument.activeView()
             rotation_view = active_view.getCameraOrientation()
             top_rotation = FreeCAD.Rotation(0.0,0.0,0.0,1.0)
             if rotation_view != top_rotation and len(union.Shape.Edges) < max_geo_admitted:
-                use_workaround = True
-            if use_workaround:
-                FreeCAD.Console.PrintWarning('workaround to avoid issues in Draft.makeSketch\n')
+                use_workaround_1 = True
+                use_workaround_2 = True
+            if use_workaround_1:
+                FreeCAD.Console.PrintWarning('workaround to avoid issues in Draft.makeSketch from Bottom\n')
                 _objs_ = Draft.downgrade(FreeCAD.ActiveDocument.getObject('union'), delete=False)
                 FreeCAD.ActiveDocument.recompute()
                 _objs_ = []
@@ -302,11 +304,23 @@ def ksu_edges2sketch():
                 sel_objs = FreeCADGui.Selection.getSelection()
             if use_draft:
                 #Draft.makeSketch(union,addTo=sketch)
-                if use_workaround:
+                if use_workaround_1:
                     Draft.makeSketch(FreeCADGui.Selection.getSelection(),autoconstraints=True) #,addTo=sketch)
                 else:
                     Draft.makeSketch(union,autoconstraints=True) #,addTo=sketch)
                 sketch = doc.ActiveObject
+                p = sketch.Placement
+                # print(p)
+                # print(p.Rotation.Axis)
+                if use_workaround_2 and p.Rotation.Axis.z != 1:
+                    FreeCAD.Console.PrintWarning('workaround on Axis to avoid issues in Draft.makeSketch\n')
+                    p.Rotation.Axis.x = 0
+                    p.Rotation.Axis.y = 0
+                    p.Rotation.Axis.z = 1
+                    p.Base.x = 0
+                    p.Base.y = 0
+                    p.Base.z = 1
+                    # print(p)
                 sketch.Label = "Sketch_converted"
             else:
                 for _e in union.Shape.Edges:
@@ -320,7 +334,7 @@ def ksu_edges2sketch():
             #sk.Placement = union.Placement
             if remove_shapes:
                 rmvsubtree([union])
-                if use_workaround:
+                if use_workaround_1:
                     for o in sel_objs:
                         FreeCAD.ActiveDocument.removeObject(o.Name)
                 if create_plane:
