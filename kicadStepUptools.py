@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.7.6.2"
+___ver___ = "9.7.7.1"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -17903,10 +17903,6 @@ def export_footprint(fname=None):
         #sayw(drill_pos)
         ## drill_pos (cntX,cntY,sizeX,sizeY)
         fp_type='  (attr smd)'+os.linesep
-        if 0: #'B_Cu' in lyr:
-            plyr='B.Cu'
-        else:
-            plyr='F.Cu'
         if len (drill_pos)>0:
             #newcontent=newcontent+os.linesep+')'+os.linesep+u' '       
             sayw ('collected drills centers and positions')
@@ -17924,7 +17920,6 @@ def export_footprint(fname=None):
         pad_nbr=1
         found_arc=False
         for pad in pth:
-            #print(pad)
             if pad[0]=='circle':
                 npad=npad+os.linesep+createFpPad(pad,offset,u'TH', drill_pos)
             elif pad[0]=='line' and not found_arc:
@@ -18791,9 +18786,17 @@ def createFpPad(pad,offset,tp, _drills=None):
                         drill_str="(drill "+"{0:.3f}".format(sx) +")"
                         #drill_str="(drill oval "+str(d[2])+" "+str(d[3]) #"(drill 0)"
                     else:
-                        if 0: #'B_Cu' in tp:
+                        #print('pad[-1]',pad[-1])
+                        pattern = '_In+([0-9]*?).Cu'
+                        result = re.search(pattern, pad[-1])
+                        if 'B_Cu' in pad[-1]:
+                            pdLr='B.Cu'
                             ptp="smd"; pad_layers=" (layers B.Cu B.Paste B.Mask))"
+                        elif result is not None:
+                            pdLr=result.group().replace('_','.')[1:]
+                            ptp="smd"; pad_layers=" (layers "+pdLr+"))"
                         else:
+                            pdLr='F.Cu'
                             ptp="smd"; pad_layers=" (layers F.Cu F.Paste F.Mask))"
                         drill_str="" #"(drill 0)"
             else:
@@ -18817,6 +18820,10 @@ def createFpPad(pad,offset,tp, _drills=None):
             #say(pad)
             return pdl
         elif pad[0][0]=='line':
+            if '_padNbr=' in pad[0][-1]:
+                padNbr='"'+pad[0][-1][pad[0][-1].index('_padNbr='):].replace('_padNbr=','').replace('_tmp','')+'"'
+            else:
+                padNbr='"#"'
             #say(_drills)
             #sayerr('rect pad nbr.'+str(pad_nbr))
             #sayw(str(pad))
@@ -18869,8 +18876,20 @@ def createFpPad(pad,offset,tp, _drills=None):
                             drill_str="(drill oval "+"{0:.3f}".format(sx)+" "+"{0:.3f}".format(sy)+")" #"(drill 0)"
                             ptype="oval"
                     else:
-                        ptp="smd"; pad_layers=" (layers F.Cu F.Paste F.Mask))"
-                        drill_str="" #"(drill 0)"
+                        #print('pad[-1] Rect',pad[-1])
+                        pattern = '_In+([0-9]*?).Cu'
+                        result = re.search(pattern, pad[0][-1])
+                        if 'B_Cu' in pad[0][-1]:
+                            pdLr='B.Cu'
+                            ptp="smd"; pad_layers=" (layers B.Cu B.Paste B.Mask))"
+                        elif result is not None:
+                            pdLr=result.group().replace('_','.')[1:]
+                            ptp="smd"; pad_layers=" (layers "+pdLr+"))"
+                        else:
+                            pdLr='F.Cu'
+                            ptp="smd"; pad_layers=" (layers F.Cu F.Paste F.Mask))"
+                        #ptp="smd"; pad_layers=" (layers F.Cu F.Paste F.Mask))"
+                        #drill_str="" #"(drill 0)"
             else:
                 if tp=='NPTH':
                     ptp="np_thru_hole"; pad_layers=" (layers *.Cu *.Mask))"
@@ -18881,19 +18900,32 @@ def createFpPad(pad,offset,tp, _drills=None):
                         drill_str="(drill oval "+"{0:.3f}".format(sx)+" "+"{0:.3f}".format(sy)+")" #"(drill 0)"
                         ptype="oval"
                 else:
-                    if 0: #'B_Cu' in tp:
+                    #print('pad[-1] Rect 2',pad[-1])
+                    pattern = '_In+([0-9]*?).Cu'
+                    result = re.search(pattern, pad[-1])
+                    if 'B_Cu' in pad[0][-1]:
+                        pdLr='B.Cu'
                         ptp="smd"; pad_layers=" (layers B.Cu B.Paste B.Mask))"
+                    elif result is not None:
+                        pdLr=result.group().replace('_','.')[1:]
+                        ptp="smd"; pad_layers=" (layers "+pdLr+"))"
                     else:
+                        pdLr='F.Cu'
                         ptp="smd"; pad_layers=" (layers F.Cu F.Paste F.Mask))"
+                    #ptp="smd"; pad_layers=" (layers F.Cu F.Paste F.Mask))"
                     drill_str="" #"(drill 0)"
 
                 #pdl ="  (pad "+str(pad_nbr)+" "+ptp+" rect (at "+str(px)+" "+str(py)+") (size "+str(sx)+" "+str(sy)+") "+drill_str+pad_layers
-            pdl ="  (pad # "+ptp+" "+ptype+" (at "+"{0:.3f}".format(px)+" "+"{0:.3f}".format(py)+") (size "+"{0:.3f}".format(sx)+" "+"{0:.3f}".format(sy)+") "+drill_str+pad_layers
+            pdl ="  (pad "+padNbr+" "+ptp+" "+ptype+" (at "+"{0:.3f}".format(px)+" "+"{0:.3f}".format(py)+") (size "+"{0:.3f}".format(sx)+" "+"{0:.3f}".format(sy)+") "+drill_str+pad_layers
             #pdl ="  (pad "+str(pad_nbr)+" thru_hole rect (at "+str(px)+" "+str(py)+") (size "+str(sx)+" "+str(sy)+") (layers F.Cu F.Paste F.Mask))"
             pad_nbr=pad_nbr+1
             #say(pad);sayw(pdl)
             return pdl
         elif pad[0][0]=='arc':
+            if '_padNbr=' in pad[0][-1]:
+                padNbr='"'+pad[0][-1][pad[0][-1].index('_padNbr='):].replace('_padNbr=','').replace('_tmp','')+'"'
+            else:
+                padNbr='"#"'
             sayerr('arc pad nbr.'+str(pad_nbr))
             #print pad
             r1=pad[0][1]; cx1=pad[0][2]; cy1=pad[0][3]
@@ -18940,7 +18972,22 @@ def createFpPad(pad,offset,tp, _drills=None):
                             drill_str="(drill oval "+"{0:.3f}".format(sx)+" "+"{0:.3f}".format(sy)+")" #"(drill 0)"
                         #drill_str="(drill oval "+str(d[2])+" "+str(d[3]) #"(drill 0)"
                     else:
-                        ptp="smd"; pad_layers=" (layers F.Cu F.Paste F.Mask))"
+                        pattern = '_In+([0-9]*?).Cu'
+                        result = re.search(pattern, pad[0][-1])
+                        if 'B_Cu' in pad[0][-1]:
+                            pdLr='B.Cu'
+                            ptp="smd"; pad_layers=" (layers B.Cu B.Paste B.Mask))"
+                        elif result is not None:
+                            pdLr=result.group().replace('_','.')[1:]
+                            ptp="smd"; pad_layers=" (layers "+pdLr+"))"
+                        else:
+                            pdLr='F.Cu'
+                            ptp="smd"; pad_layers=" (layers F.Cu F.Paste F.Mask))"
+                        if '_padNbr=' in pad[0][-1]:
+                            padNbr='"'+pad[0][-1][pad[0][-1].index('_padNbr='):].replace('_padNbr=','')+'"'
+                        else:
+                            padNbr='"#"'
+                        #ptp="smd"; pad_layers=" (layers F.Cu F.Paste F.Mask))"
                         drill_str="" #"(drill 0)"
             else:
                 if tp=='NPTH':
@@ -18951,14 +18998,22 @@ def createFpPad(pad,offset,tp, _drills=None):
                         drill_str="(drill oval "+"{0:.3f}".format(sx)+" "+"{0:.3f}".format(sy)+")" #"(drill 0)"
                     #drill_str="(drill oval "+str(d[2])+" "+str(d[3]) #"(drill 0)"
                 else:
-                    if 0: #'B_Cu' in tp:
+                    pattern = '_In+([0-9]*?).Cu'
+                    result = re.search(pattern, pad[0][-1])
+                    if 'B_Cu' in pad[0][-1]:
+                        pdLr='B.Cu'
                         ptp="smd"; pad_layers=" (layers B.Cu B.Paste B.Mask))"
+                    elif result is not None:
+                        pdLr=result.group().replace('_','.')[1:]
+                        ptp="smd"; pad_layers=" (layers "+pdLr+"))"
                     else:
+                        pdLr='F.Cu'
                         ptp="smd"; pad_layers=" (layers F.Cu F.Paste F.Mask))"
+                    #ptp="smd"; pad_layers=" (layers F.Cu F.Paste F.Mask))"
                     drill_str="" #"(drill 0)"
 
             #pdl ="  (pad "+str(pad_nbr)+" "+ptp+" oval (at "+str(px)+" "+str(py)+") (size "+str(sx)+" "+str(sy)+") "+drill_str+pad_layers
-            pdl ="  (pad # "+ptp+" oval (at "+"{0:.3f}".format(px)+" "+"{0:.3f}".format(py)+") (size "+"{0:.3f}".format(sx)+" "+"{0:.3f}".format(sy)+") "+drill_str+pad_layers
+            pdl ="  (pad "+padNbr+" "+ptp+" oval (at "+"{0:.3f}".format(px)+" "+"{0:.3f}".format(py)+") (size "+"{0:.3f}".format(sx)+" "+"{0:.3f}".format(sy)+") "+drill_str+pad_layers
             #pdl ="  (pad "+str(pad_nbr)+" "+ptp+" oval (at "+str(cx)+" "+str(cy)+") (size "+str(sx)+" "+str(sy)+") (layers F.Cu F.Paste F.Mask))"
             pad_nbr=pad_nbr+1
             #say(pad);sayw(pdl)
@@ -18968,6 +19023,10 @@ def createFpPad(pad,offset,tp, _drills=None):
     ##--------------------------------------------##
     #elif tp=='RoundRect':
     elif 'RoundRect' in tp:
+        if '_padNbr=' in pad[0][-1]:
+            padNbr='"'+pad[0][-1][pad[0][-1].index('_padNbr='):].replace('_padNbr=','').replace('_tmp','')+'"'
+        else:
+            padNbr='"#"'
         found_drill=False
         #sayw(pad)
         #stop
@@ -19046,14 +19105,32 @@ def createFpPad(pad,offset,tp, _drills=None):
                     else:
                         drill_str=drill_str+")"
                 else:
-                    ptp="smd"; pad_layers=" (layers F.Cu F.Paste F.Mask)"
+                    pattern = '_In+([0-9]*?).Cu'
+                    result = re.search(pattern, pad[0][-1])
+                    if 'B_Cu' in pad[0][-1]:
+                        pdLr='B.Cu'
+                        ptp="smd"; pad_layers=" (layers B.Cu B.Paste B.Mask)"
+                    elif result is not None:
+                        pdLr=result.group().replace('_','.')[1:]
+                        ptp="smd"; pad_layers=" (layers "+pdLr+")"
+                    else:
+                        pdLr='F.Cu'
+                        ptp="smd"; pad_layers=" (layers F.Cu F.Paste F.Mask)"
+                    #ptp="smd"; pad_layers=" (layers F.Cu F.Paste F.Mask)"
                     py=-py
                     drill_str="" #"(drill 0)"
             else:
-                if 0: #'B_Cu' in tp:
-                    ptp="smd"; pad_layers=" (layers B.Cu B.Paste B.Mask))"
+                pattern = '_In+([0-9]*?).Cu'
+                result = re.search(pattern, pad[0][-1])
+                if 'B_Cu' in pad[0][-1]:
+                    pdLr='B.Cu'
+                    ptp="smd"; pad_layers=" (layers B.Cu B.Paste B.Mask)"
+                elif result is not None:
+                    pdLr=result.group().replace('_','.')[1:]
+                    ptp="smd"; pad_layers=" (layers "+pdLr+")"
                 else:
-                    ptp="smd"; pad_layers=" (layers F.Cu F.Paste F.Mask))"
+                    pdLr='F.Cu'
+                    ptp="smd"; pad_layers=" (layers F.Cu F.Paste F.Mask)"
                 #ptp="smd"; pad_layers=" (layers F.Cu F.Paste F.Mask)"
                 py=-py
                 drill_str="" #"(drill 0)"
@@ -19090,8 +19167,8 @@ def createFpPad(pad,offset,tp, _drills=None):
             #     p_layers='(layers F.Cu F.Paste F.Mask)'
             #rratio=0.25  ### TBD
             #pdl ="  (pad "+str(pad_nbr)+" "+ptp+" roundrect (at "+str(cx)+" "+str(cy)+") (size "+\
-            pdl ="  (pad # "+ptp+" roundrect (at "+"{0:.3f}".format(px)+" "+"{0:.3f}".format(py)+") (size "+\
-                 "{0:.3f}".format(sx)+" "+"{0:.3f}".format(sy)+") "+drill_str+" "+pad_layers+" (roundrect_rratio "+str(rratio)+"))"
+            pdl ="  (pad "+padNbr+" "+ptp+" roundrect (at "+"{0:.3f}".format(px)+" "+"{0:.3f}".format(py)+") (size "+\
+                 "{0:.3f}".format(sx)+" "+"{0:.3f}".format(sy)+") "+drill_str+" "+pad_layers+" (roundrect_rratio "+"{0:.3f}".format(rratio)+"))" #+str(rratio)+"))"
             #pdl ="  (pad "+str(pad_nbr)+" thru_hole rect (at "+str(px)+" "+str(py)+") (size "+str(sx)+" "+str(sy)+") (layers F.Cu F.Paste F.Mask))"
             pad_nbr=pad_nbr+1
             #say(pad);sayw(pdl)
