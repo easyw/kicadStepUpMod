@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.7.8.1"
+___ver___ = "9.7.8.2"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -16768,6 +16768,8 @@ def PushFootprint():
                             if 'NPTH_Drills' not in o.Label:
                                 if '_padNbr=' in o.Label:
                                     skLabel = 'Sketch_Pads_TH_SMD'+o.Label[o.Label.index('_padNbr='):]+'_tmp'
+                                elif  '_padNum=' in o.Label:
+                                    skLabel = 'Sketch_Pads_TH_SMD'+o.Label[o.Label.index('_padNum='):]+'_tmp'
                                 else:
                                     skLabel = 'Sketch_Pads_TH_SMD_tmp'
                             else:
@@ -16842,6 +16844,8 @@ def PushFootprint():
                             if 'NPTH_Drills' not in o.Label:
                                 if '_padNbr=' in o.Label:
                                     skLabel = 'Sketch_Pads_TH_SMD'+o.Label[o.Label.index('_padNbr='):]+'_tmp'
+                                elif  '_padNum=' in o.Label:
+                                    skLabel = 'Sketch_Pads_TH_SMD'+o.Label[o.Label.index('_padNum='):]+'_tmp'
                                 else:
                                     skLabel = 'Sketch_Pads_TH_SMD_tmp'
                             else:
@@ -18782,6 +18786,8 @@ def createFpPad(pad,offset,tp, _drills=None):
         if pad[0]=='circle':
             if '_padNbr=' in pad[-1]:
                 padNbr='"'+pad[-1][pad[-1].index('_padNbr='):].replace('_padNbr=','').replace('_tmp','').replace('_','')+'"'
+            elif '_padNum=' in pad[-1]:
+                padNbr='"'+pad[-1][pad[-1].index('_padNum='):].replace('_padNum=','').replace('_tmp','').replace('_','')+'"'
             else:
                 padNbr='"#"'
             sayerr('circle pad nbr.'+str(pad_nbr))
@@ -18850,6 +18856,8 @@ def createFpPad(pad,offset,tp, _drills=None):
         elif pad[0][0]=='line':
             if '_padNbr=' in pad[0][-1]:
                 padNbr='"'+pad[0][-1][pad[0][-1].index('_padNbr='):].replace('_padNbr=','').replace('_tmp','').replace('_','')+'"'
+            elif '_padNum=' in pad[0][-1]:
+                padNbr='"'+pad[0][-1][pad[0][-1].index('_padNum='):].replace('_padNum=','').replace('_tmp','').replace('_','')+'"'
             else:
                 padNbr='"#"'
             #say(_drills)
@@ -18952,6 +18960,8 @@ def createFpPad(pad,offset,tp, _drills=None):
         elif pad[0][0]=='arc':
             if '_padNbr=' in pad[0][-1]:
                 padNbr='"'+pad[0][-1][pad[0][-1].index('_padNbr='):].replace('_padNbr=','').replace('_tmp','').replace('_','')+'"'
+            elif '_padNum=' in pad[0][-1]:
+                padNbr='"'+pad[0][-1][pad[0][-1].index('_padNum='):].replace('_padNum=','').replace('_tmp','').replace('_','')+'"'
             else:
                 padNbr='"#"'
             sayerr('arc pad nbr.'+str(pad_nbr))
@@ -19013,6 +19023,8 @@ def createFpPad(pad,offset,tp, _drills=None):
                             ptp="smd"; pad_layers=" (layers F.Cu F.Paste F.Mask))"
                         if '_padNbr=' in pad[0][-1]:
                             padNbr='"'+pad[0][-1][pad[0][-1].index('_padNbr='):].replace('_padNbr=','')+'"'
+                        elif '_padNum=' in pad[0][-1]:
+                            padNbr='"'+pad[0][-1][pad[0][-1].index('_padNum='):].replace('_padNum=','')+'"'
                         else:
                             padNbr='"#"'
                         #ptp="smd"; pad_layers=" (layers F.Cu F.Paste F.Mask))"
@@ -19053,6 +19065,8 @@ def createFpPad(pad,offset,tp, _drills=None):
     elif 'RoundRect' in tp:
         if '_padNbr=' in pad[0][-1]:
             padNbr='"'+pad[0][-1][pad[0][-1].index('_padNbr='):].replace('_padNbr=','').replace('_tmp','').replace('_','')+'"'
+        elif '_padNum=' in pad[0][-1]:
+            padNbr='"'+pad[0][-1][pad[0][-1].index('_padNum='):].replace('_padNum=','').replace('_tmp','').replace('_','')+'"'
         else:
             padNbr='"#"'
         found_drill=False
@@ -19378,6 +19392,8 @@ def createFpPad(pad,offset,tp, _drills=None):
                     layers.append('Poly_F_Cu')
                 if '_padNbr=' in lines[5]:
                     padNbr='"'+lines[5][lines[5].index('_padNbr='):].replace('_padNbr=','').replace('_','')+'"'
+                elif '_padNum=' in lines[5]:
+                    padNbr='"'+lines[5][lines[5].index('_padNum='):].replace('_padNum=','').replace('_','')+'"'
                 else:
                     padNbr='"#"'
                 i=i+1
@@ -19536,6 +19552,8 @@ def createFpPad(pad,offset,tp, _drills=None):
                     layers.append('Poly_F_Cu')
                 if '_padNbr=' in lines[5]:
                     padNbr='"'+lines[5][lines[5].index('_padNbr='):].replace('_padNbr=','').replace('_','')+'"'
+                elif '_padNum=' in lines[5]:
+                    padNbr='"'+lines[5][lines[5].index('_padNum='):].replace('_padNum=','').replace('_','')+'"'
                 else:
                     padNbr='"#"'
                 i=i+1
