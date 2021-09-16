@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.7.7.2"
+___ver___ = "9.7.8.1"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -16889,12 +16889,7 @@ def PushFootprint():
                     for e in ws.Edges:
                         if hasattr(e.Curve,'Radius'):
                             if not e.Closed:  # Arc and not Circle
-                                #print(e.discretize(QuasiDeflection=q_deflection))
-                                sh=Part.makePolygon(e.discretize(QuasiDeflection=q_deflection))
-                                for ed in sh.Edges:
-                                    wn.append(ed)
-                                #Part.show(sh)
-                                sayw('added discretized polygon')
+                                wn.append(Part.makePolygon(e.discretize(QuasiDeflection=q_deflection)))
                             else:
                                 #wn.append(Part.Wire(e))
                                 wnc.append(Part.Wire(e))
@@ -16906,8 +16901,35 @@ def PushFootprint():
                     for s in wn:
                         for e in s.Edges:
                             edgs.append(e)
-                            #print (e,e.TypeId)
-                    #wns = Part.Wire(Part.__sortEdges__(edgs))
+                    wns = Part.Wire(Part.__sortEdges__(edgs))
+                    #Part.show(wnc[0])
+                    #print (wns);print(wnc[0])
+                    sk_d=Draft.makeSketch([wns,wnc[0]], autoconstraints=True)
+                    Connect = sk_d
+                    
+                    # for e in ws.Edges:
+                    #     if hasattr(e.Curve,'Radius'):
+                    #         if not e.Closed:  # Arc and not Circle
+                    #             #print(e.discretize(QuasiDeflection=q_deflection))
+                    #             sh=Part.makePolygon(e.discretize(QuasiDeflection=q_deflection))
+                    #             for ed in sh.Edges:
+                    #                 wn.append(ed)
+                    #             #Part.show(sh)
+                    #             sayw('added discretized polygon')
+                    #         else:
+                    #             #wn.append(Part.Wire(e))
+                    #             wnc.append(Part.Wire(e))
+                    #             sayw('added circle pad')
+                    #     else:
+                    #         wn.append(Part.Wire(e))
+                    # #sk_d=Draft.makeSketch(wn)
+                    # edgs=[]
+                    # for s in wn:
+                    #     for e in s.Edges:
+                    #         edgs.append(e)
+                    #         #print (e,e.TypeId)
+                    # #wns = Part.Wire(Part.__sortEdges__(edgs))
+                    
                     #lines = []
                     #points = []
                     #p_coords = []
@@ -16946,38 +16968,40 @@ def PushFootprint():
                     # Part.show(sh1)
                     # stop
 
-                    if len (wnc)>0:
-                        edgs.append(wnc[0].Edges[0])
-                    sk_d=Draft.makeSketch(edgs, autoconstraints=True)
-                    FreeCAD.ActiveDocument.recompute()
+                    ## if len (wnc)>0:
+                    ##     edgs.append(wnc[0].Edges[0])
+                    ## sk_d=Draft.makeSketch(edgs, autoconstraints=True)
+                    
+                    ## FreeCAD.ActiveDocument.recompute()
                     ### creating an edge ordered sketch
                     del_sk_d = True
-                    try:
-                        ### Begin command Part_CompJoinFeatures
-                        say('importing BOPTools')
-                        import PartGui
-                        # from PartGui import BOPTools
-                        import BOPTools
-                        import BOPTools.JoinFeatures
-                        say('trying makeConnect')
-                        j = BOPTools.JoinFeatures.makeConnect(name='Connect')
-                        j.Objects = [sk_d]
-                        j.Proxy.execute(j)
-                        j.purgeTouched()
-                        for obj in j.ViewObject.Proxy.claimChildren():
-                            obj.ViewObject.hide()
-                        ### End command Part_CompJoinFeatures
-                        say('makeConnect done')
-                        Connect = FreeCAD.ActiveDocument.ActiveObject
-                    except:
-                        sayw('failed makeConnect')
-                        FreeCAD.ActiveDocument.removeObject(FreeCAD.ActiveDocument.ActiveObject.Name)
-                        Connect = sk_d
-                        del_sk_d = False
+                    if 0:
+                        try:
+                            ### Begin command Part_CompJoinFeatures
+                            say('importing BOPTools')
+                            import PartGui
+                            # from PartGui import BOPTools
+                            import BOPTools
+                            import BOPTools.JoinFeatures
+                            say('trying makeConnect')
+                            j = BOPTools.JoinFeatures.makeConnect(name='Connect')
+                            j.Objects = [sk_d]
+                            j.Proxy.execute(j)
+                            j.purgeTouched()
+                            for obj in j.ViewObject.Proxy.claimChildren():
+                                obj.ViewObject.hide()
+                            ### End command Part_CompJoinFeatures
+                            say('makeConnect done')
+                            Connect = FreeCAD.ActiveDocument.ActiveObject
+                        except:
+                            sayw('failed makeConnect')
+                            FreeCAD.ActiveDocument.removeObject(FreeCAD.ActiveDocument.ActiveObject.Name)
+                            Connect = sk_d
+                            del_sk_d = False
                     sv0 = Draft.makeShape2DView(FreeCAD.ActiveDocument.getObject(Connect.Name), FreeCAD.Vector(-0.0, -0.0, 1.0))
                     FreeCAD.ActiveDocument.recompute()
                     FreeCAD.ActiveDocument.removeObject(Connect.Name)
-                    if del_sk_d:
+                    if 0: #del_sk_d:
                         FreeCAD.ActiveDocument.removeObject(sk_d.Name)
                     #FreeCADGui.Selection.clearSelection()
                     #FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.Name,sv0.Name)
@@ -18906,7 +18930,7 @@ def createFpPad(pad,offset,tp, _drills=None):
                 else:
                     #print('pad[-1] Rect 2',pad[-1])
                     pattern = '_In+([0-9]*?).Cu'
-                    result = re.search(pattern, pad[-1])
+                    result = re.search(pattern, pad[0][-1])
                     if 'B_Cu' in pad[0][-1]:
                         pdLr='B.Cu'
                         ptp="smd"; pad_layers=" (layers B.Cu B.Paste B.Mask))"
