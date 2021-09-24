@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "9.7.8.3"
+___ver___ = "9.7.8.4"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -21187,7 +21187,7 @@ def pushFillZone(skn, ofs, keepout=None):
     elif 'Mask' in keepout:
         fillzone = """  (gr_poly"""+os.linesep
     elif 'KeepOut' in keepout: #keepout zone
-        fillzone = """  (zone (net 0) (net_name "") (layers B.Cu) (tstamp 0) (hatch edge 0.508)"""+os.linesep
+        fillzone = """  (zone (net 0) (net_name "") (layers """+keepout[:1]+""".Cu) (tstamp 0) (hatch edge 0.508)"""+os.linesep
         fillzone+="""    (connect_pads (clearance 0.508))"""+os.linesep
         fillzone+="""    (min_thickness 0.254)"""+os.linesep
         fillzone+="""    (keepout (tracks not_allowed) (vias not_allowed) (copperpour not_allowed))"""+os.linesep
