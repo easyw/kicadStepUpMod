@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.0.2'
+ksuCMD_version__='2.0.3'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -3694,7 +3694,14 @@ class Arcs2Circles():
         centers=[];rads=[]
         for idx,g in enumerate(o.Geometry):
             if 'Circle' in str(g) and not kicadStepUptools.isConstruction(g):
-                if not (g.Center in centers and g.Radius in rads):
+                found=False
+                for i,c in enumerate(centers):
+                #if not (g.Center in centers and g.Radius in rads):
+                    if c == g.Center:
+                        if g.Radius == rads[i]:
+                            found=True
+                            continue
+                if not found:
                     centers.append(g.Center);rads.append(g.Radius)
         #print(len(centers), centers)
         skLabel = o.Label+"_circles"
