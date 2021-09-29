@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global tracks_version
-tracks_version = '2.3'
+tracks_version = '2.4'
 
 import kicad_parser
 #import kicad_parser; import importlib; importlib.reload(kicad_parser)
@@ -296,7 +296,12 @@ def addtracks(fname = None):
         import kicad_parser 
         # reload_lib(kicad_parser)
         pcb = kicad_parser.KicadFcad(filename)
-        pcbThickness = pcb.board_thickness
+        # pcbThickness = pcb.board_thickness ## this doesn't always give the full board thickness
+        # print(pcbThickness,'pcbThickness')
+        
+        mypcb = KicadPCB.load(filename)
+        pcbThickness = float(mypcb.general.thickness)
+        # print(pcbThickness,'mypcb.pcbThickness')
         #pcbThickness = float(pcb.general.thickness)
         #pcb.setLayer(LvlTopName)
         minSizeDrill = 0.0  #0.8
