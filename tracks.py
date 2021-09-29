@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global tracks_version
-tracks_version = '1.2'
+tracks_version = '2.3'
 
 import kicad_parser
 #import kicad_parser; import importlib; importlib.reload(kicad_parser)
@@ -218,9 +218,27 @@ def cut_out_tracks (pcbsk,tracks,tname_sfx):
     
     return tracks_ct_Name
 ##
+def simple_cpy (obj,lbl):
+    copy = FreeCAD.ActiveDocument.addObject('Part::Feature',obj.Name)
+    copy.Label = lbl
+    copy.Shape = obj.Shape
+    copy.ViewObject.ShapeColor   = obj.ViewObject.ShapeColor
+    copy.ViewObject.LineColor    = obj.ViewObject.LineColor
+    copy.ViewObject.PointColor   = obj.ViewObject.PointColor
+    copy.ViewObject.DiffuseColor = obj.ViewObject.DiffuseColor
+    return copy
+#
+#def rmv_obj(o):
+#    FreeCADGui.Selection.clearSelection()
+#    FreeCADGui.Selection.addSelection(doc.getObject(pads.Name))
+#    removesubtree(FreeCADGui.Selection.getSelection())
+#
 
 from kicadStepUptools import removesubtree, cfg_read_all
-from kicadStepUptools import KicadPCB, make_unicode, make_string
+from kicadStepUptools import make_unicode, make_string
+import fcad_parser
+from fcad_parser import KicadPCB,SexpList
+
 #filename="C:/Cad/Progetti_K/ksu-test/pic_smart_switch.kicad_pcb"
 #filename="C:/Cad/Progetti_K/eth-32gpio/eth-32gpio.kicad_pcb"
 def addtracks(fname = None):
@@ -262,8 +280,8 @@ def addtracks(fname = None):
             slk_col = '#2d2d2d'
         else:
             slk_col = '#f8f8f0'
-        mypcb = KicadPCB.load(filename)
-        pcbThickness = float(mypcb.general.thickness)
+        # mypcb = KicadPCB.load(filename)
+        # pcbThickness = float(mypcb.general.thickness)
         #print (mypcb.general.thickness)
         #print(mypcb.layers)
         
@@ -275,8 +293,11 @@ def addtracks(fname = None):
         #    if float(lynbr) == Bot_lvl:
         #        LvlBotName=(mypcb.layers['{0}'.format(str(lynbr))][0])
         #print(LvlTopName,'  ',LvlBotName)
-        import kicad_parser; reload_lib(kicad_parser)
+        import kicad_parser 
+        # reload_lib(kicad_parser)
         pcb = kicad_parser.KicadFcad(filename)
+        pcbThickness = pcb.board_thickness
+        #pcbThickness = float(pcb.general.thickness)
         #pcb.setLayer(LvlTopName)
         minSizeDrill = 0.0  #0.8
         #print(pcb.colors)
@@ -288,7 +309,9 @@ def addtracks(fname = None):
         #track_col = pcb_col['track'][0]
         pcb_col['track'][0] = mkColor(trk_col)
         pcb_col['zone'][0] = mkColor(trk_col)
-        
+        # print(pcb_col['track'][0])
+        # print(pcb_col['pad'][0])
+        # print(pcb_col)
         #pcb_col['track'][0] = mkColor('#147b9d')
         #pcb_col['zone'][0] = mkColor('#147b9d')
         #pcb.colors = {
@@ -301,114 +324,167 @@ def addtracks(fname = None):
         #pcb.colors={'board':(1.,1.,1.),'pad':{0:(219/255,188/255,126/255)},'zone':{0:(0.,1.,0.)},'track':{0:(0.,1.,1.)},'copper':{0:(0.,1.,1.)},}  
         pcb.setLayer(Top_lvl)
         #try:   #doing top tracks layer
-        pcb.makeCopper(holes=True, minSize=minSizeDrill)
-        doc=FreeCAD.ActiveDocument
-        docG=FreeCADGui.ActiveDocument
+        ## pcb.makeCopper(holes=True, minSize=minSizeDrill)
+        # pcb.make(copper_thickness=0.035, board_thickness=pcbThickness, combo=False, fuseCoppers=True ) 
+        # pcb.makeCopper(holes=True,fuse=False)
+        # say_time()
+        # stop
+        topPads = None
+        topTracks = None
+        topZones = None
         deltaz = 0.01 #10 micron
-        composed = doc.ActiveObject
-        s = composed.Shape
-        doc.addObject('Part::Feature','topTracks'+ftname_sfx).Shape=composed.Shape
-        topTracks = doc.ActiveObject
-        #print (doc.ActiveObject.Label)
-        #print (topTracks.Label)
-        docG.ActiveObject.ShapeColor   = docG.getObject(composed.Name).ShapeColor
-        docG.ActiveObject.LineColor    = docG.getObject(composed.Name).LineColor
-        docG.ActiveObject.PointColor   = docG.getObject(composed.Name).PointColor
-        docG.ActiveObject.DiffuseColor = docG.getObject(composed.Name).DiffuseColor
-        #doc.recompute()
-        #doc.addObject('Part::Feature',"topTraks").Shape=s
-        topTracks.Label="topTracks"+ftname_sfx
-        topTracks.Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,deltaz),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
-        #if hasattr(doc.Pcb, 'Shape'):
-        #if len (doc.getObjectsByLabel('Pcb')) >0:
-        #import tracks; import importlib;importlib.reload(tracks)
-        if len (doc.getObjectsByLabel('Pcb'+ftname_sfx)) >0:
-            #PCB_Sketch_5737
-            pcb_sk = doc.getObject('PCB_Sketch'+ftname_sfx)
-            ### check if BBOx pcb > BBOx tracks
-            topTracks.Placement = doc.getObject('Pcb'+ftname_sfx).Placement
-            if (topTracks.Shape.BoundBox.XLength > pcb_sk.Shape.BoundBox.XLength) or \
-             (topTracks.Shape.BoundBox.YLength > pcb_sk.Shape.BoundBox.YLength):
-                topTracks_cut_Name = cut_out_tracks(pcb_sk,topTracks,ftname_sfx)
-                topTracks = doc.getObject(topTracks_cut_Name)
-            topTracks.Placement.Base.z+=deltaz
-            if len (doc.getObjectsByLabel('Board_Geoms'+ftname_sfx)) > 0:
-                if use_AppPart and not use_LinkGroups:
-                    doc.getObject('Board_Geoms'+ftname_sfx).addObject(topTracks)
-                elif use_LinkGroups:
-                    doc.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(topTracks,None,'',[])
-        #topTracks.Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,0.05),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
-        ##docG.getObject(topTracks.Name).Transparency=40
-        if 0:
-            docG.getObject(topTracks.Name).ShapeColor = (0.78,0.46,0.20)
-        FreeCADGui.Selection.clearSelection()
-        FreeCADGui.Selection.addSelection(doc.getObject(composed.Name))
-        #stop
-        removesubtree(FreeCADGui.Selection.getSelection())
-        say_time()
-        #except Exception as e:
-        #    exc_type, exc_obj, exc_tb = sys.exc_info()
-        #    fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-        #    FreeCAD.Console.PrintError('error class: '+str(exc_type)+'\nfile name: '+str(fname)+'\nerror @line: '+str(exc_tb.tb_lineno)+'\nerror value: '+str(e.args[0])+'\n')
-        
+
+        if FreeCAD.ActiveDocument is not None:
+            objsNum = len(FreeCAD.ActiveDocument.Objects)
+        else:
+            objsNum = 0
+        pcb.makePads(shape_type='face',thickness=0.05,holes=True,fit_arcs=True,prefix='')
+        if FreeCAD.ActiveDocument is not None:
+            if objsNum < len(FreeCAD.ActiveDocument.Objects):
+                deltaz = 0.01 #10 micron
+                pads=FreeCAD.ActiveDocument.ActiveObject
+                pads.Placement.Base.z = pads.Placement.Base.z + deltaz
+                new_obj = simple_cpy(pads,'topPads'+ftname_sfx)
+                say_time()
+                removesubtree([pads])
+                topPads = new_obj
+        if FreeCAD.ActiveDocument is not None:
+            objsNum = len(FreeCAD.ActiveDocument.Objects)
+        pcb.makeTracks(shape_type='face',fit_arcs=True,thickness=0.05,holes=True,prefix='')
+        if FreeCAD.ActiveDocument is not None:
+            if objsNum < len(FreeCAD.ActiveDocument.Objects):
+                say_time()
+                tracks=FreeCAD.ActiveDocument.ActiveObject
+                new_obj = simple_cpy(tracks,'topTracks'+ftname_sfx)
+                say_time()
+                removesubtree([tracks])
+                topTracks = new_obj
+                #stop
+        if FreeCAD.ActiveDocument is not None:
+            objsNum = len(FreeCAD.ActiveDocument.Objects)
+        pcb.makeZones(shape_type='face',thickness=0.05, fit_arcs=True,holes=True) #,prefix='')
+        if FreeCAD.ActiveDocument is not None:
+            if objsNum < len(FreeCAD.ActiveDocument.Objects):
+                say_time()
+                zones=FreeCAD.ActiveDocument.ActiveObject
+                new_obj = simple_cpy(zones,'topZones'+ftname_sfx)
+                say_time()
+                removesubtree([zones])
+                topZones = new_obj
+            if len (FreeCAD.ActiveDocument.getObjectsByLabel('Pcb'+ftname_sfx)) >0:
+                #PCB_Sketch_5737
+                pcb_sk = FreeCAD.ActiveDocument.getObject('PCB_Sketch'+ftname_sfx)
+                ### check if BBOx pcb > BBOx tracks
+                if topPads is not None:
+                    topPads.Placement = FreeCAD.ActiveDocument.getObject('Pcb'+ftname_sfx).Placement
+                    if (topPads.Shape.BoundBox.XLength > pcb_sk.Shape.BoundBox.XLength) or \
+                            (topPads.Shape.BoundBox.YLength > pcb_sk.Shape.BoundBox.YLength):
+                        topPads_cut_Name = cut_out_tracks(pcb_sk,topPads,ftname_sfx)
+                        topPads = FreeCAD.ActiveDocument.getObject(topPads_cut_Name)
+                    topPads.Placement.Base.z+=2*deltaz
+                if topTracks is not None:
+                    topTracks.Placement = FreeCAD.ActiveDocument.getObject('Pcb'+ftname_sfx).Placement
+                    topTracks.Placement.Base.z+=deltaz
+                if topZones is not None:
+                    topZones.Placement = FreeCAD.ActiveDocument.getObject('Pcb'+ftname_sfx).Placement
+                    topZones.Placement.Base.z+=deltaz
+                if len (FreeCAD.ActiveDocument.getObjectsByLabel('Board_Geoms'+ftname_sfx)) > 0:
+                    if use_AppPart and not use_LinkGroups:
+                        if topPads is not None:
+                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).addObject(topPads)
+                        if topTracks is not None:
+                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).addObject(topTracks)
+                        if topZones is not None:
+                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).addObject(topZones)
+                    elif use_LinkGroups:
+                        if topPads is not None:
+                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(topPads,None,'',[])
+                        if topTracks is not None:
+                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(topTracks,None,'',[])
+                        if topZones is not None:
+                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(topZones,None,'',[])
         #try:    #doing bot tracks layer
         #pcb.setLayer(LvlBotName)
         pcb.setLayer(Bot_lvl)
-        pcb.makeCopper(holes=True, minSize=minSizeDrill)
-        composed = doc.ActiveObject
-        s = composed.Shape
-        doc.addObject('Part::Feature','botTracks'+ftname_sfx).Shape=composed.Shape
-        botTracks = doc.ActiveObject
-        #print (doc.ActiveObject.Label)
-        #print (topTracks.Label)
-        docG.ActiveObject.ShapeColor   = docG.getObject(composed.Name).ShapeColor
-        docG.ActiveObject.LineColor    = docG.getObject(composed.Name).LineColor
-        docG.ActiveObject.PointColor   = docG.getObject(composed.Name).PointColor
-        docG.ActiveObject.DiffuseColor = docG.getObject(composed.Name).DiffuseColor
-        #doc.recompute()
-        #doc.addObject('Part::Feature',"topTraks").Shape=s
-        botTracks.Label="botTracks"+ftname_sfx
-        botTracks.Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,-1.6-deltaz),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))            
-        #if hasattr(doc.Pcb, 'Shape'):
-        ##docG.getObject(botTracks.Name).Transparency=40
-        if 0:
-            docG.getObject(botTracks.Name).ShapeColor = (0.78,0.46,0.20)
-        FreeCADGui.Selection.clearSelection()
-        FreeCADGui.Selection.addSelection(doc.getObject(composed.Name))
-        
-        removesubtree(FreeCADGui.Selection.getSelection())
-        #if hasattr(doc.Pcb, 'Shape'):
-        if len (doc.getObjectsByLabel('Pcb'+ftname_sfx)) > 0:
-            pcb_sk = doc.getObject('PCB_Sketch'+ftname_sfx)
-            shift_plcm = False
-            botTracks.Placement = doc.getObject('Pcb'+ftname_sfx).Placement
-            if (botTracks.Shape.BoundBox.XLength > pcb_sk.Shape.BoundBox.XLength) or \
-             (botTracks.Shape.BoundBox.YLength > pcb_sk.Shape.BoundBox.YLength):
-                botTracks_cut_Name = cut_out_tracks(pcb_sk,botTracks,ftname_sfx)
-                botTracks = doc.getObject(botTracks_cut_Name)
-                shift_plcm = True
-            #botTracks.Placement = doc.getObject('Pcb'+ftname_sfx).Placement
-            #botTracks.Placement = doc.Pcb.Placement
-            #if shift_plcm:
-            #    #botTracks.Placement.Base.z-=pcbThickness+deltaz
-            #    botTracks.Placement.Base.z+=pcbThickness/2+deltaz
-            #else:
-            botTracks.Placement.Base.z-=pcbThickness+deltaz
-                #print('not moved')
-            if len (doc.getObjectsByLabel('Board_Geoms'+ftname_sfx)) > 0:
-                if use_AppPart and not use_LinkGroups:
-                    doc.getObject('Board_Geoms'+ftname_sfx).addObject(botTracks)
-                elif use_LinkGroups:
-                    doc.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(botTracks,None,'',[])
-        #botTracks = FreeCAD.ActiveDocument.ActiveObject
-        #botTracks.Label="botTracks"
-        #botTracks.Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,-1.6),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))    
-        #docG.ActiveObject.Transparency=40
-        #except Exception as e:
-        #    exc_type, exc_obj, exc_tb = sys.exc_info()
-        #    fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-        #    FreeCAD.Console.PrintError('error class: '+str(exc_type)+'\nfile name: '+str(fname)+'\nerror @line: '+str(exc_tb.tb_lineno)+'\nerror value: '+str(e.args[0])+'\n')
+        # pcb.makeCopper(holes=True, minSize=minSizeDrill)
+        #pcb.makeCopper(holes=True)
+        botPads = None
+        botTracks = None
+        botZones = None
+        if FreeCAD.ActiveDocument is not None:
+            objsNum = len(FreeCAD.ActiveDocument.Objects)
+        else:
+            objsNum = 0
+        pcb.makePads(shape_type='face',thickness=0.05,holes=True,fit_arcs=True,prefix='')
+        if FreeCAD.ActiveDocument is not None:
+            if objsNum < len(FreeCAD.ActiveDocument.Objects):
+                doc=FreeCAD.ActiveDocument
+                pads=FreeCAD.ActiveDocument.ActiveObject
+                pads.Placement.Base.z = pads.Placement.Base.z - (pcbThickness + 2*deltaz)
+                new_obj = simple_cpy(pads,'botPads'+ftname_sfx)
+                say_time()
+                removesubtree([pads])
+                botPads = new_obj
+        if FreeCAD.ActiveDocument is not None:
+            objsNum = len(FreeCAD.ActiveDocument.Objects)
+        pcb.makeTracks(shape_type='face',fit_arcs=True,thickness=0.05,holes=True,prefix='')
+        if FreeCAD.ActiveDocument is not None:
+            if objsNum < len(FreeCAD.ActiveDocument.Objects):
+                say_time()
+                tracks=FreeCAD.ActiveDocument.ActiveObject
+                tracks.Placement.Base.z = tracks.Placement.Base.z - (pcbThickness + deltaz)
+                new_obj = simple_cpy(tracks,'botTracks'+ftname_sfx)
+                say_time()
+                removesubtree([tracks])
+                botTracks = new_obj
+                #stop
+        if FreeCAD.ActiveDocument is not None:
+            objsNum = len(FreeCAD.ActiveDocument.Objects)
+        pcb.makeZones(shape_type='face',thickness=0.05, fit_arcs=True,holes=True) # ,prefix='')
+        if FreeCAD.ActiveDocument is not None:
+            if objsNum < len(FreeCAD.ActiveDocument.Objects):
+                say_time()
+                zones=FreeCAD.ActiveDocument.ActiveObject
+                zones.Placement.Base.z = zones.Placement.Base.z - (pcbThickness + deltaz)
+                new_obj = simple_cpy(zones,'botZones'+ftname_sfx)
+                say_time()
+                removesubtree([zones])
+                botZones = new_obj
+            if len (FreeCAD.ActiveDocument.getObjectsByLabel('Pcb'+ftname_sfx)) >0:
+                #PCB_Sketch_5737
+                pcb_sk = FreeCAD.ActiveDocument.getObject('PCB_Sketch'+ftname_sfx)
+                ### check if BBOx pcb > BBOx tracks
+                if botPads is not None:
+                    botPads.Placement = FreeCAD.ActiveDocument.getObject('Pcb'+ftname_sfx).Placement
+                    if (botPads.Shape.BoundBox.XLength > pcb_sk.Shape.BoundBox.XLength) or \
+                            (botPads.Shape.BoundBox.YLength > pcb_sk.Shape.BoundBox.YLength):
+                        botPads_cut_Name = cut_out_tracks(pcb_sk,botPads,ftname_sfx)
+                        botPads = FreeCAD.ActiveDocument.getObject(botPads_cut_Name)
+                    botPads.Placement.Base.z-=pcbThickness+2*deltaz
+                if botTracks is not None:
+                    botTracks.Placement = FreeCAD.ActiveDocument.getObject('Pcb'+ftname_sfx).Placement
+                    botTracks.Placement.Base.z-=pcbThickness+deltaz
+                if botZones is not None:
+                    botZones.Placement = FreeCAD.ActiveDocument.getObject('Pcb'+ftname_sfx).Placement
+                    botZones.Placement.Base.z-=pcbThickness+deltaz
+                if len (FreeCAD.ActiveDocument.getObjectsByLabel('Board_Geoms'+ftname_sfx)) > 0:
+                    if use_AppPart and not use_LinkGroups:
+                        if botPads is not None:
+                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).addObject(botPads)
+                        if botTracks is not None:
+                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).addObject(botTracks)
+                        if botZones is not None:
+                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).addObject(botZones)
+                    elif use_LinkGroups:
+                        if botPads is not None:
+                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(botPads,None,'',[])
+                        if botTracks is not None:
+                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(botTracks,None,'',[])
+                        if botZones is not None:
+                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(botZones,None,'',[])
         say_time()
         
-        FreeCADGui.SendMsgToActiveView("ViewFit")
-        docG.activeView().viewAxonometric()
+        if FreeCAD.ActiveDocument is not None:
+            FreeCADGui.SendMsgToActiveView("ViewFit")
+            FreeCADGui.ActiveDocument.activeView().viewAxonometric()
+###
