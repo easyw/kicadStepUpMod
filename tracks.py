@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global tracks_version
-tracks_version = '2.4'
+tracks_version = '2.4.1'
 
 import kicad_parser
 #import kicad_parser; import importlib; importlib.reload(kicad_parser)
@@ -346,9 +346,8 @@ def addtracks(fname = None):
         pcb.makePads(shape_type='face',thickness=0.05,holes=True,fit_arcs=True,prefix='')
         if FreeCAD.ActiveDocument is not None:
             if objsNum < len(FreeCAD.ActiveDocument.Objects):
-                deltaz = 0.01 #10 micron
                 pads=FreeCAD.ActiveDocument.ActiveObject
-                pads.Placement.Base.z = pads.Placement.Base.z + deltaz
+                pads.Placement.Base.z = pads.Placement.Base.z + 2*deltaz
                 new_obj = simple_cpy(pads,'topPads'+ftname_sfx)
                 say_time()
                 removesubtree([pads])
@@ -360,6 +359,7 @@ def addtracks(fname = None):
             if objsNum < len(FreeCAD.ActiveDocument.Objects):
                 say_time()
                 tracks=FreeCAD.ActiveDocument.ActiveObject
+                tracks.Placement.Base.z+=deltaz
                 new_obj = simple_cpy(tracks,'topTracks'+ftname_sfx)
                 say_time()
                 removesubtree([tracks])
@@ -372,6 +372,7 @@ def addtracks(fname = None):
             if objsNum < len(FreeCAD.ActiveDocument.Objects):
                 say_time()
                 zones=FreeCAD.ActiveDocument.ActiveObject
+                zones.Placement.Base.z+=deltaz
                 new_obj = simple_cpy(zones,'topZones'+ftname_sfx)
                 say_time()
                 removesubtree([zones])
