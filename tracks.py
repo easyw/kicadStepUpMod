@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global tracks_version
-tracks_version = '2.4.1'
+tracks_version = '2.4.2'
 
 import kicad_parser
 #import kicad_parser; import importlib; importlib.reload(kicad_parser)
@@ -343,7 +343,7 @@ def addtracks(fname = None):
             objsNum = len(FreeCAD.ActiveDocument.Objects)
         else:
             objsNum = 0
-        pcb.makePads(shape_type='face',thickness=0.05,holes=True,fit_arcs=True,prefix='')
+        pcb.makePads(shape_type='face',thickness=0.05,holes=True,fit_arcs=True) #,prefix='')
         if FreeCAD.ActiveDocument is not None:
             if objsNum < len(FreeCAD.ActiveDocument.Objects):
                 pads=FreeCAD.ActiveDocument.ActiveObject
@@ -354,7 +354,7 @@ def addtracks(fname = None):
                 topPads = new_obj
         if FreeCAD.ActiveDocument is not None:
             objsNum = len(FreeCAD.ActiveDocument.Objects)
-        pcb.makeTracks(shape_type='face',fit_arcs=True,thickness=0.05,holes=True,prefix='')
+        pcb.makeTracks(shape_type='face',fit_arcs=True,thickness=0.05,holes=True) #,prefix='')
         if FreeCAD.ActiveDocument is not None:
             if objsNum < len(FreeCAD.ActiveDocument.Objects):
                 say_time()

@@ -31,7 +31,7 @@ from fcad_parser import KicadPCB,SexpList
 #from .fcad_parser import KicadPCB,SexpList
 
 # from kicadStepUptools import KicadPCB,SexpList
-__kicad_parser_version__ = '2.1.0'
+__kicad_parser_version__ = '2.1.1'
 # https://github.com/realthunder/fcad_pcb/issues/20#issuecomment-586042341
 print('kicad_parser_version '+__kicad_parser_version__)
 # maui
@@ -1518,6 +1518,8 @@ class KicadFcad:
 
                 if isinstance(self.holes_cache,dict):
                     self.holes_cache[key] = holes
+        if not holes:
+            return objs
 
         if not objs:
             return holes
