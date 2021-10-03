@@ -446,6 +446,7 @@ from shutil import copyfile
 import tempfile, errno
 import re
 import time
+import numbers
 
 import ksu_locator
 
@@ -12415,6 +12416,26 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                     Part.show(arc1)
                 PCB.append(['Arc', x1, y1, x2, y2, curve])         
 
+        for v in mypcb.via:
+            # based on code above for pads 
+            if 'drill' not in v:
+                continue
+            drill_present=False
+            try:
+                drill_present=isinstance(v.drill, numbers.Number)
+            except:
+                sayerr('drill size missing');
+            if drill_present:
+                if v.drill >= min_drill_size:
+                    x1=v.at[0];y1=-v.at[1]
+                    radius = float(v.drill)
+                    rx=radius;ry=radius
+                    if holes_solid:
+                        obj=createHole3(x1,y1,rx,ry,"oval",totalHeight) #need to be separated instructions
+                    else:
+                        obj=createHole4(x1,y1,rx,ry,"oval") #need to be separated instructions
+                    HoleList.append(obj)
+                    
         if 0: #this is not needed anymoore because we have built a PCB_Sketch_draft from Edges
             if len(EdgeCuts) >0 and not create_pcb_from_edges:
                 try:
