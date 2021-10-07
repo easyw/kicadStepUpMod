@@ -443,7 +443,8 @@
            <widget class="QLabel" name="label">
             <property name="toolTip">
              <string>minimum Drill size applied to PCB
-'0.0' -&gt; all drills are loaded</string>
+'0.0' -&gt; all drills are loaded
+'-1' -&gt; all drills and vias are loaded</string>
             </property>
             <property name="text">
              <string>minimum Drill size applied to PCB</string>
@@ -467,7 +468,8 @@
            <widget class="Gui::PrefLineEdit" name="lineEdit_drills">
             <property name="toolTip">
              <string>minimum Drill size applied to PCB
-'0.0' -&gt; all drills are loaded</string>
+'0.0' -&gt; all drills are loaded
+'-1' -&gt; all drills and vias are loaded</string>
             </property>
             <property name="text">
              <string>0.0</string>

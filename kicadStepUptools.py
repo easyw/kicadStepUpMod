@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.1.1.0"
+___ver___ = "10.1.2.0"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -12228,12 +12228,16 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                     p_angle=0.0
                 #say('drill');say(p.drill)
                 #say('drill size');
-                drill_present=False
-                try:
-                    tmp=p.drill[0]
-                    drill_present=True
-                except:
-                    sayerr('drill size missing');
+                if hasattr(p,'drill'):
+                    if 'offset' in p.drill:
+                        #say('offset');say(p.drill.offset)
+                        offset=p.drill.offset
+                    else:
+                        offset=[0,0]
+                else:
+                    sayw('drill size missing');
+                    #say('offset not present')
+                    offset=[0,0]
                 #print p.drill.oval
                 #if p.drill.oval:
                 #    if p.drill[0] < min_drill_size and p.drill[1] < min_drill_size:
@@ -12241,16 +12245,10 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                 #else:
                 #    if p.drill[0] < min_drill_size:
                 #        continue
-                if 'offset' in p.drill:
-                    #say('offset');say(p.drill.offset)
-                    offset=p.drill.offset
-                else:
-                    #say('offset not present')
-                    offset=[0,0]
                 #say ( p)
                 #if 'circle' in p[2]:
                 ## NB use always float() to guarantee number not string!!!
-                if drill_present:
+                if hasattr(p,'drill'):
                     #sayerr(p.drill);
                     #sayw(p.drill.oval)
                     #if p.drill.oval is not None
@@ -12336,7 +12334,25 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
              #        #closing edge
              #            if 1: #SHOW POLY BORDER
              #                Part.show(line1)
-
+            if min_drill_size == -1:
+                for v in mypcb.via:
+                    # based on code above for pads 
+                    if 'drill' not in v:
+                        continue
+                    if hasattr(v,'drill'):
+                    #if drill_present:
+                        if v.drill >= min_drill_size:
+                            x1=v.at[0];y1=-v.at[1]
+                            radius = float(v.drill)
+                            rx=radius;ry=radius
+                            if holes_solid:
+                                obj=createHole3(x1,y1,rx,ry,"oval",totalHeight) #need to be separated instructions
+                            else:
+                                obj=createHole4(x1,y1,rx,ry,"oval") #need to be separated instructions
+                            HoleList.append(obj)
+                    else:
+                        sayw('drill size missing');
+                    
             for ml in m.fp_line:
                 # if ml.layer != 'Edge.Cuts':
                 if lyr not in ml.layer:
@@ -12519,7 +12535,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
             else:
                 sayerr('empty sketch; module edge board: creating PCB from Footprint Edge.Cuts')
                 create_pcb_from_edges = True
-    
+
     LCS = None
     #if aux_orig ==1 or grid_orig ==1:
     if origin is not None: #adding LCS only on aux or grid origin
