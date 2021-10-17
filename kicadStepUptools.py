@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.1.2.0"
+___ver___ = "10.1.2.1"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -4153,6 +4153,7 @@ def find_top_container(objs_list):
     if top_cp is not None:
         return top_cp
     else:
+        top_ag = None
         for ag in ag_list:
             if len(ag.InListRecursive) == 0:
                 top_ag = ag
@@ -4661,6 +4662,7 @@ def Load_models(pcbThickness,modules):
                     mod_cnt+=1
                     doc1=FreeCAD.ActiveDocument
                     counterObj=0;counter=0
+                    prevObjs = doc1.Objects
                     for ObJ in doc1.Objects:
                         counterObj+=1
                     say(model_name)
@@ -4706,7 +4708,17 @@ def Load_models(pcbThickness,modules):
                                     #say(str(doc1.Objects)+' HERE')
                                     #sayw(str(imported_obj_list)+' HERE')
                                     newStep = find_top_container(imported_obj_list)
-                                    impLabel = make_string(newStep.Label)
+                                    if newStep is not None:
+                                        impLabel = make_string(newStep.Label)
+                                    else: #old format import multi objs without a Part container
+                                        actObjs = doc1.Objects
+                                        actObjNum = len (actObjs)
+                                        newStep = doc1.addObject('App::Part',model_name)
+                                        impLabel = make_string(newStep.Label)
+                                        for o in actObjs[counterObj:]:
+                                            doc1.getObject(newStep.Name).addObject(doc1.getObject(o.Name))
+                                            #print(o.Label)
+                                        
                             #myStep = FreeCAD.ActiveDocument.ActiveObject
                             #print(myStep.Label)
                             #impLabel = myStep.Label
