@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.1.3.1"
+___ver___ = "10.1.3.2"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -2775,7 +2775,7 @@ def exportStep(objs, ffPathName):
                     #print(len(FreeCAD.ActiveDocument.ActiveObject.ViewObject.DiffuseColor))
                     #print(len(FreeCAD.ActiveDocument.ActiveObject.Shape.Faces))
                     #print(FreeCAD.ActiveDocument.ActiveObject.Label)
-                    FreeCADGui.ActiveDocument.getObject(obj.Name).ShapeColor = single_color #color_vector[0]
+                    FreeCADGui.ActiveDocument.getObject(obj.Name).ShapeColor = single_color[0] #color_vector[0]
         # end test aligning colors
         
         # reducing STEP file size
