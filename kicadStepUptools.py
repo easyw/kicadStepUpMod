@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.1.2.1"
+___ver___ = "10.1.3.1"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -1195,7 +1195,7 @@ led_black="""material DEF LED-BLACK Material {
         specularColor 0.6 0.5 0.6
         emissiveColor 0.0 0.0 0.0
         shininess 0.5
-        transparency 0.0
+        transparency 0.10
         }"""
 
 glass_green="""material DEF GLASS-GREEN Material {
@@ -1236,15 +1236,15 @@ material_properties=[as_is, metal_grey_pins, metal_grey, gold_pins,\
                      pcb_green, pcb_blue, pcb_black,\
                      metal_aluminum, metal_bronze, metal_silver, metal_copper]
 
-material_properties_diffuse=[(0.,0.,0.),(0.824,0.820,0.781),( 0.298, 0.298, 0.298),(0.859,0.738,0.496), \
-                             (0.148, 0.145, 0.145), (0.082, 0.086, 0.094),(0.250, 0.262, 0.281), (0.273, 0.273, 0.273), (0.379, 0.270, 0.215), \
-                             (0.883, 0.711, 0.492), (0.137, 0.402, 0.727),(0.340, 0.680, 0.445), (0.809, 0.426, 0.148), (0.700, 0.100, 0.050), \
-                             (0.578, 0.336, 0.352), (0.832, 0.680, 0.066), (0.895, 0.891, 0.813), \
-                             (0.691, 0.664, 0.598), \
-                             (0.700, 0.100, 0.050), (0.400, 0.700, 0.150), (0.100, 0.250, 0.700), (0.98, 0.840, 0.066), (0.895, 0.891, 0.813),(0.27, 0.25, 0.27), (0.1, 0.05, 0.1),\
-                             (0.400769, 0.441922, 0.459091), (0.566681, 0.580872, 0.580874), (0.000000, 0.631244, 0.748016), (0.000000, 0.75, 0.44), (0.75, 0.44, 0.0), \
-                             (0.07, 0.3, 0.12), (0.07, 0.12, 0.3), (0.16, 0.16, 0.16), \
-                             (0.372322, 0.371574, 0.373173), (0.714, 0.4284, 0.18144), (0.50754, 0.50754, 0.50754), (0.7038, 0.27048, 0.0828)] # (0.314286, 0.074365, 0.000000)]
+material_properties_diffuse=[(0.,0.,0.,0.),(0.824,0.820,0.781,0.),( 0.298, 0.298, 0.298,0.),(0.859,0.738,0.496,0.), \
+                             (0.148, 0.145, 0.145,0.), (0.082, 0.086, 0.094,0.),(0.250, 0.262, 0.281,0.), (0.273, 0.273, 0.273,0.), (0.379, 0.270, 0.215,0.), \
+                             (0.883, 0.711, 0.492,0.), (0.137, 0.402, 0.727,0.),(0.340, 0.680, 0.445,0.), (0.809, 0.426, 0.148,0.), (0.700, 0.100, 0.050,0.), \
+                             (0.578, 0.336, 0.352,0.), (0.832, 0.680, 0.066,0.), (0.895, 0.891, 0.813,0.), \
+                             (0.691, 0.664, 0.598,0.), \
+                             (0.700, 0.100, 0.050,0.1), (0.400, 0.700, 0.150,0.1), (0.100, 0.250, 0.700,0.1), (0.98, 0.840, 0.066,0.1), (0.895, 0.891, 0.813,0.1),(0.27, 0.25, 0.27,0.1), (0.1, 0.05, 0.1,0.1),\
+                             (0.400769, 0.441922, 0.459091,0.37), (0.566681, 0.580872, 0.580874,0.38), (0.000000, 0.631244, 0.748016,0.39), (0.000000, 0.75, 0.44,0.39), (0.75, 0.44, 0.0,0.39), \
+                             (0.07, 0.3, 0.12,0.), (0.07, 0.12, 0.3,0.), (0.16, 0.16, 0.16,0.), \
+                             (0.372322, 0.371574, 0.373173,0.), (0.714, 0.4284, 0.18144,0.), (0.50754, 0.50754, 0.50754,0.), (0.7038, 0.27048, 0.0828,0.)] # (0.314286, 0.074365, 0.000000)]
 
 #FreeCAD.Console.PrintMessage (len (material_properties_names))
 #FreeCAD.Console.PrintMessage (len (material_properties))
@@ -1997,7 +1997,7 @@ def exportVRMLmaterials(objects, filepath):
     with material properties
     `Mesh` structure is defined at root."""
     global ui, creaseAngle, shape_col
-    global color_list, color_list_mat
+    global color_list, color_list_mat, color_list_new
     #material_list=["as is","metal pins","gold pins","black body","dark brown body","brown body","grey body","green body","white body","black label","white label"]
     #material_properties_names=["as is","metal grey pins","gold pins","black body","resistor black body",\
     #                       "grey body","dark grey body","brown body","light brown body","blue body",\
@@ -2019,6 +2019,7 @@ def exportVRMLmaterials(objects, filepath):
         f.write(material_definitions)
         color_list=[]
         color_list_mat=[]
+        color_list_new=[]
         index_color=-1
         Dialog = QtGui.QDialog()
         ui = Ui_Dialog()
@@ -2041,8 +2042,9 @@ def exportVRMLmaterials(objects, filepath):
             #shape_col=(1.0, 0.0, 0.0)#, 0.0)
             f.write("}\n") # closes points
             #say(obj.color)
-            shape_col=obj.color[:-1] #remove last item
-            #say(shape_col)
+            # shape_col=obj.color[:-1] #remove last item
+            shape_col=obj.color
+            #sayw(shape_col)
             if shape_col not in color_list:
                 #sayw(shape_col);say('not found')
                 idc=0;material_index=0
@@ -2051,11 +2053,12 @@ def exportVRMLmaterials(objects, filepath):
                     #say(mat_diff_col)
                     delta_col=0.01
                     if ((abs(shape_col[0]-mat_diff_col[0])<delta_col) and (abs(shape_col[1]-mat_diff_col[1])<delta_col)\
-                        and (abs(shape_col[2]-mat_diff_col[2])<delta_col)) and not found_mat:
-                        #sayw('found a match')
+                        and (abs(shape_col[2]-mat_diff_col[2])<delta_col) and (abs(shape_col[3]-mat_diff_col[3])<delta_col)) and not found_mat:
+                        #sayerr('found a match')
                         material_index=idc
                         found_mat=True
                         #stop
+                        #break #exit loop
                     idc+=1
                 ## pal = QtGui.QPalette()
                 ## bgc = QtGui.QColor(shape_col[0]*255,shape_col[1]*255, shape_col[2]*255)
@@ -2077,25 +2080,34 @@ def exportVRMLmaterials(objects, filepath):
                     #say(reply)
                     if reply==1:
                         material=str(ui.comboBox.currentText())
+                        idx = ui.comboBox.findText(ui.comboBox.currentText())
+                        col_index=len(color_list)-1 #(color_list.index(material_properties_diffuse[idx])
                     else:
                         material="as is"
+                        #color_list.append(shape_col)
+                        idx = ui.comboBox.findText("as is")
+                        col_index=color_list.index(shape_col)
                 color_list_mat.append(material)
-                #say(material)
+                # sayw(material)
             #else:
             #    sayw(shape_col);say('Found!')
             #    col_index=color_list.index(shape_col)
             #    ui.plainTextEdit.setStyleSheet("#plainTextEdit {background-color:rgb("+str(shape_col[0]*255)+","+str(shape_col[1]*255)+","+str(shape_col[2]*255)+");}") 
             #    ui.comboBox.setCurrentIndex(col_index)
             #say("searching")
-            col_index=color_list.index(shape_col)
+            #print(color_list,'color_list')
+            #col_index=color_list.index(shape_col)
+            # col_index=idx
             #say(color_list_mat[col_index])
-            if not Materials or color_list_mat[col_index]=="as is":
+            if not Materials or material=="as is":
                 shape_transparency=obj.transp
-                f.write("appearance Appearance{material Material{diffuseColor %g %g %g\n" % shape_col)
+                color_list_new.append(shape_col)
+                f.write("appearance Appearance{material Material{diffuseColor %g %g %g\n" % shape_col[:-1])
                 f.write("transparency %g}}" % shape_transparency)
                 f.write("}\n") # closes Shape
             else:
                 material_index=material_properties_names.index(color_list_mat[col_index])
+                color_list_new.append(material_properties_diffuse[material_index])
                 #say(material_properties[material_index])
                 #f.write("appearance Appearance{"+material_properties[material_index]+"}}\n")
                 f.write("appearance Appearance{material USE "+material_ids[material_index]+" }}\n")
@@ -2662,7 +2674,7 @@ def go_export(fPathName):
 def exportStep(objs, ffPathName):
     #Export fused object
     global exportS, applymaterials, enable_materials
-    global color_list, color_list_mat
+    global color_list, color_list_mat, color_list_new
     
     #if applymaterials==1:
     #    sayw(color_list); sayw(color_list_mat)
@@ -2722,26 +2734,25 @@ def exportStep(objs, ffPathName):
                 #else copy singular colors for faces
                 else:
                     applyDiffuse=1;
-                for color in single_color:
-                    color_vector.append((color[0], color[1], color[2]))
-                #sayw(color_vector)
-                #sayerr (color_list)
-                #sayw(color_list_mat)
-                idx=0
-                if 'color_list' in globals():
-                    for color in color_vector:
-                        if color in color_list:
-                            #sayerr('found')
-                            pos = color_list.index(color)
-                            #sayw(pos)
-                            if color_list_mat[pos]!='as is':
-                                if color_list_mat[pos] in material_properties_names:
-                                    pos2 = material_properties_names.index(color_list_mat[pos])
-                                    color_vector[idx]=material_properties_diffuse[pos2]
-                            else:
-                                color_vector[idx]=color
-                        idx+=1
-                #sayw(color_vector)
+                # for color in single_color:
+                #     color_vector.append((color[0], color[1], color[2], color[3])) # 0.1))
+                # idx=0
+                # print(color_list_mat)
+                # print(color_list_new)
+                # if 'color_list' in globals():
+                #     for color in color_vector:
+                #         if color[0:3] in color_list:
+                #             #sayerr('found')
+                #             pos = color_list.index(color[0:3])
+                #             #sayw(pos)
+                #             if color_list_mat[pos]!='as is':
+                #                 if color_list_mat[pos] in material_properties_names:
+                #                     pos2 = material_properties_names.index(color_list_mat[pos])
+                #                     color_vector[idx]=material_properties_diffuse[pos2]
+                #             else:
+                #                 color_vector[idx]=color
+                #         idx+=1
+                #     #sayw(color_vector)
                 #say("color_vector")
                 #say(color_vector)
                 #sayw(applyDiffuse)
@@ -2756,11 +2767,15 @@ def exportStep(objs, ffPathName):
                 #        #say(single_color[0])
                 #        FreeCADGui.ActiveDocument.getObject(obj.Name).ShapeColor=(0.,0.,1.)
                 #    #meshes.append(shapeToMesh(face, Diffuse_color[i], transparency[i], scale))
-                    if(applyDiffuse):
-                        FreeCADGui.ActiveDocument.getObject(obj.Name).DiffuseColor=color_vector
-                    else:
-                        #say(color_vector)
-                        FreeCADGui.ActiveDocument.getObject(obj.Name).ShapeColor=color_vector[0]
+                if (applyDiffuse):
+                    #FreeCADGui.ActiveDocument.getObject(obj.Name).DiffuseColor=color_vector
+                    FreeCADGui.ActiveDocument.getObject(obj.Name).DiffuseColor = color_list_new                
+                else:
+                    #say(color_vector)
+                    #print(len(FreeCAD.ActiveDocument.ActiveObject.ViewObject.DiffuseColor))
+                    #print(len(FreeCAD.ActiveDocument.ActiveObject.Shape.Faces))
+                    #print(FreeCAD.ActiveDocument.ActiveObject.Label)
+                    FreeCADGui.ActiveDocument.getObject(obj.Name).ShapeColor = single_color #color_vector[0]
         # end test aligning colors
         
         # reducing STEP file size
