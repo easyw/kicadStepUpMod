@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.1.3.2"
+___ver___ = "10.1.3.3"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -1033,7 +1033,7 @@ led_red="""material DEF LED-RED Material {
         emissiveColor 0.000 0.000 0.000
         specularColor 0.300 0.400 0.150
         shininess 0.125
-        transparency 0.10
+        transparency 0.15
         }"""
 
 led_green="""material DEF LED-GREEN Material {
@@ -1042,7 +1042,7 @@ led_green="""material DEF LED-GREEN Material {
         emissiveColor 0.000 0.000 0.000
         specularColor 0.600 0.300 0.100
         shininess 0.05
-        transparency 0.10
+        transparency 0.15
         }"""
 
 led_blue="""material DEF LED-BLUE Material {
@@ -1051,7 +1051,7 @@ led_blue="""material DEF LED-BLUE Material {
         emissiveColor 0.000 0.000 0.000
         specularColor 0.500 0.600 0.300
         shininess 0.125
-        transparency 0.10
+        transparency 0.15
         }"""
 
 led_yellow="""material DEF LED-YELLOW Material {
@@ -1060,7 +1060,7 @@ led_yellow="""material DEF LED-YELLOW Material {
         specularColor 0.160 0.203 0.320
         emissiveColor 0.0 0.0 0.0
         shininess 0.125
-        transparency 0.10
+        transparency 0.15
         }"""
 
 led_white="""material DEF LED-WHITE Material {
@@ -1069,7 +1069,25 @@ led_white="""material DEF LED-WHITE Material {
         specularColor 0.047 0.055 0.109
         emissiveColor 0.0 0.0 0.0
         shininess 0.125
-        transparency 0.10
+        transparency 0.15
+        }"""
+
+led_grey="""material DEF LED-GREY Material {
+        ambientIntensity 0.494
+        diffuseColor 0.27 0.25 0.27
+        specularColor 0.5 0.5 0.6
+        emissiveColor 0.0 0.0 0.0
+        shininess 0.35
+        transparency 0.15
+        }"""
+
+led_black="""material DEF LED-BLACK Material {
+        ambientIntensity 0.494
+        diffuseColor 0.1 0.05 0.1
+        specularColor 0.6 0.5 0.6
+        emissiveColor 0.0 0.0 0.0
+        shininess 0.5
+        transparency 0.15
         }"""
 
 glass_grey="""material DEF GLASS-19 Material {
@@ -1082,17 +1100,35 @@ glass_grey="""material DEF GLASS-19 Material {
         }"""
 
 glass_gold="""material DEF GLASS-29 Material {
-        ambientIntensity 0.234375
-        diffuseColor 0.566681 0.580872 0.580874
-        specularColor 0.617761 0.429816 0.400140
-        emissiveColor 0.000000 0.000000 0.000000
-        shininess 0.072727
-        transparency 0.38
+        ambientIntensity 0.379
+        diffuseColor 0.859 0.738 0.496
+        specularColor 0.137 0.145 0.184
+        emissiveColor 0.0 0.0 0.0
+        shininess 0.40
+        transparency 0.39
         }"""
 
 glass_blue="""material DEF GLASS-13 Material {
         ambientIntensity 0.250000
         diffuseColor 0.000000 0.631244 0.748016
+        specularColor 0.915152 0.915152 0.915152
+        emissiveColor 0.000000 0.000000 0.000000
+        shininess 0.642424
+        transparency 0.39
+        }"""
+
+glass_green="""material DEF GLASS-GREEN Material {
+        ambientIntensity 0.250000
+        diffuseColor 0.000000 0.75 0.44
+        specularColor 0.915152 0.915152 0.915152
+        emissiveColor 0.000000 0.000000 0.000000
+        shininess 0.642424
+        transparency 0.39
+        }"""
+
+glass_orange="""material DEF GLASS-ORANGE Material {
+        ambientIntensity 0.250000
+        diffuseColor 0.75 0.44 0.000000
         specularColor 0.915152 0.915152 0.915152
         emissiveColor 0.000000 0.000000 0.000000
         shininess 0.642424
@@ -1176,47 +1212,6 @@ metal_copper="""material DEF MET-COPPER Material {
         }"""
 #specularColor 0.780612 0.598604 0.000000
 
-
-       
-
-led_grey="""material DEF LED-GREY Material {
-        ambientIntensity 0.494
-        diffuseColor 0.27 0.25 0.27
-        specularColor 0.5 0.5 0.6
-        emissiveColor 0.0 0.0 0.0
-        shininess 0.35
-        transparency 0.10
-        }"""
-     
-
-led_black="""material DEF LED-BLACK Material {
-        ambientIntensity 0.494
-        diffuseColor 0.1 0.05 0.1
-        specularColor 0.6 0.5 0.6
-        emissiveColor 0.0 0.0 0.0
-        shininess 0.5
-        transparency 0.10
-        }"""
-
-glass_green="""material DEF GLASS-GREEN Material {
-        ambientIntensity 0.250000
-        diffuseColor 0.000000 0.75 0.44
-        specularColor 0.915152 0.915152 0.915152
-        emissiveColor 0.000000 0.000000 0.000000
-        shininess 0.642424
-        transparency 0.39
-        }"""
-
-glass_orange="""material DEF GLASS-ORANGE Material {
-        ambientIntensity 0.250000
-        diffuseColor 0.75 0.44 0.000000
-        specularColor 0.915152 0.915152 0.915152
-        emissiveColor 0.000000 0.000000 0.000000
-        shininess 0.642424
-        transparency 0.39
-        }"""
-
-        
 material_properties_names=["as is","metal grey pins","metal grey","gold pins",
                            "black body","resistor black body","grey body","dark grey body","brown body",\
                            "light brown body","blue body","green body","orange body","red_body",\
@@ -1226,6 +1221,7 @@ material_properties_names=["as is","metal grey pins","metal grey","gold pins",
                            "glass grey","glass gold","glass blue","glass green","glass orange", \
                            "pcb green", "pcb blue", "pcb black",\
                            "metal aluminum", "metal bronze", "metal silver", "metal copper"]
+
 material_properties=[as_is, metal_grey_pins, metal_grey, gold_pins,\
                      black_body,resistor_black_body, grey_body,dark_grey_body,brown_body,\
                      light_brown_body,blue_body, green_body,orange_body,red_body,\
@@ -1241,8 +1237,8 @@ material_properties_diffuse=[(0.,0.,0.,0.),(0.824,0.820,0.781,0.),( 0.298, 0.298
                              (0.883, 0.711, 0.492,0.), (0.137, 0.402, 0.727,0.),(0.340, 0.680, 0.445,0.), (0.809, 0.426, 0.148,0.), (0.700, 0.100, 0.050,0.), \
                              (0.578, 0.336, 0.352,0.), (0.832, 0.680, 0.066,0.), (0.895, 0.891, 0.813,0.), \
                              (0.691, 0.664, 0.598,0.), \
-                             (0.700, 0.100, 0.050,0.1), (0.400, 0.700, 0.150,0.1), (0.100, 0.250, 0.700,0.1), (0.98, 0.840, 0.066,0.1), (0.895, 0.891, 0.813,0.1),(0.27, 0.25, 0.27,0.1), (0.1, 0.05, 0.1,0.1),\
-                             (0.400769, 0.441922, 0.459091,0.37), (0.566681, 0.580872, 0.580874,0.38), (0.000000, 0.631244, 0.748016,0.39), (0.000000, 0.75, 0.44,0.39), (0.75, 0.44, 0.0,0.39), \
+                             (0.700, 0.100, 0.050,0.15), (0.400, 0.700, 0.150,0.15), (0.100, 0.250, 0.700,0.15), (0.98, 0.840, 0.066,0.15), (0.895, 0.891, 0.813,0.15),(0.27, 0.25, 0.27,0.15), (0.1, 0.05, 0.1,0.15),\
+                             (0.400769, 0.441922, 0.459091,0.37), (0.859, 0.738, 0.496,0.39), (0.000000, 0.631244, 0.748016,0.39), (0.000000, 0.75, 0.44,0.39), (0.75, 0.44, 0.0,0.39), \
                              (0.07, 0.3, 0.12,0.), (0.07, 0.12, 0.3,0.), (0.16, 0.16, 0.16,0.), \
                              (0.372322, 0.371574, 0.373173,0.), (0.714, 0.4284, 0.18144,0.), (0.50754, 0.50754, 0.50754,0.), (0.7038, 0.27048, 0.0828,0.)] # (0.314286, 0.074365, 0.000000)]
 
