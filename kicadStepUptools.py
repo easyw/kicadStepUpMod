@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.1.3.3"
+___ver___ = "10.1.3.4"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -6234,7 +6234,6 @@ def onLoadFootprint(file_name=None):
         name="C:/Cad/Progetti_K/ksu-test/test.kicad_mod"
     if len(name) > 0:
         #txtFile = __builtin__.open(name,"r")
-
         #with io.open(name,'r', encoding='utf-8') as txtFile:
         with codecs.open(name,'r', encoding='utf-8') as txtFile:
             #text = f.read()
@@ -15910,12 +15909,14 @@ def PushFootprint():
         if len (sel) >= 1:
             #sayw(doc.Name)
             to_discretize=False;sk_to_discr=[];sk_temp=[];sk_to_convert=[];sk_to_reselect=[]
+            fp_label=u''
             #annular=0.125
             if "Sketch" in sel[0].TypeId or "Group" in sel[0].TypeId:
                 if "Group" in sel[0].TypeId:
                     #print(FreeCAD.ActiveDocument.getObject(sel[0].Name).OutList,'g.OutList')
                     #for o in FreeCAD.ActiveDocument.Objects:
                     #print((sel[0].Name))
+                    fp_label=sel[0].Label.replace(' ','_')
                     for o in FreeCAD.ActiveDocument.getObject(sel[0].Name).OutList:
                         #if sel[0] in o.InList:
                         #print(o.Label)
@@ -16218,7 +16219,9 @@ def PushFootprint():
                     pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
                     pg.SetString("last_fp_path", make_string(last_fp_path)) # py3 .decode("utf-8")
                     start_time=current_milli_time()
-                    export_footprint(name)
+                    if not name.endswith('.kicad_mod'):
+                        name=name+u'.kicad_mod'
+                    export_footprint(name,fp_label)
                     for s in sk_to_discr:
                         FreeCADGui.Selection.addSelection(s)
                     for s in sk_to_reselect:
@@ -16537,7 +16540,7 @@ def normalize_bsplines():
 ###
 
 ###
-def export_footprint(fname=None):
+def export_footprint(fname=None,flabel=None):
     global last_fp_path, test_flag, start_time
     global configParser, configFilePath, start_time
     global ignore_utf8, ignore_utf8_incfg, disable_PoM_Observer
@@ -16588,7 +16591,10 @@ def export_footprint(fname=None):
         sk_name=None
         NetTie_present = False
         fp_name='fc_footprint'
-        fp_name = FreeCAD.ActiveDocument.Name
+        if flabel == '' or flabel is None:
+            fp_name = FreeCAD.ActiveDocument.Name
+        else:
+            fp_name = flabel
         #print(fp_name, 'fp_name1')
         
         for s in sel:
@@ -16597,9 +16603,6 @@ def export_footprint(fname=None):
                 sk_label=s.Label
             if 'NetTie' in s.Label:
                 NetTie_present = True
-            if s.TypeId =='App::DocumentObjectGroup':
-                fp_name=s.Label
-                #print(fp_name, 'fp_name2')
 
         if len(to_discretize)>0 and sk_name is not None:
             #sel = FreeCADGui.Selection.getSelection()
@@ -17102,9 +17105,9 @@ def export_footprint(fname=None):
             sayw ('collected drills centers and positions')
             fp_type=''
         #re.sub(r'^[^\n]*\n', '', s)
-            newcontent=u"(module "+fp_name+" (layer F.Cu) (tedit 61218795)"+os.linesep+newcontent
+            newcontent=u"(module "+fp_name.replace('-fp','')+" (layer F.Cu) (tedit 61218795)"+os.linesep+newcontent
         else:
-            newcontent=u"(module "+fp_name+" (layer F.Cu) (tedit 61218795)"+os.linesep+fp_type+newcontent
+            newcontent=u"(module "+fp_name.replace('-fp','')+" (layer F.Cu) (tedit 61218795)"+os.linesep+fp_type+newcontent
         
         #header=header+fp_type
         ### ----------TH-------------------------------      
