@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.1.3.5"
+___ver___ = "10.1.3.6"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -6754,7 +6754,8 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
     if load_models is None:
         load_models = True
     if load_models == False:
-        layer_list = ['Edge.Cuts','Dwgs.User','Cmts.User','Eco1.User','Eco2.User','Margin']
+        # layer_list = ['Edge.Cuts','Dwgs.User','Cmts.User','Eco1.User','Eco2.User','Margin']
+        layer_list = ['Edge.Cuts','Dwgs.User','Cmts.User','Eco1.User','Eco2.User','Margin', 'F.FillZone', 'F.KeepOutZone', 'F.MaskZone','B.FillZone', 'B.KeepOutZone', 'B.MaskZone',]
         LayerSelectionDlg = QtGui.QDialog()
         ui = Ui_LayerSelection()
         ui.setupUi(LayerSelectionDlg)
@@ -6908,7 +6909,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                 #    ##off_x=-xp+xmin+(xMax-xmin)/2; off_y=-yp-(ymin+(yMax-ymin)/2)  #offset of the board & modules
                 #    off_x=-xp+center_x;off_y=-yp+center_y
                 #    #off_x=-xp;off_y=-yp
-                modules=DrawPCB(mypcb,SketchLayer,override_pcb,keep_pcb_sketch)
+                modules,nsk = DrawPCB(mypcb,SketchLayer,override_pcb,keep_pcb_sketch)
                 if override_pcb == True:
                     if use_AppPart and not force_oldGroups and not use_LinkGroups:
                         doc.getObject(board_name).addObject(doc.getObject(boardG_name))
@@ -7060,6 +7061,9 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
             #updating pcb_sketch
             if SketchLayer != 'Edge.Cuts' and SketchLayer is not None:
                 pcb_sk.Label = SketchLayer
+                if nsk > 1:
+                    pcb_sk.Label+="s"
+                    pcb_sk.ViewObject.Visibility=False
             #FreeCAD.ActiveDocument.getObject("PCB_Sketch").Placement = FreeCAD.Placement(FreeCAD.Vector(board_base_point_x,board_base_point_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
             #FreeCAD.ActiveDocument.getObject("PCB_SketchN").Placement = FreeCAD.Placement(FreeCAD.Vector(board_base_point_x,board_base_point_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
             ## FreeCAD.ActiveDocument.getObject("Pcb").Placement = FreeCAD.Placement(FreeCAD.Vector(-off_x,-off_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
@@ -11738,6 +11742,17 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
     #edg_segms = len(mypcb.gr_line)+len(mypcb.gr_arc)
     edg_segms = 0
     sayw('parsing')
+    sk_label = lyr
+    if 'Mask' in lyr:
+        lyr = lyr[:-4]
+        #print(lyr)
+    keepout=False
+    if 'Fill' in lyr or 'KeepOut' in lyr:
+        if 'KeepOut' in lyr:
+            keepout=True
+        lyr = lyr[:2]+'Cu'
+        #print(lyr)
+    
     for ln in mypcb.gr_line:
         if lyr in ln.layer:
             #say(ln.layer)
@@ -11768,6 +11783,20 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
             #sayerr(bs.layer)
             edg_segms+=4
             #edg_segms+=1
+    for zn in mypcb.zone:
+        #print (zn,zn.layer,zn.polygon)
+        if hasattr(zn,'layer'):
+            zlayer=zn.layer
+        else:
+            zlayer=zn.layers
+        if not keepout:
+            if lyr in zlayer and not hasattr(zn,'keepout'):
+                for p in zn.polygon.pts.xy:
+                    edg_segms+=1
+        else:
+            if lyr in zlayer and hasattr(zn,'keepout'):
+                for p in zn.polygon.pts.xy:
+                    edg_segms+=1 
     
     sayw(str(edg_segms)+' edge segments')
     #for lp in mypcb.gr_poly: #pcb polylines
@@ -11888,10 +11917,69 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
         if show_border:
             Part.show(line1)
 
+    k_index = 0
+    for zn in mypcb.zone:
+        #print(zn.layer)
+        if hasattr(zn,'layer'):
+            zlayer=zn.layer
+        else:
+            zlayer=zn.layers
+        if lyr[0] not in zlayer:
+            continue
+        if 'Mask' in lyr and 'Mask' not in zlayer:
+            continue
+        #print(zn.polygon.pts.xy)
+        if not keepout:
+            if hasattr(zn,'keepout'):
+                continue
+        else:
+            if not hasattr(zn,'keepout'):
+                continue
+        ind = 0
+        l = len(zn.polygon.pts.xy)
+        z_lines = []
+        for p in zn.polygon.pts.xy:
+            if ind == 0:
+                line1=Part.Edge(PLine(Base.Vector(zn.polygon.pts.xy[l-1][0],-zn.polygon.pts.xy[l-1][1],0), Base.Vector(zn.polygon.pts.xy[0][0],-zn.polygon.pts.xy[0][1],0)))
+                edges.append(line1);
+                if load_sketch:
+                    if aux_orig ==1 or grid_orig ==1:
+                        #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0]-off_x,-l.start[1]-off_y,0), Base.Vector(l.end[0]-off_x,-l.end[1]-off_y,0)))
+                        PCB_Geo.append(PLine(Base.Vector(zn.polygon.pts.xy[l-1][0]-off_x,-zn.polygon.pts.xy[l-1][1]-off_y,0), Base.Vector(zn.polygon.pts.xy[0][0]-off_x,-zn.polygon.pts.xy[0][1]-off_y,0)))
+                        line2=Part.Edge(PLine(Base.Vector(zn.polygon.pts.xy[l-1][0]-off_x,-zn.polygon.pts.xy[l-1][1]-off_y,0), Base.Vector(zn.polygon.pts.xy[0][0]-off_x,-zn.polygon.pts.xy[0][1]-off_y,0)))
+                    else:
+                        #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0],-l.start[1],0), Base.Vector(l.end[0],-l.end[1],0)))
+                        PCB_Geo.append(PLine(Base.Vector(zn.polygon.pts.xy[l-1][0],-zn.polygon.pts.xy[l-1][1],0), Base.Vector(zn.polygon.pts.xy[0][0],-zn.polygon.pts.xy[0][1],0)))
+                        line2=Part.Edge(PLine(Base.Vector(zn.polygon.pts.xy[l-1][0],-zn.polygon.pts.xy[l-1][1],0), Base.Vector(zn.polygon.pts.xy[0][0],-zn.polygon.pts.xy[0][1],0)))
+                z_lines.append(line2)
+            else:
+                line1=Part.Edge(PLine(Base.Vector(zn.polygon.pts.xy[ind-1][0],-zn.polygon.pts.xy[ind-1][1],0), Base.Vector(zn.polygon.pts.xy[ind][0],-zn.polygon.pts.xy[ind][1],0)))
+                edges.append(line1);
+                if load_sketch:
+                    if aux_orig ==1 or grid_orig ==1:
+                        #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0]-off_x,-l.start[1]-off_y,0), Base.Vector(l.end[0]-off_x,-l.end[1]-off_y,0)))
+                        PCB_Geo.append(PLine(Base.Vector(zn.polygon.pts.xy[ind-1][0]-off_x,-zn.polygon.pts.xy[ind-1][1]-off_y,0), Base.Vector(zn.polygon.pts.xy[ind][0]-off_x,-zn.polygon.pts.xy[ind][1]-off_y,0)))
+                        line2=Part.Edge(PLine(Base.Vector(zn.polygon.pts.xy[ind-1][0]-off_x,-zn.polygon.pts.xy[ind-1][1]-off_y,0), Base.Vector(zn.polygon.pts.xy[ind][0]-off_x,-zn.polygon.pts.xy[ind][1]-off_y,0)))
+                    else:
+                        #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0],-l.start[1],0), Base.Vector(l.end[0],-l.end[1],0)))
+                        PCB_Geo.append(PLine(Base.Vector(zn.polygon.pts.xy[ind-1][0],-zn.polygon.pts.xy[ind-1][1],0), Base.Vector(zn.polygon.pts.xy[ind][0],-zn.polygon.pts.xy[ind][1],0)))
+                        line2=Part.Edge(PLine(Base.Vector(zn.polygon.pts.xy[ind-1][0],-zn.polygon.pts.xy[ind-1][1],0), Base.Vector(zn.polygon.pts.xy[ind][0],-zn.polygon.pts.xy[ind][1],0)))
+                z_lines.append(line2)
+            ind+=1
+        Draft.makeSketch(z_lines)
+        ndsk = FreeCAD.ActiveDocument.ActiveObject
+        ndsk.Label = sk_label + '_' + str(k_index)
+        ndsk.ViewObject.LineColor = (1.00,1.00,1.00)
+        ndsk.ViewObject.PointColor = (1.00,1.00,1.00)
+        k_index += 1
+        #closing edge
+
+    # k_index = 0
     for lp in mypcb.gr_poly: #pcb polylines
         if lyr not in lp.layer:
         # if lp.layer != 'Edge.Cuts':
             continue
+        ply_lines = []
         ind = 0
         l = len(lp.pts.xy)
         for p in lp.pts.xy:
@@ -11902,9 +11990,15 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                     if aux_orig ==1 or grid_orig ==1:
                         #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0]-off_x,-l.start[1]-off_y,0), Base.Vector(l.end[0]-off_x,-l.end[1]-off_y,0)))
                         PCB_Geo.append(PLine(Base.Vector(lp.pts.xy[l-1][0]-off_x,-lp.pts.xy[l-1][1]-off_y,0), Base.Vector(lp.pts.xy[0][0]-off_x,-lp.pts.xy[0][1]-off_y,0)))
+                        if lp.layer != 'Edge.Cuts':
+                            line2=Part.Edge(PLine(Base.Vector(lp.pts.xy[l-1][0]-off_x,-lp.pts.xy[l-1][1]-off_y,0), Base.Vector(lp.pts.xy[0][0]-off_x,-lp.pts.xy[0][1]-off_y,0)))
                     else:
                         #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0],-l.start[1],0), Base.Vector(l.end[0],-l.end[1],0)))
                         PCB_Geo.append(PLine(Base.Vector(lp.pts.xy[l-1][0],-lp.pts.xy[l-1][1],0), Base.Vector(lp.pts.xy[0][0],-lp.pts.xy[0][1],0)))
+                        if lp.layer != 'Edge.Cuts':
+                            line2=Part.Edge(PLine(Base.Vector(lp.pts.xy[l-1][0],-lp.pts.xy[l-1][1],0), Base.Vector(lp.pts.xy[0][0],-lp.pts.xy[0][1],0)))
+                if lp.layer != 'Edge.Cuts':
+                    ply_lines.append(line2)
             else:
                 line1=Part.Edge(PLine(Base.Vector(lp.pts.xy[ind-1][0],-lp.pts.xy[ind-1][1],0), Base.Vector(lp.pts.xy[ind][0],-lp.pts.xy[ind][1],0)))
                 edges.append(line1);
@@ -11912,10 +12006,23 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                     if aux_orig ==1 or grid_orig ==1:
                         #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0]-off_x,-l.start[1]-off_y,0), Base.Vector(l.end[0]-off_x,-l.end[1]-off_y,0)))
                         PCB_Geo.append(PLine(Base.Vector(lp.pts.xy[ind-1][0]-off_x,-lp.pts.xy[ind-1][1]-off_y,0), Base.Vector(lp.pts.xy[ind][0]-off_x,-lp.pts.xy[ind][1]-off_y,0)))
+                        if lp.layer != 'Edge.Cuts':
+                            line2=Part.Edge(PLine(Base.Vector(lp.pts.xy[ind-1][0]-off_x,-lp.pts.xy[ind-1][1]-off_y,0), Base.Vector(lp.pts.xy[ind][0]-off_x,-lp.pts.xy[ind][1]-off_y,0)))
                     else:
                         #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0],-l.start[1],0), Base.Vector(l.end[0],-l.end[1],0)))
                         PCB_Geo.append(PLine(Base.Vector(lp.pts.xy[ind-1][0],-lp.pts.xy[ind-1][1],0), Base.Vector(lp.pts.xy[ind][0],-lp.pts.xy[ind][1],0)))
+                        if lp.layer != 'Edge.Cuts':
+                            line2=Part.Edge(PLine(Base.Vector(lp.pts.xy[ind-1][0],-lp.pts.xy[ind-1][1],0), Base.Vector(lp.pts.xy[ind][0],-lp.pts.xy[ind][1],0)))
+                if lp.layer != 'Edge.Cuts':
+                    ply_lines.append(line2)
             ind+=1
+        if lp.layer != 'Edge.Cuts':
+            Draft.makeSketch(ply_lines)
+            ndsk = FreeCAD.ActiveDocument.ActiveObject
+            ndsk.Label = sk_label + '_Poly_' + str(k_index)
+            ndsk.ViewObject.LineColor = (1.00,1.00,1.00)
+            ndsk.ViewObject.PointColor = (1.00,1.00,1.00)
+            k_index += 1
         #closing edge
 
     #bsplines
@@ -13240,12 +13347,15 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
             pcb_bbx = doc.getObject(pcb_name).Shape.BoundBox
             say("pcb dimensions: ("+"{0:.2f}".format(pcb_bbx.XLength)+";"+"{0:.2f}".format(pcb_bbx.YLength)+";"+"{0:.2f}".format(pcb_bbx.ZLength)+")")          
     say_time()
+    if k_index == 1:
+        FreeCAD.ActiveDocument.removeObject(ndsk.Name)
+
     FreeCADGui.activeDocument().activeView().viewAxometric()
     if (zfit):
         FreeCADGui.SendMsgToActiveView("ViewFit")
     #FreeCADGui.SendMsgToActiveView("ViewFit")
     #pads_found=getPadsList(content)
-    return PCB_Models
+    return PCB_Models, k_index
     
 ###    
 
