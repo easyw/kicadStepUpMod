@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.1.3.6"
+___ver___ = "10.1.3.7"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -1232,15 +1232,15 @@ material_properties=[as_is, metal_grey_pins, metal_grey, gold_pins,\
                      pcb_green, pcb_blue, pcb_black,\
                      metal_aluminum, metal_bronze, metal_silver, metal_copper]
 
-material_properties_diffuse=[(0.,0.,0.),(0.824,0.820,0.781),( 0.298, 0.298, 0.298),(0.859,0.738,0.496), \
-                             (0.148, 0.145, 0.145), (0.082, 0.086, 0.094),(0.250, 0.262, 0.281), (0.273, 0.273, 0.273), (0.379, 0.270, 0.215), \
-                             (0.883, 0.711, 0.492), (0.137, 0.402, 0.727),(0.340, 0.680, 0.445), (0.809, 0.426, 0.148), (0.700, 0.100, 0.050), \
-                             (0.578, 0.336, 0.352), (0.832, 0.680, 0.066), (0.895, 0.891, 0.813), \
-                             (0.691, 0.664, 0.598), \
-                             (0.700, 0.100, 0.050), (0.400, 0.700, 0.150), (0.100, 0.250, 0.700), (0.98, 0.840, 0.066), (0.895, 0.891, 0.813),(0.27, 0.25, 0.27), (0.1, 0.05, 0.1),\
-                             (0.400769, 0.441922, 0.459091), (0.566681, 0.580872, 0.580874), (0.000000, 0.631244, 0.748016), (0.000000, 0.75, 0.44), (0.75, 0.44, 0.0), \
-                             (0.07, 0.3, 0.12), (0.07, 0.12, 0.3), (0.16, 0.16, 0.16), \
-                             (0.372322, 0.371574, 0.373173), (0.714, 0.4284, 0.18144), (0.50754, 0.50754, 0.50754), (0.7038, 0.27048, 0.0828)] # (0.314286, 0.074365, 0.000000)]
+material_properties_diffuse=[(0.,0.,0.,0.),(0.824,0.820,0.781,0.),( 0.298, 0.298, 0.298,0.),(0.859,0.738,0.496,0.), \
+                             (0.148, 0.145, 0.145,0.), (0.082, 0.086, 0.094,0.),(0.250, 0.262, 0.281,0.), (0.273, 0.273, 0.273,0.), (0.379, 0.270, 0.215,0.), \
+                             (0.883, 0.711, 0.492,0.), (0.137, 0.402, 0.727,0.),(0.340, 0.680, 0.445,0.), (0.809, 0.426, 0.148,0.), (0.700, 0.100, 0.050,0.), \
+                             (0.578, 0.336, 0.352,0.), (0.832, 0.680, 0.066,0.), (0.895, 0.891, 0.813,0.), \
+                             (0.691, 0.664, 0.598,0.), \
+                             (0.700, 0.100, 0.050,0.15), (0.400, 0.700, 0.150,0.15), (0.100, 0.250, 0.700,0.15), (0.98, 0.840, 0.066,0.15), (0.895, 0.891, 0.813,0.15),(0.27, 0.25, 0.27,0.15), (0.1, 0.05, 0.1,0.15),\
+                             (0.400769, 0.441922, 0.459091,0.37), (0.859, 0.738, 0.496,0.39), (0.000000, 0.631244, 0.748016,0.39), (0.000000, 0.75, 0.44,0.39), (0.75, 0.44, 0.0,0.39), \
+                             (0.07, 0.3, 0.12,0.), (0.07, 0.12, 0.3,0.), (0.16, 0.16, 0.16,0.), \
+                             (0.372322, 0.371574, 0.373173,0.), (0.714, 0.4284, 0.18144,0.), (0.50754, 0.50754, 0.50754,0.), (0.7038, 0.27048, 0.0828,0.)] # (0.314286, 0.074365, 0.000000)]
 
 #FreeCAD.Console.PrintMessage (len (material_properties_names))
 #FreeCAD.Console.PrintMessage (len (material_properties))
@@ -2037,7 +2037,8 @@ def exportVRMLmaterials(objects, filepath):
             #shape_col=(1.0, 0.0, 0.0)#, 0.0)
             f.write("}\n") # closes points
             #say(obj.color)
-            shape_col=obj.color[:-1] #remove last item
+            ##shape_col=obj.color[:-1] #remove last item
+            shape_col=obj.color
             #say(shape_col)
             if shape_col not in color_list:
                 #sayw(shape_col);say('not found')
@@ -2047,7 +2048,7 @@ def exportVRMLmaterials(objects, filepath):
                     #say(mat_diff_col)
                     delta_col=0.01
                     if ((abs(shape_col[0]-mat_diff_col[0])<delta_col) and (abs(shape_col[1]-mat_diff_col[1])<delta_col)\
-                        and (abs(shape_col[2]-mat_diff_col[2])<delta_col)) and not found_mat:
+                        and (abs(shape_col[2]-mat_diff_col[2])<delta_col) and (abs(shape_col[3]-mat_diff_col[3])<delta_col)) and not found_mat:
                         #sayw('found a match')
                         material_index=idc
                         found_mat=True
@@ -2062,6 +2063,7 @@ def exportVRMLmaterials(objects, filepath):
                 ui.comboBox.setCurrentIndex(material_index)
                 #ui.comboBox.clear()
                 color_list.append(shape_col)
+                #print(shape_col, 'shape_col')
                 index_color=index_color+1
                 #say(color_list)
                 #ui.comboBox.addItems(color_list)
@@ -2076,7 +2078,7 @@ def exportVRMLmaterials(objects, filepath):
                     else:
                         material="as is"
                 color_list_mat.append(material)
-                #say(material)
+                sayw(material)
             #else:
             #    sayw(shape_col);say('Found!')
             #    col_index=color_list.index(shape_col)
@@ -2084,10 +2086,11 @@ def exportVRMLmaterials(objects, filepath):
             #    ui.comboBox.setCurrentIndex(col_index)
             #say("searching")
             col_index=color_list.index(shape_col)
+            #print (color_list_mat[col_index],col_index)
             #say(color_list_mat[col_index])
             if not Materials or color_list_mat[col_index]=="as is":
                 shape_transparency=obj.transp
-                f.write("appearance Appearance{material Material{diffuseColor %g %g %g\n" % shape_col)
+                f.write("appearance Appearance{material Material{diffuseColor %g %g %g\n" % shape_col[:-1])
                 f.write("transparency %g}}" % shape_transparency)
                 f.write("}\n") # closes Shape
             else:
@@ -2639,6 +2642,7 @@ def go_export(fPathName):
             #say(objs)
             #export(objs, fullFilePathName, scale=None)
             export(objs, fPathName, 0.3937)
+            align_colors_to_materials(objs)
             if len(objs) == 1:
                 exportS=True
                 exportStep(objs, fPathName)
@@ -2655,6 +2659,55 @@ def go_export(fPathName):
         #    lbl=objs[0].Label
         return lbl
 ###
+def align_colors_to_materials(objects):
+    global exportS, applymaterials, enable_materials
+    global color_list, color_list_mat
+    
+    newobj_list= objects
+    
+    if align_vrml_step_colors and  enable_materials == 1: #(applymaterials==1):
+        sayw('aligning VRML colors to Materials')
+        applyDiffuse=0
+        color_vector=[]
+        for obj in newobj_list: #objs:
+            color_vector=[]
+            shape1=obj.Shape
+            single_color=FreeCADGui.ActiveDocument.getObject(obj.Name).DiffuseColor
+            if(len(single_color)!=len(shape1.Faces)):
+                applyDiffuse=0;
+                #copy color to all faces
+            #else copy singular colors for faces
+            else:
+                applyDiffuse=1;
+            for color in single_color:
+                color_vector.append((color[0], color[1], color[2], color[3]))
+            #sayw(color_vector)
+            #sayerr (color_list)
+            #sayw(color_list_mat)
+            idx=0
+            if 'color_list' in globals():
+                for color in color_vector:
+                    if color in color_list:
+                        #sayerr('found')
+                        pos = color_list.index(color)
+                        #sayw(pos)
+                        if color_list_mat[pos]!='as is':
+                            if color_list_mat[pos] in material_properties_names:
+                                pos2 = material_properties_names.index(color_list_mat[pos])
+                                color_vector[idx]=material_properties_diffuse[pos2]
+                        else:
+                            color_vector[idx]=color
+                    idx+=1
+                if(applyDiffuse):
+                    FreeCADGui.ActiveDocument.getObject(obj.Name).DiffuseColor=color_vector
+                else:
+                    #say(color_vector)
+                    #FreeCADGui.ActiveDocument.getObject(obj.Name).ShapeColor=color_vector[0]
+                    FreeCADGui.ActiveDocument.getObject(obj.Name).DiffuseColor=color_vector #[0]
+                    FreeCADGui.ActiveDocument.getObject(obj.Name).Transparency=int(float(color_vector[0][3])*100)
+    # end test aligning colors
+##
+##
 def exportStep(objs, ffPathName):
     #Export fused object
     global exportS, applymaterials, enable_materials
@@ -2699,65 +2752,6 @@ def exportStep(objs, ffPathName):
         #newobj.Label="TEST"
         newobj_list=[FreeCAD.ActiveDocument.getObject(new_name)]
         #test aligning colors
-        if align_vrml_step_colors and  enable_materials == 1: #(applymaterials==1):
-            sayw('aligning VRML colors to STEP')
-            applyDiffuse=0
-            color_vector=[]
-            for obj in newobj_list: #objs:
-                shape1=obj.Shape
-                single_color=FreeCADGui.ActiveDocument.getObject(obj.Name).DiffuseColor
-                #check length color
-                #say("len color")
-                #say(len(single_color))
-                #say((single_color))
-                #say (len(shape1.Faces))
-                #colors less then faces
-                if(len(single_color)!=len(shape1.Faces)):
-                    applyDiffuse=0;
-                    #copy color to all faces
-                #else copy singular colors for faces
-                else:
-                    applyDiffuse=1;
-                for color in single_color:
-                    color_vector.append((color[0], color[1], color[2]))
-                #sayw(color_vector)
-                #sayerr (color_list)
-                #sayw(color_list_mat)
-                idx=0
-                if 'color_list' in globals():
-                    for color in color_vector:
-                        if color in color_list:
-                            #sayerr('found')
-                            pos = color_list.index(color)
-                            #sayw(pos)
-                            if color_list_mat[pos]!='as is':
-                                if color_list_mat[pos] in material_properties_names:
-                                    pos2 = material_properties_names.index(color_list_mat[pos])
-                                    color_vector[idx]=material_properties_diffuse[pos2]
-                            else:
-                                color_vector[idx]=color
-                        idx+=1
-                #sayw(color_vector)
-                #say("color_vector")
-                #say(color_vector)
-                #sayw(applyDiffuse)
-                #for index in range(len(shape1.Faces)):
-                #    #say("color x")
-                #    #say(color_vector[indexColor])
-                #    singleFace=shape1.Faces[index]
-                #    if(applyDiffuse):
-                #        #say(color_vector[indexColor])
-                #        singleFace=(1.,0.,0.)
-                #    else:
-                #        #say(single_color[0])
-                #        FreeCADGui.ActiveDocument.getObject(obj.Name).ShapeColor=(0.,0.,1.)
-                #    #meshes.append(shapeToMesh(face, Diffuse_color[i], transparency[i], scale))
-                    if(applyDiffuse):
-                        FreeCADGui.ActiveDocument.getObject(obj.Name).DiffuseColor=color_vector
-                    else:
-                        #say(color_vector)
-                        FreeCADGui.ActiveDocument.getObject(obj.Name).ShapeColor=color_vector[0]
-        # end test aligning colors
         
         # reducing STEP file size
         #NB WriteSurfaceCurveMode parameter get after FC close-reopen
@@ -8859,7 +8853,7 @@ def getPadsList(content):
         #removing extra keepout zones
         for count, p in enumerate(found):
             if '(zone ' in p:
-                print (len(p))
+                #print (len(p))
                 idx = p.index("(zone ")
                 z = p[0:idx]
                 found[count] = z
@@ -11789,11 +11783,15 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
             zlayer=zn.layer
         else:
             zlayer=zn.layers
+            for i,l in enumerate(zlayer):
+                l=l.replace('"','')
+                zlayer[i]=l
         if not keepout:
             if lyr in zlayer and not hasattr(zn,'keepout'):
                 for p in zn.polygon.pts.xy:
                     edg_segms+=1
         else:
+            #print(zlayer,lyr,lyr in zlayer, hasattr(zn,'keepout'))
             if lyr in zlayer and hasattr(zn,'keepout'):
                 for p in zn.polygon.pts.xy:
                     edg_segms+=1 
@@ -11924,8 +11922,16 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
             zlayer=zn.layer
         else:
             zlayer=zn.layers
-        if lyr[0] not in zlayer:
-            continue
+            for i,l in enumerate(zlayer):
+                l=l.replace('"','')
+                zlayer[i]=l
+        # print(lyr[0],zlayer,lyr[0] in zlayer,lyr[0]+'.Cu' in zlayer)
+        zl_found = False
+        for zl in zlayer:
+            if lyr[0]+'.Cu' in zlayer:
+                zl_found = True
+        if not zl_found:
+               continue
         if 'Mask' in lyr and 'Mask' not in zlayer:
             continue
         #print(zn.polygon.pts.xy)
