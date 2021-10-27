@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.1.3.7"
+___ver___ = "10.1.3.8"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -11785,7 +11785,10 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
             zlayer=zn.layers
             for i,l in enumerate(zlayer):
                 l=l.replace('"','')
-                zlayer[i]=l
+                if isinstance(zlayer, list):
+                    zlayer[i]=l
+                else:
+                    zlayer=l
         if not keepout:
             if lyr in zlayer and not hasattr(zn,'keepout'):
                 for p in zn.polygon.pts.xy:
@@ -11924,7 +11927,10 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
             zlayer=zn.layers
             for i,l in enumerate(zlayer):
                 l=l.replace('"','')
-                zlayer[i]=l
+                if isinstance(zlayer, list):
+                    zlayer[i]=l
+                else:
+                    zlayer=l
         # print(lyr[0],zlayer,lyr[0] in zlayer,lyr[0]+'.Cu' in zlayer)
         zl_found = False
         for zl in zlayer:
