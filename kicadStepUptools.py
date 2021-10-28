@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.1.3.9"
+___ver___ = "10.1.4.0"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -11686,6 +11686,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
     import PySide
     import FreeCAD, Part
     from PySide import QtGui, QtCore
+    from math import pi
     
     say("PCB Loader ")
     ## NB use always float() to guarantee number not string!!!
@@ -12093,11 +12094,22 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
         #edges.append(makeArc(makeVect(l.start),makeVect(l.end),l.angle))
         [xs, ys] = a.start
         [x1, y1] = a.end
-        curve = a.angle
-        [x2, y2] = rotPoint2([x1, y1], [xs, ys], curve)
-        #myarc = Part.Arc(Base.Vector(x2,-y2,0),mid_point(Base.Vector(x2,-y2,0),Base.Vector(x1,-y1,0),curve),Base.Vector(x1,-y1,0))
-        arc1=Part.Edge(Part.Arc(Base.Vector(x2,-y2,0),mid_point(Base.Vector(x2,-y2,0),Base.Vector(x1,-y1,0),curve),Base.Vector(x1,-y1,0)))
-        #sayerr("Part.Arc")
+        if hasattr (a, 'mid'):
+            [xm, ym] = a.mid 
+            arc1 = Part.Edge(Part.Arc(Base.Vector(xs,-ys,0),Base.Vector(xm,-ym,0),Base.Vector(x1,-y1,0)))
+            curve = arc1.Curve.AngleXU/pi*180
+            if curve > 0:
+                curve = -1*curve
+            [x2, y2] = rotPoint2([x1, y1], [xs, ys], curve)
+        else:
+            curve = a.angle
+            [x2, y2] = rotPoint2([x1, y1], [xs, ys], curve)
+            arc1 = Part.Edge(Part.Arc(Base.Vector(x2,-y2,0),mid_point(Base.Vector(x2,-y2,0),Base.Vector(x1,-y1,0),curve),Base.Vector(x1,-y1,0)))
+        # if curve>0:
+        #     arc = Part.makeCircle(r,center,Vector(0,0,1),a-angle,a)
+        #     arc.reverse();
+        # else:
+        #     arc = Part.makeCircle(r,center,Vector(0,0,1),a,a-angle)
         Cntr = arc1.Curve.Center
         cx=Cntr.x;cy=Cntr.y
         #print cx,cy
