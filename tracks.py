@@ -193,7 +193,7 @@ def cut_out_tracks (pcbsk,tracks,tname_sfx):
     FreeCADGui.ActiveDocument.getObject(extrude.Name).Visibility=False
     FreeCAD.ActiveDocument.recompute()
     
-    # placing inside te container
+    # placing inside the container
     if len (FreeCAD.ActiveDocument.getObjectsByLabel('Board_Geoms'+tname_sfx)) > 0:
         extrude.adjustRelativeLinks(FreeCAD.ActiveDocument.getObject('Board_Geoms'+tname_sfx))
         FreeCAD.ActiveDocument.getObject('Board_Geoms'+tname_sfx).addObject(extrude)

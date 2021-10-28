@@ -6,7 +6,7 @@ There are many variants of `S-Expression <https://en.wikipedia.org/wiki/S-expres
 This module here only deals with the *prefix notation*, where the first element
 of an expression is expected to be an operator, which is referred to as the
 ``<key>`` in this module. The module provides a parser `SexpParser` that
-coverts a python list-based expression into a python object model. Each
+converts a python list-based expression into a python object model. Each
 expression in the list-based S-Expression representation is defined as a
 recursive ``list`` representation in the form of ::
 

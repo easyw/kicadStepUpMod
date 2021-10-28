@@ -482,7 +482,7 @@ class KicadFcad:
     def __init__(self,filename=None,debug=False,**kwds):
 
         #############################################################
-        # Begining of user customizable parameters during construction
+        # Beginning of user customizable parameters during construction
         self.prefix = ''
         self.indent = '  '
         self.make_sketch = False
@@ -535,7 +535,7 @@ class KicadFcad:
         # Ending of user customizable parameters
         #############################################################
 
-        # checking user overriden parameters
+        # checking user overridden parameters
         for key,value in kwds.items():
             if not hasattr(self,key):
                 raise ValueError('unknown parameter "{}"'.format(key))
