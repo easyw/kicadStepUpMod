@@ -10,11 +10,11 @@
 #*  Kicad STEPUP (TM) is a TradeMark and cannot be freely usable            *
 #*                                                                          *
 
-ksu_wb_version='v 10.6.4'
+ksu_wb_version='v 10.6.5'
 global myurlKWB, ksuWBpath
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=471 #v10.6.4
+mycommitsKWB=472 #v10.6.5
 global verKSU
 verKSU="10.1.3.8"
 
@@ -143,7 +143,8 @@ class KiCadStepUpWB ( Workbench ):
                    'complex-Polyline-footprint.FCStd', 'footprint-complex-arc-pads.FCStd', \
                    'footprint-SPU0410LR5H.FCStd','WaveguideAntenna-RF-fp.FCStd', 'Notch-RF-filter-wNT-fp.FCStd', \
                    'Microstrip-RF-filter-fp.FCStd', 'Splitter-RF-fp.FCStd', \
-                   'kicadStepUp-cheat-sheet.pdf', 'kicad-3D-to-MCAD.pdf', 'Generating-a-KiCAD-footprint-and-Model-from-3D-Step-Data.pdf' ]
+                   'kicadStepUp-cheat-sheet.pdf', 'kicad-3D-to-MCAD.pdf', 'Generating-a-KiCAD-footprint-and-Model-from-3D-Step-Data.pdf', \
+                   'ECAD-MCAD-collaboration.pdf']
         dirs = self.ListDemos()
 
         #self.appendToolbar("ksu Tools", ["ksuTools"])
