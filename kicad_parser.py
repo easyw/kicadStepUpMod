@@ -31,7 +31,7 @@ from fcad_parser import KicadPCB,SexpList
 #from .fcad_parser import KicadPCB,SexpList
 
 # from kicadStepUptools import KicadPCB,SexpList
-__kicad_parser_version__ = '2.1.1'
+__kicad_parser_version__ = '2.1.2'
 # https://github.com/realthunder/fcad_pcb/issues/20#issuecomment-586042341
 print('kicad_parser_version '+__kicad_parser_version__)
 # maui
@@ -295,7 +295,11 @@ def make_gr_line(params):
     return Part.makeLine(makeVect(params.start),makeVect(params.end))
 
 def make_gr_arc(params):
-    return  makeArc(makeVect(params.start),makeVect(params.end),params.angle)
+    if hasattr(params, 'angle'):
+        return  makeArc(makeVect(params.start),makeVect(params.end),params.angle)
+    return Part.ArcOfCircle(makeVect(params.start),
+                            makeVect(params.mid),
+                            makeVect(params.end)).toShape()
 
 def make_gr_curve(params):
     return makeCurve([makeVect(p) for p in SexpList(params.pts.xy)])
@@ -482,7 +486,7 @@ class KicadFcad:
     def __init__(self,filename=None,debug=False,**kwds):
 
         #############################################################
-        # Begining of user customizable parameters during construction
+        # Beginning of user customizable parameters during construction
         self.prefix = ''
         self.indent = '  '
         self.make_sketch = False
@@ -535,7 +539,7 @@ class KicadFcad:
         # Ending of user customizable parameters
         #############################################################
 
-        # checking user overriden parameters
+        # checking user overridden parameters
         for key,value in kwds.items():
             if not hasattr(self,key):
                 raise ValueError('unknown parameter "{}"'.format(key))
@@ -1217,10 +1221,11 @@ class KicadFcad:
         def _addHoles(objs):
             h = self._cutHoles(None,holes,None,
                             minSize=minHoleSize,oval=ovalHole)
-            if isinstance(h,(tuple,list)):
-                objs += h
-            elif holes:
-                objs.append(h)
+            if h:
+                if isinstance(h,(tuple,list)):
+                    objs += h
+                elif holes:
+                    objs.append(h)
             return objs
 
         def _wire():
@@ -1518,6 +1523,7 @@ class KicadFcad:
 
                 if isinstance(self.holes_cache,dict):
                     self.holes_cache[key] = holes
+
         if not holes:
             return objs
 
