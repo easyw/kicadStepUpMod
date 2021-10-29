@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.1.4.0"
+___ver___ = "10.1.5.0"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -789,6 +789,13 @@ else:
 import fcad_parser
 from fcad_parser import KicadPCB,SexpList
 import kicad_parser
+
+###
+def rotatePoint(r,sa,da,c):
+    # sa, da in degrees
+    x = c[0] - cos(radians(sa+da)) * r
+    y = c[1] - sin(radians(sa+da)) * r
+    return [x,y]
 ###
 def getFCversion():
 
@@ -19364,7 +19371,7 @@ def getBoardOutline():
 ##
 
 
-def createEdge(edg,ofs,sklayer=None):
+def createEdge(edg,ofs,sklayer=None,pcb_ver=None):
     global edge_width, maxRadius
     
     #print edg
@@ -19384,16 +19391,14 @@ def createEdge(edg,ofs,sklayer=None):
     else:
         layer = sklayer
     if edg[0] == 'line':
-        if 0: #abs(edg[1]+ofs[0])>500 or abs(edg[2]+ofs[1])>500: "{0:.3f}".
-            #print edg
-            stop
+        if pcb_ver is None or pcb_ver < 20211014:
             k_edg = "  (gr_line (start {0:.3f} {1:.3f}) (end {2:.3f} {3:.3f}) (angle 90) (layer {5}) (width {4}))"\
                         .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edge_width, layer)
+            #k_edg +=os.linesep
+            #.format('{0:.10f}').format(edg[1] + abs(0), '{0:.10f}').format(edg[2] + abs(0), '{0:.10f}').format(edg[3] + abs(0), '{0:.10f}').format(edg[4] + abs(0), 'Edge.Cuts', edge_width)
         else:
-            k_edg = "  (gr_line (start {0:.3f} {1:.3f}) (end {2:.3f} {3:.3f}) (angle 90) (layer {5}) (width {4}))"\
+            k_edg = "  (gr_line (start {0:.3f} {1:.3f}) (end {2:.3f} {3:.3f}) (layer {5}) (width {4}))"\
                         .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edge_width, layer)
-        #k_edg +=os.linesep
-        #.format('{0:.10f}').format(edg[1] + abs(0), '{0:.10f}').format(edg[2] + abs(0), '{0:.10f}').format(edg[3] + abs(0), '{0:.10f}').format(edg[4] + abs(0), 'Edge.Cuts', edge_width)
     elif edg[0] == 'circle':
         k_edg = "  (gr_circle (center {0:.3f} {1:.3f}) (end {2:.3f} {1:.3f}) (layer {4}) (width {3}))".format(edg[2]+ofs[0], -edg[3]+ofs[1], edg[2]+ofs[0]-edg[1], edge_width, layer)
         #k_edg +=os.linesep
@@ -19407,9 +19412,10 @@ def createEdge(edg,ofs,sklayer=None):
         #if abs(abs(edg[5])-2*pi) <= edge_tolerance:
         #    print '2PI'
         #    use_rotation=True
-        radius = edg[1]
-        xs = edg[2]
-        ys = (edg[3]) * (-1)
+        radius = edg[1]         #radius
+        xs = edg[2]             #center x
+        ys = (edg[3]) * (-1)    #center y
+        #mp = DraftGeomUtils.findMidpoint(self.circle.Edges[0])
         #if 0: #use_rotation:
         #    sayerr('2PI')
         #    sayerr('check edge orientation!!!')
@@ -19435,22 +19441,18 @@ def createEdge(edg,ofs,sklayer=None):
         ## eA = atan2(edg[11][1]-edg[3], edg[11][0]-edg[2])
         # sayerr(edg[12])
         
-        if  1: #angle ==< 0:
-            x1 = edg[10][0] 
-            y1 = (edg[10][1]) * (-1) 
-            x2 = edg[11][0] 
-            y2 = (edg[11][1]) * (-1) 
-        else:
-            x1 = edg[11][0] 
-            y1 = (edg[11][1]) * (-1) 
+        x1 = edg[10][0] 
+        y1 = (edg[10][1]) * (-1) 
+        x2 = edg[11][0] 
+        y2 = (edg[11][1]) * (-1) 
         
         #y1 = (radius * sin(sA)) * + ys
         #print axisX, axisY,axisZ
-        #print 'coord     xs, ys, x1, y1 ', xs,';', ys,';', x1,';', y1,';',angle
-        
+        #print ('coord     xs, ys, x1, y1 ', xs,';', ys,';', x1,';', y1,';',angle)
+        #for i,e in enumerate(edg):
+        #    print ('param edg['+str(i)+']='+str(edg[i]))
         #if angle > 180:
         #    angle = 360 - angle
-                         
         #self.getMinX(xs)
         #self.getMinY(ys)
         #self.getMinX(x1)
@@ -19461,18 +19463,39 @@ def createEdge(edg,ofs,sklayer=None):
         # Draft.makePoint(x2, -y2, 0)
         
         if abs(xs) > maxRadius or abs(ys) > maxRadius:
-            k_edg = "  (gr_line (start {0:.3f} {1:.3f}) (end {2:.3f} {3:.3f}) (angle 0) (layer {5}) (width {4}))"\
-                        .format(x1+ofs[0], y1+ofs[1], x2+ofs[0], y2+ofs[1], edge_width, layer)
-            #k_edg = "  (gr_line (start {0} {1}) (end {2} {3}) (angle 90) (layer {5}) (width {4}))"\
-            #            .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edge_width, 'Edge.Cuts')
-            #print xs + ofs[0]
-            #stop
+            if pcb_ver is None or pcb_ver < 20211014:
+                k_edg = "  (gr_line (start {0:.3f} {1:.3f}) (end {2:.3f} {3:.3f}) (angle 0) (layer {5}) (width {4}))"\
+                            .format(x1+ofs[0], y1+ofs[1], x2+ofs[0], y2+ofs[1], edge_width, layer)
+                #k_edg = "  (gr_line (start {0} {1}) (end {2} {3}) (angle 90) (layer {5}) (width {4}))"\
+                #            .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edge_width, 'Edge.Cuts')
+                #print xs + ofs[0]
+                #stop
+            else:
+                k_edg = "  (gr_line (start {0:.3f} {1:.3f}) (end {2:.3f} {3:.3f}) (layer {5}) (width {4}))"\
+                            .format(x1+ofs[0], y1+ofs[1], x2+ofs[0], y2+ofs[1], edge_width, layer)
         else:
-            #self.pcbElem.append(['gr_arc', xs, ys, x1, y1, curve, width, layer])
-            k_edg = "  (gr_arc (start {0:.3f} {1:.3f}) (end {2:.3f} {3:.3f}) (angle {4:.3f}) (layer {6}) (width {5}))"\
-                    .format(xs+ofs[0], ys+ofs[1], x1+ofs[0], y1+ofs[1], angle, edge_width, layer)
-            #.format(
-            #            '{0:.10f}'.format(i[1] + abs(self.minX)), '{0:.10f}'.format(i[2] + abs(self.minY)), '{0:.10f}'.format(i[3] + abs(self.minX)), '{0:.10f}'.format(i[4] + abs(self.minY)), i[5], i[6], i[7]))
+            if pcb_ver is None or pcb_ver < 20211014:
+                #self.pcbElem.append(['gr_arc', xs, ys, x1, y1, curve, width, layer])
+                k_edg = "  (gr_arc (start {0:.3f} {1:.3f}) (end {2:.3f} {3:.3f}) (angle {4:.3f}) (layer {6}) (width {5}))"\
+                        .format(xs+ofs[0], ys+ofs[1], x1+ofs[0], y1+ofs[1], angle, edge_width, layer)
+            else:
+                # print(angle)
+                # ep = rotatePoint(radius,sA,angle,[x1,y1])
+                # print(ep[0],ep[1])
+                mp = mid_point(Base.Vector(x1,y1,0),Base.Vector(x2,y2,0),angle)
+                # Draft.makePoint(x1,y1,0)
+                # FreeCAD.ActiveDocument.ActiveObject.ViewObject.PointColor=(1.0,0.0,0.0,0.0)
+                # Draft.makePoint(x2,y2,0)
+                # FreeCAD.ActiveDocument.ActiveObject.ViewObject.PointColor=(0.0,1.0,0.0,0.0)
+                # Draft.makePoint(mp[0],mp[1],0)
+                # FreeCAD.ActiveDocument.ActiveObject.ViewObject.PointColor=(0.0,0.0,1.0,0.0)
+                # Part.show(Part.Edge(Part.Arc(FreeCAD.Base.Vector(x1, y1, 0), FreeCAD.Base.Vector(mp[0],mp[1], 0), FreeCAD.Base.Vector(x2, y2, 0))))
+                # print(mp[0],mp[1])
+                k_edg = "  (gr_arc (start {0:.3f} {1:.3f}) (mid {2:.3f} {3:.3f}) (end {4:.3f} {5:.3f}) (layer {7}) (width {6}))"\
+                        .format(x2+ofs[0], y2+ofs[1], mp[0]+ofs[0], mp[1]+ofs[1], x1+ofs[0], y1+ofs[1], edge_width, layer)
+                        #.format(xs+ofs[0], ys+ofs[1], mp[0]+ofs[0], mp[1]+ofs[1], x1+ofs[0], y1+ofs[1], edge_width, layer)
+                #print(k_edg)
+                #stop
     #    self.addArc(edg[1:], 'Edge.Cuts', 0.01)
     elif edg[0] == 'spline':
         k_edg = "  (gr_curve (pts (xy {0:.3f} {1:.3f}) (xy {2:.3f} {3:.3f}) (xy {4:.3f} {5:.3f}) (xy {6:.3f} {7:.3f})) (layer {9}) (width {8}))"\
@@ -20063,7 +20086,8 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                 print (ssklayer)
             edge_pcb_exists=False
             mypcb = KicadPCB.load(fpath)
-            sayw('parsing')
+            pcb_version = mypcb.version
+            sayw('parsing, pcb v='+str(pcb_version))
             edg_segms = 0
             for ln in mypcb.gr_line:
                 if ssklayer in ln.layer:
@@ -20333,7 +20357,7 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                 #stop
                 #for border in new_edge_list:
                 for border in sanitized_edge_list:
-                    new_border=new_border+os.linesep+createEdge(border,offset,sklayer)
+                    new_border=new_border+os.linesep+createEdge(border,offset,sklayer,pcb_version)
                     #sayw(createEdge(border))
                 #stop
                 new_edge=new_border+os.linesep+')'+os.linesep
