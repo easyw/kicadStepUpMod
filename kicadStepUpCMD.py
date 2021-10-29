@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.0.3'
+ksuCMD_version__='2.0.4'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -1456,7 +1456,9 @@ class ksuToolsCollisions:
         if reload_Gui:
             reload_lib( kicadStepUptools )
         #FreeCAD.Console.PrintWarning( 'active :)\n' )
+        FreeCAD.ActiveDocument.openTransaction('collisions')
         kicadStepUptools.routineCollisions()
+        FreeCAD.ActiveDocument.commitTransaction()
 
 FreeCADGui.addCommand('ksuToolsCollisions',ksuToolsCollisions())
 ##
