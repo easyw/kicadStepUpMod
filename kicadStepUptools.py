@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.1.5.0"
+___ver___ = "10.1.5.1"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -12442,23 +12442,28 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                                 rotateObj(obj, [x1, y1, p_angle])
                             HoleList.append(obj)
                     #elif p.drill[0]!=0: #circle drill hole
-                    elif p.drill[0] >= min_drill_size:
-                        #xs=p.at[0]+offset[0]+m.at[0];ys=-p.at[1]-offset[1]-m.at[1]
-                        xs=p.at[0]+m.at[0];ys=-p.at[1]-m.at[1]
-                        #x1=mc.end[0]+m.at[0];y1=-mc.end[1]-m.at[1]
-                        radius = float(p.drill[0])#/2 #sqrt((xs - x1) ** 2 + (ys - y1) ** 2)
-                        rx=radius;ry=radius
-                        #print(p.at[0],p.at[1], p.drill[0])
-                        [x1, y1] = rotPoint2([xs, ys], [m.at[0], -m.at[1]], m_angle)
-                        if holes_solid:
-                            obj=createHole3(x1,y1,rx,ry,"oval",totalHeight) #need to be separated instructions
-                        else:
-                            obj=createHole4(x1,y1,rx,ry,"oval") #need to be separated instructions
-                        #say(HoleList)
-                        #if p_angle!=0:
-                        #    rotateObj(obj, [x1, y1, p_angle])
-                        #rotateObj(obj, [m.at[0], m.at[1], m_angle])
-                        HoleList.append(obj)   
+                    try: # [0] >= min_drill_size: #isinstance(p.drill,list):
+                        # for t in m.fp_text:
+                        #     print(t[1])
+                        if p.drill[0] >= min_drill_size:
+                            #xs=p.at[0]+offset[0]+m.at[0];ys=-p.at[1]-offset[1]-m.at[1]
+                            xs=p.at[0]+m.at[0];ys=-p.at[1]-m.at[1]
+                            #x1=mc.end[0]+m.at[0];y1=-mc.end[1]-m.at[1]
+                            radius = float(p.drill[0])#/2 #sqrt((xs - x1) ** 2 + (ys - y1) ** 2)
+                            rx=radius;ry=radius
+                            #print(p.at[0],p.at[1], p.drill[0])
+                            [x1, y1] = rotPoint2([xs, ys], [m.at[0], -m.at[1]], m_angle)
+                            if holes_solid:
+                                obj=createHole3(x1,y1,rx,ry,"oval",totalHeight) #need to be separated instructions
+                            else:
+                                obj=createHole4(x1,y1,rx,ry,"oval") #need to be separated instructions
+                            #say(HoleList)
+                            #if p_angle!=0:
+                            #    rotateObj(obj, [x1, y1, p_angle])
+                            #rotateObj(obj, [m.at[0], m.at[1], m_angle])
+                            HoleList.append(obj)   
+                    except:
+                        sayerr('missing drill value on pad for module '+str(m.fp_text[0][1])) 
                     ##pads.append({'x': x, 'y': y, 'rot': rot, 'padType': pType, 'padShape': pShape, 'rx': drill_x, 'ry': drill_y, 'dx': dx, 'dy': dy, 'holeType': hType, 'xOF': xOF, 'yOF': yOF, 'layers': layers})        
                     #stop
              #if hasattr(m, 'fp_poly'):
@@ -17458,7 +17463,7 @@ def export_footprint(fname=None,flabel=None):
             #sayerr(drill)
             if circ_pad[0]=='circle':
                 #ret=createFpPad(drill,offset,u'Drills')
-                #♦sayw(circ_pad)
+                #sayw(circ_pad)
                 polypad_pos.append(createFpPad(circ_pad,offset,u'Drills'))
             # elif drill[0]=='line' and not found_arc:
             #     mdrills.append(drill)
