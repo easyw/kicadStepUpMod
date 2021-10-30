@@ -12463,7 +12463,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                             #rotateObj(obj, [m.at[0], m.at[1], m_angle])
                             HoleList.append(obj)   
                     except:
-                        sayerr('missing drill value on pad for module '+str(m.fp_text[0][1])) 
+                        sayw('missing drill value on pad for module '+str(m.fp_text[0][1])) 
                     ##pads.append({'x': x, 'y': y, 'rot': rot, 'padType': pType, 'padShape': pShape, 'rx': drill_x, 'ry': drill_y, 'dx': dx, 'dy': dy, 'holeType': hType, 'xOF': xOF, 'yOF': yOF, 'layers': layers})        
                     #stop
              #if hasattr(m, 'fp_poly'):
