@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.1.5.1"
+___ver___ = "10.1.7.0"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -9910,9 +9910,15 @@ def createHole4(x,y,dx,dy,type):
     mydrill=addPadLong2(x, y, dx, dy, perc, tp, 0)
     holeModel=[]
     #holeModel.append(hole)
-    holeModel.append(mydrill)
+    #holeModel.append(mydrill)
     ##holeModel = Part.makeCompound(holeModel)
-    holeModel = Part.Face(holeModel)
+    #holeModel = Part.Face(holeModel)
+    face = OSCD2Dg_edgestofaces(mydrill.Edges,3 , edge_tolerance)
+    face.fix(0,0,0)
+    #Part.show(face)
+    holeModel = face
+    #sayerr('x'+str(x)+' y'+str(y)+' dx'+str(dx)+' dy'+str(dy)+' perc'+str(perc)+' tp'+str(tp)+'0')
+    #stop
     #say("hereHole")
     #FreeCAD.ActiveDocument.recompute()
     return holeModel
@@ -10157,8 +10163,6 @@ def routineDrawFootPrint(content,name):
             #say(str(dy)+"+"+str(ry)+" dy,ry")
             #say(str(xOF)+"+"+str(yOF)+" xOF,yOF")
             #def addPadLong(x, y, dx, dy, perc, typ, z_off):
-            x1=xs+xOF
-            y1=ys-yOF #yoffset opposite
             #say(str(x1)+"+"+str(y1)+" x1,y1")
             top=False
             bot=False
@@ -10176,6 +10180,8 @@ def routineDrawFootPrint(content,name):
                 sayerr('internal layers not supported!')
                 sayw(result.group())
             if top==True:
+                x1=xs+xOF
+                y1=ys-yOF #yoffset opposite
                 #mypad=addPadLong(x1, y1, dx, dy, perc, 0, 0)
                 mypad2 = None
                 skip = False
@@ -10236,6 +10242,9 @@ def routineDrawFootPrint(content,name):
                     TopPadList.append(mypad2)
                 
             if bot==True:
+                #on Bot layer offset is opposite
+                x1=xs-xOF
+                y1=ys+yOF #yoffset opposite
                 #mypad=addPadLong(x1, y1, dx, dy, perc, 0, -1.6)
                 mypad2=None; skip = False
                 #if pShape=='custom':
@@ -12433,7 +12442,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                                 ry=rx
                             #print(p.at[0],p.at[1], p.drill[0])
                             [x1, y1] = rotPoint2([xs, ys], [m.at[0], -m.at[1]], m_angle)
-                            # sayw('holes solid '+str(holes_solid))
+                            #sayw('holes solid '+str(holes_solid))
                             if holes_solid:
                                 obj=createHole3(x1,y1,rx,ry,"oval",totalHeight) #need to be separated instructions   
                             else:
@@ -12442,28 +12451,29 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                                 rotateObj(obj, [x1, y1, p_angle])
                             HoleList.append(obj)
                     #elif p.drill[0]!=0: #circle drill hole
-                    try: # [0] >= min_drill_size: #isinstance(p.drill,list):
-                        # for t in m.fp_text:
-                        #     print(t[1])
-                        if p.drill[0] >= min_drill_size:
-                            #xs=p.at[0]+offset[0]+m.at[0];ys=-p.at[1]-offset[1]-m.at[1]
-                            xs=p.at[0]+m.at[0];ys=-p.at[1]-m.at[1]
-                            #x1=mc.end[0]+m.at[0];y1=-mc.end[1]-m.at[1]
-                            radius = float(p.drill[0])#/2 #sqrt((xs - x1) ** 2 + (ys - y1) ** 2)
-                            rx=radius;ry=radius
-                            #print(p.at[0],p.at[1], p.drill[0])
-                            [x1, y1] = rotPoint2([xs, ys], [m.at[0], -m.at[1]], m_angle)
-                            if holes_solid:
-                                obj=createHole3(x1,y1,rx,ry,"oval",totalHeight) #need to be separated instructions
-                            else:
-                                obj=createHole4(x1,y1,rx,ry,"oval") #need to be separated instructions
-                            #say(HoleList)
-                            #if p_angle!=0:
-                            #    rotateObj(obj, [x1, y1, p_angle])
-                            #rotateObj(obj, [m.at[0], m.at[1], m_angle])
-                            HoleList.append(obj)   
-                    except:
-                        sayw('missing drill value on pad for module '+str(m.fp_text[0][1])) 
+                    else:
+                        try: # [0] >= min_drill_size: #isinstance(p.drill,list):
+                            # for t in m.fp_text:
+                            #     print(t[1])
+                            if p.drill[0] >= min_drill_size:
+                                #xs=p.at[0]+offset[0]+m.at[0];ys=-p.at[1]-offset[1]-m.at[1]
+                                xs=p.at[0]+m.at[0];ys=-p.at[1]-m.at[1]
+                                #x1=mc.end[0]+m.at[0];y1=-mc.end[1]-m.at[1]
+                                radius = float(p.drill[0])#/2 #sqrt((xs - x1) ** 2 + (ys - y1) ** 2)
+                                rx=radius;ry=radius
+                                #print(p.at[0],p.at[1], p.drill[0])
+                                [x1, y1] = rotPoint2([xs, ys], [m.at[0], -m.at[1]], m_angle)
+                                if holes_solid:
+                                    obj=createHole3(x1,y1,rx,ry,"oval",totalHeight) #need to be separated instructions
+                                else:
+                                    obj=createHole4(x1,y1,rx,ry,"oval") #need to be separated instructions
+                                #say(HoleList)
+                                #if p_angle!=0:
+                                #    rotateObj(obj, [x1, y1, p_angle])
+                                #rotateObj(obj, [m.at[0], m.at[1], m_angle])
+                                HoleList.append(obj)   
+                        except:
+                            sayw('missing drill value on pad for module '+str(m.fp_text[0][1])) 
                     ##pads.append({'x': x, 'y': y, 'rot': rot, 'padType': pType, 'padShape': pShape, 'rx': drill_x, 'ry': drill_y, 'dx': dx, 'dy': dy, 'holeType': hType, 'xOF': xOF, 'yOF': yOF, 'layers': layers})        
                     #stop
              #if hasattr(m, 'fp_poly'):
