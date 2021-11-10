@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.1.7.0"
+___ver___ = "10.1.7.5"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -2192,7 +2192,7 @@ def exportVRML(objects, filepath):
     say(filepath+' written')
 ###
 
-def export(componentObjs, fullfilePathName, scale=None):
+def export(componentObjs, fullfilePathName, scale=None, label=None):
     """ Exports given ComponentModel object using FreeCAD.
 
     `componentObjs` : a ComponentObjs list
@@ -2202,7 +2202,10 @@ def export(componentObjs, fullfilePathName, scale=None):
     
     global exportV, applymaterials, ui, creaseAngle
     
-    exp_name=componentObjs[0].Label
+    if label is None:
+        exp_name=componentObjs[0].Label
+    else:
+        exp_name=label
     #removing not allowed chars
     translation_table = dict.fromkeys(map(ord, '<>:"/\|?*,;:\\'), None)
     exp_name=exp_name.translate(translation_table)
@@ -2625,11 +2628,13 @@ def go_export(fPathName):
         say(msg)
     else:
         objs = []
-        check_AP()
+        #check_AP()
         sel = FreeCADGui.Selection.getSelection()
         for obj in sel:
             FreeCADGui.Selection.removeSelection(obj)
         wrl_selected=False
+        say(sel[0].Label)
+        lbl=sel[0].Label
         for obj in sel:
             if not 'App::VRMLObject' in obj.TypeId:
                 if 'App::Part' in obj.TypeId:
@@ -2644,15 +2649,21 @@ def go_export(fPathName):
                 wrl_selected=True
         if wrl_selected==False:
             say(fPathName)
-            say(objs[0].Label)
-            lbl=objs[0].Label
+            # say(objs[0].Label)
+            # lbl=objs[0].Label
             #say(objs)
-            #export(objs, fullFilePathName, scale=None)
-            export(objs, fPathName, 0.3937)
+            #export(objs, fullFilePathName, scale=None, lbl=None)
+            export(objs, fPathName, 0.3937, lbl)
             align_colors_to_materials(objs)
-            if len(objs) == 1:
+            if len(objs) == 1 or 'App::Part' in sel[0].TypeId:
                 exportS=True
-                exportStep(objs, fPathName)
+                if 'App::Part' in sel[0].TypeId:
+                    exportStep([sel[0]], fPathName)
+                    # need to refresh color changing
+                    FreeCADGui.Selection.addSelection(sel[0])
+                    #FreeCADGui.Selection.clearSelection()
+                else:
+                    exportStep(objs, fPathName)
             else:
                 #say("Select ONE single part object !")
                 exportS=False
@@ -2752,12 +2763,18 @@ def exportStep(objs, ffPathName):
             exportS=False
             pass
     if exportS:
-        ## resetting placement
-        newobj=reset_prop_shapes(FreeCAD.ActiveDocument.getObject(objs[0].Name),FreeCAD.ActiveDocument, FreeCAD,FreeCADGui)
-        new_name=FreeCAD.ActiveDocument.ActiveObject.Name
+        ## resetting placement TBD for Part & Shape
+        if 'App::Part' not in objs[0].TypeId:
+            newobj=reset_prop_shapes(FreeCAD.ActiveDocument.getObject(objs[0].Name),FreeCAD.ActiveDocument, FreeCAD,FreeCADGui)
+            new_name=FreeCAD.ActiveDocument.ActiveObject.Name
+            #newobj.Label="TEST"
+            newobj_list=[FreeCAD.ActiveDocument.getObject(new_name)]
+        else:
+            import kicadStepUpCMD
+            FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.getObject(objs[0].Name))
+            kicadStepUpCMD.ksuToolsResetPartPlacement.Activated(FreeCAD.ActiveDocument.getObject(objs[0].Name))
+            newobj_list=[FreeCAD.ActiveDocument.getObject(objs[0].Name)]
         
-        #newobj.Label="TEST"
-        newobj_list=[FreeCAD.ActiveDocument.getObject(new_name)]
         #test aligning colors
         
         # reducing STEP file size
