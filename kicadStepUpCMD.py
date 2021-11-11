@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.0.4'
+ksuCMD_version__='2.0.5'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -3639,9 +3639,17 @@ class checkSolidExpSTEP():
                     reply = QtGui.QMessageBox.warning(None,"Warning", msg1)
                     FreeCAD.Console.PrintError(msg)
                 else:
-                    msg='Exporting to STEP would create a single solids object!\n'
-                    reply = QtGui.QMessageBox.information(None,"Info", msg)
-                    FreeCAD.Console.PrintMessage(msg)
+                    FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.ActiveObject)
+                    ksuToolsCheckSolid.Activated(FreeCAD.ActiveDocument.ActiveObject)
+                    if '.[solid]' not in FreeCAD.ActiveDocument.ActiveObject.Label:
+                        msg='Exporting to STEP would create a single NON solids object!\n'
+                        msg1="""Exporting to STEP would create a <b>single NON solids object!<b>"""
+                        reply = QtGui.QMessageBox.warning(None,"Warning", msg1)
+                        FreeCAD.Console.PrintError(msg)
+                    else:
+                        msg='Exporting to STEP would create a single solids object!\n'
+                        reply = QtGui.QMessageBox.information(None,"Info", msg)
+                        FreeCAD.Console.PrintMessage(msg)
                 FreeCADGui.SendMsgToActiveView("ViewFit")
                 FreeCAD.Console.PrintMessage(tempfilepath+u'\n')
 
