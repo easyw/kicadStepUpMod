@@ -27,7 +27,7 @@ help_txt+="<b>Load kicad Footprint module</b> -> will load directly kicad footpr
 help_txt+="<b>Export to kicad STEP & scaled VRML</b> -> will convert MCAD model to STEP and VRML to be used by Kicad and kicad StepUp<br>"
 help_txt+="<b>   -> VRML can be multipart;<br>   -> STEP must be single part</b><br>(<i>'Part Boolean Union'</i> or <i>'Part Makecompound'</i>)<br>"
 help_txt+="<i>assign material to selected colors and your VRML 3D models will have nice shiny effects</i><br>"
-help_txt+="<b>Push pcb Sketch to kicad_pcb Edge</b> -> will push pcb Skecth to kicad_pcb Edge in your design; it can be done with an empty or with an existing pcb Edge<br>"
+help_txt+="<b>Push pcb Sketch to kicad_pcb Edge</b> -> will push pcb Sketch to kicad_pcb Edge in your design; it can be done with an empty or with an existing pcb Edge<br>"
 help_txt+="<br>for a more detailed help have a look at <br><b>kicadStepUp-starter-Guide.pdf</b><br>"
 help_txt+="or just follow the <b>YouTube video tutorials</b> <br><a href='https://youtu.be/h6wMU3lE_sA'  target='_blank'>kicadStepUp basics</a><br>"
 help_txt+="<a href='https://youtu.be/O6vr8QFnYGw' target='_blank'>kicadStepUp STEP alignment to Kicad footprint</a><br>"

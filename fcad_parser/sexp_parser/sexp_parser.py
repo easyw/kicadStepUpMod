@@ -1,7 +1,7 @@
 '''
 S-Expression parser written in Python
 
-This module provides a generic parser `SexpParser` that coverts a python
+This module provides a generic parser `SexpParser` that converts a python
 list-based S-Expression into a python object model.  Each expression in the
 list-based S-Expression is defined as a recursive ``list`` representation in
 the form of ::
@@ -711,7 +711,7 @@ def parseFloat4(obj,sexp):
     return parseCopy(obj,sexp,4,float)
 
 def parseSexp(sexp):
-    """Parses S-expressions and return a ``list`` represention
+    """Parses S-expressions and return a ``list`` representation
         
         Code borrowed from: http://rosettacode.org/wiki/S-Expressions, with
         the following modifications,
