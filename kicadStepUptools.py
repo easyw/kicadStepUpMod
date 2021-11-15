@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.1.7.5"
+___ver___ = "10.1.7.6"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -4466,6 +4466,48 @@ def Load_models(pcbThickness,modules):
                     #print(utf_path)
                     #print(utf_path2)
                     #print(step_module)
+                    #.stpZ
+                    if (module_path=='not-found'):
+                        pos=utf_path.rfind('.')
+                        rel_pos=len(utf_path)-pos
+                        utf_path=utf_path[:-rel_pos+1]+u'stpZ'
+                        if os.path.exists(utf_path):
+                            #module_path=models3D_prefix+step_module
+                            module_path=utf_path
+                            #sayw("found! "+module_path)
+                        else:
+                            pos=step_module.rfind('.')
+                            rel_pos=len(step_module5)-pos
+                            step_module_t=step_module5[:-rel_pos+1]+u'stpZ'
+                            if os.path.exists(step_module_t): # absolute path
+                                module_path=step_module_t
+                            else:
+                                pos=utf_path2.rfind('.')
+                                rel_pos=len(utf_path2)-pos
+                                utf_path2=utf_path2[:-rel_pos+1]+u'stpZ'
+                                if os.path.exists(utf_path2):
+                                    module_path=utf_path2
+                    #.stpz
+                    if (module_path=='not-found'):
+                        pos=utf_path.rfind('.')
+                        rel_pos=len(utf_path)-pos
+                        utf_path=utf_path[:-rel_pos+1]+u'stpz'
+                        if os.path.exists(utf_path):
+                            #module_path=models3D_prefix+step_module
+                            module_path=utf_path
+                            #sayw("found! "+module_path)
+                        else:
+                            pos=step_module.rfind('.')
+                            rel_pos=len(step_module5)-pos
+                            step_module_t=step_module5[:-rel_pos+1]+u'stpz'
+                            if os.path.exists(step_module_t): # absolute path
+                                module_path=step_module_t
+                            else:
+                                pos=utf_path2.rfind('.')
+                                rel_pos=len(utf_path2)-pos
+                                utf_path2=utf_path2[:-rel_pos+1]+u'stpz'
+                                if os.path.exists(utf_path2):
+                                    module_path=utf_path2
                     #.step
                     if os.path.exists(utf_path):
                         #module_path=models3D_prefix+step_module
@@ -4618,48 +4660,6 @@ def Load_models(pcbThickness,modules):
                                 pos=utf_path2.rfind('.')
                                 rel_pos=len(utf_path2)-pos
                                 utf_path2=utf_path2[:-rel_pos+1]+u'IGS'
-                                if os.path.exists(utf_path2):
-                                    module_path=utf_path2
-                    #.stpZ
-                    if (module_path=='not-found'):
-                        pos=utf_path.rfind('.')
-                        rel_pos=len(utf_path)-pos
-                        utf_path=utf_path[:-rel_pos+1]+u'stpZ'
-                        if os.path.exists(utf_path):
-                            #module_path=models3D_prefix+step_module
-                            module_path=utf_path
-                            #sayw("found! "+module_path)
-                        else:
-                            pos=step_module.rfind('.')
-                            rel_pos=len(step_module5)-pos
-                            step_module_t=step_module5[:-rel_pos+1]+u'stpZ'
-                            if os.path.exists(step_module_t): # absolute path
-                                module_path=step_module_t
-                            else:
-                                pos=utf_path2.rfind('.')
-                                rel_pos=len(utf_path2)-pos
-                                utf_path2=utf_path2[:-rel_pos+1]+u'stpZ'
-                                if os.path.exists(utf_path2):
-                                    module_path=utf_path2
-                    #.stpz
-                    if (module_path=='not-found'):
-                        pos=utf_path.rfind('.')
-                        rel_pos=len(utf_path)-pos
-                        utf_path=utf_path[:-rel_pos+1]+u'stpz'
-                        if os.path.exists(utf_path):
-                            #module_path=models3D_prefix+step_module
-                            module_path=utf_path
-                            #sayw("found! "+module_path)
-                        else:
-                            pos=step_module.rfind('.')
-                            rel_pos=len(step_module5)-pos
-                            step_module_t=step_module5[:-rel_pos+1]+u'stpz'
-                            if os.path.exists(step_module_t): # absolute path
-                                module_path=step_module_t
-                            else:
-                                pos=utf_path2.rfind('.')
-                                rel_pos=len(utf_path2)-pos
-                                utf_path2=utf_path2[:-rel_pos+1]+u'stpz'
                                 if os.path.exists(utf_path2):
                                     module_path=utf_path2
                 else:
