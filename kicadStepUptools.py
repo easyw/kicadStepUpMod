@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.1.7.8"
+___ver___ = "10.1.8.1"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -510,7 +510,8 @@ global start_time, show_messages
 global show_messages, applymaterials
 global real_board_pos_x, real_board_pos_y, board_base_point_x, board_base_point_y
 global ksu_config_fname, ini_content, configFilePath
-global models3D_prefix, blacklisted_model_elements, col, colr, colg, colb
+global models3D_prefix, models3D_prefix2, models3D_prefix3, models3D_prefix4
+global blacklisted_model_elements, col, colr, colg, colb
 global bbox, volume_minimum, height_minimum, idf_to_origin, aux_orig
 global base_orig, base_point, bbox_all, bbox_list, whitelisted_model_elements
 global fusion, addVirtual, blacklisted_models, exportFusing, min_drill_size
@@ -2970,7 +2971,8 @@ font_size = 8
 def cfg_read_all():
     global ksu_config_fname, default_ksu_config_ini, applymaterials
     ##ksu pre-set
-    global models3D_prefix, models3D_prefix2, blacklisted_model_elements, col, colr, colg, colb
+    global models3D_prefix, models3D_prefix2, models3D_prefix3, models3D_prefix4
+    global blacklisted_model_elements, col, colr, colg, colb
     global bbox, volume_minimum, height_minimum, idf_to_origin, aux_orig
     global base_orig, base_point, bbox_all, bbox_list, whitelisted_model_elements
     global fusion, addVirtual, blacklisted_models, exportFusing, min_drill_size
@@ -3022,10 +3024,18 @@ def cfg_read_all():
     #        print (p)
             
     models3D_prefix = prefs.GetString('prefix3d_1')
+    
+    # sayw(prefs.GetString('prefix3d_1'))
+    # sayw(prefs.GetString('prefix3d_2'))
+    # sayw(prefs.GetString('prefix3d_3'))
+    # sayw(prefs.GetString('prefix3d_4'))
+    
     if len (models3D_prefix) == 0:
         prefs.SetString('prefix3d_1',make_string(default_prefix3d))
         models3D_prefix = prefs.GetString('prefix3d_1')
     models3D_prefix2 = prefs.GetString('prefix3d_2')
+    models3D_prefix3 = prefs.GetString('prefix3d_3')
+    models3D_prefix4 = prefs.GetString('prefix3d_4')
     light_green = [0.20,0.60,0.40] # std Green
     blue = [0.13,0.40,0.73] # Deep Sea Blue
     red = [1.0,0.16,0.0] # Ferrari Red
@@ -3471,6 +3481,7 @@ def Display_info(blacklisted_models):
     global height_minimum, volume_minimum, idf_to_origin, ksu_config_fname
     global board_base_point_x, board_base_point_y, real_board_pos_x, real_board_pos_y
     global animate_result, apply_reflex, apply_reflex_all, addVirtual, fname_sfx
+    global running_time
     
     say('info message')
     if blacklisted_model_elements != '':
@@ -3512,6 +3523,7 @@ def Display_info(blacklisted_models):
     pcb_name=u'Pcb'+fname_sfx
     pcb_bbx = doc.getObject(pcb_name).Shape.BoundBox
     msg+="<br>pcb dimensions: ("+"{0:.2f}".format(pcb_bbx.XLength)+";"+"{0:.2f}".format(pcb_bbx.YLength)+";"+"{0:.2f}".format(pcb_bbx.ZLength)+")"
+    msg+="<br>running time: "+str(round(running_time,2))+"sec"
     msg+="<br>StepUp configuration options are located in the preferences system of FreeCAD."
     if (grid_orig==1):
         say("Board Placed @ "+"{0:.2f}".format(board_base_point_x)+";"+"{0:.2f}".format(board_base_point_y)+";0.0")
@@ -4232,9 +4244,41 @@ def check_wrl_transparency(step_module):
                 sayerr('wrz transparency NOT supported')
     return step_transparency
 ##
+def findModelPath(model_type, path_list):
+    """ Find module in all paths and types specified """
+    global models3D_prefix, models3D_prefix2, models3D_prefix3, models3D_prefix4
+
+    module_path='not-found'
+    # model_type = [step_module,step_module_lw,step_module_up,step_module2,step_module2_up,step_module3,step_module3_up,step_module4,step_module4_up,step_module5,step_module5_up]
+    # path_list  = [models3D_prefix,models3D_prefix2,models3D_prefix3,models3D_prefix4]
+    path_list = list(filter(None, path_list)) #removing empty paths
+    # sayw('searching models:'+str(model_type))
+    # sayw('on '+str(len(path_list))+' paths: '+str(path_list))
+    for model in model_type:
+        if (module_path=='not-found'):
+            # sayerr('trying '+model)
+            if os.path.exists(model): # absolute path
+                module_path=model
+                break
+        for mpath in path_list:
+            if (module_path=='not-found'):
+                model=model.replace(u'"', u'')  # strip out '"'
+                mpath_U = re.sub("\\\\", "/", mpath)
+                # mpath_U = mpath_U.replace("\\", "/")
+                utf_path=os.path.join(make_unicode(mpath_U),make_unicode(model))
+                # sayerr('trying '+utf_path)
+                if os.path.exists(utf_path):
+                    module_path=utf_path
+                    # say('model found! on path: '+re.sub("\\\\", "/", module_path))
+                    break
+
+    return module_path
+##
 def Load_models(pcbThickness,modules):
     global off_x, off_y, volume_minimum, height_minimum, bbox_all, bbox_list
-    global whitelisted_model_elements, models3D_prefix, models3D_prefix2, last_pcb_path, full_placement
+    global whitelisted_model_elements
+    global models3D_prefix, models3D_prefix2, models3D_prefix3, models3D_prefix4
+    global last_pcb_path, full_placement
     global allow_compound, compound_found, bklist, force_transparency, warning_nbr, use_AppPart
     global conv_offs, use_Links, links_imp_mode, use_pypro, use_LinkGroups, fname_sfx
     
@@ -4280,7 +4324,7 @@ def Load_models(pcbThickness,modules):
             #say(step_module.split(':')[1:])
             say('adjusting Alias Path')
             say('step-module-replaced '+step_module)
-        if (step_module.find('${HOME}')!=-1):  #local 3D path
+        elif (step_module.find('${HOME}')!=-1):  #local 3D path
             #step_module=step_module.replace('${KIPRJMOD}', '.')
             home = expanduser("~")
             #step_module=step_module.decode("utf-8").replace(u'${HOME}', home.decode("utf-8"))
@@ -4289,7 +4333,7 @@ def Load_models(pcbThickness,modules):
             encoded=1
             say('adjusting Local Path')
             say('step-module-replaced '+step_module)
-        if (step_module.find('${KIPRJMOD}')!=-1):  #local 3D path
+        elif (step_module.find('${KIPRJMOD}')!=-1):  #local 3D path
             step_module = re.sub("\\\\", "/", step_module)
             #if isinstance(step_module, str):
             #    step_module = step_module.decode('unicode_escape')
@@ -4304,7 +4348,7 @@ def Load_models(pcbThickness,modules):
             encoded=1
             say('adjusting Relative Path')
             say('step-module-replaced '+step_module)
-        if (step_module.startswith('.')) or (step_module.startswith('".')):  #relative path
+        elif (step_module.startswith('.')) or (step_module.startswith('".')):  #relative path
             #step_module=last_pcb_path+"/"+step_module
             step_module=last_pcb_path+os.sep+step_module
             step_module=step_module.replace(u'"', u'')  # name with spaces
@@ -4313,7 +4357,7 @@ def Load_models(pcbThickness,modules):
             sayw('adjusting Relative Path')
             say('step-module-replaced '+step_module)
             #stop
-        if (step_module.find('${KISYS3DMOD}/')!=-1):  #local ${KISYS3DMOD} 3D path
+        elif (step_module.find('${KISYS3DMOD}/')!=-1):  #local ${KISYS3DMOD} 3D path
             #step_module=step_module.replace('${KIPRJMOD}', '.')
             #step_module=step_module.decode("utf-8").replace(u'${KISYS3DMOD}/', u'')
             step_module=step_module.replace(u'${KISYS3DMOD}/', u'')
@@ -4322,7 +4366,7 @@ def Load_models(pcbThickness,modules):
             encoded=1
             say('adjusting Local Path')
             say('step-module-replaced '+step_module)
-        if (step_module.find('${')!=-1) and encoded==0:  #extra local ${ENV} 3D path
+        elif (step_module.find('${')!=-1) and encoded==0:  #extra local ${ENV} 3D path
             step_module= re.sub('\${.*?}/', '', step_module)
             #step_module=step_module.decode("utf-8").replace(u'${}/', u'')
             step_module=step_module.replace(u'${}/', u'')
@@ -4338,17 +4382,10 @@ def Load_models(pcbThickness,modules):
             encoded=1
             say('adjusting 2nd Local Path')
             say('step-module-replaced '+step_module)      
-        if (encoded == 0):  #test local 3D path without the use of KIPRJMOD
-            step_module_local = re.sub("\\\\", "/", step_module)
-            #if isinstance(step_module, str):
-            #    step_module = step_module.decode('unicode_escape')
+        if (encoded == 0):  #test local 3D path without the use of KIPRJMOD or ENV
+            step_module_local = re.sub("\\\\", "/", step_module)     #subst '\\' with '/'
+            # step_module_local = step_module_local.replace("\\", "/") #subst '\'  with '/'
             last_pcb_path_local = re.sub("\\\\", "/", last_pcb_path)
-            #if isinstance(last_pcb_path, str):
-            #    last_pcb_path = last_pcb_path.decode('unicode_escape')
-            #step_module_local=os.join(last_pcb_path_local, step_module_local)
-            #sm=step_module
-            #step_module=re.sub(r"^\$\{KIPRJMOD\}.*$",last_pcb_path, sm)
-            #step_module=re.sub('\${.KIPRJMOD}/', '', step_module)
             # print(step_module)
             # print(step_module_local)
             step_module_local=step_module_local.replace(u'"', u'')  # name with spaces
@@ -4360,37 +4397,69 @@ def Load_models(pcbThickness,modules):
             rel_pos=len(utf_path_local)-pos
             local_path=utf_path_local[:-rel_pos+1]
             #print(local_path)
-            #print(os.path.exists(local_path+u'step'))
-            #print(os.path.exists(local_path+u'stp'))
             #stop
-            if os.path.exists(local_path+u'step'):
-                #step_module=step_module.replace(u'"', u'')  # name with spaces
+            if os.path.exists(local_path+u'stpZ'):
+                step_module = local_path+u'stpZ'
+                encoded=1
+                say('adjusting Relative Path to pcb file')
+                say('step-module-replaced '+step_module)
+            elif os.path.exists(local_path+u'stpz'):
+                step_module = local_path+u'stpz'
+                encoded=1
+                say('adjusting Relative Path to pcb file')
+                say('step-module-replaced '+step_module)
+            elif os.path.exists(local_path+u'STPZ'):
+                step_module = local_path+u'STPZ'
+                encoded=1
+                say('adjusting Relative Path to pcb file')
+                say('step-module-replaced '+step_module)
+            elif os.path.exists(local_path+u'step'):
                 step_module = local_path+u'step'
                 encoded=1
                 say('adjusting Relative Path to pcb file')
                 say('step-module-replaced '+step_module)
-            elif os.path.exists(local_path+u'stp'):
-                #step_module=step_module.replace(u'"', u'')  # name with spaces
-                step_module = local_path+u'stp'
-                encoded=1
-                say('adjusting Relative Path to pcb file')
-                say('step-module-replaced '+step_module)
             elif os.path.exists(local_path+u'STEP'):
-                #step_module=step_module.replace(u'"', u'')  # name with spaces
                 step_module = local_path+u'STEP'
                 encoded=1
                 say('adjusting Relative Path to pcb file')
                 say('step-module-replaced '+step_module)
+            elif os.path.exists(local_path+u'stp'):
+                step_module = local_path+u'stp'
+                encoded=1
+                say('adjusting Relative Path to pcb file')
+                say('step-module-replaced '+step_module)
             elif os.path.exists(local_path+u'STP'):
-                #step_module=step_module.replace(u'"', u'')  # name with spaces
                 step_module = local_path+u'STP'
                 encoded=1
                 say('adjusting Relative Path to pcb file')
                 say('step-module-replaced '+step_module)
-            ## to do add igs,iges    
+            
+            elif os.path.exists(local_path+u'iges'):
+                step_module = local_path+u'iges'
+                encoded=1
+                say('adjusting Relative Path to pcb file')
+                say('step-module-replaced '+step_module)
+            elif os.path.exists(local_path+u'IGES'):
+                step_module = local_path+u'IGES'
+                encoded=1
+                say('adjusting Relative Path to pcb file')
+                say('step-module-replaced '+step_module)
+            elif os.path.exists(local_path+u'igs'):
+                step_module = local_path+u'igs'
+                encoded=1
+                say('adjusting Relative Path to pcb file')
+                say('step-module-replaced '+step_module)
+            elif os.path.exists(local_path+u'IGS'):
+                step_module = local_path+u'IGS'
+                encoded=1
+                say('adjusting Relative Path to pcb file')
+                say('step-module-replaced '+step_module)
         if step_module != 'no3Dmodel':
             #model_type = step_module.split('.')[1]
             #if encoded!=1:
+            step_module = re.sub("\\\\", "/", step_module)      #subst '\\' with '/'
+            # step_module =  step_module.replace("\\", "/") #subst '\'  with '/'
+            
             wrl_model = ''
             if step_module.lower().endswith('wrl') or step_module.lower().endswith('wrz'):
                 wrl_model = step_module
@@ -4401,12 +4470,24 @@ def Load_models(pcbThickness,modules):
             rel_pos=len(step_module)-pos
             #sayw(rel_pos)
             #stop
-            step_module=step_module[:-rel_pos+1]+u'step'
+            step_module=step_module[:-rel_pos+1]+u'stpZ'
+            step_module_lw=step_module[:-4]+u'stpz'
+            step_module_up=step_module[:-4]+u'STPZ'
             #step_module=step_module[:-3]+'step'
-            step_module2=step_module[:-4]+u'stp'
-            step_module3=step_module[:-4]+u'iges'
-            step_module4=step_module[:-4]+u'igs'
-            step_module5=step_module[:-4]+u'stpz'
+            step_module2=step_module[:-4]+u'step'
+            step_module2_up=step_module[:-4]+u'STEP'
+            step_module3=step_module[:-4]+u'stp'
+            step_module3_up=step_module[:-4]+u'stp'
+            step_module4=step_module[:-4]+u'iges'
+            step_module4_up=step_module[:-4]+u'IGES'
+            step_module5=step_module[:-4]+u'igs'
+            step_module5_up=step_module[:-4]+u'IGS'
+            # step_module=step_module[:-rel_pos+1]+u'step'
+            # #step_module=step_module[:-3]+'step'
+            # step_module2=step_module[:-4]+u'stp'
+            # step_module3=step_module[:-4]+u'iges'
+            # step_module4=step_module[:-4]+u'igs'
+            # step_module5=step_module[:-4]+u'stpz'
             #if encoded!=1:
             #    #step_module=step_module.decode("utf-8").replace(u'"', u'')  # name with spaces
             #    step_module=step_module.replace(u'"', u'')  # name with spaces
@@ -4430,240 +4511,9 @@ def Load_models(pcbThickness,modules):
                 if model_name=="box_mcad" or model_name=="cylV_mcad" or model_name=="cylH_mcad":
                     createScaledObjs=True
                 if not createScaledObjs:
-                    module_path='not-found'
-                    step_module=step_module.replace(u'"', u'')  # name with spaces
-                    # sayerr(step_module+' TEST')
-                    #step_module=step_module.replace('"', '')  # name with spaces
-                    #step_module=step_module.decode("utf-8").replace(u'"', u'')  # name with spaces
-                    #step_module=step_module.encode("utf-8")
-                    #sayw(models3D_prefix+step_module)
-                    # removing 'backslash' for unicode_escape
-                    ## new utf-8 test
-                    models3D_prefix = re.sub("\\\\", "/", models3D_prefix)
-                    models3D_prefix_U = models3D_prefix
-                    #if isinstance(models3D_prefix, str):
-                    #    models3D_prefix_U = models3D_prefix.decode('unicode_escape')
-                    #else:
-                    #    models3D_prefix_U = models3D_prefix
-                    step_module = re.sub("\\\\", "/", step_module)
-                    #if isinstance(step_module, str):
-                    #    step_module = step_module.decode('unicode_escape')
-                    #else:
-                    #    step_module = step_module.encode('utf-8')
-                    #utf_path=os.path.join(models3D_prefix,step_module)
-                    #print(type(step_module))  #maui test py3
-                    utf_path=os.path.join(make_unicode(models3D_prefix_U),make_unicode(step_module))
-                    #sayw(utf_path)
-                    #utf_path=os.path.join(models3D_prefix,step_module)
-                    ##adding 2nd 3Dprefix support to step
-                    #utf_path2=os.path.join(models3D_prefix2,step_module)
-                    ## new utf-8 test
-                    models3D_prefix2 = re.sub("\\\\", "/", models3D_prefix2)
-                    #if isinstance(models3D_prefix2, str):
-                    #    models3D_prefix2_U = models3D_prefix2.decode('unicode_escape')
-                    #else:
-                    #    models3D_prefix2_U = models3D_prefix2
-                    models3D_prefix2_U = models3D_prefix2
-                    utf_path2=os.path.join(make_unicode(models3D_prefix2_U),make_unicode(step_module)) # utf-8 chars
-                    #print(utf_path)
-                    #print(utf_path2)
-                    #print(step_module)
-                    #.step
-                    if os.path.exists(utf_path):
-                        #module_path=models3D_prefix+step_module
-                        module_path=utf_path
-                        #sayw("found! "+module_path)
-                    else:
-                        if os.path.exists(step_module): # absolute path
-                            module_path=step_module
-                        else:
-                            if os.path.exists(utf_path2):
-                                module_path=utf_path2
-                    #.STEP
-                    if (module_path=='not-found'):
-                        pos=utf_path.rfind('.')
-                        rel_pos=len(utf_path)-pos
-                        utf_path=utf_path[:-rel_pos+1]+u'STEP'
-                        if os.path.exists(utf_path):
-                            #module_path=models3D_prefix+step_module
-                            module_path=utf_path
-                            #sayw("found! "+module_path)
-                        else:
-                            pos=step_module.rfind('.')
-                            rel_pos=len(step_module)-pos
-                            step_module_t=step_module[:-rel_pos+1]+u'STEP'
-                            if os.path.exists(step_module_t): # absolute path
-                                module_path=step_module_t
-                            else:
-                                pos=utf_path2.rfind('.')
-                                rel_pos=len(utf_path2)-pos
-                                utf_path2=utf_path2[:-rel_pos+1]+u'STEP'
-                                if os.path.exists(utf_path2):
-                                    module_path=utf_path2
-                    #adding .stp support
-                    #if isinstance(step_module2, str):
-                    #    step_module = step_module2.decode('unicode_escape')
-                    utf_path=os.path.join(make_unicode(models3D_prefix_U),make_unicode(step_module2))
-                    utf_path2=os.path.join(make_unicode(models3D_prefix2_U),make_unicode(step_module2))
-                    #sayerr(step_module2)
-                    #sayerr(utf_path)
-                    #sayerr(utf_path2)
-                    ## new utf-8 test
-                    if (module_path=='not-found'):
-                        if os.path.exists(utf_path):
-                        #if os.path.exists(models3D_prefix+step_module2) and (module_path=='not-found'):
-                            #module_path=models3D_prefix+step_module2
-                            module_path=utf_path
-                            #sayw("found! "+module_path)
-                        else:
-                            if os.path.exists(step_module2): # absolute path
-                                module_path=step_module2
-                            else:
-                                if os.path.exists(utf_path2):
-                                    module_path=utf_path2
-                    #sayerr(module_path)
-                    #stop
-                    #.STP
-                    if (module_path=='not-found'):
-                        pos=utf_path.rfind('.')
-                        rel_pos=len(utf_path)-pos
-                        utf_path=utf_path[:-rel_pos+1]+u'STP'
-                        if os.path.exists(utf_path):
-                            #module_path=models3D_prefix+step_module
-                            module_path=utf_path
-                            #sayw("found! "+module_path)
-                        else:
-                            pos=step_module.rfind('.')
-                            rel_pos=len(step_module2)-pos
-                            step_module_t=step_module2[:-rel_pos+1]+u'STP'
-                            if os.path.exists(step_module_t): # absolute path
-                                module_path=step_module_t
-                            else:
-                                pos=utf_path2.rfind('.')
-                                rel_pos=len(utf_path2)-pos
-                                utf_path2=utf_path2[:-rel_pos+1]+u'STP'
-                                if os.path.exists(utf_path2):
-                                    module_path=utf_path2
-                    #adding .iges support
-                    #if isinstance(step_module3, str):
-                    #    step_module = step_module3.decode('unicode_escape')
-                    utf_path=os.path.join(make_unicode(models3D_prefix_U),make_unicode(step_module3))
-                    utf_path2=os.path.join(make_unicode(models3D_prefix2_U),make_unicode(step_module3))
-                    ## new utf-8 test
-                    if (module_path=='not-found'):
-                        if os.path.exists(utf_path):
-                        #if os.path.exists(models3D_prefix+step_module3) and (module_path=='not-found'):
-                            #module_path=models3D_prefix_U+step_module3
-                            module_path=utf_path
-                        else:
-                            if os.path.exists(step_module3): # absolute path
-                                module_path=step_module3
-                                #sayw("found3! "+module_path)
-                            else:
-                                if os.path.exists(utf_path2):
-                                    module_path=utf_path2
-                    #.IGES
-                    if (module_path=='not-found'):
-                        pos=utf_path.rfind('.')
-                        rel_pos=len(utf_path)-pos
-                        utf_path=utf_path[:-rel_pos+1]+u'IGES'
-                        if os.path.exists(utf_path):
-                            #module_path=models3D_prefix+step_module
-                            module_path=utf_path
-                            #sayw("found! "+module_path)
-                        else:
-                            pos=step_module.rfind('.')
-                            rel_pos=len(step_module3)-pos
-                            step_module_t=step_module3[:-rel_pos+1]+u'IGES'
-                            if os.path.exists(step_module_t): # absolute path
-                                module_path=step_module_t
-                            else:
-                                pos=utf_path2.rfind('.')
-                                rel_pos=len(utf_path2)-pos
-                                utf_path2=utf_path2[:-rel_pos+1]+u'IGES'
-                                if os.path.exists(utf_path2):
-                                    module_path=utf_path2
-                    #if (module_path!='not-found'):
-                    #    sayerr(module_path)
-                    #    stop
-                    #adding .igs support
-                    utf_path=os.path.join(make_unicode(models3D_prefix_U),make_unicode(step_module4))
-                    utf_path2=os.path.join(make_unicode(models3D_prefix2_U),make_unicode(step_module4))
-                    ## new utf-8 test
-                    if (module_path=='not-found'):
-                        if os.path.exists(utf_path):
-                        #if os.path.exists(models3D_prefix+step_module4) and (module_path=='not-found'):
-                            #module_path=models3D_prefix_U+step_module4
-                            module_path=utf_path
-                        else:
-                            if os.path.exists(step_module5): # absolute path
-                                module_path=step_module5
-                            else:
-                                if os.path.exists(utf_path2):
-                                    module_path=utf_path2
-                    #.IGS
-                    if (module_path=='not-found'):
-                        pos=utf_path.rfind('.')
-                        rel_pos=len(utf_path)-pos
-                        utf_path=utf_path[:-rel_pos+1]+u'IGS'
-                        if os.path.exists(utf_path):
-                            #module_path=models3D_prefix+step_module
-                            module_path=utf_path
-                            #sayw("found! "+module_path)
-                        else:
-                            pos=step_module.rfind('.')
-                            rel_pos=len(step_module4)-pos
-                            step_module_t=step_module4[:-rel_pos+1]+u'IGS'
-                            if os.path.exists(step_module_t): # absolute path
-                                module_path=step_module_t
-                            else:
-                                pos=utf_path2.rfind('.')
-                                rel_pos=len(utf_path2)-pos
-                                utf_path2=utf_path2[:-rel_pos+1]+u'IGS'
-                                if os.path.exists(utf_path2):
-                                    module_path=utf_path2
-                    #.stpZ
-                    if (module_path=='not-found'):
-                        pos=utf_path.rfind('.')
-                        rel_pos=len(utf_path)-pos
-                        utf_path=utf_path[:-rel_pos+1]+u'stpZ'
-                        if os.path.exists(utf_path):
-                            #module_path=models3D_prefix+step_module
-                            module_path=utf_path
-                            #sayw("found! "+module_path)
-                        else:
-                            pos=step_module.rfind('.')
-                            rel_pos=len(step_module5)-pos
-                            step_module_t=step_module5[:-rel_pos+1]+u'stpZ'
-                            if os.path.exists(step_module_t): # absolute path
-                                module_path=step_module_t
-                            else:
-                                pos=utf_path2.rfind('.')
-                                rel_pos=len(utf_path2)-pos
-                                utf_path2=utf_path2[:-rel_pos+1]+u'stpZ'
-                                if os.path.exists(utf_path2):
-                                    module_path=utf_path2
-                    #.stpz
-                    if (module_path=='not-found'):
-                        pos=utf_path.rfind('.')
-                        rel_pos=len(utf_path)-pos
-                        utf_path=utf_path[:-rel_pos+1]+u'stpz'
-                        if os.path.exists(utf_path):
-                            #module_path=models3D_prefix+step_module
-                            module_path=utf_path
-                            #sayw("found! "+module_path)
-                        else:
-                            pos=step_module.rfind('.')
-                            rel_pos=len(step_module5)-pos
-                            step_module_t=step_module5[:-rel_pos+1]+u'stpz'
-                            if os.path.exists(step_module_t): # absolute path
-                                module_path=step_module_t
-                            else:
-                                pos=utf_path2.rfind('.')
-                                rel_pos=len(utf_path2)-pos
-                                utf_path2=utf_path2[:-rel_pos+1]+u'stpz'
-                                if os.path.exists(utf_path2):
-                                    module_path=utf_path2
+                    path_list = [models3D_prefix,models3D_prefix2,models3D_prefix3,models3D_prefix4]
+                    model_type = [step_module,step_module_lw,step_module_up,step_module2,step_module2_up,step_module3,step_module3_up,step_module4,step_module4_up,step_module5,step_module5_up]
+                    module_path = findModelPath(model_type, path_list)     # Find module in all paths and types specified
                 else:
                     scale_vrml=modules[i][8]
                     #sayw(scale_vrml)
@@ -5306,7 +5156,10 @@ def Load_models(pcbThickness,modules):
         last_pcb_path_local = re.sub("\\\\", "/", last_pcb_path)
         last_pcb_path_local_U = make_unicode(last_pcb_path_local)
         say("missing models");say (missing_models)
-        say("searching path");say(models3D_prefix_U);say (models3D_prefix2_U)
+        say("searching path")
+        for mpath in path_list:
+            say(mpath)
+        #say(models3D_prefix_U);say (models3D_prefix2_U)
         say(last_pcb_path_local_U)
         missings=[]
         missings=missing_models.split('\r\n')
@@ -5314,8 +5167,10 @@ def Load_models(pcbThickness,modules):
         #if len (missings) > n_rpt_max: #warning_nbr =-1 for skipping the test
         wmsg="""... missing module(s)<br>"""
         wmsg+="""... searching path:<br>"""
-        wmsg+=models3D_prefix_U+"""<br>"""
-        wmsg+=models3D_prefix2_U+"""<br>"""
+        for mpath in path_list:
+            wmsg+=mpath+"""<br>"""
+        #wmsg+=models3D_prefix_U+"""<br>"""
+        #wmsg+=models3D_prefix2_U+"""<br>"""
         wmsg+=last_pcb_path_local_U+"""<br>"""
         wmsg+="""... missing module(s) '.step' or '.stp' or .iges' or '.igs'<br>"""
         for i in range(min(len (missings),n_rpt_max)):
@@ -6754,7 +6609,8 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
     global test_flag, last_pcb_path, configParser, configFilePath, start_time
     global aux_orig, base_orig, base_point, idf_to_origin, off_x, off_y, export_board_2step
     global real_board_pos_x, real_board_pos_y, board_base_point_x, board_base_point_y
-    global models3D_prefix, blacklisted_model_elements, col, colr, colg, colb
+    global models3D_prefix, models3D_prefix2, models3D_prefix3, models3D_prefix4
+    global blacklisted_model_elements, col, colr, colg, colb
     global bbox, volume_minimum, height_minimum, idf_to_origin, aux_orig
     global base_orig, base_point, bbox_all, bbox_list, whitelisted_model_elements
     global fusion, addVirtual, blacklisted_models, exportFusing, min_drill_size
