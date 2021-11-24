@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.1.8.1"
+___ver___ = "10.1.8.2"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -11989,8 +11989,13 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
             [xm, ym] = a.mid 
             arc1 = Part.Edge(Part.Arc(Base.Vector(xs,-ys,0),Base.Vector(xm,-ym,0),Base.Vector(x1,-y1,0)))
             curve = arc1.Curve.AngleXU/pi*180
+            #curve = arc1.AngleXU/pi*180
+            #print(curve)
             if curve > 0:
                 curve = -1*curve
+                #print('inverting')
+                #arc1.reverse();
+            #Part.show(arc1);print(curve) #;stop
             [x2, y2] = rotPoint2([x1, y1], [xs, ys], curve)
         else:
             curve = a.angle
@@ -12002,11 +12007,12 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
         # else:
         #     arc = Part.makeCircle(r,center,Vector(0,0,1),a,a-angle)
         Cntr = arc1.Curve.Center
+        #Cntr = arc1.Center
         cx=Cntr.x;cy=Cntr.y
         #print cx,cy
         r = arc1.Curve.Radius
+        #r = arc1.Radius
         #r=arcRadius(xs, ys, x1, y1, curve)
-        #print r
         #sa = arc1.Curve.FirstAngle
         #ea = arc1.Curve.LastAngle
         #sa,ea = arcAngles2(xs, ys, x1, y1, cx, cy, curve)
@@ -12021,11 +12027,25 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
         if load_sketch:
             if aux_orig ==1 or grid_orig ==1:
                 #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx-off_x,cy-off_y,0),FreeCAD.Vector(0,0,1),r),sa,ea),False)
-                PCB_Geo.append(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx-off_x,cy-off_y,0),FreeCAD.Vector(0,0,1),r),sa,ea))
+                #PCB_Geo.append(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx-off_x,cy-off_y,0),FreeCAD.Vector(0,0,1),r),sa,ea))
+                if hasattr (a, 'mid'):
+                    PCB_Geo.append(Part.ArcOfCircle(kicad_parser.makeVect([a.start[0]-off_x,a.start[1]+off_y]),
+                                                    kicad_parser.makeVect([a.mid[0]-off_x,a.mid[1]+off_y]),
+                                                    kicad_parser.makeVect([a.end[0]-off_x,a.end[1]+off_y])))
+                    # print('a.start=',a.start,'a.mid=',a.mid,'a.end=',a.end, 'off_x=',off_x, 'off_y=',off_y)
+                    # Part.show(Part.ArcOfCircle(kicad_parser.makeVect([a.start[0]-off_x,a.start[1]+off_y]),
+                    #                                 kicad_parser.makeVect([a.mid[0]-off_x,a.mid[1]+off_y]),
+                    #                                 kicad_parser.makeVect([a.end[0]-off_x,a.end[1]+off_y])).toShape())
+                else:
+                    PCB_Geo.append(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx-off_x,cy-off_y,0),FreeCAD.Vector(0,0,1),r),sa,ea))
             else:
-                #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx,cy,0),FreeCAD.Vector(0,0,1),r),sa,ea),False)
-                PCB_Geo.append(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx,cy,0),FreeCAD.Vector(0,0,1),r),sa,ea))
-
+                if hasattr (a, 'mid'):
+                    PCB_Geo.append(Part.ArcOfCircle(kicad_parser.makeVect(a.start),
+                                                    kicad_parser.makeVect(a.mid),
+                                                    kicad_parser.makeVect(a.end)))
+                else:
+                    #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx,cy,0),FreeCAD.Vector(0,0,1),r),sa,ea),False)
+                    PCB_Geo.append(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx,cy,0),FreeCAD.Vector(0,0,1),r),sa,ea))
         #mp=mid_point(Base.Vector(x2,-y2,0),Base.Vector(x1,-y1,0),curve)
         #msg1= "App.ActiveDocument.PCB_SketchN.addGeometry(Part.Arc(Base.Vector({0},-{1},0),{4},Base.Vector({2},-{3},0)))".format(x2,y2,x1,y1,mp)
         #print msg1
