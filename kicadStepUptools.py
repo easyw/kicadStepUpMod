@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.1.8.2"
+___ver___ = "10.1.8.3"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -12466,24 +12466,45 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                 #x1=ma.end[0]+m.at[0];y1=-ma.end[1]-m.at[1]
                 xs=ma.start[0];ys=ma.start[1]
                 x1=ma.end[0];y1=ma.end[1]
-                curve = ma.angle
-                [x2, y2] = rotPoint2([x1, y1], [xs, ys], curve)
-                y1=-y1-m.at[1]; y2=-y2-m.at[1]
-                x1+=m.at[0];x2+=m.at[0]
-                [x1, y1] = rotPoint2([x1, y1], [m.at[0], -m.at[1]], m_angle)
-                [x2, y2] = rotPoint2([x2, y2], [m.at[0], -m.at[1]], m_angle)
-                arc1=Part.Edge(Part.Arc(Base.Vector(x2,y2,0),mid_point(Base.Vector(x2,y2,0),Base.Vector(x1,y1,0),curve),Base.Vector(x1,y1,0)))
-                edges.append(arc1)
-                EdgeCuts.append(arc1)
-                sa,ea = arcAngles2(arc1,curve)
-                Cntr = arc1.Curve.Center
-                cx=Cntr.x;cy=Cntr.y
-                #print cx,cy
-                r = arc1.Curve.Radius
-                if aux_orig ==1 or grid_orig ==1:
-                    FpEdges_Geo.append(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx-off_x,cy-off_y,0),FreeCAD.Vector(0,0,1),r),sa,ea))
+                if hasattr (ma, 'mid'):
+                    [xm, ym] = ma.mid 
+                    #arc2 = Part.Edge(Part.Arc(Base.Vector(xs,-ys,0),Base.Vector(xm,-ym,0),Base.Vector(x1,-y1,0)))
+                    arc1 = Part.Edge(Part.ArcOfCircle(kicad_parser.makeVect(ma.start), kicad_parser.makeVect(ma.mid), kicad_parser.makeVect(ma.end)).toShape())
+                    arc1.rotate(Vector(),Vector(0,0,1),m_angle)
+                    if aux_orig ==1 or grid_orig ==1:
+                        mat_t=(m.at[0]-off_x,-m.at[1]-off_y,0)
+                    else:
+                        mat_t=(m.at[0],-m.at[1],0)
+                    arc1.translate(mat_t)
+                    edges.append(arc1)
+                    EdgeCuts.append(arc1)
+                    sa,ea = arcAngles2(arc1,curve)
+                    Cntr = arc1.Curve.Center
+                    cx=Cntr.x;cy=Cntr.y
+                    #print cx,cy
+                    r = arc1.Curve.Radius
+                    skt = Draft.makeSketch(arc1)
+                    FpEdges_Geo.append(skt.Geometry[0])
+                    FreeCAD.ActiveDocument.removeObject(skt.Name)
                 else:
-                    FpEdges_Geo.append(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx,cy,0),FreeCAD.Vector(0,0,1),r),sa,ea))
+                    curve = ma.angle
+                    [x2, y2] = rotPoint2([x1, y1], [xs, ys], curve)
+                    y1=-y1-m.at[1]; y2=-y2-m.at[1]
+                    x1+=m.at[0];x2+=m.at[0]
+                    [x1, y1] = rotPoint2([x1, y1], [m.at[0], -m.at[1]], m_angle)
+                    [x2, y2] = rotPoint2([x2, y2], [m.at[0], -m.at[1]], m_angle)
+                    arc1=Part.Edge(Part.Arc(Base.Vector(x2,y2,0),mid_point(Base.Vector(x2,y2,0),Base.Vector(x1,y1,0),curve),Base.Vector(x1,y1,0)))
+                    edges.append(arc1)
+                    EdgeCuts.append(arc1)
+                    sa,ea = arcAngles2(arc1,curve)
+                    Cntr = arc1.Curve.Center
+                    cx=Cntr.x;cy=Cntr.y
+                    #print cx,cy
+                    r = arc1.Curve.Radius
+                    if aux_orig ==1 or grid_orig ==1:
+                        FpEdges_Geo.append(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx-off_x,cy-off_y,0),FreeCAD.Vector(0,0,1),r),sa,ea))
+                    else:
+                        FpEdges_Geo.append(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx,cy,0),FreeCAD.Vector(0,0,1),r),sa,ea))
                 if show_border:
                     Part.show(arc1)
                 PCB.append(['Arc', x1, y1, x2, y2, curve])         
