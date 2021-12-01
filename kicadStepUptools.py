@@ -10369,6 +10369,7 @@ def routineDrawFootPrint(content,name):
         BCrtYd_name=FreeCAD.ActiveDocument.ActiveObject.Name
         FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.0000,0.0000,1.0000)
         FreeCADGui.ActiveDocument.ActiveObject.Transparency = 60
+        FreeCAD.ActiveDocument.ActiveObject.Placement.Base.z-=1.6
     #
     if len(FFab)>0:
         #FSilk_lines = Part.makeCompound(FrontSilk)
@@ -10395,6 +10396,7 @@ def routineDrawFootPrint(content,name):
         FFab_name=FreeCAD.ActiveDocument.ActiveObject.Name
         FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.0000,1.0000,0.0000)
         FreeCADGui.ActiveDocument.ActiveObject.Transparency = 60
+        FreeCAD.ActiveDocument.ActiveObject.Placement.Base.z-=1.6
     #
     if len(FrontSilk)>0:
         #FSilk_lines = Part.makeCompound(FrontSilk)
@@ -10425,6 +10427,7 @@ def routineDrawFootPrint(content,name):
         BSilk_name=FreeCAD.ActiveDocument.ActiveObject.Name
         FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (1.0000,1.0000,1.0000)
         FreeCADGui.ActiveDocument.ActiveObject.Transparency = 60
+        FreeCAD.ActiveDocument.ActiveObject.Placement.Base.z-=1.6
     #
     if len(EdgeCuts)>0:
         #FSilk_lines = Part.makeCompound(FrontSilk)
