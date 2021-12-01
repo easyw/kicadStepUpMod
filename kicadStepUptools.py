@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.1.8.3"
+___ver___ = "10.1.8.5"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -8427,8 +8427,10 @@ def shiftPointOnLine(x1, y1, x2, y2, distance):
 
 ###
 def getLine(layer, content, oType):
+    layer=layer.replace('"','')
     data = []
     source = ''.join(content)
+    source=source.replace('"','')
     #
     #data1 = re.findall(r'\({1}\s+\(start\s+([0-9\.-]*?)\s+([0-9\.-]*?)\)\s+\(end\s+([0-9\.-]*?)\s+([0-9\.-]*?)\)(\s+\(angle\s+[0-9\.-]*?\)\s+|\s+)\(layer\s+{0}\)\s+\(width\s+([0-9\.]*?)\)\)'.format(layer, oType), source, re.MULTILINE|re.DOTALL)
     data1 = re.findall(r'\({1}\s+\(start\s+([0-9\.-]*?)\s+([0-9\.-]*?)\)\s+\(end\s+([0-9\.-]*?)\s+([0-9\.-]*?)\)(\s+\(angle\s+[0-9\.-]*?\)\s+|\s+)\(layer\s+{0}\)\s+\(width\s+([0-9\.]*?)\)'.format(layer, oType), source, re.MULTILINE|re.DOTALL)
@@ -8475,6 +8477,8 @@ def getCircle(layer, content, oType):
     data = []
     #
     source = ''.join(content)
+    layer=layer.replace('"','')
+    source=source.replace('"','')
     #data1 = re.findall(r'\({1}\s+\(center\s+([0-9\.-]*?)\s+([0-9\.-]*?)\)\s+\(end\s+([0-9\.-]*?)\s+([0-9\.-]*?)\)\s+\(layer\s+{0}\)(\s+\(width\s+([0-9\.]*?)\)|)\)'.format(layer, oType), source, re.MULTILINE|re.DOTALL)
     data1 = re.findall(r'\({1}\s+\(center\s+([0-9\.-]*?)\s+([0-9\.-]*?)\)\s+\(end\s+([0-9\.-]*?)\s+([0-9\.-]*?)\)\s+\(layer\s+{0}\)(\s+\(width\s+([0-9\.]*?)\)|)'.format(layer, oType), source, re.MULTILINE|re.DOTALL)
     #say(source)
@@ -8545,9 +8549,11 @@ def rotPoint2(point, ref, angle):
 ###
 def getArc(layer, content, oType):
     data = []
-    #
     source = ''.join(content)
+    source = source.replace('"','')
+    layer = layer.replace('"','')
     #data1 = re.findall(r'\({1}\s+\(start\s+([0-9\.-]*?)\s+([0-9\.-]*?)\)\s+\(end\s+([0-9\.-]*?)\s+([0-9\.-]*?)\)\s+\(angle\s+([0-9\.-]*?)\)\s+\(layer\s+{0}\)(\s+\(width\s+([0-9\.]*?)\)|)\)'.format(layer, oType), source, re.MULTILINE|re.DOTALL)
+    #(fp_arc (start 0.015 -0.03) (end 22.348 -2.772) (angle -17) (layer Edge.Cuts) (width 0.16))
     data1 = re.findall(r'\({1}\s+\(start\s+([0-9\.-]*?)\s+([0-9\.-]*?)\)\s+\(end\s+([0-9\.-]*?)\s+([0-9\.-]*?)\)\s+\(angle\s+([0-9\.-]*?)\)\s+\(layer\s+{0}\)(\s+\(width\s+([0-9\.]*?)|)\)'.format(layer, oType), source, re.MULTILINE|re.DOTALL)
     for i in data1:
         xs = float(i[0])
@@ -8559,13 +8565,27 @@ def getArc(layer, content, oType):
             width = float(i[6])
         else:
             width = 0
-
         if abs(curve)==360: 
             [x2, y2] = [xs, ys]
         else:
             [x2, y2] = rotPoint2([x1, y1], [xs, ys], curve)
-
         data.append([x1, y1 * (-1), x2, y2 * (-1), curve, width])
+    if len (data) == 0:
+        # (fp_arc (start 20.570471 -9.181725) (mid 21.697398 -6.042909) (end 22.348 -2.772) (layer "Edge.Cuts") (width 0.16) (tstamp 30b75c25-1d2c-45e7-83e2-bb3be98f8f83))
+        data2 = re.findall(r'\({1}\s+\(start\s+([0-9\.-]*?)\s+([0-9\.-]*?)\)\s+\(mid\s+([0-9\.-]*?)\s+([0-9\.-]*?)\)\s+\(end\s+([0-9\.-]*?)\s+([0-9\.-]*?)\)\s+\(layer\s+{0}\)\s+\(width\s+([0-9\.]*?)\)'.format(layer, oType), source, re.MULTILINE|re.DOTALL)
+        #print(data2,data,data1)
+        for i in data2:
+            xs = float(i[0])
+            ys = float(i[1])
+            xm = float(i[2])
+            ym = float(i[3])
+            x1 = float(i[4])
+            y1 = float(i[5])
+            if i[6].strip() != '':
+                width = float(i[6])
+            else:
+                width = 0
+            data.append([xs, ys * (-1), xm, ym * (-1), x1, y1 * (-1), width])
     #
     return data
 
@@ -9944,6 +9964,61 @@ def createPoly(x, y, sx, sy, dcx,dcy,dx,dy,pShape, layer, poly_points):
     return extr
     
 ###
+def createArcW (layer, content, arc_prim, layer_list):
+
+    fpArc = getArc(layer, content, arc_prim)
+    #print(layer,fpArc)
+    for i in fpArc:
+        if len(i) == 6:  #kv5
+            x1 = i[0] #+ X1
+            y1 = i[1] #+ Y1
+            x2 = i[2] #+ X1
+            y2 = i[3] #+ Y1
+            _angle = i[4]
+            # print('center=',x1,y1,' end=',x2,y2,' angle=',i[4],' width=',i[5])
+            arc1=addArc_3([x1, y1], [x2, y2], i[4], i[5])
+            # kv5 fp_arc start=center coord, end=arc_end coord, angle=delta angle
+            # getArc -> [x2, y2] = rotPoint2([x1, y1], [xc, yc], curve)
+            xm=(x1+x2)/2
+            ym=(y1+y2)/2
+            rotateObj(arc1, [xm, ym, 180])
+            layer_list.append(arc1)
+        elif len(i) == 7: #kv6
+            # kv6 fp_arc start=arc_start coord, mid=arc_mid coord, end=arc_end coord
+            # start, mid, end
+            xs = i[0]; ys = i[1] #+ Y1
+            xm = i[2]; ym = i[3] #+ Y1
+            xe = i[4]; ye = i[5] #+ Y1
+            edge_arc = Part.ArcOfCircle(kicad_parser.makeVect([xs,-ys]),
+                                    kicad_parser.makeVect([xm,-ym]),
+                                    kicad_parser.makeVect([xe,-ye])).toShape() 
+            #Draft.makeSketch(edge_arc)
+            # e => arc Edge
+            delta_angle=degrees(edge_arc.LastParameter-edge_arc.FirstParameter)
+            center = edge_arc.Curve.Center
+            xc,yc,zc= center[0],center[1],center[2]
+            #print (center);  print(delta_angle)
+            # arc1_kv5=addArc_3([x1, y1], [x2, y2], i[4], i[5])
+            # kv5 fp_arc start=center coord, end=arc_end coord, angle=delta angle
+            [x1,y1] = [xe, ye]
+            [x2,y2] = [xs,ys] #rotPoint2([x1, y1], [xs, ys], -curve)
+            # if curve <0:
+            #     curve*=-1
+            #if curve >90:
+            #    curve=(curve-90)/4
+            # arc1 = addArc_3([x1, y1], [x2, y2], curve, i[6])
+            arc1 = addArc_3([x1, y1], [x2, y2], delta_angle, i[6])
+            #arc1 = addArc_3([center[0], -center[1]], [x2, y2], -curve+180/2, i[6])
+            xm=(x1+x2)/2
+            ym=(y1+y2)/2
+            #rotateObj(arc1, [xm, ym, 180])
+            #.rotate(Vector(),Vector(0,0,1),180)
+            layer_list.append(arc1)
+        #else:
+        #    print(len(i),str(i))
+        #if mksketch:
+        #    skt = Draft.makeSketch(arc1)
+###
 def routineDrawFootPrint(content,name):
     global rot_wrl, zfit
     #for item in content:
@@ -10224,216 +10299,51 @@ def routineDrawFootPrint(content,name):
                     #BotPadList.append(mypad)
                     BotNetTieList.append(mypad)
 ##
+
     FrontSilk = []
     FCrtYd = []
     FFab = []
     EdgeCuts = []
+    BotSilk = []
+    BCrtYd = []
+    BFab = []
+    
+    layer_names = ['F.SilkS','F.CrtYd','F.Fab','Edge.Cuts','B.SilkS','B.CrtYd','B.Fab']
+    layers_name_list = [FrontSilk,FCrtYd,FFab,EdgeCuts,BotSilk,BCrtYd,BFab]
+        
     # line
     #getLine('F.SilkS', content, 'fp_line')
-    for i in getLine('F.CrtYd', content, 'fp_line'):
-        #say("here3")
-        x1 = i[0] #+ X1
-        y1 = i[1] #+ Y1
-        x2 = i[2] #+ X1
-        y2 = i[3] #+ Y1
-        obj = addLine_2(x1, y1, x2, y2, i[4])
-        FCrtYd.append(addLine_2(x1, y1, x2, y2, i[4]))
-    for i in getLine('F.CrtYd', content, 'fp_rect'):
-        #say("here3")
-        x1 = i[0] #+ X1
-        y1 = i[1] #+ Y1
-        x2 = i[2] #+ X1
-        y2 = i[3] #+ Y1
-        obj = addLine_2(x1, y1, x2, y2, i[4])
-        FCrtYd.append(addLine_2(x1, y1, x2, y1, i[4]))
-        FCrtYd.append(addLine_2(x2, y1, x2, y2, i[4]))
-        FCrtYd.append(addLine_2(x2, y2, x1, y2, i[4]))
-        FCrtYd.append(addLine_2(x1, y2, x1, y1, i[4]))
-    for i in getLine('F.Fab', content, 'fp_line'):
-        #say("here3")
-        x1 = i[0] #+ X1
-        y1 = i[1] #+ Y1
-        x2 = i[2] #+ X1
-        y2 = i[3] #+ Y1
-        obj = addLine_2(x1, y1, x2, y2, i[4])
-        FFab.append(addLine_2(x1, y1, x2, y2, i[4]))
-    for i in getLine('F.Fab', content, 'fp_rect'):
-        #say("here3")
-        x1 = i[0] #+ X1
-        y1 = i[1] #+ Y1
-        x2 = i[2] #+ X1
-        y2 = i[3] #+ Y1
-        obj = addLine_2(x1, y1, x2, y2, i[4])
-        FFab.append(addLine_2(x1, y1, x2, y1, i[4]))
-        FFab.append(addLine_2(x2, y1, x2, y2, i[4]))
-        FFab.append(addLine_2(x2, y2, x1, y2, i[4]))
-        FFab.append(addLine_2(x1, y2, x1, y1, i[4]))
-    for i in getLine('F.SilkS', content, 'fp_line'):
-        #say("here3")
-        x1 = i[0] #+ X1
-        y1 = i[1] #+ Y1
-        x2 = i[2] #+ X1
-        y2 = i[3] #+ Y1
-        obj = addLine_2(x1, y1, x2, y2, i[4])
-        #layerNew.changeSide(obj, X1, Y1, warst)
-        #layerNew.rotateObj(obj, [X1, Y1, ROT])
-        #layerNew.addObject(obj)
-        FrontSilk.append(addLine_2(x1, y1, x2, y2, i[4]))
-    for i in getLine('F.SilkS', content, 'fp_rect'):
-        #say("here3")
-        x1 = i[0] #+ X1
-        y1 = i[1] #+ Y1
-        x2 = i[2] #+ X1
-        y2 = i[3] #+ Y1
-        obj = addLine_2(x1, y1, x2, y2, i[4])
-        FrontSilk.append(addLine_2(x1, y1, x2, y1, i[4]))
-        FrontSilk.append(addLine_2(x2, y1, x2, y2, i[4]))
-        FrontSilk.append(addLine_2(x2, y2, x1, y2, i[4]))
-        FrontSilk.append(addLine_2(x1, y2, x1, y1, i[4]))
-    for i in getLine('Edge.Cuts', content, 'fp_line'):
-        #say("here3")
-        x1 = i[0] #+ X1
-        y1 = i[1] #+ Y1
-        x2 = i[2] #+ X1
-        y2 = i[3] #+ Y1
-        obj = addLine_2(x1, y1, x2, y2, i[4])
-        EdgeCuts.append(addLine_2(x1, y1, x2, y2, i[4]))
-    for i in getLine('Edge.Cuts', content, 'fp_rect'):
-        #say("here3")
-        x1 = i[0] #+ X1
-        y1 = i[1] #+ Y1
-        x2 = i[2] #+ X1
-        y2 = i[3] #+ Y1
-        obj = addLine_2(x1, y1, x2, y2, i[4])
-        EdgeCuts.append(addLine_2(x1, y1, x2, y1, i[4]))
-        EdgeCuts.append(addLine_2(x2, y1, x2, y2, i[4]))
-        EdgeCuts.append(addLine_2(x2, y2, x1, y2, i[4]))
-        EdgeCuts.append(addLine_2(x1, y2, x1, y1, i[4]))
-
+    for n,lay in enumerate (layer_names):
+        for i in getLine(lay, content, 'fp_line'):
+            x1 = i[0] #+ X1
+            y1 = i[1] #+ Y1
+            x2 = i[2] #+ X1
+            y2 = i[3] #+ Y1
+            obj = addLine_2(x1, y1, x2, y2, i[4])
+            layers_name_list[n].append(addLine_2(x1, y1, x2, y2, i[4]))
+    for n,lay in enumerate (layer_names):
+        for i in getLine(lay, content, 'fp_rect'):
+            x1 = i[0] #+ X1
+            y1 = i[1] #+ Y1
+            x2 = i[2] #+ X1
+            y2 = i[3] #+ Y1
+            obj = addLine_2(x1, y1, x2, y2, i[4])
+            layers_name_list[n].append(addLine_2(x1, y1, x2, y1, i[4]))
+            layers_name_list[n].append(addLine_2(x2, y1, x2, y2, i[4]))
+            layers_name_list[n].append(addLine_2(x2, y2, x1, y2, i[4]))
+            layers_name_list[n].append(addLine_2(x1, y2, x1, y1, i[4]))
+    
     # circle
-    for i in getCircle('F.CrtYd', content, 'fp_circle'):
-        #say(i)
-        xs = i[0] #+ X1
-        ys = i[1] #+ Y1
-        FCrtYd.append(addCircle_2(xs, ys, i[2], i[3]))
-    for i in getCircle('F.Fab', content, 'fp_circle'):
-        #say(i)
-        xs = i[0] #+ X1
-        ys = i[1] #+ Y1
-        FFab.append(addCircle_2(xs, ys, i[2], i[3]))
-    for i in getCircle('F.SilkS', content, 'fp_circle'):
-        #say(i)
-        xs = i[0] #+ X1
-        ys = i[1] #+ Y1
-        FrontSilk.append(addCircle_2(xs, ys, i[2], i[3]))
-    for i in getCircle('Edge.Cuts', content, 'fp_circle'):
-        #say(i)
-        xs = i[0] #+ X1
-        ys = i[1] #+ Y1
-        EdgeCuts.append(addCircle_2(xs, ys, i[2], i[3]))
-
+    for n,lay in enumerate (layer_names):
+        for i in getCircle(lay, content, 'fp_circle'):
+            xs = i[0] #+ X1
+            ys = i[1] #+ Y1
+            layers_name_list[n].append(addCircle_2(xs, ys, i[2], i[3]))
     # arc
-    for i in getArc('F.CrtYd', content, 'fp_arc'):
-        x1 = i[0] #+ X1
-        y1 = i[1] #+ Y1
-        x2 = i[2] #+ X1
-        y2 = i[3] #+ Y1
-
-        arc1=addArc_3([x1, y1], [x2, y2], i[4], i[5])
-        #arc2=arc1.copy()
-        #arc2.Placement=arc1.Placement;
-        #FrontSilk.append(arc2)
-        ##shape=arc1.copy()
-        ##shape.Placement=arc1.Placement;
-        #say(i[4])
-        #say(arcMidPoint([x1, y1], [x2, y2],i[4]))
-        #[xm,ym]=arcMidPoint([x1, y1], [x2, y2],i[4])
-        xm=(x1+x2)/2
-        ym=(y1+y2)/2
-        ##shape.rotate((xm,ym,0),(0,0,1),180)
-        #shape.translate(((x1-x2)/2,(y1-y2)/2,0))
-        rotateObj(arc1, [xm, ym, 180])
-        ##arc1.Placement=shape.Placement
-
-        #arc1.Placement = FreeCAD.Placement(arc1.Placement.Base, FreeCAD.Rotation(0, 0, 180))
-        #FrontSilk.append(addArc_3([x1, y1], [x2, y2], i[4], i[5]))
-        FCrtYd.append(arc1)
-    for i in getArc('F.Fab', content, 'fp_arc'):
-        x1 = i[0] #+ X1
-        y1 = i[1] #+ Y1
-        x2 = i[2] #+ X1
-        y2 = i[3] #+ Y1
-
-        arc1=addArc_3([x1, y1], [x2, y2], i[4], i[5])
-        #arc2=arc1.copy()
-        #arc2.Placement=arc1.Placement;
-        #FrontSilk.append(arc2)
-        ##shape=arc1.copy()
-        ##shape.Placement=arc1.Placement;
-        #say(i[4])
-        #say(arcMidPoint([x1, y1], [x2, y2],i[4]))
-        #[xm,ym]=arcMidPoint([x1, y1], [x2, y2],i[4])
-        xm=(x1+x2)/2
-        ym=(y1+y2)/2
-        ##shape.rotate((xm,ym,0),(0,0,1),180)
-        #shape.translate(((x1-x2)/2,(y1-y2)/2,0))
-        rotateObj(arc1, [xm, ym, 180])
-        ##arc1.Placement=shape.Placement
-
-        #arc1.Placement = FreeCAD.Placement(arc1.Placement.Base, FreeCAD.Rotation(0, 0, 180))
-        #FrontSilk.append(addArc_3([x1, y1], [x2, y2], i[4], i[5]))
-        FFab.append(arc1)
-    for i in getArc('F.SilkS', content, 'fp_arc'):
-        x1 = i[0] #+ X1
-        y1 = i[1] #+ Y1
-        x2 = i[2] #+ X1
-        y2 = i[3] #+ Y1
-
-        arc1=addArc_3([x1, y1], [x2, y2], i[4], i[5])
-        #arc2=arc1.copy()
-        #arc2.Placement=arc1.Placement;
-        #FrontSilk.append(arc2)
-        ##shape=arc1.copy()
-        ##shape.Placement=arc1.Placement;
-        #say(i[4])
-        #say(arcMidPoint([x1, y1], [x2, y2],i[4]))
-        #[xm,ym]=arcMidPoint([x1, y1], [x2, y2],i[4])
-        xm=(x1+x2)/2
-        ym=(y1+y2)/2
-        ##shape.rotate((xm,ym,0),(0,0,1),180)
-        #shape.translate(((x1-x2)/2,(y1-y2)/2,0))
-        rotateObj(arc1, [xm, ym, 180])
-        ##arc1.Placement=shape.Placement
-
-        #arc1.Placement = FreeCAD.Placement(arc1.Placement.Base, FreeCAD.Rotation(0, 0, 180))
-        #FrontSilk.append(addArc_3([x1, y1], [x2, y2], i[4], i[5]))
-        FrontSilk.append(arc1)
-    for i in getArc('Edge.Cuts', content, 'fp_arc'):
-        x1 = i[0] #+ X1
-        y1 = i[1] #+ Y1
-        x2 = i[2] #+ X1
-        y2 = i[3] #+ Y1
-
-        arc1=addArc_3([x1, y1], [x2, y2], i[4], i[5])
-        #arc2=arc1.copy()
-        #arc2.Placement=arc1.Placement;
-        #FrontSilk.append(arc2)
-        ##shape=arc1.copy()
-        ##shape.Placement=arc1.Placement;
-        #say(i[4])
-        #say(arcMidPoint([x1, y1], [x2, y2],i[4]))
-        #[xm,ym]=arcMidPoint([x1, y1], [x2, y2],i[4])
-        xm=(x1+x2)/2
-        ym=(y1+y2)/2
-        ##shape.rotate((xm,ym,0),(0,0,1),180)
-        #shape.translate(((x1-x2)/2,(y1-y2)/2,0))
-        rotateObj(arc1, [xm, ym, 180])
-        ##arc1.Placement=shape.Placement
-
-        #arc1.Placement = FreeCAD.Placement(arc1.Placement.Base, FreeCAD.Rotation(0, 0, 180))
-        #FrontSilk.append(addArc_3([x1, y1], [x2, y2], i[4], i[5]))
-        EdgeCuts.append(arc1)
-
+    for n,lay in enumerate (layer_names):
+        # print(l,lay,content)
+        arc1 = createArcW (lay, content, 'fp_arc', layers_name_list[n])
+    
     if len(FCrtYd)>0:
         #FSilk_lines = Part.makeCompound(FrontSilk)
         #Part.show(FSilk_lines)
@@ -10446,6 +10356,17 @@ def routineDrawFootPrint(content,name):
         FCrtYd_lines.fixedPosition = True
         FreeCAD.ActiveDocument.ActiveObject.Label="FCrtYd"
         FCrtYd_name=FreeCAD.ActiveDocument.ActiveObject.Name
+        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.0000,0.0000,1.0000)
+        FreeCADGui.ActiveDocument.ActiveObject.Transparency = 60
+    #
+    if len(BCrtYd)>0:
+        BCrtYd_lines = FreeCAD.ActiveDocument.addObject("Part::FeaturePython","BCrtYd_lines")
+        BCrtYd_lines.addProperty("App::PropertyBool","fixedPosition","importPart")
+        BCrtYd_lines.Shape = Part.makeCompound(BCrtYd) #TopPadsBase.Shape.copy()
+        BCrtYd_lines.ViewObject.Proxy=0
+        BCrtYd_lines.fixedPosition = True
+        FreeCAD.ActiveDocument.ActiveObject.Label="BCrtYd"
+        BCrtYd_name=FreeCAD.ActiveDocument.ActiveObject.Name
         FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.0000,0.0000,1.0000)
         FreeCADGui.ActiveDocument.ActiveObject.Transparency = 60
     #
@@ -10464,10 +10385,21 @@ def routineDrawFootPrint(content,name):
         FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.0000,1.0000,0.0000)
         FreeCADGui.ActiveDocument.ActiveObject.Transparency = 60
     #
+    if len(BFab)>0:
+        BFab_lines = FreeCAD.ActiveDocument.addObject("Part::FeaturePython","BFab_lines")
+        BFab_lines.addProperty("App::PropertyBool","fixedPosition","importPart")
+        BFab_lines.Shape = Part.makeCompound(BFab) #TopPadsBase.Shape.copy()
+        BFab_lines.ViewObject.Proxy=0
+        BFab_lines.fixedPosition = True
+        FreeCAD.ActiveDocument.ActiveObject.Label="BFab"
+        FFab_name=FreeCAD.ActiveDocument.ActiveObject.Name
+        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.0000,1.0000,0.0000)
+        FreeCADGui.ActiveDocument.ActiveObject.Transparency = 60
+    #
     if len(FrontSilk)>0:
         #FSilk_lines = Part.makeCompound(FrontSilk)
         #Part.show(FSilk_lines)
-        FSilk_lines = FreeCAD.ActiveDocument.addObject("Part::FeaturePython","Filk_lines")
+        FSilk_lines = FreeCAD.ActiveDocument.addObject("Part::FeaturePython","FSilk_lines")
         #FSilk_lines.Label="FSilk_lines"
         #FSilk_lines_name=FSilk_lines.Name
         FSilk_lines.addProperty("App::PropertyBool","fixedPosition","importPart")
@@ -10476,6 +10408,21 @@ def routineDrawFootPrint(content,name):
         FSilk_lines.fixedPosition = True
         FreeCAD.ActiveDocument.ActiveObject.Label="FrontSilk"
         FSilk_name=FreeCAD.ActiveDocument.ActiveObject.Name
+        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (1.0000,1.0000,1.0000)
+        FreeCADGui.ActiveDocument.ActiveObject.Transparency = 60
+    #
+    if len(BotSilk)>0:
+        #FSilk_lines = Part.makeCompound(FrontSilk)
+        #Part.show(FSilk_lines)
+        BSilk_lines = FreeCAD.ActiveDocument.addObject("Part::FeaturePython","BSilk_lines")
+        #FSilk_lines.Label="FSilk_lines"
+        #FSilk_lines_name=FSilk_lines.Name
+        BSilk_lines.addProperty("App::PropertyBool","fixedPosition","importPart")
+        BSilk_lines.Shape = Part.makeCompound(BotSilk) #TopPadsBase.Shape.copy()
+        BSilk_lines.ViewObject.Proxy=0
+        BSilk_lines.fixedPosition = True
+        FreeCAD.ActiveDocument.ActiveObject.Label="BotSilk"
+        BSilk_name=FreeCAD.ActiveDocument.ActiveObject.Name
         FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (1.0000,1.0000,1.0000)
         FreeCADGui.ActiveDocument.ActiveObject.Transparency = 60
     #
@@ -10594,6 +10541,21 @@ def routineDrawFootPrint(content,name):
     if len(FrontSilk)>0:
         obj2 = FreeCAD.ActiveDocument.getObject(FSilk_name)
         list.append(FSilk_name)
+        fp_group.addObject(obj2)
+        some_element = True
+    if len(BCrtYd)>0:
+        obj6 = FreeCAD.ActiveDocument.getObject(BCrtYd_name)
+        list.append(BCrtYd_name)
+        fp_group.addObject(obj6)
+        some_element = True
+    if len(BFab)>0:
+        obj7 = FreeCAD.ActiveDocument.getObject(BFab_name)
+        list.append(BFab_name)
+        fp_group.addObject(obj7)
+        some_element = True
+    if len(BotSilk)>0:
+        obj2 = FreeCAD.ActiveDocument.getObject(BSilk_name)
+        list.append(BSilk_name)
         fp_group.addObject(obj2)
         some_element = True
     if len(EdgeCuts)>0:
