@@ -29,9 +29,10 @@ sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 import fcad_parser
 from fcad_parser import KicadPCB,SexpList
 #from .fcad_parser import KicadPCB,SexpList
+from fcad_parser import unquote #maui
 
 # from kicadStepUptools import KicadPCB,SexpList
-__kicad_parser_version__ = '2.1.2'
+__kicad_parser_version__ = '2.1.3'
 # https://github.com/realthunder/fcad_pcb/issues/20#issuecomment-586042341
 print('kicad_parser_version '+__kicad_parser_version__)
 # maui
@@ -42,10 +43,6 @@ if PY3:
 else:
     string_types = basestring,
 
-def unquote(s):
-    if len(s)>1 and s[0]=='"':
-        return s[1:-1]
-    return s
 
 def updateGui():
     try:
@@ -122,7 +119,10 @@ def makeColor(*color):
 def makeVect(l):
     return Vector(l[0],-l[1],0)
 
-def getAt(at):
+def getAt(sexp):
+    at = getattr(sexp, 'at', None)
+    if not at:
+        return Vector(0,0,0),0
     v = makeVect(at)
     return (v,0) if len(at)==2 else (v,at[2])
 
@@ -549,6 +549,47 @@ class KicadFcad:
             self.part_path = getKicadPath(self.path_env)
         self.pcb = KicadPCB.load(self.filename)
 
+        if self.pcb._key == 'module':
+            # this is a kicad_mod file, make it look like a kicad_pcb
+            pcb = KicadPCB(parseSexp('''
+                    (kicad_pcb
+                        (general
+                            (thickness 0.3)
+                            (drawings 0)
+                            (tracks 0)
+                            (zones 0)
+                            (modules 1)
+                            (nets 0)
+                        )
+                        (layers
+                            (0 F.Cu signal)
+                            (31 B.Cu signal)
+                            (32 B.Adhes user)
+                            (33 F.Adhes user)
+                            (34 B.Paste user)
+                            (35 F.Paste user)
+                            (36 B.SilkS user)
+                            (37 F.SilkS user)
+                            (38 B.Mask user)
+                            (39 F.Mask user)
+                            (40 Dwgs.User user)
+                            (41 Cmts.User user)
+                            (42 Eco1.User user)
+                            (43 Eco2.User user)
+                            (44 Edge.Cuts user)
+                            (45 Margin user)
+                            (46 B.CrtYd user)
+                            (47 F.CrtYd user)
+                            (48 B.Fab user)
+                            (49 F.Fab user)
+                        )
+                    )'''))
+            self.module = self.pcb
+            pcb.module._append(self.pcb)
+            self.pcb = pcb
+        else:
+            self.module = None
+
         if not self.board_thickness:
             try:
                 self.board_thickness = self.pcb.general.thickness
@@ -677,7 +718,7 @@ class KicadFcad:
                 offset -= step
 
         # setup dielectric layer offset and thickness. Going backwards, because
-        # makeBoard() assumes the first dielectric layer to be located at z=0 
+        # makeBoard() assumes the first dielectric layer to be located at z=0
         current = 1000.0
         for _, name in reversed(coppers):
             _, offset, thickness = self._stackup_map[name]
@@ -1087,13 +1128,16 @@ class KicadFcad:
             obj.Placement = Placement(pos,r)
             obj.purgeTouched()
 
-    def _makeEdgeCuts(self, sexp, ctx, wires, non_closed, at=None):
-        try:
-            # get layer name for Edge.Cuts
-            _,layer = self.findLayer(44)
-        except Exception:
-            raise RuntimeError('No Edge.Cuts layer found')
-        return self._makeShape(sexp, ctx, wires, non_closed, layer, at)
+    def _makeEdgeCuts(self, sexp, ctx, wires, non_closed, at=None, layers=None):
+        if not layers:
+            # default to layer Edge.Cuts
+            layers = [44]
+        for l in layers:
+            try:
+                _,layer = self.findLayer(l)
+            except Exception:
+                continue
+            self._makeShape(sexp, ctx, wires, non_closed, layer, at)
 
     def _makeShape(self, sexp, ctx, wires, non_closed=None, layer=None, at=None):
         edges = []
@@ -1210,13 +1254,21 @@ class KicadFcad:
         self._makeEdgeCuts(self.pcb, 'gr', wires, non_closed)
 
         self._pushLog('checking footprints...',prefix=prefix)
-        for m in self.pcb.module:
-            self._makeEdgeCuts(m, 'fp', wires, non_closed, m.at)
+        if self.module:
+            # try Edge.Cuts first
+            self._makeEdgeCuts(self.module, 'fp', wires, non_closed)
+            # try F.CrtYd and B.CrtYd
+            self._makeEdgeCuts(self.module, 'fp', wires, non_closed, layers=(46, 47))
+        else:
+            for m in self.pcb.module:
+                self._makeEdgeCuts(m, 'fp', wires, non_closed, getattr(m, 'at', None))
+
         self._popLog()
 
         if not wires and not non_closed:
-            self._popLog('no board edges found')
-            return
+            if not wires and not non_closed:
+                self._popLog('no board edges found')
+                return
 
         def _addHoles(objs):
             h = self._cutHoles(None,holes,None,
@@ -1344,7 +1396,7 @@ class KicadFcad:
         if not offset:
             offset = self.hole_size_offset;
         for m in self.pcb.module:
-            m_at,m_angle = getAt(m.at)
+            m_at,m_angle = getAt(m)
             for p in m.pad:
                 if 'drill' not in p:
                     continue
@@ -1361,7 +1413,8 @@ class KicadFcad:
                         skip_count += 1
                         continue
                     ofs = -abs(offset)
-                if p.drill.oval:
+                # print(p.drill) #maui
+                if 'oval' in str(p.drill): #p.drill.oval:
                     if not oval:
                         continue
                     size = Vector(p.drill[0],p.drill[1])
@@ -1377,7 +1430,7 @@ class KicadFcad:
                 else:
                     skip_count += 1
                     continue
-                at,angle = getAt(p.at)
+                at,angle = getAt(p)
                 angle -= m_angle;
                 if not isZero(angle):
                     w.rotate(Vector(),Vector(0,0,1),angle)
@@ -1406,12 +1459,12 @@ class KicadFcad:
                         continue
                     if hasattr(v,'drill'): # maui
                         if v.drill>=minSize and (not maxSize or v.drill<=maxSize):
-        
+
                             z_offsets = [layer_offsets[unquote(n)] for n in v.layers]
                             pos = makeVect(v.at)
                             pos.z = min(z_offsets)
                             dist = max(z_offsets) - pos.z
-        
+
                             s = v.drill+ofs
                             if self.via_bound:
                                 s *= self.via_bound
@@ -1596,7 +1649,7 @@ class KicadFcad:
                 if t[0] == 'reference':
                     ref = t[1]
                     break;
-            m_at,m_angle = getAt(m.at)
+            m_at,m_angle = getAt(m)
             pads = []
             count += len(m.pad)
 
@@ -1628,10 +1681,11 @@ class KicadFcad:
                     continue
 
                 # kicad put pad shape offset inside drill element? Why?
-                if 'drill' in p and 'offset' in p.drill:
+                print(p.drill)
+                if 'drill' in p and 'offset' in str(p.drill):
                     w.translate(makeVect(p.drill.offset))
 
-                at,angle = getAt(p.at)
+                at,angle = getAt(p)
                 angle -= m_angle;
                 if not isZero(angle):
                     w.rotate(Vector(),Vector(0,0,1),angle)
@@ -2116,7 +2170,7 @@ class KicadFcad:
                 if t[0] == 'value':
                     value = t[1]
 
-            m_at,m_angle = getAt(m.at)
+            m_at,m_angle = getAt(m)
             m_at += Vector(0,0,z)
             objs = []
             for (model_idx,model) in enumerate(m.model):

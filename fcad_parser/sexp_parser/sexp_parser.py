@@ -39,6 +39,16 @@ else:
 
 logger = logging.getLogger(__name__)
 
+def unquote(s):
+    try:
+        if s.startswith('"'):
+            s = s[1:]
+        if s.endswith('"'):
+            s = s[:-1]
+        return s.replace(r'\"', '"')
+    except Exception:
+        return s
+
 class SexpValueDict(OrderedDict):
     '''Dictionary for holding named and un-named values
 
@@ -109,7 +119,7 @@ class Sexp(object):
 
         Attributes:
             _key (string|int): hold the key of this S-Expression
-            _value: various types for present the value of this expression
+            _value: various types to represent the value of this expression
 
         This class provides the basic accessing interface for sub-keys, and
         sub-values of an expression. It also has the `_export()` function to
@@ -727,7 +737,7 @@ def parseSexp(sexp):
                     \s*(?:
                     (?P<l>\()|
                     (?P<r>\))|
-                    (?P<q>"[^"]*")|
+                    (?P<q>"(\\"|[^"])*")|
                     (?P<s>[^(^)\s]+)
                 )''')
 
