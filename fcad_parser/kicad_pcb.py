@@ -88,6 +88,6 @@ class KicadPCB(SexpParser):
 
     @staticmethod
     def load(filename):
-        with open(filename,'r') as f:
-            return KicadPCB(parseSexp(f.read()))
+        with open(filename,'rb') as f:  # maui
+            return KicadPCB(parseSexp(f.read().decode("UTF-8"))) # maui
 
