@@ -13,7 +13,7 @@ from .sexp_parser import *
 __author__ = "Zheng, Lei"
 __copyright__ = "Copyright 2016, Zheng, Lei"
 __license__ = "MIT"
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __email__ = "realthunder.dev@gmail.com"
 __status__ = "Prototype"
 
@@ -88,6 +88,6 @@ class KicadPCB(SexpParser):
 
     @staticmethod
     def load(filename):
-        with open(filename,'r') as f:
-            return KicadPCB(parseSexp(f.read()))
+        with open(filename,'rb') as f:  # maui
+            return KicadPCB(parseSexp(f.read().decode("UTF-8"))) # maui
 
