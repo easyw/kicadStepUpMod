@@ -2,10 +2,10 @@
 <package format="1" xmlns="https://wiki.freecad.org/Package_Metadata">
   <name>KicadStepUp Workbench</name>
   <description>A bidirectional ECAD/MCAD collaboration between KiCAD and FreeCAD.</description>
-  <version>10.9.1</version>
+  <version>10.9.2</version>
   <maintainer email="easyw@katamail.com">Maui</maintainer>
   <license file="LICENSE">AGPLv3.0</license>
-  <url type="repository" branch="main">https://github.com/easyw/kicadStepUpMod</url>
+  <url type="repository" branch="master">https://github.com/easyw/kicadStepUpMod</url>
   <icon>Resources/icons/kicad-StepUp-tools-WB.svg</icon> <!-- If you include your icon here, you don't have to submit it to the main FreeCAD repo -->
 
   <content>
