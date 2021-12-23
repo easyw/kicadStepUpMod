@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.1.8.7"
+___ver___ = "10.1.9"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -3547,7 +3547,7 @@ def Display_info(blacklisted_models):
         for obj in doc.Objects:
             if ("Board_Geoms" not in obj.Label) and ("Step_Models" not in obj.Label) and ("Step_Virtual_Models" not in obj.Label)\
               and (obj.TypeId != "App::Line") and (obj.TypeId != "App::Plane") and (obj.TypeId != "App::Origin")\
-              and (obj.TypeId != "App::Part"):
+              and (obj.TypeId != "App::Part") and ("Local_CS" not in obj.Name):
                 if show_data:
                     say(obj.Name)
                 shape1=obj.Shape
