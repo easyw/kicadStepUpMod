@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.1.9"
+___ver___ = "10.2.0"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -12443,6 +12443,9 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                     arc1.translate(mat_t)
                     edges.append(arc1)
                     EdgeCuts.append(arc1)
+                    delta_angle=degrees(arc1.LastParameter-arc1.FirstParameter)
+                    curve = delta_angle
+                    [x2, y2] = [xs,ys] #rotPoint2([x1, y1], [xs, ys], curve)
                     sa,ea = arcAngles2(arc1,curve)
                     Cntr = arc1.Curve.Center
                     cx=Cntr.x;cy=Cntr.y

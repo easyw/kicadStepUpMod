@@ -10,13 +10,13 @@
 #*  Kicad STEPUP (TM) is a TradeMark and cannot be freely usable            *
 #*                                                                          *
 
-ksu_wb_version='v 10.9.2'
+ksu_wb_version='v 10.9.3'
 global myurlKWB, ksuWBpath
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=505 # v10.9.1
+mycommitsKWB=506 # v10.9.3
 global verKSU
-verKSU="10.1.9"
+verKSU="10.2.0"
 
 import FreeCAD, FreeCADGui, Part, os, sys
 import re, time
