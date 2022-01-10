@@ -12177,6 +12177,11 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                     #stop
                 else: #py3
                     model=md[0] # py3 .decode("utf-8")
+
+                if 1 in md and md[1] == "hide":
+                    say("model "+model+" has show flag not set, skipping")
+                    continue
+
                 #print (model, ' MODEL', type(model)) #maui test py3
                 if (virtual==1 and addVirtual==0):
                     model_name='no3Dmodel'
