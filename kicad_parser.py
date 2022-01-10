@@ -325,7 +325,7 @@ def makePrimitve(key, params):
         else:
             make_shape = globals()['make_{}'.format(key)]
             return make_shape(params), width
-    except KeyError:
+    except (KeyError, TypeError):
         logger.warning('Unknown primitive {} in custom pad'.format(key))
         return None, None
 
