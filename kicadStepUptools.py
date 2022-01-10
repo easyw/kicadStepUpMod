@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.2.0"
+___ver___ = "10.3.1"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -6740,6 +6740,9 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                             say('Pcb not present')
                 else:
                     doc=FreeCAD.newDocument(fname)
+                doc.commitTransaction()
+                doc.openTransaction('opening_kicad')
+                say('opening Transaction \'opening_kicad\'')
                 pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
                 pg.SetString("last_pcb_path", make_string(last_pcb_path)) # py3 .decode("utf-8")
                 #pg.SetString("last_pcb_path", last_pcb_path.decode("utf-8"))
@@ -6800,6 +6803,8 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                 #pcbThickness,modules,board_elab,mod_lines,mod_arcs,mod_circles=LoadKicadBoard(name)
                 #say(modules)
                 #routineDrawPCB(pcbThickness,board_elab,mod_lines,mod_arcs,mod_circles)
+                doc.commitTransaction()
+                say('closing Transaction \'opening_kicad\'')
             else:
                 say(name+' missing\r')
                 stop
@@ -10060,6 +10065,10 @@ def routineDrawFootPrint(content,name):
         doc=FreeCAD.activeDocument()
     else:
         doc=FreeCAD.newDocument()
+    #doc.UndoMode = 1
+    #doc.openTransaction()
+    doc.openTransaction('opening_kicad_footprint')
+    say('opening Transaction \'opening_kicad_footprint\'')
     for obj in FreeCAD.ActiveDocument.Objects:
         FreeCADGui.Selection.removeSelection(obj)
 
@@ -10772,6 +10781,8 @@ def routineDrawFootPrint(content,name):
         #pads_found=getPadsList(content)
     else:
         sayerr('internal layers not supported or fotprint empty')
+    doc.commitTransaction()
+    say('closing Transaction \'opening_kicad_footprint\'')
 ###
 
 def routineDrawIDF(doc,filename):

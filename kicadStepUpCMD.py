@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.0.5'
+ksuCMD_version__='2.0.6'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -3406,7 +3406,14 @@ class ksuToolsAddTracks:
     def Activated(self):
         # do something here...
         import tracks
+        if FreeCAD.ActiveDocument is not None:
+            doc = FreeCAD.ActiveDocument
+        else:
+            doc = FreeCAD.newDocument()
+        doc.commitTransaction()
+        doc.openTransaction('add_tracks_kicad')
         tracks.addtracks()
+        doc.commitTransaction()
 
 FreeCADGui.addCommand('ksuToolsAddTracks',ksuToolsAddTracks())
 #####
