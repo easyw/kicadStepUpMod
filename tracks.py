@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global tracks_version
-tracks_version = '2.4.2'
+tracks_version = '2.4.4'
 
 import kicad_parser
 #import kicad_parser; import importlib; importlib.reload(kicad_parser)
@@ -166,7 +166,11 @@ def mkColor(*color):
 def cut_out_tracks (pcbsk,tracks,tname_sfx):
     
     # import tracks; import importlib;importlib.reload(tracks)
-    FreeCAD.ActiveDocument.addObject('Part::Extrusion','Extrude')
+    import random
+    temp_tobedeleted = []
+    removing_temp_objs = False
+    Extrude_Name = 'Extrude' + str(random.randrange(1,100))
+    FreeCAD.ActiveDocument.addObject('Part::Extrusion', Extrude_Name)
     extrude = FreeCAD.ActiveDocument.ActiveObject
     #f = FreeCAD.ActiveDocument.getObject('Extrude')
     print (pcbsk.Name)
@@ -186,7 +190,8 @@ def cut_out_tracks (pcbsk,tracks,tname_sfx):
     extrude.ViewObject.PointColor=getattr(pcbsk.getLinkedObject(True).ViewObject,'PointColor',extrude.ViewObject.PointColor)
     pcbsk.Visibility = False
     FreeCAD.ActiveDocument.recompute()
-    FreeCAD.ActiveDocument.addObject("Part::MultiCommon","Common_Top")
+    Common_Top_Name = "Common_Top"+ str(random.randrange(1,100))
+    FreeCAD.ActiveDocument.addObject("Part::MultiCommon",Common_Top_Name)
     Common_Top = FreeCAD.ActiveDocument.ActiveObject
     Common_Top.Shapes = [tracks,extrude,]
     FreeCADGui.ActiveDocument.getObject(tracks.Name).Visibility=False
@@ -210,13 +215,17 @@ def cut_out_tracks (pcbsk,tracks,tname_sfx):
     FreeCADGui.ActiveDocument.ActiveObject.Transparency=FreeCADGui.ActiveDocument.getObject(Common_Top.Name).Transparency
     FreeCAD.ActiveDocument.ActiveObject.Label=new_label
     tracks_ct_Name = FreeCAD.ActiveDocument.ActiveObject.Name
-    FreeCAD.ActiveDocument.removeObject(Common_Top.Name)
-    FreeCAD.ActiveDocument.removeObject(tracks.Name)
-    FreeCAD.ActiveDocument.removeObject(extrude.Name)
+    if removing_temp_objs:
+        FreeCAD.ActiveDocument.removeObject(Common_Top.Name)
+        FreeCAD.ActiveDocument.removeObject(tracks.Name)
+        FreeCAD.ActiveDocument.removeObject(extrude.Name)
+    else:
+        doc = FreeCAD.ActiveDocument
+        temp_tobedeleted.append([doc.getObject(Common_Top.Name),doc.getObject(tracks.Name),doc.getObject(extrude.Name)])
     FreeCAD.ActiveDocument.getObject(tracks_ct_Name).Label = new_label
     FreeCAD.ActiveDocument.recompute()
     
-    return tracks_ct_Name
+    return tracks_ct_Name, temp_tobedeleted
 ##
 def simple_cpy (obj,lbl):
     copy = FreeCAD.ActiveDocument.addObject('Part::Feature',obj.Name)
@@ -338,7 +347,7 @@ def addtracks(fname = None):
         topTracks = None
         topZones = None
         deltaz = 0.01 #10 micron
-
+        add_toberemoved = []
         if FreeCAD.ActiveDocument is not None:
             objsNum = len(FreeCAD.ActiveDocument.Objects)
         else:
@@ -350,7 +359,8 @@ def addtracks(fname = None):
                 pads.Placement.Base.z = pads.Placement.Base.z + 2*deltaz
                 new_obj = simple_cpy(pads,'topPads'+ftname_sfx)
                 say_time()
-                removesubtree([pads])
+                # removesubtree([pads])
+                add_toberemoved.append([pads])
                 topPads = new_obj
         if FreeCAD.ActiveDocument is not None:
             objsNum = len(FreeCAD.ActiveDocument.Objects)
@@ -362,7 +372,8 @@ def addtracks(fname = None):
                 tracks.Placement.Base.z+=deltaz
                 new_obj = simple_cpy(tracks,'topTracks'+ftname_sfx)
                 say_time()
-                removesubtree([tracks])
+                # removesubtree([tracks])
+                add_toberemoved.append([tracks])
                 topTracks = new_obj
                 #stop
         if FreeCAD.ActiveDocument is not None:
@@ -375,7 +386,8 @@ def addtracks(fname = None):
                 zones.Placement.Base.z+=deltaz
                 new_obj = simple_cpy(zones,'topZones'+ftname_sfx)
                 say_time()
-                removesubtree([zones])
+                # removesubtree([zones])
+                add_toberemoved.append([zones])
                 topZones = new_obj
             if len (FreeCAD.ActiveDocument.getObjectsByLabel('Pcb'+ftname_sfx)) >0:
                 #PCB_Sketch_5737
@@ -385,8 +397,9 @@ def addtracks(fname = None):
                     topPads.Placement = FreeCAD.ActiveDocument.getObject('Pcb'+ftname_sfx).Placement
                     if (topPads.Shape.BoundBox.XLength > pcb_sk.Shape.BoundBox.XLength) or \
                             (topPads.Shape.BoundBox.YLength > pcb_sk.Shape.BoundBox.YLength):
-                        topPads_cut_Name = cut_out_tracks(pcb_sk,topPads,ftname_sfx)
+                        topPads_cut_Name, temp_tobedeleted = cut_out_tracks(pcb_sk,topPads,ftname_sfx)
                         topPads = FreeCAD.ActiveDocument.getObject(topPads_cut_Name)
+                        add_toberemoved.append(temp_tobedeleted)
                     topPads.Placement.Base.z+=2*deltaz
                 if topTracks is not None:
                     topTracks.Placement = FreeCAD.ActiveDocument.getObject('Pcb'+ftname_sfx).Placement
@@ -429,7 +442,8 @@ def addtracks(fname = None):
                 pads.Placement.Base.z = pads.Placement.Base.z - (pcbThickness + 2*deltaz)
                 new_obj = simple_cpy(pads,'botPads'+ftname_sfx)
                 say_time()
-                removesubtree([pads])
+                # removesubtree([pads])
+                add_toberemoved.append([pads])
                 botPads = new_obj
         if FreeCAD.ActiveDocument is not None:
             objsNum = len(FreeCAD.ActiveDocument.Objects)
@@ -441,7 +455,8 @@ def addtracks(fname = None):
                 tracks.Placement.Base.z = tracks.Placement.Base.z - (pcbThickness + deltaz)
                 new_obj = simple_cpy(tracks,'botTracks'+ftname_sfx)
                 say_time()
-                removesubtree([tracks])
+                # removesubtree([tracks])
+                add_toberemoved.append([tracks])
                 botTracks = new_obj
                 #stop
         if FreeCAD.ActiveDocument is not None:
@@ -454,7 +469,8 @@ def addtracks(fname = None):
                 zones.Placement.Base.z = zones.Placement.Base.z - (pcbThickness + deltaz)
                 new_obj = simple_cpy(zones,'botZones'+ftname_sfx)
                 say_time()
-                removesubtree([zones])
+                # removesubtree([zones])
+                add_toberemoved.append([zones])
                 botZones = new_obj
             if len (FreeCAD.ActiveDocument.getObjectsByLabel('Pcb'+ftname_sfx)) >0:
                 #PCB_Sketch_5737
@@ -464,8 +480,9 @@ def addtracks(fname = None):
                     botPads.Placement = FreeCAD.ActiveDocument.getObject('Pcb'+ftname_sfx).Placement
                     if (botPads.Shape.BoundBox.XLength > pcb_sk.Shape.BoundBox.XLength) or \
                             (botPads.Shape.BoundBox.YLength > pcb_sk.Shape.BoundBox.YLength):
-                        botPads_cut_Name = cut_out_tracks(pcb_sk,botPads,ftname_sfx)
+                        botPads_cut_Name, temp_tobedeleted = cut_out_tracks(pcb_sk,botPads,ftname_sfx)
                         botPads = FreeCAD.ActiveDocument.getObject(botPads_cut_Name)
+                        add_toberemoved.append(temp_tobedeleted)
                     botPads.Placement.Base.z-=pcbThickness+2*deltaz
                 if botTracks is not None:
                     botTracks.Placement = FreeCAD.ActiveDocument.getObject('Pcb'+ftname_sfx).Placement
@@ -493,4 +510,5 @@ def addtracks(fname = None):
         if FreeCAD.ActiveDocument is not None:
             FreeCADGui.SendMsgToActiveView("ViewFit")
             FreeCADGui.ActiveDocument.activeView().viewAxonometric()
+            return add_toberemoved
 ###

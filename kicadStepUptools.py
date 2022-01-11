@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.3.1"
+___ver___ = "10.3.3"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -3965,9 +3965,15 @@ def Export2MCAD(blacklisted_model_elements):
 ###
 def removesubtree(objs):
     def addsubobjs(obj,toremoveset):
-        toremove.add(obj)
-        for subobj in obj.OutList:
-            addsubobjs(subobj,toremoveset)
+        if isinstance(obj, list):
+            for o in obj:
+                toremove.add(o)
+                for subobj in o.OutList:
+                    addsubobjs(subobj,toremoveset)
+        else:
+            toremove.add(obj)
+            for subobj in obj.OutList:
+                addsubobjs(subobj,toremoveset)
 
     import FreeCAD
     toremove=set()
@@ -6622,6 +6628,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
     import fcad_parser
     from fcad_parser import KicadPCB,SexpList
     import kicad_parser
+    objs_toberemoved = []
 
     pull_sketch = False
     override_pcb = None
@@ -6730,8 +6737,10 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                     elif override_pcb == True:
                         if doc.getObject(boardG_name) in doc.Objects: #if 1: #try:
                             if keep_pcb_sketch==True:
-                                doc.getObject(boardG_name).removeObject(doc.getObject(sketch_name_sfx)) #keep sketck & constrains
-                            removesubtree([doc.getObject(boardG_name)])
+                                # doc.getObject(boardG_name).removeObject(doc.getObject(sketch_name_sfx)) #keep sketck & constrains
+                                objs_toberemoved.append([doc.getObject(sketch_name_sfx)])
+                            # removesubtree([doc.getObject(boardG_name)])
+                            objs_toberemoved.append([doc.getObject(boardG_name)])
                             #doc.recompute()
                             sayw('old Pcb removed')
                             #stop
@@ -6909,7 +6918,8 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                     FreeCAD.ActiveDocument.getObject(s_name).Placement = FreeCAD.Placement(FreeCAD.Vector(center_x,center_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
                     #stop
                     #say_time()
-                FreeCAD.ActiveDocument.removeObject("PCB_Sketch_draft")
+                # FreeCAD.ActiveDocument.removeObject("PCB_Sketch_draft")
+                objs_toberemoved.append([FreeCAD.ActiveDocument.getObject("PCB_Sketch_draft")])
                 if (zfit):
                     FreeCADGui.SendMsgToActiveView("ViewFit")
                 if 0: # test_face # addConstraints!='none': 
@@ -6959,7 +6969,8 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
             if keep_pcb_sketch == True:
                 #sayw(sketch_name_sfx+'001')
                 if doc.getObject(sketch_name_sfx+'001') in doc.Objects: #if 1: #try:
-                    doc.removeObject(sketch_name_sfx+'001') #keep sketck & constrains
+                    # doc.removeObject(sketch_name_sfx+'001') #keep sketck & constrains
+                    objs_toberemoved.append([doc.getObject(sketch_name_sfx+'001')])
                     docG = FreeCADGui.ActiveDocument
                     docG.getObject(sketch_name_sfx).Visibility=True
             elif override_pcb == True:
@@ -7233,6 +7244,19 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
             
             #say_time()
             #stop
+    def removing_kobjs():
+        ''' removing objects after delay ''' 
+        from kicadStepUptools import removesubtree
+        doc.openTransaction('rmv_objs_kicad')
+        for tbr in objs_toberemoved:
+            removesubtree(tbr)
+        doc.commitTransaction()
+        # doc.undo()
+        # doc.undo()
+        # adding a timer to allow double transactions during the python code
+    QtCore.QTimer.singleShot(0.2,removing_kobjs)
+    
+        
 ###
 
 def routineR_XYZ(axe,alpha):

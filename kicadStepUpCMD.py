@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.0.6'
+ksuCMD_version__='2.1.0'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -3395,6 +3395,8 @@ class ksuToolsAddTracks:
                      'MenuText': mybtn_tooltip ,
                      'ToolTip' : mybtn_tooltip}
  
+
+
     def IsActive(self):
         return True
         #else:
@@ -3406,14 +3408,32 @@ class ksuToolsAddTracks:
     def Activated(self):
         # do something here...
         import tracks
+        from kicadStepUptools import removesubtree
+        from PySide import QtGui, QtCore
         if FreeCAD.ActiveDocument is not None:
             doc = FreeCAD.ActiveDocument
         else:
             doc = FreeCAD.newDocument()
-        doc.commitTransaction()
+        #doc.commitTransaction()
+        #doc.UndoMode = 1
         doc.openTransaction('add_tracks_kicad')
-        tracks.addtracks()
+        add_toberemoved = tracks.addtracks()
+        # print(add_toberemoved)
         doc.commitTransaction()
+        doc.recompute()
+        def removing_objs():
+            ''' removing objects after delay ''' 
+            from kicadStepUptools import removesubtree
+            doc.openTransaction('rmv_tracks_kicad')
+            for tbr in add_toberemoved:
+                removesubtree(tbr)
+            doc.commitTransaction()
+            # doc.undo()
+            # doc.undo()
+        # adding a timer to allow double transactions during the python code
+        QtCore.QTimer.singleShot(0.2,removing_objs)
+
+    ##
 
 FreeCADGui.addCommand('ksuToolsAddTracks',ksuToolsAddTracks())
 #####
