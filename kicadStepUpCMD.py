@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.1.0'
+ksuCMD_version__='2.1.1'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -73,6 +73,23 @@ conv_started = False
 
 global max_geo_admitted
 max_geo_admitted = 1500 # after this number, no recompute is applied
+
+from sys import platform as _platform
+
+pt_lnx=False
+# window GUI dimensions parameters
+if _platform == "linux" or _platform == "linux2":
+   # linux
+   pt_lnx=True
+   sizeXmin=172;sizeYmin=34+34
+   sizeX=172;sizeY=516 #536
+   sizeXright=172;sizeYright=536 #556
+else:
+    sizeXmin=172;sizeYmin=34
+    sizeX=172;sizeY=482#502
+    sizeXright=172;sizeYright=502#522
+if _platform == "darwin":
+    pt_osx=True
 
 def P_Line(prm1,prm2):
     if hasattr(Part,"LineSegment"):
@@ -3432,6 +3449,11 @@ class ksuToolsAddTracks:
             # doc.undo()
         # adding a timer to allow double transactions during the python code
         QtCore.QTimer.singleShot(0.2,removing_objs)
+        if (not pt_lnx): # and (not pt_osx): issue on AppImages hanging on loading 
+            FreeCADGui.SendMsgToActiveView("ViewFit")
+        else:
+            zf= Timer (0.25,ZoomFitThread)
+            zf.start()        
 
     ##
 

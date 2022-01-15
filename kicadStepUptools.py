@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.3.3"
+___ver___ = "10.3.4"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -7255,6 +7255,14 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
         # doc.undo()
         # adding a timer to allow double transactions during the python code
     QtCore.QTimer.singleShot(0.2,removing_kobjs)
+    if (zfit):
+        FreeCADGui.SendMsgToActiveView("ViewFit")
+    #ImportGui.insert(u"./c0603.step","demo_5D_vrml_from_step")
+    if (not pt_lnx): # and (not pt_osx): issue on AppImages hanging on loading 
+        FreeCADGui.SendMsgToActiveView("ViewFit")
+    else:
+        zf= Timer (0.25,ZoomFitThread)
+        zf.start()
     
         
 ###
