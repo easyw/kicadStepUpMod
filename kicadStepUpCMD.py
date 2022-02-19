@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.1.1'
+ksuCMD_version__='2.1.2'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -3426,6 +3426,7 @@ class ksuToolsAddTracks:
         # do something here...
         import tracks
         from kicadStepUptools import removesubtree
+        from kicadStepUptools import ZoomFitThread
         from PySide import QtGui, QtCore
         if FreeCAD.ActiveDocument is not None:
             doc = FreeCAD.ActiveDocument
