@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.1.2'
+ksuCMD_version__='2.1.3'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -425,6 +425,19 @@ class Ui_Offset_value(object):
         self.checkBox.setChecked(True)
         self.checkBox.setObjectName("checkBox")
         self.gridLayout.addWidget(self.checkBox, 1, 0, 1, 1)
+        
+        self.offset_label_2 = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.offset_label_2.setMinimumSize(QtCore.QSize(0, 0))
+        self.offset_label_2.setToolTip("")
+        self.offset_label_2.setText("Offset Y [mm]:")
+        self.offset_label_2.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.offset_label_2.setObjectName("offset_label_2")
+        self.gridLayout.addWidget(self.offset_label_2, 1, 0, 1, 1)
+        self.lineEdit_offset_2 = QtWidgets.QLineEdit(self.gridLayoutWidget)
+        self.lineEdit_offset_2.setToolTip("Offset Y value [+/- mm]")
+        self.lineEdit_offset_2.setText("5.0")
+        self.lineEdit_offset_2.setObjectName("lineEdit_offset_2")
+        self.gridLayout.addWidget(self.lineEdit_offset_2, 1, 1, 1, 1)
 
         self.retranslateUi(Offset_value)
         self.buttonBoxLayer.accepted.connect(Offset_value.accept)
@@ -730,6 +743,58 @@ class ksuToolsContour2Poly:
 if FreeCAD.GuiUp:
     FreeCADGui.addCommand('ksuToolsContour2Poly',ksuToolsContour2Poly())
 ##
+class ksuToolsMoveSketch:
+    "ksu tools MoveSketch"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Sketcher_Move.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksu Move Sketch" ,
+                     'ToolTip' : "Move 2D Sketch"}
+ 
+    def IsActive(self):
+        sel = FreeCADGui.Selection.getSelection()
+        if len(sel) == 0:
+            return False
+        else:
+            return True
+
+    def Activated(self):
+        # do something here...
+        sel=FreeCADGui.Selection.getSelection()
+        if len (sel) == 1:
+            doc = FreeCAD.ActiveDocument
+            if 'Sketcher' in sel[0].TypeId:
+                s = doc.getObject(sel[0].Name)
+                offsetDlg = QtGui.QDialog()
+                ui = Ui_Offset_value()
+                ui.setupUi(offsetDlg)
+                ui.offset_label.setText("Select a Sketch and Parameters to<br>move the sketch.<br>Offset X:")
+                ui.lineEdit_offset.setText("10.0")
+                ui.checkBox.setVisible(False)
+                ui.offset_label_2.setText("Offset Y [mm]:")
+                ui.lineEdit_offset_2.setToolTip("Offset Y value [+/- mm]")
+                ui.lineEdit_offset_2.setText("0.0")
+                reply=offsetDlg.exec_()
+                if reply==1: # ok
+                    offsetX=float(ui.lineEdit_offset.text().replace(',','.'))
+                    offsetY=float(ui.lineEdit_offset_2.text().replace(',','.'))
+                    doc.openTransaction('moveSk')
+                    n = doc.getObject(s.Name).GeometryCount
+                    mv = []
+                    for j in range (n):
+                        mv.append(j)
+                    doc.getObject(s.Name).addMove(mv, FreeCAD.Vector(offsetX, offsetY, 0))
+                    doc.commitTransaction()
+                    doc.recompute() # ([s])
+                else:
+                    print('Cancel')
+            else:
+                print('select a Sketch')
+            #doc.recompute(None,True,True)
+            #doc.abortTransaction()
+
+FreeCADGui.addCommand('ksuToolsMoveSketch',ksuToolsMoveSketch())    
+##
 class ksuToolsOffset2D:
     "ksu tools Offset2D"
  
@@ -754,6 +819,8 @@ class ksuToolsOffset2D:
             ui = Ui_Offset_value()
             ui.setupUi(offsetDlg)
             ui.lineEdit_offset.setText("-1.0")
+            ui.offset_label_2.setVisible(False)
+            ui.lineEdit_offset_2.setVisible(False)
             reply=offsetDlg.exec_()
             if reply==1: # ok
                 offset=float(ui.lineEdit_offset.text().replace(',','.'))
