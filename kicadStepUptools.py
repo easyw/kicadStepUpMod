@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.3.4"
+___ver___ = "10.3.5"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -3481,7 +3481,7 @@ def Display_info(blacklisted_models):
     global height_minimum, volume_minimum, idf_to_origin, ksu_config_fname
     global board_base_point_x, board_base_point_y, real_board_pos_x, real_board_pos_y
     global animate_result, apply_reflex, apply_reflex_all, addVirtual, fname_sfx
-    global running_time
+    global running_time, missingHeight
     
     say('info message')
     if blacklisted_model_elements != '':
@@ -3512,8 +3512,10 @@ def Display_info(blacklisted_models):
         msg+="<br><b><font color=blue>modules with volume less than "+str(volume_minimum)+"mm^3 not included</font></b>"
     if (height_minimum!=0):
         msg+="<br><b><font color=blue>modules with height less than "+str(height_minimum)+"mm not included</font></b>"    
-    if (min_drill_size!=0):
+    if (min_drill_size>0):
         msg+="<br><b><font color=blue>drills with size less than "+str(min_drill_size)+"mm not included</font></b>"
+    if (min_drill_size==-1):
+        msg+="<br><b><font color=red>ALL via drills included</font></b>"
     if (compound_found):
         msg+="<br>found  <b><font color=red>multi-part</font></b></b> object(s)"
     if addVirtual==0:
@@ -3523,6 +3525,8 @@ def Display_info(blacklisted_models):
     pcb_name=u'Pcb'+fname_sfx
     pcb_bbx = doc.getObject(pcb_name).Shape.BoundBox
     msg+="<br>pcb dimensions: ("+"{0:.2f}".format(pcb_bbx.XLength)+";"+"{0:.2f}".format(pcb_bbx.YLength)+";"+"{0:.2f}".format(pcb_bbx.ZLength)+")"
+    if missingHeight:
+        msg+="<br><b><font color=red>MISSING pcb height from stack; forced 1.6mm value</font></b>"
     msg+="<br>running time: "+str(round(running_time,2))+"sec"
     msg+="<br>StepUp configuration options are located in the preferences system of FreeCAD."
     if (grid_orig==1):
@@ -3531,7 +3535,8 @@ def Display_info(blacklisted_models):
         say("Board Placed @ "+"{0:.2f}".format(new_pos_x)+";"+"{0:.2f}".format(new_pos_y)+";0.0")
     say("kicad pcb pos: ("+"{0:.2f}".format(real_board_pos_x)+";"+"{0:.2f}".format(real_board_pos_y)+";"+"{0:.2f}".format(0)+")")      
     say("pcb dimensions: ("+"{0:.2f}".format(pcb_bbx.XLength)+";"+"{0:.2f}".format(pcb_bbx.YLength)+";"+"{0:.2f}".format(pcb_bbx.ZLength)+")")          
-
+    if missingHeight:
+        sayerr('MISSING pcb height from stack; forced 1.6mm value')
     if (show_messages==True):
         QtGui.QApplication.restoreOverrideCursor()
         #RotateXYZGuiClass().setGeometry(25, 250, 500, 500)
@@ -3983,7 +3988,11 @@ def removesubtree(objs):
     while not checkinlistcomplete:
         for obj in toremove:
             if (obj not in objs) and (frozenset(obj.InList) - toremove):
-                toremove.remove(obj)
+                try:
+                    toremove.remove(obj)
+                except:
+                    print('exception')
+                    pass
                 break
         else:
             checkinlistcomplete = True
@@ -3991,6 +4000,7 @@ def removesubtree(objs):
         try:
             obj.Document.removeObject(obj.Name)
         except:
+            print('exception')
             pass
 
 ###
@@ -6623,7 +6633,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
     global last_fp_path, last_pcb_path, plcmnt, xp, yp, exportFusing
     global ignore_utf8, ignore_utf8_incfg, pcb_path, disable_VBO, use_AppPart, force_oldGroups, use_Links, use_LinkGroups
     global original_filename, edge_width, load_sketch, grid_orig, warning_nbr, running_time, addConstraints
-    global conv_offs, zfit, fname_sfx
+    global conv_offs, zfit, fname_sfx, missingHeight
 
     import fcad_parser
     from fcad_parser import KicadPCB,SexpList
@@ -6737,10 +6747,10 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                     elif override_pcb == True:
                         if doc.getObject(boardG_name) in doc.Objects: #if 1: #try:
                             if keep_pcb_sketch==True:
-                                # doc.getObject(boardG_name).removeObject(doc.getObject(sketch_name_sfx)) #keep sketck & constrains
-                                objs_toberemoved.append([doc.getObject(sketch_name_sfx)])
-                            # removesubtree([doc.getObject(boardG_name)])
-                            objs_toberemoved.append([doc.getObject(boardG_name)])
+                                doc.getObject(boardG_name).removeObject(doc.getObject(sketch_name_sfx)) #keep sketck & constrains
+                                #objs_toberemoved.append([doc.getObject(sketch_name_sfx)])
+                            removesubtree([doc.getObject(boardG_name)])
+                            #objs_toberemoved.append([doc.getObject(boardG_name)])
                             #doc.recompute()
                             sayw('old Pcb removed')
                             #stop
@@ -6969,8 +6979,8 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
             if keep_pcb_sketch == True:
                 #sayw(sketch_name_sfx+'001')
                 if doc.getObject(sketch_name_sfx+'001') in doc.Objects: #if 1: #try:
-                    # doc.removeObject(sketch_name_sfx+'001') #keep sketck & constrains
-                    objs_toberemoved.append([doc.getObject(sketch_name_sfx+'001')])
+                    doc.removeObject(sketch_name_sfx+'001') #keep sketck & constrains
+                    #objs_toberemoved.append([doc.getObject(sketch_name_sfx+'001')])
                     docG = FreeCADGui.ActiveDocument
                     docG.getObject(sketch_name_sfx).Visibility=True
             elif override_pcb == True:
@@ -11577,7 +11587,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
     global start_time, use_AppPart, force_oldGroups, min_drill_size
     global addVirtual, load_sketch, off_x, off_y, aux_orig, grid_orig
     global running_time, conv_offs, use_Links, apply_edge_tolerance, simplifyComSolid
-    global zfit, use_LinkGroups, fname_sfx
+    global zfit, use_LinkGroups, fname_sfx, missingHeight
     
     def simu_distance(p0, p1):
         return max (abs(p0[0] - p1[0]), abs(p0[1] - p1[1]))
@@ -11613,6 +11623,11 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
     PCBs = []
     #print (mypcb.general) #maui errorchecking
     totalHeight=float(mypcb.general.thickness)
+    missingHeight = False
+    if totalHeight == 0:
+        totalHeight = 1.6
+        missingHeight = True
+        sayerr('pcb thickness = 0mm! CHANGED to 1.6mm Please fix your pcb design!')
     say('pcb thickness '+str(totalHeight)+'mm')
     version=mypcb.version
     say('kicad_pcb version ' +str(version))
@@ -13171,6 +13186,15 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                 FreeCAD.ActiveDocument.recompute()
                 #stop
                 #say_time()
+            
+            else:
+                #face = cut_base
+                sayw('pcb without holes')
+                # Part.show(cut_base) #test_face
+                # f0 = cut_base.Faces[0]
+                # Part.show(f0)
+                #cut_base = cut_base
+                
             #else:
             #    #face = cut_base
             #    try:
