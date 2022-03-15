@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.1.3'
+ksuCMD_version__='2.1.4'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -2314,6 +2314,121 @@ class ksuToolsCopyPlacement:
             FreeCAD.Console.PrintMessage("Placement copied\n")
 
 FreeCADGui.addCommand('ksuToolsCopyPlacement',ksuToolsCopyPlacement())
+
+####
+class ksuToolsColoredClone:
+    "ksu tools colored Clone object"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'CloneYlw.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksu Colored Clone" ,
+                     'ToolTip' : "Colored Clone object"}
+ 
+    def IsActive(self):
+        return True
+ 
+    def Activated(self):
+        # do something here...
+        if FreeCADGui.Selection.getSelection():
+            sel=FreeCADGui.Selection.getSelection()
+            def mk_str(input):
+                if (sys.version_info > (3, 0)):  #py3
+                    if isinstance(input, str):
+                        return input
+                    else:
+                        input =  input.encode('utf-8')
+                        return input
+                else:  #py2
+                    if type(input) == unicode:
+                        input =  input.encode('utf-8')
+                        return input
+                    else:
+                        return input
+            if len(sel) != 1:
+                    msg="Select one object with Shape to be colored Cloned!\n"
+                    reply = QtGui.QMessageBox.information(None,"Warning", msg)
+                    FreeCAD.Console.PrintWarning(msg)             
+            else: #sel[0].TypeId != 'PartDesign::Body'):
+            
+                obj_tocopy=sel[0]
+                cp_label=mk_str(obj_tocopy.Label)+u'_cl'
+                
+                if hasattr(FreeCAD.ActiveDocument.getObject(obj_tocopy.Name), "Shape"):
+                    import Draft
+                    newObj = Draft.make_clone(FreeCAD.ActiveDocument.getObject(obj_tocopy.Name))
+                    FreeCAD.ActiveDocument.recompute()
+                    newObj.Label=cp_label
+                    if hasattr(FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name),'ShapeColor'):# and ('Origin' not in FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).TypeId):
+                        # if 'LinkView' in dir(FreeCADGui):
+                        #     FreeCAD.ActiveDocument.ActiveObject.ViewObject.ShapeColor=getattr(FreeCAD.ActiveDocument.getObject(obj_tocopy.Name).getLinkedObject(True).ViewObject,'ShapeColor',FreeCAD.ActiveDocument.getObject(obj_tocopy.Name).ViewObject.ShapeColor)
+                        #     FreeCAD.ActiveDocument.ActiveObject.ViewObject.LineColor=getattr(FreeCAD.ActiveDocument.getObject(obj_tocopy.Name).getLinkedObject(True).ViewObject,'LineColor',FreeCAD.ActiveDocument.getObject(obj_tocopy.Name).ViewObject.LineColor)
+                        #else:
+                        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).ShapeColor
+                        if hasattr(FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name),'LineColor'):
+                            FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).LineColor
+                            FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).PointColor
+                        if hasattr(FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name),'DiffuseColor'):
+                            FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).DiffuseColor
+                        if hasattr(FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name),'Transparency'):
+                            FreeCADGui.ActiveDocument.ActiveObject.Transparency=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).Transparency
+                    else:
+                        FreeCAD.Console.PrintWarning('missing copy of color attributes')
+                FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).Visibility = False
+                    #FreeCAD.ActiveDocument.recompute()
+                #else:
+                #    FreeCAD.Console.PrintWarning("Select object with a \"Shape\" to be copied!\n")             
+        else:
+            #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
+            reply = QtGui.QMessageBox.information(None,"Warning", "Select one object with Shape to be cloned!")
+            FreeCAD.Console.PrintWarning("Select one object with Shape to be cloned!\n")             
+
+FreeCADGui.addCommand('ksuToolsColoredClone',ksuToolsColoredClone())
+
+####
+class ksuToolsUnion:
+    "ksu tools Make Union objects"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Part-Fuse.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksu Fuse objects" ,
+                     'ToolTip' : "Make Union (Fuse) objects"}
+ 
+    def IsActive(self):
+        return True
+ 
+    def Activated(self):
+        # do something here...
+        if FreeCADGui.Selection.getSelection():
+            sel=FreeCADGui.Selection.getSelection()
+            def mk_str(input):
+                if (sys.version_info > (3, 0)):  #py3
+                    if isinstance(input, str):
+                        return input
+                    else:
+                        input =  input.encode('utf-8')
+                        return input
+                else:  #py2
+                    if type(input) == unicode:
+                        input =  input.encode('utf-8')
+                        return input
+                    else:
+                        return input
+            ##
+            if len(sel)<=1:
+                    msg="Select at least two objects with Shape to be copied!\n"
+                    reply = QtGui.QMessageBox.information(None,"Warning", msg)
+                    FreeCAD.Console.PrintWarning(msg)             
+            else: #sel[0].TypeId != 'PartDesign::Body'):
+                FreeCAD.activeDocument().addObject("Part::MultiFuse","Fusion")
+                Fusion = FreeCAD.activeDocument().ActiveObject
+                Fusion.Shapes = sel
+                FreeCAD.ActiveDocument.recompute()
+        else:
+            #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
+            reply = QtGui.QMessageBox.information(None,"Warning", "Select at least two objects with Shape to be copied!")
+            FreeCAD.Console.PrintWarning("Select at least two objects with Shape to be copied!\n")             
+
+FreeCADGui.addCommand('ksuToolsUnion',ksuToolsUnion())
 
 ####
 class ksuToolsSimpleCopy:
