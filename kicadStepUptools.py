@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.3.5"
+___ver___ = "10.3.6"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -8481,6 +8481,7 @@ def getLine(layer, content, oType):
     #
     #data1 = re.findall(r'\({1}\s+\(start\s+([0-9\.-]*?)\s+([0-9\.-]*?)\)\s+\(end\s+([0-9\.-]*?)\s+([0-9\.-]*?)\)(\s+\(angle\s+[0-9\.-]*?\)\s+|\s+)\(layer\s+{0}\)\s+\(width\s+([0-9\.]*?)\)\)'.format(layer, oType), source, re.MULTILINE|re.DOTALL)
     data1 = re.findall(r'\({1}\s+\(start\s+([0-9\.-]*?)\s+([0-9\.-]*?)\)\s+\(end\s+([0-9\.-]*?)\s+([0-9\.-]*?)\)(\s+\(angle\s+[0-9\.-]*?\)\s+|\s+)\(layer\s+{0}\)\s+\(width\s+([0-9\.]*?)\)'.format(layer, oType), source, re.MULTILINE|re.DOTALL)
+    #TBD fp_line kv7
     #say(data1)
     for i in data1:
         x1 = float(i[0])
@@ -8917,7 +8918,8 @@ def getPolyList(content):
     #model_name = re.search(r'\(module\s+(.+?)\(layer', model, re.MULTILINE|re.DOTALL).groups(0)[0]
     #say(model_name)
     fp_pnts = []
-    found = re.findall(r'\(fp_poly .*', model, re.MULTILINE|re.DOTALL)
+    width = 0.16
+    found = re.findall(r'\(fp_poly.*', model, re.MULTILINE|re.DOTALL)
     if len(found):
         found = found[0].strip().split('(fp_poly ')
         for j in found:
@@ -8929,19 +8931,23 @@ def getPolyList(content):
                     layers = 'F.SilkS'
                     #layers = None
                     sayerr('NO LAYER on NetTie') #test utf-8 test pads
-                # print(layers)
+                #print(layers)
                 # stop
                 #pnts = re.search(r'\(fp_poly\s\(pts(.*?)\)\s\(width', j, re.MULTILINE|re.DOTALL)
-                pnts = re.search(r'\(pts(.*?)\)\s\(width', j, re.MULTILINE|re.DOTALL)
+                pnts = re.search(r'\(pts(.*?)(.*?)\(width', j, re.MULTILINE|re.DOTALL)
                 #pnts_nt = re.search(r'\(fp_poly\s\(pts(.*?)\)\s\(width', j, re.MULTILINE|re.DOTALL)
                 #if pnts_nt is not None:
                 #    pnts = pnts_nt #re.search(r'\(fp_poly\s\(pts(.*?)\)\s\(width', j, re.MULTILINE|re.DOTALL)
                 #    pShape = 'NetTie'
+                #print('pnts',pnts.group())
+                width = re.search(r'\(width(.*?)\)', j, re.MULTILINE|re.DOTALL)
+                width = float(width[0].strip().split('(width ')[1].strip(')'))
+                #print('width',width)
                 fp_pnts.append({'layers': layers, 'points': pnts})
 
     #say(fp_pnts)
     #
-    return fp_pnts
+    return fp_pnts, width
 ###
 
 def makePoint(self, x, y):
@@ -10319,7 +10325,19 @@ def routineDrawFootPrint(content,name):
         
         #say(pType+"here")
         ### cmt- #da gestire: pad type trapez
-    for fp in getPolyList(content):
+    FrontSilk = []
+    FCrtYd = []
+    FFab = []
+    EdgeCuts = []
+    BotSilk = []
+    BCrtYd = []
+    BFab = []
+    
+    layer_names = ['F.SilkS','F.CrtYd','F.Fab','Edge.Cuts','B.SilkS','B.CrtYd','B.Fab']
+    layers_name_list = [FrontSilk,FCrtYd,FFab,EdgeCuts,BotSilk,BCrtYd,BFab]
+    
+    fp_list,width = getPolyList(content)
+    for fp in fp_list:
         pnts = fp['points']
         layers = fp['layers']
         #print(layers)
@@ -10329,10 +10347,12 @@ def routineDrawFootPrint(content,name):
             lyr = 'bot'
         elif 'F.Cu' in layers:
             lyr = 'top'
+        elif 'Edge.Cuts' in layers:
+            lyr = 'Edge.Cuts'
         else:
             lyr = None
             sayw('geometry unsupported')
-        if pnts is not None and lyr is not None: # minimal closed shape points
+        if pnts is not None and lyr is not None and lyr != 'Edge.Cuts': # minimal closed shape points
             #sayw(pnts.groups(0)[0].split('(xy'))
             #print(pGeomC)
             try:
@@ -10349,19 +10369,45 @@ def routineDrawFootPrint(content,name):
                 else:
                     #BotPadList.append(mypad)
                     BotNetTieList.append(mypad)
+        # polyline fp_poly
+        elif lyr == 'Edge.Cuts':
+            #print(pnts.groups(0)[1])
+            poly_points=pnts.groups(0)[1].split('(xy')[1:]
+            #print(poly_points)
+            for i,p in enumerate (poly_points[:-1]):
+                p=p[1:].split(')')[0].split(' ')
+                p1 = poly_points[i+1][1:].split(')')[0].split(' ')
+                x1 = float(p[0]) #+ X1
+                y1 = -float(p[1]) #+ Y1
+                x2 = float(p1[0]) #+ X1
+                y2 = -float(p1[1]) #+ Y1
+                obj = addLine_2(x1, y1, x2, y2, 0.12)
+                layers_name_list[3].append(addLine_2(x1, y1, x2, y2, width))
+            #closing poly
+            p = poly_points[0][1:].split(')')[0].split(' ')
+            x1 = float(p[0]) #+ X1
+            y1 = -float(p[1]) #+ Y1
+            obj = addLine_2(x2, y2, x1, y1, width)
+            layers_name_list[3].append(addLine_2(x1, y1, x2, y2, width))
+            #stop
+        
 ##
 
-    FrontSilk = []
-    FCrtYd = []
-    FFab = []
-    EdgeCuts = []
-    BotSilk = []
-    BCrtYd = []
-    BFab = []
-    
-    layer_names = ['F.SilkS','F.CrtYd','F.Fab','Edge.Cuts','B.SilkS','B.CrtYd','B.Fab']
-    layers_name_list = [FrontSilk,FCrtYd,FFab,EdgeCuts,BotSilk,BCrtYd,BFab]
+    #FrontSilk = []
+    #FCrtYd = []
+    #FFab = []
+    #EdgeCuts = []
+    #BotSilk = []
+    #BCrtYd = []
+    #BFab = []
+    #
+    #layer_names = ['F.SilkS','F.CrtYd','F.Fab','Edge.Cuts','B.SilkS','B.CrtYd','B.Fab']
+    #layers_name_list = [FrontSilk,FCrtYd,FFab,EdgeCuts,BotSilk,BCrtYd,BFab]
         
+    #TBD 
+    #for n,lay in enumerate (layer_names):
+    #    getPolyList
+    
     # line
     #getLine('F.SilkS', content, 'fp_line')
     for n,lay in enumerate (layer_names):
@@ -12394,26 +12440,49 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                             sayw('missing drill value on pad for module '+str(m.fp_text[0][1])) 
                     ##pads.append({'x': x, 'y': y, 'rot': rot, 'padType': pType, 'padShape': pShape, 'rx': drill_x, 'ry': drill_y, 'dx': dx, 'dy': dy, 'holeType': hType, 'xOF': xOF, 'yOF': yOF, 'layers': layers})        
                     #stop
-             #if hasattr(m, 'fp_poly'):
-             #    for lp in m.fp_poly:
-             #        # if ml.layer != 'Edge.Cuts':
-             #        if lp.layer != 'F.Cu':
-             #        #if lyr not in ml.layer:
-             #            continue
-             #        #print ml.start,ml.end
-             #        ind = 0
-             #        l = len(lp.pts.xy)
-             #        for p in lp.pts.xy:
-             #            if ind == 0:
-             #                line1=Part.Edge(PLine(Base.Vector(lp.pts.xy[l-1][0],-lp.pts.xy[l-1][1],0), Base.Vector(lp.pts.xy[0][0],-lp.pts.xy[0][1],0)))
-             #                edges.append(line1);
-             #            else:
-             #                line1=Part.Edge(PLine(Base.Vector(lp.pts.xy[ind-1][0],-lp.pts.xy[ind-1][1],0), Base.Vector(lp.pts.xy[ind][0],-lp.pts.xy[ind][1],0)))
-             #                edges.append(line1);
-             #            ind+=1
-             #        #closing edge
-             #            if 1: #SHOW POLY BORDER
-             #                Part.show(line1)
+            if hasattr(m, 'fp_poly'):
+                for lp in m.fp_poly:
+                    print(m.layer)
+                    # if m.layer != 'Edge.Cuts':
+                    # print(lp)
+                    # print(lp.pts)
+                    # print(lp.pts.xy)
+                    # for p in lp.pts.xy:
+                    #     print(p)
+                    #if lp.layer != 'F.Cu':
+                    if 'F.Cu' not in m.layer:
+                        continue
+                    #print ml.start,ml.end
+                    ind = 0
+                    l = len(lp.pts.xy)
+                    print(lp)
+                    for p in lp.pts.xy:
+                        #print('p',p)
+                        if ind == 0:
+                            line1=Part.Edge(PLine(Base.Vector(lp.pts.xy[l-1][0],-lp.pts.xy[l-1][1],0), Base.Vector(lp.pts.xy[0][0],-lp.pts.xy[0][1],0)))
+                            edges.append(line1);
+                        else:
+                            line1=Part.Edge(PLine(Base.Vector(lp.pts.xy[ind-1][0],-lp.pts.xy[ind-1][1],0), Base.Vector(lp.pts.xy[ind][0],-lp.pts.xy[ind][1],0)))
+                            edges.append(line1);
+                        ind+=1
+                        EdgeCuts.append(line1)
+                        print(line1.Vertexes[0].Point.x,line1.Vertexes[0].Point.y)
+                        #line1.Vertexes[1].Point)
+                        pt1 = (line1.Vertexes[0].Point.x,-line1.Vertexes[0].Point.y)
+                        pt2 = (line1.Vertexes[1].Point.x,-line1.Vertexes[1].Point.y)
+                        x1=pt1[0]+m.at[0];y1=-pt1[1]-m.at[1]
+                        x2=pt2[0]+m.at[0];y2=-pt2[1]-m.at[1]
+                        [x1, y1] = rotPoint2([x1,y1], [m.at[0], -m.at[1]], m_angle)
+                        [x2, y2] = rotPoint2([x2,y2], [m.at[0], -m.at[1]], m_angle)            
+                        if aux_orig ==1 or grid_orig ==1:
+                            FpEdges_Geo.append(PLine(Base.Vector(x1-off_x,y1-off_y,0), Base.Vector(x2-off_x,y2-off_y,0)))
+                        else:
+                            FpEdges_Geo.append(PLine(Base.Vector(x1,y1,0), Base.Vector(x2,y2,0)))
+                        PCB.append(['Line', x1, y1, x2, y2])
+                    #closing edge
+                        if  show_border: #0: #SHOW POLY BORDER
+                            Part.show(line1)
+                    #stop
             if min_drill_size == -1:
                 for v in mypcb.via:
                     # based on code above for pads 
@@ -20184,7 +20253,7 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                     repl = re.sub('\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE)
                     repl = re.sub('\s\(gr_arc(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_arc(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_arc(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE)
                     repl = re.sub('\s\(gr_circle(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_circle(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_circle(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE)
-                    repl = re.sub('\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE)
+                    repl = re.sub('\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE|re. DOTALL)
                     #sayerr(replace)
                     k = repl.rfind(")")  #removing latest ')'
                     newcontent = repl[:k]
@@ -20731,22 +20800,27 @@ def push3D2pcb(s,cnt,tsp):
                     #print (ln)
                     #print (ln.split('(at ')[1].split(')')[0].split(' '))
                     ref_values=ln.split('(at ')[1].split(')')[0].split(' ')
+                    old_ref_angle = 0
                     if len(ref_values) == 3:
                         #print(pad_values[2])
-                        old_ref_angle = (float(ref_values[2]))
-                    else:
-                        old_ref_angle = 0
+                        print(ref_values[2])
+                        if ref_values[2] != 'unlocked':
+                            old_ref_angle = (float(ref_values[2]))
+                    #else:
+                    #    old_ref_angle = 0
                     #print (pad_values);print(ln.split('(at '))
                     idx_ref=idxF+ik
                 if '(fp_text value' in ln:
                     #print (ln)
                     #print (ln.split('(at ')[1].split(')')[0].split(' '))
                     val_values=ln.split('(at ')[1].split(')')[0].split(' ')
+                    old_val_angle = 0
                     if len(val_values) == 3:
                         #print(pad_values[2])
-                        old_val_angle = (float(val_values[2]))
-                    else:
-                        old_val_angle = 0
+                        if ref_values[2] != 'unlocked':
+                            old_val_angle = (float(val_values[2]))
+                    #else:
+                    #    old_val_angle = 0
                     base_val_angle = old_val_angle - mod_old_angle
                     new_val_angle = ' '+("{0:.3f}".format(base_val_angle + bbpa))
                     if float(new_val_angle) == 0:
@@ -20758,11 +20832,13 @@ def push3D2pcb(s,cnt,tsp):
                     #print (ln)
                     #print (ln.split('(at ')[1].split(')')[0].split(' '))
                     usr_values=ln.split('(at ')[1].split(')')[0].split(' ')
+                    old_usr_angle = 0
                     if len(usr_values) == 3:
                         #print(pad_values[2])
-                        old_usr_angle = (float(usr_values[2]))
-                    else:
-                        old_usr_angle = 0
+                        if usr_values[2] != 'unlocked':
+                            old_usr_angle = (float(usr_values[2]))
+                    #else:
+                    #    old_usr_angle = 0
                     base_usr_angle = old_usr_angle - mod_old_angle
                     new_usr_angle = ' '+("{0:.3f}".format(base_usr_angle + bbpa))
                     if float(new_usr_angle) == 0:

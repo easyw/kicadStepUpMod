@@ -53,6 +53,7 @@ class KicadPCB(SexpParser):
                'fp_arc',
                'fp_line', # maui
                'fp_rect', # maui
+               'fp_poly', # maui
                'pad',
                'model']
 
