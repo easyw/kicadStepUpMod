@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.3.6"
+___ver___ = "10.3.7"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -12442,7 +12442,10 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                     #stop
             if hasattr(m, 'fp_poly'):
                 for lp in m.fp_poly:
-                    print(m.layer)
+                    #print(lp.layer)
+                    if 'Edge.Cuts' not in lp.layer:
+                        continue
+                    # print(m.layer)
                     # if m.layer != 'Edge.Cuts':
                     # print(lp)
                     # print(lp.pts)
@@ -12455,7 +12458,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                     #print ml.start,ml.end
                     ind = 0
                     l = len(lp.pts.xy)
-                    print(lp)
+                    #print(lp)
                     for p in lp.pts.xy:
                         #print('p',p)
                         if ind == 0:
@@ -12466,7 +12469,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                             edges.append(line1);
                         ind+=1
                         EdgeCuts.append(line1)
-                        print(line1.Vertexes[0].Point.x,line1.Vertexes[0].Point.y)
+                        #print(line1.Vertexes[0].Point.x,line1.Vertexes[0].Point.y)
                         #line1.Vertexes[1].Point)
                         pt1 = (line1.Vertexes[0].Point.x,-line1.Vertexes[0].Point.y)
                         pt2 = (line1.Vertexes[1].Point.x,-line1.Vertexes[1].Point.y)

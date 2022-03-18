@@ -38,7 +38,7 @@ StepUp Cheat sheet
 
 ### Requirements
 
-- **FreeCAD** **0.17 >= 11707** or **0.18** or **0.19**
+- **FreeCAD** **0.17 >= 11707**, **0.18**, **0.19**, **0.20**
 
 
 ### License
