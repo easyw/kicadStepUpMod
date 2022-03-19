@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global tracks_version
-tracks_version = '2.4.5'
+tracks_version = '2.4.6'
 
 import kicad_parser
 #import kicad_parser; import importlib; importlib.reload(kicad_parser)
@@ -402,8 +402,8 @@ def addtracks(fname = None):
                     #        (topPads.Shape.BoundBox.YLength > pcb_sk.Shape.BoundBox.YLength):
                     if (topPads.Shape.BoundBox.XMax > pcb_sk.Shape.BoundBox.XMax) or \
                             (topPads.Shape.BoundBox.XMin < pcb_sk.Shape.BoundBox.XMin) or \
-                            (topPads.Shape.BoundBox.YMax > pcb_sk.Shape.BoundBox.YXMax) or \
-                            (topPads.Shape.BoundBox.YMin < pcb_sk.Shape.BoundBox.YXMin):
+                            (topPads.Shape.BoundBox.YMax > pcb_sk.Shape.BoundBox.YMax) or \
+                            (topPads.Shape.BoundBox.YMin < pcb_sk.Shape.BoundBox.YMin):
                         topPads_cut_Name, temp_tobedeleted = cut_out_tracks(pcb_sk,topPads,ftname_sfx)
                         topPads = FreeCAD.ActiveDocument.getObject(topPads_cut_Name)
                         add_toberemoved.append(temp_tobedeleted)
@@ -489,8 +489,8 @@ def addtracks(fname = None):
                     #        (botPads.Shape.BoundBox.YLength > pcb_sk.Shape.BoundBox.YLength):
                     if (botPads.Shape.BoundBox.XMax > pcb_sk.Shape.BoundBox.XMax) or \
                             (botPads.Shape.BoundBox.XMin < pcb_sk.Shape.BoundBox.XMin) or \
-                            (botPads.Shape.BoundBox.YMax > pcb_sk.Shape.BoundBox.YXMax) or \
-                            (botPads.Shape.BoundBox.YMin < pcb_sk.Shape.BoundBox.YXMin):
+                            (botPads.Shape.BoundBox.YMax > pcb_sk.Shape.BoundBox.YMax) or \
+                            (botPads.Shape.BoundBox.YMin < pcb_sk.Shape.BoundBox.YMin):
                         botPads_cut_Name, temp_tobedeleted = cut_out_tracks(pcb_sk,botPads,ftname_sfx)
                         botPads = FreeCAD.ActiveDocument.getObject(botPads_cut_Name)
                         add_toberemoved.append(temp_tobedeleted)
