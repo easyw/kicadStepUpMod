@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global tracks_version
-tracks_version = '2.4.4'
+tracks_version = '2.4.5'
 
 import kicad_parser
 #import kicad_parser; import importlib; importlib.reload(kicad_parser)
@@ -206,7 +206,7 @@ def cut_out_tracks (pcbsk,tracks,tname_sfx):
     FreeCAD.ActiveDocument.addObject('Part::Feature',tracks.Label+'_').Shape=FreeCAD.ActiveDocument.getObject(Common_Top.Name).Shape
     tracks_ct = FreeCAD.ActiveDocument.ActiveObject
     tracks_ctV = FreeCADGui.ActiveDocument.ActiveObject
-    new_label=tracks.Label #+'_n'
+    new_label=tracks.Label +'_cut'
     FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.getObject(Common_Top.Name).ShapeColor
     FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.getObject(Common_Top.Name).ShapeColor
     FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(Common_Top.Name).LineColor
@@ -221,7 +221,10 @@ def cut_out_tracks (pcbsk,tracks,tname_sfx):
         FreeCAD.ActiveDocument.removeObject(extrude.Name)
     else:
         doc = FreeCAD.ActiveDocument
-        temp_tobedeleted.append([doc.getObject(Common_Top.Name),doc.getObject(tracks.Name),doc.getObject(extrude.Name)])
+        #temp_tobedeleted.append([doc.getObject(Common_Top.Name),doc.getObject(tracks.Name),doc.getObject(extrude.Name)])
+        temp_tobedeleted.append(doc.getObject(Common_Top.Name))
+        temp_tobedeleted.append(doc.getObject(tracks.Name))
+        temp_tobedeleted.append(doc.getObject(extrude.Name))
     FreeCAD.ActiveDocument.getObject(tracks_ct_Name).Label = new_label
     FreeCAD.ActiveDocument.recompute()
     
@@ -395,8 +398,12 @@ def addtracks(fname = None):
                 ### check if BBOx pcb > BBOx tracks
                 if topPads is not None:
                     topPads.Placement = FreeCAD.ActiveDocument.getObject('Pcb'+ftname_sfx).Placement
-                    if (topPads.Shape.BoundBox.XLength > pcb_sk.Shape.BoundBox.XLength) or \
-                            (topPads.Shape.BoundBox.YLength > pcb_sk.Shape.BoundBox.YLength):
+                    #if (topPads.Shape.BoundBox.XLength > pcb_sk.Shape.BoundBox.XLength) or \
+                    #        (topPads.Shape.BoundBox.YLength > pcb_sk.Shape.BoundBox.YLength):
+                    if (topPads.Shape.BoundBox.XMax > pcb_sk.Shape.BoundBox.XMax) or \
+                            (topPads.Shape.BoundBox.XMin < pcb_sk.Shape.BoundBox.XMin) or \
+                            (topPads.Shape.BoundBox.YMax > pcb_sk.Shape.BoundBox.YXMax) or \
+                            (topPads.Shape.BoundBox.YMin < pcb_sk.Shape.BoundBox.YXMin):
                         topPads_cut_Name, temp_tobedeleted = cut_out_tracks(pcb_sk,topPads,ftname_sfx)
                         topPads = FreeCAD.ActiveDocument.getObject(topPads_cut_Name)
                         add_toberemoved.append(temp_tobedeleted)
@@ -478,8 +485,12 @@ def addtracks(fname = None):
                 ### check if BBOx pcb > BBOx tracks
                 if botPads is not None:
                     botPads.Placement = FreeCAD.ActiveDocument.getObject('Pcb'+ftname_sfx).Placement
-                    if (botPads.Shape.BoundBox.XLength > pcb_sk.Shape.BoundBox.XLength) or \
-                            (botPads.Shape.BoundBox.YLength > pcb_sk.Shape.BoundBox.YLength):
+                    #if (botPads.Shape.BoundBox.XLength > pcb_sk.Shape.BoundBox.XLength) or \
+                    #        (botPads.Shape.BoundBox.YLength > pcb_sk.Shape.BoundBox.YLength):
+                    if (botPads.Shape.BoundBox.XMax > pcb_sk.Shape.BoundBox.XMax) or \
+                            (botPads.Shape.BoundBox.XMin < pcb_sk.Shape.BoundBox.XMin) or \
+                            (botPads.Shape.BoundBox.YMax > pcb_sk.Shape.BoundBox.YXMax) or \
+                            (botPads.Shape.BoundBox.YMin < pcb_sk.Shape.BoundBox.YXMin):
                         botPads_cut_Name, temp_tobedeleted = cut_out_tracks(pcb_sk,botPads,ftname_sfx)
                         botPads = FreeCAD.ActiveDocument.getObject(botPads_cut_Name)
                         add_toberemoved.append(temp_tobedeleted)
