@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.1.5'
+ksuCMD_version__='2.1.6'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -1161,26 +1161,7 @@ class ksuToolsPushPCB:
             reload_lib( kicadStepUptools )
         #from kicadStepUptools import onPushPCB
         #FreeCAD.Console.PrintWarning( 'active :)\n' )
-        sel = FreeCADGui.Selection.getSelection()
-        if len (sel) ==1:
-            if 'Sketcher' in sel[0].TypeId:
-                s = sel[0].Shape
-                sk = Draft.make_sketch(s, autoconstraints=True)
-                sk_obj = FreeCAD.ActiveDocument.ActiveObject
-                FreeCADGui.Selection.clearSelection()
-                FreeCADGui.Selection.addSelection(sk_obj)
-                kicadStepUptools.PushPCB()
-                FreeCAD.ActiveDocument.removeObject(sk_obj.Name)
-            else:
-                msg="""select one Sketch to be pushed to kicad board!"""
-                FreeCAD.Console.PrintError(msg)
-                FreeCAD.Console.PrintWarning('\n')
-                kicadStepUptools.say_warning(msg)
-        else:
-            msg="""select one Sketch to be pushed to kicad board!"""
-            FreeCAD.Console.PrintError(msg)
-            FreeCAD.Console.PrintWarning('\n')
-            kicadStepUptools.say_warning(msg)
+        kicadStepUptools.PushPCB()
         # ppcb=kicadStepUptools.KSUWidget
         # ppcb.onPushPCB()
  
@@ -1766,8 +1747,8 @@ class ksuToolsDiscretize:
             shapes = []
             for selobj in sel:
                 for e in selobj.Shape.Edges:
-                    # if not hasattr(e.Curve,'Radius'):
-                    if not e.Closed:  # Arc and not Circle
+                    if not hasattr(e.Curve,'Radius'):
+                    #if not e.Closed:  # Arc and not Circle
                         shapes.append(Part.makePolygon(e.discretize(QuasiDeflection=q_deflection)))
                     else:
                         shapes.append(Part.Wire(e))
