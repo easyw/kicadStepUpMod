@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.3.7"
+___ver___ = "10.3.8"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -12020,7 +12020,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
         if load_sketch:
             if aux_orig ==1 or grid_orig ==1:
                 PCB_Geo.append(spline)
-                pi = 0
+                # pi = 0
                 #for p in bs.pts.xy:
                 #    if (pi == 1) or (pi == 2):
                 #        PCB_Geo.append(Part.Circle (FreeCAD.Vector(p[0]-off_x, -p[1]-off_y), FreeCAD.Vector(0, 0, 1), 0.5))
@@ -12039,7 +12039,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                 #    pi+=1
             else:
                 PCB_Geo.append(spline)
-                pi = 0
+                # pi = 0
                 # for p in bs.pts.xy:
                 #     if (pi == 1) or (pi == 2):
                 #         PCB_Geo.append(Part.makeCircle (0.5, Base.Vector(p[0]-off_x, -p[1]-off_y, 0.0), Base.Vector(1,0,0)))
