@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.3.9"
+___ver___ = "10.4.0"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -7257,6 +7257,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
     def removing_kobjs():
         ''' removing objects after delay ''' 
         from kicadStepUptools import removesubtree
+        doc=FreeCAD.ActiveDocument
         doc.openTransaction('rmv_objs_kicad')
         for tbr in objs_toberemoved:
             removesubtree(tbr)
