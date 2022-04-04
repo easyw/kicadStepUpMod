@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.4.1"
+___ver___ = "10.4.2"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -19431,15 +19431,15 @@ def createEdge(edg,ofs,sklayer=None,pcb_ver=None):
         layer = sklayer
     if edg[0] == 'line':
         if pcb_ver is None or pcb_ver < 20211014:
-            k_edg = "  (gr_line (start {0:.4f} {1:.4f}) (end {2:.4f} {3:.4f}) (angle 90) (layer {5}) (width {4}))"\
+            k_edg = "  (gr_line (start {0:.6f} {1:.6f}) (end {2:.6f} {3:.6f}) (angle 90) (layer {5}) (width {4}))"\
                         .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edge_width, layer)
             #k_edg +=os.linesep
             #.format('{0:.10f}').format(edg[1] + abs(0), '{0:.10f}').format(edg[2] + abs(0), '{0:.10f}').format(edg[3] + abs(0), '{0:.10f}').format(edg[4] + abs(0), 'Edge.Cuts', edge_width)
         else:
-            k_edg = "  (gr_line (start {0:.4f} {1:.4f}) (end {2:.4f} {3:.4f}) (layer {5}) (width {4}))"\
+            k_edg = "  (gr_line (start {0:.6f} {1:.6f}) (end {2:.6f} {3:.6f}) (layer {5}) (width {4}))"\
                         .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edge_width, layer)
     elif edg[0] == 'circle':
-        k_edg = "  (gr_circle (center {0:.4f} {1:.4f}) (end {2:.4f} {1:.4f}) (layer {4}) (width {3}))".format(edg[2]+ofs[0], -edg[3]+ofs[1], edg[2]+ofs[0]-edg[1], edge_width, layer)
+        k_edg = "  (gr_circle (center {0:.6f} {1:.6f}) (end {2:.6f} {1:.6f}) (layer {4}) (width {3}))".format(edg[2]+ofs[0], -edg[3]+ofs[1], edg[2]+ofs[0]-edg[1], edge_width, layer)
         #k_edg +=os.linesep
                     #.format(
                     #'{0:.10f}'.format(i[1] + abs(self.minX)), '{0:.10f}'.format(i[2] + abs(self.minY)), '{0:.10f}'.format(
@@ -19503,19 +19503,19 @@ def createEdge(edg,ofs,sklayer=None,pcb_ver=None):
         
         if abs(xs) > maxRadius or abs(ys) > maxRadius:
             if pcb_ver is None or pcb_ver < 20211014:
-                k_edg = "  (gr_line (start {0:.4f} {1:.4f}) (end {2:.4f} {3:.4f}) (angle 0) (layer {5}) (width {4}))"\
+                k_edg = "  (gr_line (start {0:.6f} {1:.6f}) (end {2:.6f} {3:.6f}) (angle 0) (layer {5}) (width {4}))"\
                             .format(x1+ofs[0], y1+ofs[1], x2+ofs[0], y2+ofs[1], edge_width, layer)
                 #k_edg = "  (gr_line (start {0} {1}) (end {2} {3}) (angle 90) (layer {5}) (width {4}))"\
                 #            .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edge_width, 'Edge.Cuts')
                 #print xs + ofs[0]
                 #stop
             else:
-                k_edg = "  (gr_line (start {0:.4f} {1:.4f}) (end {2:.4f} {3:.4f}) (layer {5}) (width {4}))"\
+                k_edg = "  (gr_line (start {0:.6f} {1:.6f}) (end {2:.6f} {3:.6f}) (layer {5}) (width {4}))"\
                             .format(x1+ofs[0], y1+ofs[1], x2+ofs[0], y2+ofs[1], edge_width, layer)
         else:
             if pcb_ver is None or pcb_ver < 20211014:
                 #self.pcbElem.append(['gr_arc', xs, ys, x1, y1, curve, width, layer])
-                k_edg = "  (gr_arc (start {0:.4f} {1:.4f}) (end {2:.4f} {3:.4f}) (angle {4:.4f}) (layer {6}) (width {5}))"\
+                k_edg = "  (gr_arc (start {0:.6f} {1:.6f}) (end {2:.6f} {3:.6f}) (angle {4:.6f}) (layer {6}) (width {5}))"\
                         .format(xs+ofs[0], ys+ofs[1], x1+ofs[0], y1+ofs[1], angle, edge_width, layer)
             else:
                 #stop
@@ -19531,14 +19531,14 @@ def createEdge(edg,ofs,sklayer=None,pcb_ver=None):
                 # FreeCAD.ActiveDocument.ActiveObject.ViewObject.PointColor=(0.0,0.0,1.0,0.0)
                 # Part.show(Part.Edge(Part.Arc(FreeCAD.Base.Vector(x1, y1, 0), FreeCAD.Base.Vector(mp[0],mp[1], 0), FreeCAD.Base.Vector(x2, y2, 0))))
                 # print(mp[0],mp[1])
-                k_edg = "  (gr_arc (start {0:.4f} {1:.4f}) (mid {2:.4f} {3:.4f}) (end {4:.4f} {5:.4f}) (layer {7}) (width {6}))"\
+                k_edg = "  (gr_arc (start {0:.6f} {1:.6f}) (mid {2:.6f} {3:.6f}) (end {4:.6f} {5:.6f}) (layer {7}) (width {6}))"\
                         .format(x2+ofs[0], y2+ofs[1], mp[0]+ofs[0], mp[1]+ofs[1], x1+ofs[0], y1+ofs[1], edge_width, layer)
                         #.format(xs+ofs[0], ys+ofs[1], mp[0]+ofs[0], mp[1]+ofs[1], x1+ofs[0], y1+ofs[1], edge_width, layer)
                 #print(k_edg)
                 #stop
     #    self.addArc(edg[1:], 'Edge.Cuts', 0.01)
     elif edg[0] == 'spline':
-        k_edg = "  (gr_curve (pts (xy {0:.4f} {1:.4f}) (xy {2:.4f} {3:.4f}) (xy {4:.4f} {5:.4f}) (xy {6:.3f} {7:.3f})) (layer {9}) (width {8}))"\
+        k_edg = "  (gr_curve (pts (xy {0:.6f} {1:.6f}) (xy {2:.6f} {3:.6f}) (xy {4:.6f} {5:.6f}) (xy {6:.3f} {7:.3f})) (layer {9}) (width {8}))"\
         .format(edg[1]+ofs[0], -edg[2]+ofs[1], edg[3]+ofs[0], -edg[4]+ofs[1], edg[5]+ofs[0], -edg[6]+ofs[1], edg[7]+ofs[0], -edg[8]+ofs[1], edge_width, layer)
         # (pts (xy 151.983691 88.782809) (xy 152.805595 84.674685) (xy 148.40623 80.726614) (xy 144.40069 81.955321)) (layer Edge.Cuts) (width 0.2))
         
@@ -20384,10 +20384,10 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                             #print 'border len= ', len(border)
                             #points=border [10].x
                             #p1x = float(border [10].x);p1y=float(border [10].y)
-                            p1x = float("{0:.4f}".format(border [10].x));p1y=float("{0:.4f}".format(border [10].y))
+                            p1x = float("{0:.6f}".format(border [10].x));p1y=float("{0:.6f}".format(border [10].y))
                             #print p1x, ' ',p1y
                             #p2x = float(border [11].x);p2y=float(border [11].y)
-                            p2x = float("{0:.4f}".format(border [11].x));p2y=float("{0:.4f}".format(border [11].y))
+                            p2x = float("{0:.6f}".format(border [11].x));p2y=float("{0:.6f}".format(border [11].y))
                             #print '1st point ', border [10],' 2nd point ', border [11]
                             sanitized_edge_list.append(['line',p1x,p1y,p2x,p2y])
                         else:
