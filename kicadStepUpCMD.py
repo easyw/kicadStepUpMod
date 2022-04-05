@@ -1169,6 +1169,9 @@ class ksuToolsPushPCB:
                 s = sel[0].Shape
                 sk = Draft.make_sketch(s.Edges, autoconstraints=True)
                 sk_obj = FreeCAD.ActiveDocument.ActiveObject
+                # tol = 0.0001
+                # constr = 'coincident'
+                # add_constraints(sk_obj.Name, tol, constr)
                 # FreeCAD.ActiveDocument.recompute(None,True,True)
                 FreeCADGui.Selection.clearSelection()
                 FreeCADGui.Selection.addSelection(sk_obj)
