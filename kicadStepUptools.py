@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.4.3"
+___ver___ = "10.4.4"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -12390,31 +12390,35 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                     #if p.drill.oval:  #maui temp workaround errorchecking
                         #sayw(str(p.drill.oval))
                         #sayw('drill oval')
-                        if p.drill[0] >= min_drill_size or p.drill[1] >= min_drill_size:
-                            xs=p.at[0]+m.at[0];ys=-p.at[1]-m.at[1]
-                            #x1=mc.end[0]+m.at[0];y1=-mc.end[1]-m.at[1]
-                            #radius = float(p.drill[0])/2 #sqrt((xs - x1) ** 2 + (ys - y1) ** 2)
-                            rx=float(p.drill[0])
-                            #print (p.drill)
-                            if len(p.drill)>2:
-                                try:
-                                    #print (p.drill[1])
-                                    #stop
-                                    ry=float(p.drill[1])
-                                except:
+                        # print (str(p.drill).split(','))
+                        try:
+                            if p.drill[0] >= min_drill_size or p.drill[1] >= min_drill_size:
+                                xs=p.at[0]+m.at[0];ys=-p.at[1]-m.at[1]
+                                #x1=mc.end[0]+m.at[0];y1=-mc.end[1]-m.at[1]
+                                #radius = float(p.drill[0])/2 #sqrt((xs - x1) ** 2 + (ys - y1) ** 2)
+                                rx=float(p.drill[0])
+                                #print (p.drill)
+                                if len(p.drill)>2:
+                                    try:
+                                        #print (p.drill[1])
+                                        #stop
+                                        ry=float(p.drill[1])
+                                    except:
+                                        ry=rx
+                                else:
                                     ry=rx
-                            else:
-                                ry=rx
-                            #print(p.at[0],p.at[1], p.drill[0])
-                            [x1, y1] = rotPoint2([xs, ys], [m.at[0], -m.at[1]], m_angle)
-                            #sayw('holes solid '+str(holes_solid))
-                            if holes_solid:
-                                obj=createHole3(x1,y1,rx,ry,"oval",totalHeight) #need to be separated instructions   
-                            else:
-                                obj=createHole4(x1,y1,rx,ry,"oval") #need to be separated instructions   
-                            if p_angle!=0:
-                                rotateObj(obj, [x1, y1, p_angle])
-                            HoleList.append(obj)
+                                #print(p.at[0],p.at[1], p.drill[0])
+                                [x1, y1] = rotPoint2([xs, ys], [m.at[0], -m.at[1]], m_angle)
+                                #sayw('holes solid '+str(holes_solid))
+                                if holes_solid:
+                                    obj=createHole3(x1,y1,rx,ry,"oval",totalHeight) #need to be separated instructions   
+                                else:
+                                    obj=createHole4(x1,y1,rx,ry,"oval") #need to be separated instructions   
+                                if p_angle!=0:
+                                    rotateObj(obj, [x1, y1, p_angle])
+                                HoleList.append(obj)
+                        except:
+                            sayw('missing drill value on pad for module '+str(m.fp_text[0][1])) 
                     #elif p.drill[0]!=0: #circle drill hole
                     else:
                         try: # [0] >= min_drill_size: #isinstance(p.drill,list):
