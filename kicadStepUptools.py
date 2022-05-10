@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.4.4"
+___ver___ = "10.4.5"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -16012,7 +16012,7 @@ def PullMoved():
                                         #ts = s.Label[s.Label.rfind('_')+1:]
                                         nMd = 0
                                         #print('nbrModel = 0')
-                                    #print(ts);stop
+                                    #print('timestamp',ts,'numModel',nMd)
                                     content = pull3D2dsn(s,mymodels,ts,nMd,gof,pcbThickness)
                                 #else:
                                 #    msg="""select only 3D model(s) to be updated/pulled from kicad board!<br><b>a TimeSTamp is required!</b>"""
@@ -20604,8 +20604,9 @@ def pull3D2dsn(s,mdls,tsp,nMd,gof,pcbThickness):
             #print('nbrModel = 0')
     idxF=-1
     for i,mdl in enumerate (mdls):
+        #print (mdl,nMd)
         #print(mdl[10],':', mdl[12]-1,':',nMd)
-        if tsp in mdl[10] and mdl[12]-1 == nMd:
+        if tsp in str(mdl[10]) and mdl[12]-1 == nMd:
             #print('FOUND',mdl[10],':', mdl[12],':',nMd)
             #if nMd == mdl[12]:
             idxF=i
