@@ -10,13 +10,13 @@
 #*  Kicad STEPUP (TM) is a TradeMark and cannot be freely usable            *
 #*                                                                          *
 
-ksu_wb_version='v 10.12.1'
+ksu_wb_version='v 10.12.2'
 global myurlKWB, ksuWBpath
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=526 # v10.12.0
+mycommitsKWB=527 # v10.12.0
 global verKSU
-verKSU="10.4.5"
+verKSU="10.4.6"
 
 import FreeCAD, FreeCADGui, Part, os, sys
 import re, time
@@ -151,7 +151,7 @@ class KiCadStepUpWB ( Workbench ):
         self.appendToolbar("ksu Tools", ["ksuToolsEditPrefs","ksuTools","ksuToolsOpenBoard","ksuToolsLoadFootprint",\
                            "ksuToolsExportModel","ksuToolsPushPCB","ksuToolsFootprintGen","Separator","ksuToolsAddTracks","ksuToolsAddSilks","Separator",\
                            "ksuToolsCollisions","ksuToolsImport3DStep","ksuToolsExport3DStep","ksuToolsMakeUnion",\
-                           "ksuToolsMakeCompound", "ksuToolsUnion", "ksuToolsSimpleCopy", "ksuToolsDeepCopy", "ksuToolsColoredClone", "ksuToolsCheckSolid"])
+                           "ksuToolsMakeCompound", "ksuToolsUnion", "ksuToolsSimpleCopy", "ksuToolsDeepCopy", "ksuToolsColoredClone", "ksuToolsColoredBinder", "ksuToolsCheckSolid"])
                            #, "ksuToolsPushMoved","ksuToolsSync3DModels"])
         self.appendToolbar("ksu Sketching", ["ksuTools3D2D", "ksuTools2D2Sketch", "ksuTools2DtoFace",\
                            "ksuToolsLoopSelection","ksuToolsEdges2Sketch","ksuToolsMoveSketch","ksuToolsOffset2D","ksuToolsExtrude","ksuToolsMergeSketches",\

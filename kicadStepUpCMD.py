@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.1.7'
+ksuCMD_version__='2.1.8'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -2408,6 +2408,81 @@ class ksuToolsColoredClone:
             FreeCAD.Console.PrintWarning("Select one object with Shape to be cloned!\n")             
 
 FreeCADGui.addCommand('ksuToolsColoredClone',ksuToolsColoredClone())
+
+####
+class ksuToolsColoredBinder:
+    "ksu tools colored Binder object"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'SubShapeBinderYlw.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksu Colored Binder" ,
+                     'ToolTip' : "Colored Binder object"}
+ 
+    def IsActive(self):
+        return True
+ 
+    def Activated(self):
+        # do something here...
+        if FreeCADGui.Selection.getSelection():
+            sel=FreeCADGui.Selection.getSelection()
+            def mk_str(input):
+                if (sys.version_info > (3, 0)):  #py3
+                    if isinstance(input, str):
+                        return input
+                    else:
+                        input =  input.encode('utf-8')
+                        return input
+                else:  #py2
+                    if type(input) == unicode:
+                        input =  input.encode('utf-8')
+                        return input
+                    else:
+                        return input
+            if len(sel) != 1:
+                    msg="Select one object with Shape to be colored Binded!\n"
+                    reply = QtGui.QMessageBox.information(None,"Warning", msg)
+                    FreeCAD.Console.PrintWarning(msg)             
+            else: #sel[0].TypeId != 'PartDesign::Body'):
+            
+                obj_tocopy=sel[0]
+                cp_label=mk_str(obj_tocopy.Label)+u'_bnd'
+                
+                if hasattr(FreeCAD.ActiveDocument.getObject(obj_tocopy.Name), "Shape"):
+                    newObj = FreeCAD.ActiveDocument.addObject('PartDesign::SubShapeBinder',obj_tocopy.Name)
+                    newObj.Support = [obj_tocopy]
+                    FreeCADGui.ActiveDocument.getObject(newObj.Name).DrawStyle = u"Dashed"
+                    FreeCADGui.ActiveDocument.getObject(newObj.Name).DisplayMode = u"Wireframe"
+                    FreeCAD.ActiveDocument.recompute()
+                    newObj.Label=cp_label
+                    if hasattr(FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name),'ShapeColor'):# and ('Origin' not in FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).TypeId):
+                        # if 'LinkView' in dir(FreeCADGui):
+                        #     FreeCAD.ActiveDocument.ActiveObject.ViewObject.ShapeColor=getattr(FreeCAD.ActiveDocument.getObject(obj_tocopy.Name).getLinkedObject(True).ViewObject,'ShapeColor',FreeCAD.ActiveDocument.getObject(obj_tocopy.Name).ViewObject.ShapeColor)
+                        #     FreeCAD.ActiveDocument.ActiveObject.ViewObject.LineColor=getattr(FreeCAD.ActiveDocument.getObject(obj_tocopy.Name).getLinkedObject(True).ViewObject,'LineColor',FreeCAD.ActiveDocument.getObject(obj_tocopy.Name).ViewObject.LineColor)
+                        #else:
+                        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).ShapeColor
+                        if hasattr(FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name),'LineColor'):
+                            FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).LineColor
+                            FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).PointColor
+                        if hasattr(FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name),'DiffuseColor'):
+                            FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).DiffuseColor
+                        if hasattr(FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name),'Transparency'):
+                            FreeCADGui.ActiveDocument.ActiveObject.Transparency=FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).Transparency
+                        else:
+                            FreeCADGui.ActiveDocument.ActiveObject.Transparency=60
+                    else:
+                        FreeCAD.Console.PrintWarning('missing copy of color attributes')
+                    if hasattr(FreeCAD.ActiveDocument.getObject(obj_tocopy.Name), "getGlobalPlacement"):
+                        newObj.Placement = FreeCAD.ActiveDocument.getObject(obj_tocopy.Name).getGlobalPlacement()
+                FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).Visibility = False
+                    #FreeCAD.ActiveDocument.recompute()
+                #else:
+                #    FreeCAD.Console.PrintWarning("Select object with a \"Shape\" to be copied!\n")             
+        else:
+            #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
+            reply = QtGui.QMessageBox.information(None,"Warning", "Select one object with Shape to be cloned!")
+            FreeCAD.Console.PrintWarning("Select one object with Shape to be cloned!\n")             
+
+FreeCADGui.addCommand('ksuToolsColoredBinder',ksuToolsColoredBinder())
 
 ####
 class ksuToolsUnion:
