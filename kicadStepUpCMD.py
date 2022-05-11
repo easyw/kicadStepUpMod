@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.1.8'
+ksuCMD_version__='2.1.9'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -2439,7 +2439,7 @@ class ksuToolsColoredBinder:
                     else:
                         return input
             if len(sel) != 1:
-                    msg="Select one object with Shape to be colored Binded!\n"
+                    msg="Select one object with Shape to generate a colored Binder!\n"
                     reply = QtGui.QMessageBox.information(None,"Warning", msg)
                     FreeCAD.Console.PrintWarning(msg)             
             else: #sel[0].TypeId != 'PartDesign::Body'):
@@ -2479,8 +2479,8 @@ class ksuToolsColoredBinder:
                 #    FreeCAD.Console.PrintWarning("Select object with a \"Shape\" to be copied!\n")             
         else:
             #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
-            reply = QtGui.QMessageBox.information(None,"Warning", "Select one object with Shape to be cloned!")
-            FreeCAD.Console.PrintWarning("Select one object with Shape to be cloned!\n")             
+            reply = QtGui.QMessageBox.information(None,"Warning", "Select one object with Shape to generate a colored Binder!")
+            FreeCAD.Console.PrintWarning("Select one object with Shape to generate a colored Binder!\n")             
 
 FreeCADGui.addCommand('ksuToolsColoredBinder',ksuToolsColoredBinder())
 
