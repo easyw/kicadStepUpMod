@@ -38,7 +38,7 @@ StepUp Cheat sheet
 
 ### Requirements
 
-- **FreeCAD** **0.17 >= 11707**, **0.18**, **0.19**, **0.20**
+- **FreeCAD** **0.17 >= 11707**, **0.18**, **0.19**, **0.20**, **0.21**
 
 - **KiCAD** **5.1**, **6.x**, **7 nigthly** (partially supported)
 

@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.4.5"
+___ver___ = "10.4.7"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -20255,8 +20255,11 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                     #print offset
                     #say(offset)
                     #stop
-                    say('pcb edge exists')
-                    sayw('removing old Edge '+ssklayer)
+                    if ssklayer == 'Edge':
+                        say('pcb edge exists')
+                        sayw('removing old Edge '+ssklayer)
+                    else:
+                        sayw('removing existing drawings '+ssklayer)
                     ## removing old Edge
                     repl = re.sub('\s\(gr_line(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_line(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_line(.+?)'+ssklayer+'(.+?)\)\)\n','',data, flags=re.MULTILINE)
                     repl = re.sub('\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE)
@@ -20427,7 +20430,10 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                 msg="""<b>new KeepOutZone pushed to kicad board!</b><br>Edit the properties of the new KeepOutZone in pcbnew<br>"""
             msg+="<b>file saved to<br>"+fpath+"</b><br><br>"
             msg+="<i>backup file saved to<br>"+foname+"</i><br>"
-            msgr="new Edge pushed to kicad board!\n"
+            if ssklayer == 'Edge':
+                msgr="new Edge pushed to kicad board!\n"
+            else:
+                msgr="new "+ssklayer+" pushed to kicad board!\n"
             msgr+="file saved to "+fpath+"\n"
             msgr+="backup file saved to "+foname
             lns=len (not_supported) 
