@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.1.9'
+ksuCMD_version__='2.2.0'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -2483,6 +2483,53 @@ class ksuToolsColoredBinder:
             FreeCAD.Console.PrintWarning("Select one object with Shape to generate a colored Binder!\n")             
 
 FreeCADGui.addCommand('ksuToolsColoredBinder',ksuToolsColoredBinder())
+
+####
+####
+class ksuToolsReLinkBinder:
+    "ksu tools Relink Binder object"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'SubShapeBinderRelink.svg') , # the name of a svg file available in the resources
+                     'MenuText': "ksu Relink Binder" ,
+                     'ToolTip' : "Relink Binder object"}
+ 
+    def IsActive(self):
+        return True
+ 
+    def Activated(self):
+        # do something here...
+        if FreeCADGui.Selection.getSelection():
+            sel=FreeCADGui.Selection.getSelection()
+            def mk_str(input):
+                if (sys.version_info > (3, 0)):  #py3
+                    if isinstance(input, str):
+                        return input
+                    else:
+                        input =  input.encode('utf-8')
+                        return input
+                else:  #py2
+                    if type(input) == unicode:
+                        input =  input.encode('utf-8')
+                        return input
+                    else:
+                        return input
+            if len(sel) != 2:
+                    msg="Select the Binder and one object with Shape to ReLink the Binder!\n"
+                    reply = QtGui.QMessageBox.information(None,"Warning", msg)
+                    FreeCAD.Console.PrintWarning(msg)             
+            else: #sel[0].TypeId != 'PartDesign::Body'):
+            
+                binder=sel[0]
+                obj2link = sel[1]
+                if binder.TypeId == 'PartDesign::SubShapeBinder' and hasattr(obj2link, "Shape"):
+                    binder.Support = [obj2link]
+        else:
+            #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
+            reply = QtGui.QMessageBox.information(None,"Warning", "Select the Binder and one object with Shape to ReLink the Binder!")
+            FreeCAD.Console.PrintWarning("Select the Binder and one object with Shape to ReLink the Binder!\n")             
+
+FreeCADGui.addCommand('ksuToolsReLinkBinder',ksuToolsReLinkBinder())
 
 ####
 class ksuToolsUnion:
