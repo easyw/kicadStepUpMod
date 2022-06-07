@@ -10,7 +10,7 @@
 
   <content>
     <workbench>
-      <classname>KicadStepUp Workbench</classname>
+      <classname>KiCadStepUpWB</classname>
       <subdirectory>./</subdirectory>
       <freecadmin>0.17.0</freecadmin>
       <tag>kicad</tag>
