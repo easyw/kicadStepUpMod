@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.4.7"
+___ver___ = "10.5.0"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -4317,7 +4317,9 @@ def Load_models(pcbThickness,modules):
     botV_name='BotV'+fname_sfx
     stepM_name='Step_Models'+fname_sfx
     stepV_name='Step_Virtual_Models'+fname_sfx
-                            
+    
+    my_hide_list=""
+
     for i in range(len(modules)):
         step_module=modules[i][0]
         module_container = step_module
@@ -4521,6 +4523,7 @@ def Load_models(pcbThickness,modules):
             if blacklisted_model_elements.find(model_name) != -1:
                 blacklisted=1
         ###
+
         if (blacklisted==0):
             if step_module != 'no3Dmodel':
                 createScaledObjs=False
@@ -4756,6 +4759,12 @@ def Load_models(pcbThickness,modules):
                     wrl_pos=pos_vrml
                     #sayerr(wrl_pos);sayw(float(wrl_pos[0]));stop
                     isVirtual=modules[i][9]
+                    isHidden=modules[i][13]
+                    if (isHidden):
+                        md_hide=True
+                    else:
+                        md_hide=False
+                    
                     #if show_debug:
                     #    sayw(wrl_rot)
                     #    sayerr(modules[i])
@@ -4859,6 +4868,14 @@ def Load_models(pcbThickness,modules):
                         obj=FreeCAD.ActiveDocument.ActiveObject
                         #volume_minimum=1
                         myPart=FreeCAD.ActiveDocument.getObject(obj.Name)   #mauitemp min vol
+                        if md_hide:
+                            myPart.ViewObject.Visibility=False
+                            # myPart.ViewObject.Transparency=70
+                            sayerr('hiding '+myPart.Label)
+                            my_hide_list+=myPart.Label+'\r\n'
+                        #else:
+                        #    myPart.ViewObject.Transparency=0
+                            # sayerr('hiding '+myPart.Label)
                         #sayw(obj.Label)
                         #sayw(step_layer);
                         #sayw(str(myPart.Shape.Volume))
@@ -5167,7 +5184,19 @@ def Load_models(pcbThickness,modules):
         print('TreeView Test collapsing 2 step 2')
     else:
         pass
-    #stop
+    #print (my_hide_list)
+    if my_hide_list != "":
+        n_rpt_max=10
+        sayw(str(len(my_hide_list.split('\r\n'))-1)+" model[s] hidden")
+        sayw(str(my_hide_list.split('\r\n')[:-1]))
+        my_hide_res = []
+        my_hide_res = my_hide_list.split('\r\n')
+        wmsg="""... model[s] hidden<br>"""
+        for i in range(min(len (my_hide_res),n_rpt_max)):
+            wmsg=wmsg+my_hide_res[i]+'<br>'
+        QtGui.QApplication.restoreOverrideCursor()
+        reply = QtGui.QMessageBox.information(None,"Warning ...",wmsg+'<b><font color=blue>. . . '+str(len(my_hide_res)-1)+' model[s] hidden</font></b>' )
+        
     if missing_models != '':
         last_pcb_path_local = re.sub("\\\\", "/", last_pcb_path)
         last_pcb_path_local_U = make_unicode(last_pcb_path_local)
@@ -5206,66 +5235,6 @@ def Load_models(pcbThickness,modules):
     #    #FreeCAD.Console.PrintMessage("black-listed module "+ '\n'.join(map(str, blacklisted_models)))
     return blacklisted_model_elements
 ###
-
-def LoadKicadBoard (board_fname):
-    # checking FC version requirement
-    ######################################################################
-    #say("FC Version ")
-    #say(FreeCAD.Version())
-    global start_time, fusion, FC_export_min_version, use_AppPart, force_oldGroups, use_Links, use_LinkGroups
-    FC_majorV,FC_minorV,FC_git_Nbr=getFCversion()
-    #FC_majorV=FreeCAD.Version()[0]
-    #FC_minorV=FreeCAD.Version()[1]
-    ##FC_majorV=int(FreeCAD.Version()[0])
-    ##FC_minorV=int(FreeCAD.Version()[1])
-    #try:
-    #    FC_git_Nbr=int(FreeCAD.Version()[2].strip(" (Git)"))
-    #except:
-    #    FC_git_Nbr=0
-    #FC_git_Nbr=(FreeCAD.Version()[2].strip(" (Git)"))
-    sayw('FC Version '+str(FC_majorV)+str(FC_minorV)+"-"+str(FC_git_Nbr))   
-    msg1="use ONLY FreeCAD STABLE version 0.15 or later\r\n"
-    #msg1+="to generate your STEP and VRML models\r\nFC 016 dev version results are still unpredictable"
-    msg1+="to generate your STEP and VRML models\r\n"
-    if int(FC_majorV) <= 0:
-        if int(FC_minorV) < 15:
-            QtGui.QApplication.restoreOverrideCursor()
-            reply = QtGui.QMessageBox.information(None,"Warning! ...",msg1)    
-    msg=''
-    if FC_majorV == 0 and FC_minorV == 17:
-        if FC_git_Nbr >= int(FC_export_min_version):
-            use_AppPart=True
-    if FC_majorV > 0:
-        use_AppPart=True
-    if FC_majorV == 0 and FC_minorV > 17:
-        if FC_git_Nbr >= int(FC_export_min_version):
-            use_AppPart=True
-    if use_AppPart and not force_oldGroups:
-        sayw("creating hierarchy")
-    if (fusion==True):
-        msg+="you have chosen: fuse modules to board\r\nbe careful ... fusion can be heavy or generate FC crash"
-        msg+="when fusing a lot of objects\r\nplease consider to use bbox or blacklist small objects\r\n\r\n"    
-    ##start_time=current_milli_time()
-    xMax=0; xmin=0; yMax=0; ymin=0
-    Levels = {}
-    Edge_Cuts_lvl=0;Top_lvl=0
-    Kicad_Board_elaborated,Levels,Edge_Cuts_lvl,Top_lvl,PCBVersion,pcbThickness = Elaborate_Kicad_Board(board_fname)
-    say('PCBThickness '+str(pcbThickness)+' mm')
-    modules = []
-    #sayw(str(Top_lvl)+' top_lvl')
-    #stop
-    ##modules = getParts(modules,Top_lvl,Kicad_Board_elaborated,Levels)
-    modules,mod_lines,mod_arcs,mod_circles = getParts(modules,Top_lvl,Kicad_Board_elaborated,Levels,edges_on_footprint=True)
-    #sayw(len(mod_lines));sayw(mod_lines)
-    #stop
-    #pads=[]
-    #for i in range(len(modules)):
-    #    for j in range(len(modules[i])):
-    #        #say (len(modules[i]))
-    #        say(modules[i][j])
-    #return pcbThickness,modules,Kicad_Board_elaborated
-    return pcbThickness,modules,Kicad_Board_elaborated,mod_lines,mod_arcs,mod_circles
-### end LoadKicadBoard
 
 def getPads(board_elab,pcbThickness):
     # pad
@@ -5605,182 +5574,6 @@ def get3DParams (mdl_name,params,rot, virtual):
             #sayerr('no3Dmodel')
     return model_name, rot_comb, warn, pos_vrml, rotz_vrml, scale_vrml
 ###
-
-def getParts(PCB_Models,Top_lvl,Kicad_Board_elaborated,Levels,edges_on_footprint = None):
-    global addVirtual
-    PCB_Models = []
-    mod_lines =[];mod_arcs=[];mod_circles=[]
-    #for i in re.findall(r'\[start\]\(module(.+?)\)\[stop\]', Kicad_Board_elaborated, re.MULTILINE|re.DOTALL):
-    for i in re.findall(r'\[start\]\(module(.+?)\)\[stop\]', Kicad_Board_elaborated, re.MULTILINE|re.DOTALL):
-        ### say(i)
-        [x, y, rot] = re.search(r'\(at\s+([0-9\.-]*?)\s+([0-9\.-]*?)(\s+[0-9\.-]*?|)\)', i).groups()
-        layer = re.search(r'\(layer\s+(.+?)\)', i).groups()[0]
-        x = float(x)
-        y = float(y) * (-1)
-        if rot == '':
-            rot = 0.0
-        else:
-            rot = float(rot)
-        #rot=rot-rotz  not here #adding vrml module z-rotation  
-        #say (str(Levels[layer])+"-"+str(Top_lvl))
-        #sayerr(i+str(rot))
-        rotF = rot
-        if Levels[layer] == Top_lvl:  # top
-            side = "Top"
-        else:
-            side = "Bottom"
-            rot *= -1 ##bottom 3d model rotation
-        # line
-        for e in getLineF('Edge.Cuts', i, 'fp_line', [x, y]):
-            #say (e)
-        ##for i in getLine('F.SilkS', content, 'fp_line'):
-            [x1, y1] = rotPoint2([e[0],e[1]], [x, y], rotF)
-            [x2, y2] = rotPoint2([e[2],e[3]], [x, y], rotF)
-            #if side == 0:
-                #y1 = self.odbijWspolrzedne(y1, Y1)
-                #y2 = self.odbijWspolrzedne(y2, Y1)
-            mod_lines.append (['Line', x1, y1, x2, y2])
-            ##PCB.append(['Line', x1, y1, x2, y2])
-        #sayw (mod_lines)
-        #stop
-        for e in getArcF('Edge.Cuts', i, 'fp_arc', [x, y]):
-        ##for i in getLine('F.SilkS', content, 'fp_line'):
-            [x1, y1] = rotPoint2([e[0],e[1]], [x, y], rotF)
-            [x2, y2] = rotPoint2([e[2],e[3]], [x, y], rotF)
-            curve = e[4]
-            #if side == 0:
-                #y1 = self.odbijWspolrzedne(y1, Y1)
-                #y2 = self.odbijWspolrzedne(y2, Y1)
-            mod_arcs.append (['Arc', x1, y1, x2, y2, curve])
-            ##PCB.append(['Arc', x1, y1, x2, y2, curve])
-        for e in getCircleF('Edge.Cuts', i, 'fp_circle', [x,y]):
-            #sayw (e)
-            #stop
-            [x1, y1] = rotPoint2([e[0], e[1]], [x, y], rotF)
-            mod_circles.append (['Circle', x1, y1, e[2]])
-            #PCB.append(['Circle', x, y, i['r']])
-        #model = re.search(r'\(model\s+(.+?)\.wrl',i)
-        model_name='no3Dmodel'
-        ## looking for 3d models assigned to footprint i = list of all fp details
-        #side='noLayer'
-        #if show_debug:
-            #m_list= re.findall(r'((.|\n)*)\(model\s+(.+?)\)',i)
-            #    for module in re.findall(r'\[start\]\(module(.+?)\)\[stop\]', board_elab, re.MULTILINE|re.DOTALL):
-            #m_list= re.findall(r'\(model(.+?)\)\)', i, re.MULTILINE|re.DOTALL)
-            #m_list= re.findall(r'\(model(.+?)\)\)(.+?)\)', i, re.MULTILINE|re.DOTALL)
-            #m_list= re.findall(r'\(model(.+?)\(rotate\s+(.+?)\)\)(.+?)\)', i, re.MULTILINE|re.DOTALL)
-        virtual=0
-        if (i.find("virtual")!=-1):
-            virtual=1
-
-        m_list= re.findall(r'\(model\s(.+?)\)\)\s+\)', i, re.MULTILINE|re.DOTALL)
-            ## m_list is a list of single 3D model with parameters 
-        #if show_debug:
-        #    sayw(i)  #model description
-        #    sayerr (m_list) # 3d model parameters
-            #stop
-        
-        model_list=[]
-        for params in m_list:
-            #warn=''
-            mdl_name=re.findall(r'(.+?)\.wrl',params)
-            #if virtual == 1:
-            #    sayerr("virtual model(s)");sayw(mdl_name)
-            # sayw(mdl_name)
-            # sayerr(params)
-            if len(mdl_name) > 0:
-                    model_name, rot_comb, warn, pos_vrml, rotz_vrml, scale_vrml = get3DParams(mdl_name,params, rot, virtual)
-                    line = []
-                    line.append(model_name)
-                    line.append(x)
-                    line.append(y)
-                    line.append(rot_comb)
-                    line.append(side)
-                    line.append(warn)
-                    line.append(pos_vrml)
-                    line.append(rotz_vrml)
-                    #sayerr(rotz_vrml)
-                    line.append(scale_vrml)
-                    line.append(virtual)
-                    PCB_Models.append(line)
-            mdl_name=re.findall(r'(.+?)\.step',params, re.IGNORECASE)
-            #mdl_name=re.findall(r'\(model\s+(.+?)\.step',params, re.IGNORECASE)
-            #     model_list2 =re.findall(r'\(model\s+(.+?)\.step',i, re.IGNORECASE)
-            if len(mdl_name) > 0:
-                    model_name, rot_comb, warn, pos_vrml, rotz_vrml, scale_vrml = get3DParams(mdl_name,params, rot, virtual)
-                    line = []
-                    line.append(model_name)
-                    line.append(x)
-                    line.append(y)
-                    line.append(rot_comb)
-                    line.append(side)
-                    line.append(warn)
-                    line.append(pos_vrml)
-                    line.append(rotz_vrml)
-                    #sayerr(rotz_vrml)
-                    line.append(scale_vrml)              
-                    line.append(virtual)
-                    PCB_Models.append(line)
-            mdl_name=re.findall(r'(.+?)\.stp',params, re.IGNORECASE)
-            #     model_list3 =re.findall(r'\(model\s+(.+?)\.stp',i, re.IGNORECASE)
-            if len(mdl_name) > 0:
-                    model_name, rot_comb, warn, pos_vrml, rotz_vrml, scale_vrml = get3DParams(mdl_name,params, rot, virtual)
-                    line = []
-                    line.append(model_name)
-                    line.append(x)
-                    line.append(y)
-                    line.append(rot_comb)
-                    line.append(side)
-                    line.append(warn)
-                    line.append(pos_vrml)
-                    line.append(rotz_vrml)
-                    #sayerr(rotz_vrml)
-                    line.append(scale_vrml)              
-                    line.append(virtual)
-                    PCB_Models.append(line)
-            mdl_name=re.findall(r'(.+?)\.iges',params, re.IGNORECASE)
-            #     model_list4 =re.findall(r'\(model\s+(.+?)\.iges',i, re.IGNORECASE)
-            if len(mdl_name) > 0:
-                    model_name, rot_comb, warn, pos_vrml, rotz_vrml, scale_vrml = get3DParams(mdl_name,params, rot, virtual)
-                    line = []
-                    line.append(model_name)
-                    line.append(x)
-                    line.append(y)
-                    line.append(rot_comb)
-                    line.append(side)
-                    line.append(warn)
-                    line.append(pos_vrml)
-                    line.append(rotz_vrml)
-                    #sayerr(rotz_vrml)
-                    line.append(scale_vrml)              
-                    line.append(virtual)
-                    PCB_Models.append(line)
-            mdl_name=re.findall(r'(.+?)\.igs',params, re.IGNORECASE)
-            #     model_list4 =re.findall(r'\(model\s+(.+?)\.igs',i, re.IGNORECASE)
-            if len(mdl_name) > 0:
-                    model_name, rot_comb, warn, pos_vrml, rotz_vrml, scale_vrml = get3DParams(mdl_name,params, rot, virtual)
-                    line = []
-                    line.append(model_name)
-                    line.append(x)
-                    line.append(y)
-                    line.append(rot_comb)
-                    line.append(side)
-                    line.append(warn)
-                    line.append(pos_vrml)
-                    line.append(rotz_vrml)
-                    #sayerr(rotz_vrml)
-                    line.append(scale_vrml)              
-                    line.append(virtual)
-                    PCB_Models.append(line)
-        ##virtual = re.search(r'\(attr\s+(.+?)virtual\)',i)
-    ####
-    # say( i )
-    # say( PCB_EL )
-    if edges_on_footprint:
-        return PCB_Models,mod_lines,mod_arcs,mod_circles
-    else:
-        return PCB_Models
-### end getParts
 
 def getPCBThickness(Board):
     #say(len(Kicad_Board))
@@ -12247,7 +12040,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                 #sayw('bot ' + m.layer)
     
             n_md=1
-            for md in m.model:
+            for md in m.model: #parsing 3d model(s)
                 #say (md[0]) #model name
                 #say(md.at.xyz)
                 #say(md.scale.xyz)
@@ -12272,6 +12065,11 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                 else: #py3
                     model=md[0] # py3 .decode("utf-8")
                 #print (model, ' MODEL', type(model)) #maui test py3
+                md_hide = False
+                if len(md) >4: #hide attribute on 3d model
+                    if md[1] == 'hide':
+                        md_hide = True
+                        #print(md[0],'hidden')
                 if (virtual==1 and addVirtual==0):
                     model_name='no3Dmodel'
                     side='noLayer'
@@ -12333,6 +12131,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                             line.append('null')
                         line.append(m.fp_text[0][1]) #fp reference
                         line.append(n_md) #number of models in module
+                        line.append(md_hide)
                         PCB_Models.append(line)
                         n_md+=1
         
@@ -15636,11 +15435,17 @@ def PushMoved():
                                 #    sayerr(msg)
                                 #    say_warning(msg)
                         newcontent=u''.join(content)
-                        pcbTracks=re.findall('\s\(tracks(\s.+?)\)',data, re.MULTILINE|re.DOTALL)
-                        found_tracks=False
-                        if len(pcbTracks)>0:
-                            if (float(pcbTracks[0])) > 0:
-                                found_tracks=True
+                        #pcbTracks=re.findall('\s\(tracks(\s.+?)\)',data, re.MULTILINE|re.DOTALL)
+                        found_tracks=True
+                        if 0: # forcing found tracks to true 'cause kicad 6 doesn't write it anymore inside the file
+                            pcbTracks=re.findall('\s\(tracks(\s.+?)\)',data, re.MULTILINE|re.DOTALL)
+                            found_tracks=False
+                            if len(pcbTracks)>0:
+                                try:
+                                    if (float(pcbTracks[0])) > 0:
+                                        found_tracks=True
+                                except:
+                                    found_tracks=True
                         with codecs.open(fpath,'w', encoding='utf-8') as ofile:
                             ofile.write(newcontent)
                             ofile.close()        
@@ -15648,7 +15453,7 @@ def PushMoved():
                         say('pushed '+str(mdp)+' model(s)')
                         msg="""<b>3D model new position(s) pushed to kicad board!</b><br>["""+str(mdp)+""" model(s) updated]<br><br>"""
                         if found_tracks:
-                            msg+="<font color='red'><b>tracks found!<br></b>you will need to fix your routing!</font><br><br>"
+                            msg+="<font color='blue'><b>in caso of tracks<br></b>you will need to fix your routing!</font><br><br>"
                         msg+="<b>file saved to<br>"+fpath+"</b><br><br>"
                         msg+="<i>backup file saved to<br>"+foname+"</i><br>"
                         msgr="3D model new position pushed to kicad board!\n"
