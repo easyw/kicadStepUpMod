@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.2.0'
+ksuCMD_version__='2.2.1'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -748,8 +748,8 @@ class ksuToolsMoveSketch:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Sketcher_Move.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Move Sketch" ,
-                     'ToolTip' : "Move 2D Sketch"}
+                     'MenuText': "Move Sketch" ,
+                     'ToolTip' : "ksu Move 2D Sketch"}
  
     def IsActive(self):
         sel = FreeCADGui.Selection.getSelection()
@@ -800,8 +800,8 @@ class ksuToolsOffset2D:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Offset2D.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Offset 2D" ,
-                     'ToolTip' : "Offset 2D object"}
+                     'MenuText': "Offset 2D" ,
+                     'ToolTip' : "ksu Offset 2D object"}
  
     def IsActive(self):
         sel = FreeCADGui.Selection.getSelection()
@@ -904,8 +904,8 @@ class ksuToolsOpenBoard:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'importBoard.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Load Board" ,
-                     'ToolTip' : "Load KiCad PCB Board and Parts"}
+                     'MenuText': "Load Board" ,
+                     'ToolTip' : "ksu Load KiCad PCB Board and Parts"}
  
     def IsActive(self):
         #if FreeCAD.ActiveDocument == None:
@@ -940,8 +940,8 @@ class ksuToolsLoadFootprint:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'importFP.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Load FootPrint" ,
-                     'ToolTip' : "Load KiCad PCB FootPrint"}
+                     'MenuText': "Load FootPrint" ,
+                     'ToolTip' : "ksu Load KiCad PCB FootPrint"}
  
     def IsActive(self):
         #if FreeCAD.ActiveDocument == None:
@@ -972,8 +972,8 @@ class ksuToolsExportModel:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'export3DModel.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Export 3D Model" ,
-                     'ToolTip' : "Export 3D Model to KiCad"}
+                     'MenuText': "Export 3D Model" ,
+                     'ToolTip' : "ksu Export 3D Model to KiCad"}
  
     def IsActive(self):
         #if FreeCAD.ActiveDocument == None:
@@ -1021,8 +1021,8 @@ class ksuToolsImport3DStep:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'add_block_y.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Import 3D Step" ,
-                     'ToolTip' : "Import 3D Step Model"}
+                     'MenuText': "Import 3D Step" ,
+                     'ToolTip' : "ksu Import 3D Step Model"}
  
     def IsActive(self):
         #if FreeCAD.ActiveDocument == None:
@@ -1051,8 +1051,8 @@ class ksuToolsExport3DStep:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'export3DStep.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Export 3D to Step" ,
-                     'ToolTip' : "Export selected objects to Step Model"}
+                     'MenuText': "Export 3D to Step" ,
+                     'ToolTip' : "ksu Export selected objects to Step Model"}
  
     def IsActive(self):
         #if FreeCAD.ActiveDocument == None:
@@ -1081,8 +1081,8 @@ class ksuToolsMakeUnion:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'fusion.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Make Union" ,
-                     'ToolTip' : "Make a Union of selected objects"}
+                     'MenuText': "Make Union" ,
+                     'ToolTip' : "ksu Make a Union of selected objects"}
  
     def IsActive(self):
         #if FreeCAD.ActiveDocument == None:
@@ -1111,8 +1111,8 @@ class ksuToolsMakeCompound:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'compound.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Make Compound" ,
-                     'ToolTip' : "Make a Compound of selected objects"}
+                     'MenuText': "Make Compound" ,
+                     'ToolTip' : "ksu Make a Compound of selected objects"}
  
     def IsActive(self):
         #if FreeCAD.ActiveDocument == None:
@@ -1141,8 +1141,8 @@ class ksuToolsPushPCB:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Sketcher_Rectangle.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Push Sketch to PCB" ,
-                     'ToolTip' : "Push Sketch to PCB Edge"}
+                     'MenuText': "Push Sketch to PCB" ,
+                     'ToolTip' : "ksu Push Sketch to PCB Edge"}
  
     def IsActive(self):
         #if FreeCAD.ActiveDocument == None:
@@ -1201,8 +1201,8 @@ class ksuToolsPullPCB:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Sketcher_Pull.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Pull Sketch from PCB" ,
-                     'ToolTip' : "Pull Sketch from PCB Edge"}
+                     'MenuText': "Pull Sketch from PCB" ,
+                     'ToolTip' : "ksu Pull Sketch from PCB Edge"}
  
     def IsActive(self):
         #if FreeCAD.ActiveDocument == None:
@@ -1237,8 +1237,8 @@ class ksuToolsPushMoved:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'PushMoved.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Push 3D moved model(s) to PCB" ,
-                     'ToolTip' : "Push 3D moved model(s) to PCB"}
+                     'MenuText': "Push 3D moved model(s) to PCB" ,
+                     'ToolTip' : "ksu Push 3D moved model(s) to PCB"}
  
     def IsActive(self):
         #if FreeCAD.ActiveDocument == None:
@@ -1271,8 +1271,8 @@ class ksuToolsPullMoved:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'PullMoved.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Pull 3D model(s) placement from PCB" ,
-                     'ToolTip' : "Pull 3D model(s) placement from PCB"}
+                     'MenuText': "Pull 3D model(s) placement from PCB" ,
+                     'ToolTip' : "ksu Pull 3D model(s) placement from PCB"}
  
     def IsActive(self):
         #if FreeCAD.ActiveDocument == None:
@@ -1305,8 +1305,8 @@ class ksuAsm2Part:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Assembly_To_Part.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Convert an Assembly (A3) to Part hierarchy" ,
-                     'ToolTip' : "Convert an Assembly (A3) to Part hierarchy"}
+                     'MenuText': "Convert an Assembly (A3) to Part hierarchy" ,
+                     'ToolTip' : "ksu Convert an Assembly (A3) to Part hierarchy"}
  
     def IsActive(self):
         import FreeCADGui
@@ -1441,8 +1441,8 @@ class ksuToolsSync3DModels:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Sync3Dmodels.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Sync 3D model(s) Ref & TimeStamps with PCB" ,
-                     'ToolTip' : "Sync 3D model(s) Ref & TimeStamps\nof the Selected 3D model with kicad PCB"}
+                     'MenuText': "Sync 3D model(s) Ref & TimeStamps with PCB" ,
+                     'ToolTip' : "ksu Sync 3D model(s) Ref & TimeStamps\nof the Selected 3D model with kicad PCB"}
  
     def IsActive(self):
         #if FreeCAD.ActiveDocument == None:
@@ -1476,8 +1476,8 @@ class ksuToolsGeneratePositions:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'File_Positions.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu tools Generate 3D models Positions" ,
-                     'ToolTip' : "Generate 3D models Positions\nData for Active Document\n[MCAD Synchronize]"}
+                     'MenuText': "tools Generate 3D models Positions" ,
+                     'ToolTip' : "ksu Generate 3D models Positions\nData for Active Document\n[MCAD Synchronize]"}
  
     def IsActive(self):
         if FreeCAD.ActiveDocument is None:
@@ -1503,8 +1503,8 @@ class ksuToolsComparePositions:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Compare_Positions.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu tools Compare 3D models Positions" ,
-                     'ToolTip' : "Compare 3D models Positions\nData with the Active Document\n[MCAD Synchronize]"}
+                     'MenuText': "tools Compare 3D models Positions" ,
+                     'ToolTip' : "ksu Compare 3D models Positions\nData with the Active Document\n[MCAD Synchronize]"}
  
     def IsActive(self):
         if FreeCAD.ActiveDocument is None:
@@ -1551,8 +1551,8 @@ class ksuToolsCollisions:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'collisions.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Check Collisions" ,
-                     'ToolTip' : "Check Collisions and Interferences"}
+                     'MenuText': "Check Collisions" ,
+                     'ToolTip' : "ksu Check Collisions and Interferences"}
  
     def IsActive(self):
         return True
@@ -1577,8 +1577,8 @@ class ksuTools3D2D:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , '3Dto2D.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu 3D to 2D" ,
-                     'ToolTip' : "3D object to 2D projection"}
+                     'MenuText': "3D to 2D" ,
+                     'ToolTip' : "ksu 3D object to 2D projection"}
  
     def IsActive(self):
         return True
@@ -1625,8 +1625,8 @@ class ksuToolsTurnTable:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'texture_turntable.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu TurnTable" ,
-                     'ToolTip' : "TurnTable"}
+                     'MenuText': "TurnTable" ,
+                     'ToolTip' : "ksu TurnTable"}
  
     def IsActive(self):
         if FreeCAD.ActiveDocument is None:
@@ -1687,8 +1687,8 @@ class ksuToolsConstrainator:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Sketcher_LockAll.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Constrain a Sketch" ,
-                     'ToolTip' : "Fix & auto Constrain a Sketch"}
+                     'MenuText': "Constrain a Sketch" ,
+                     'ToolTip' : "ksu Fix & auto Constrain a Sketch"}
  
     def IsActive(self):
         return True
@@ -1756,8 +1756,8 @@ class ksuToolsDiscretize:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Discretize.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Discretize" ,
-                     'ToolTip' : "Discretize a shape/outline to a Sketch"}
+                     'MenuText': "Discretize" ,
+                     'ToolTip' : "ksu Discretize a shape/outline to a Sketch"}
  
     def IsActive(self):
         return True
@@ -1795,8 +1795,8 @@ class ksuToolsEdges2Sketch:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Edges2Sketch.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Edges to Sketch" ,
-                     'ToolTip' : "Select coplanar edge(s) or Face(s) or \na single Vertex of a coplanar outline \nto get a corresponding Sketch"}
+                     'MenuText': "Edges to Sketch" ,
+                     'ToolTip' : "ksu Select coplanar edge(s) or Face(s) or \na single Vertex of a coplanar outline \nto get a corresponding Sketch"}
  
     def IsActive(self):
         sel = FreeCADGui.Selection.getSelection()
@@ -1827,8 +1827,8 @@ class ksuToolsResetPartPlacement:
     #####################################
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'resetPartPlacement.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Reset Part Placement" ,
-                     'ToolTip' : "Reset Placement for all Part containers in selection"}
+                     'MenuText': "Reset Part Placement" ,
+                     'ToolTip' : "ksu Reset Placement for all Part containers in selection"}
     def getLinkGlobalPlacement(self,ob):
         # print(ob.Name,'Link object')
         # FreeCAD.Console.PrintMessage(ob.Parents)
@@ -1888,8 +1888,8 @@ class ksuToolsResetPlacement:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'resetPlacement.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Reset Placement" ,
-                     'ToolTip' : "Reset Placement for a Shape"}
+                     'MenuText': "Reset Placement" ,
+                     'ToolTip' : "ksu Reset Placement for a Shape"}
  
     def IsActive(self):
         return True
@@ -1915,8 +1915,8 @@ class ksuTools2D2Sketch:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , '2DtoSketch.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu 2D to Sketch" ,
-                     'ToolTip' : "2D object (or DXF) to Sketch"}
+                     'MenuText': "2D to Sketch" ,
+                     'ToolTip' : "ksu 2D object (or DXF) to Sketch"}
  
     def IsActive(self):
         return True
@@ -2106,8 +2106,8 @@ class ksuTools2DtoFace:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , '2DtoFace.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu 2D to Face" ,
-                     'ToolTip' : "2D object (or DXF) to Surface for extruding"}
+                     'MenuText': "2D to Face" ,
+                     'ToolTip' : "ksu 2D object (or DXF) to Surface for extruding"}
  
     def IsActive(self):
         return True
@@ -2151,8 +2151,8 @@ class ksuToolsSimplifySketck:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'SimplifySketch.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Simplify Sketch" ,
-                     'ToolTip' : "Simplifying Sketch to Arcs and Lines"}
+                     'MenuText': "Simplify Sketch" ,
+                     'ToolTip' : "ksu Simplifying Sketch to Arcs and Lines"}
  
     def IsActive(self):
         return True
@@ -2178,8 +2178,8 @@ class ksuToolsBsplineNormalize:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Sketcher_BSplineNormalize.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Geo to Bspline" ,
-                     'ToolTip' : "Convert Geometry to Bspline for KiCAD format"}
+                     'MenuText': "Geo to Bspline" ,
+                     'ToolTip' : "ksu Convert Geometry to Bspline for KiCAD format"}
  
     def IsActive(self):
         return True
@@ -2205,8 +2205,8 @@ class ksuToolsFootprintGen:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'exportFootprint.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Footprint generator" ,
-                     'ToolTip' : "Footprint editor and exporter"}
+                     'MenuText': "Footprint generator" ,
+                     'ToolTip' : "ksu Footprint editor and exporter"}
  
     def IsActive(self):
         return True
@@ -2235,7 +2235,7 @@ class ksuToolsStepImportModeSTD:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'ImportModeSTD.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu tools disable Full STEP Import Mode" ,
+                     'MenuText': "disable Full STEP Import Mode" ,
                      'ToolTip' : "ksu tools disable Full STEP Import Mode"}
  
     def IsActive(self):
@@ -2270,7 +2270,7 @@ class ksuToolsStepImportModeComp:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'ImportModeSimplified.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu tools disable Simplified STEP Import Mode" ,
+                     'MenuText': "disable Simplified STEP Import Mode" ,
                      'ToolTip' : "ksu tools disable Simplified STEP Import Mode"}
  
     def IsActive(self):
@@ -2305,7 +2305,7 @@ class ksuToolsCopyPlacement:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Placement_Copy.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu tools Copy Placement 1st to 2nd" ,
+                     'MenuText': "Copy Placement 1st to 2nd" ,
                      'ToolTip' : "ksu tools Copy Placement 1st to 2nd"}
  
     def IsActive(self):
@@ -2346,7 +2346,7 @@ class ksuToolsColoredClone:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'CloneYlw.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Colored Clone" ,
+                     'MenuText': "Colored Clone" ,
                      'ToolTip' : "Colored Clone object"}
  
     def IsActive(self):
@@ -2415,7 +2415,7 @@ class ksuToolsColoredBinder:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'SubShapeBinderYlw.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Colored Binder" ,
+                     'MenuText': "Colored Binder" ,
                      'ToolTip' : "Colored Binder object"}
  
     def IsActive(self):
@@ -2448,8 +2448,10 @@ class ksuToolsColoredBinder:
                 cp_label=mk_str(obj_tocopy.Label)+u'_bnd'
                 
                 if hasattr(FreeCAD.ActiveDocument.getObject(obj_tocopy.Name), "Shape"):
-                    newObj = FreeCAD.ActiveDocument.addObject('PartDesign::SubShapeBinder',obj_tocopy.Name)
-                    newObj.Support = [obj_tocopy]
+                    FreeCADGui.runCommand('PartDesign_SubShapeBinder')
+                    # newObj = FreeCAD.ActiveDocument.addObject('PartDesign::SubShapeBinder',obj_tocopy.Name)
+                    # newObj.Support = [obj_tocopy]
+                    newObj = FreeCAD.ActiveDocument.ActiveObject
                     FreeCADGui.ActiveDocument.getObject(newObj.Name).DrawStyle = u"Dashed"
                     FreeCADGui.ActiveDocument.getObject(newObj.Name).DisplayMode = u"Wireframe"
                     FreeCAD.ActiveDocument.recompute()
@@ -2471,8 +2473,8 @@ class ksuToolsColoredBinder:
                             FreeCADGui.ActiveDocument.ActiveObject.Transparency=60
                     else:
                         FreeCAD.Console.PrintWarning('missing copy of color attributes')
-                    if hasattr(FreeCAD.ActiveDocument.getObject(obj_tocopy.Name), "getGlobalPlacement"):
-                        newObj.Placement = FreeCAD.ActiveDocument.getObject(obj_tocopy.Name).getGlobalPlacement()
+                    #if hasattr(FreeCAD.ActiveDocument.getObject(obj_tocopy.Name), "getGlobalPlacement"):
+                    #    newObj.Placement = FreeCAD.ActiveDocument.getObject(obj_tocopy.Name).getGlobalPlacement()
                 FreeCADGui.ActiveDocument.getObject(obj_tocopy.Name).Visibility = False
                     #FreeCAD.ActiveDocument.recompute()
                 #else:
@@ -2491,8 +2493,8 @@ class ksuToolsReLinkBinder:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'SubShapeBinderRelink.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Relink Binder" ,
-                     'ToolTip' : "Relink Binder object"}
+                     'MenuText': "Relink Binder" ,
+                     'ToolTip' : "Relink Binder object Select Binder and an Object to be linked"}
  
     def IsActive(self):
         return True
@@ -2519,11 +2521,20 @@ class ksuToolsReLinkBinder:
                     reply = QtGui.QMessageBox.information(None,"Warning", msg)
                     FreeCAD.Console.PrintWarning(msg)             
             else: #sel[0].TypeId != 'PartDesign::Body'):
-            
-                binder=sel[0]
-                obj2link = sel[1]
-                if binder.TypeId == 'PartDesign::SubShapeBinder' and hasattr(obj2link, "Shape"):
-                    binder.Support = [obj2link]
+                selEx = FreeCADGui.Selection.getSelectionEx("", 0)
+                binder=selEx[0]
+                obj2link = selEx[1]
+                #FreeCAD.Console.PrintMessage(obj2link.Object.Name+'.'+obj2link.SubElementNames[0]+'\n')
+                if binder.Object.TypeId == 'PartDesign::SubShapeBinder' and hasattr(sel[1], "Shape"):
+                # [(<Part object>, ('Part.Part001.Cylinder.',))]
+                    #FreeCAD.Console.PrintMessage('here'+obj2link.Object.Name+'.'+obj2link.SubElementNames[0]+'\n')
+                    binder.Object.BindMode = u"Synchronized"
+                    binder.Object.Support = [(obj2link.Object,(obj2link.SubElementNames[0],))]
+                    binder.Object.recompute(True)
+                else:
+                    msg="Select the Binder and one object with Shape to ReLink the Binder!\n"
+                    reply = QtGui.QMessageBox.information(None,"Warning", msg)
+                    FreeCAD.Console.PrintWarning(msg)             
         else:
             #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
             reply = QtGui.QMessageBox.information(None,"Warning", "Select the Binder and one object with Shape to ReLink the Binder!")
@@ -2537,7 +2548,7 @@ class ksuToolsUnion:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Part-Fuse.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Fuse objects" ,
+                     'MenuText': "Fuse objects" ,
                      'ToolTip' : "Make Union (Fuse) objects"}
  
     def IsActive(self):
@@ -2583,8 +2594,8 @@ class ksuToolsSimpleCopy:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'simple_copy.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Simple Copy" ,
-                     'ToolTip' : "Simple Copy object"}
+                     'MenuText': "Simple Copy" ,
+                     'ToolTip' : "ksu Simple Copy object"}
  
     def IsActive(self):
         return True
@@ -2681,8 +2692,8 @@ class ksuToolsDeepCopy:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'deep_copy.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu PartDN Copy" ,
-                     'ToolTip' : "PartDN Copy object\nwith relative placement\n[flattened model]"}
+                     'MenuText': "PartDN Copy" ,
+                     'ToolTip' : "ksu PartDN Copy object\nwith relative placement\n[flattened model]"}
  
     def IsActive(self):
         if int(float(FreeCAD.Version()[0]))==0 and int(float(FreeCAD.Version()[1]))<=16: #active only for FC>0.16
@@ -2941,8 +2952,8 @@ class ksuToolsRemoveFromTree:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'TreeItemOutMinus.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu tools Remove from Tree" ,
-                     'ToolTip' : "Remove Object(s) from Container Tree\nkeeping Placement\nFirst Selection is the Container"}
+                     'MenuText': "Remove from Tree" ,
+                     'ToolTip' : "ksu Remove Object(s) from Container Tree\nkeeping Placement\nFirst Selection is the Container"}
  
     def IsActive(self):
         return True
@@ -3001,8 +3012,8 @@ class ksuToolsAddToTree:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'TreeItemInPlus.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu tools Add to Tree" ,
-                     'ToolTip' : "Add Object(s) to Container Tree\nkeeping Placement\nFirst Selection is the Container"}
+                     'MenuText': "Add to Tree" ,
+                     'ToolTip' : "ksu Add Object(s) to Container Tree\nkeeping Placement\nFirst Selection is the Container"}
  
     def IsActive(self):
         return True
@@ -3081,8 +3092,8 @@ class ksuToolsTransparencyToggle:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'transparency_toggle.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Transparency Toggle" ,
-                     'ToolTip' : "Selection Transparency Toggle"}
+                     'MenuText': "Transparency Toggle" ,
+                     'ToolTip' : "ksu Selection Transparency Toggle"}
  
     def IsActive(self):
         return True
@@ -3116,8 +3127,8 @@ class ksuToolsHighlightToggle:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'select_toggle.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Highlight Toggle" ,
-                     'ToolTip' : "Selection Highlight Toggle"}
+                     'MenuText': "Highlight Toggle" ,
+                     'ToolTip' : "ksu Selection Highlight Toggle"}
  
     def IsActive(self):
         return True
@@ -3144,8 +3155,8 @@ class ksuToolsVisibilityToggle:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'visibility_toggle.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Visibility Toggle" ,
-                     'ToolTip' : "Selection Visibility Toggle"}
+                     'MenuText': "Visibility Toggle" ,
+                     'ToolTip' : "ksu Selection Visibility Toggle"}
  
     def IsActive(self):
         return True
@@ -3168,8 +3179,8 @@ class ksuToolsCheckSolid:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'ShapeInfo_check.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu Check Solid property" ,
-                     'ToolTip' : "Check Solid property\nToggle suffix"}
+                     'MenuText': "Check Solid property" ,
+                     'ToolTip' : "ksu Check Solid property\nToggle suffix"}
  
     def IsActive(self):
         return True
@@ -3268,7 +3279,7 @@ class ksuToolsToggleTreeView:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'expand_all.svg') , # the name of a svg file available in the resources
-                     'MenuText': "ksu tools Expand/Collapse Tree View" ,
+                     'MenuText': "Expand/Collapse Tree View" ,
                      'ToolTip' : "ksu tools Expand/Collapse Tree View"}
  
     def IsActive(self):

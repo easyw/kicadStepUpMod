@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.5.0"
+___ver___ = "10.5.1"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -15453,7 +15453,7 @@ def PushMoved():
                         say('pushed '+str(mdp)+' model(s)')
                         msg="""<b>3D model new position(s) pushed to kicad board!</b><br>["""+str(mdp)+""" model(s) updated]<br><br>"""
                         if found_tracks:
-                            msg+="<font color='blue'><b>in caso of tracks<br></b>you will need to fix your routing!</font><br><br>"
+                            msg+="<font color='blue'><b>in case of tracks<br></b>you will need to fix your routing!</font><br><br>"
                         msg+="<b>file saved to<br>"+fpath+"</b><br><br>"
                         msg+="<i>backup file saved to<br>"+foname+"</i><br>"
                         msgr="3D model new position pushed to kicad board!\n"
