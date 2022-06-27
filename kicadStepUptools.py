@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.5.1"
+___ver___ = "10.6.0"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -11475,16 +11475,23 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
         QtGui.QApplication.restoreOverrideCursor()
         reply = QtGui.QMessageBox.information(None,"Error ...","... KICAD pcb version "+ str(version)+" not supported \r\n"+"\r\nplease open and save your board with the latest kicad version")
         sys.exit("pcb version not supported")
-    if version==3:
+    elif version==3:
         Edge_Cuts_lvl=28
         Top_lvl=15
-    if version>=4:
+    elif version>=4:
         Edge_Cuts_lvl=44
         Top_lvl=0
     conv_offs=1.0
     if version >= 20171114:
         conv_offs=25.4
-    
+    #getting pcb version for the interal use of 'virtual' modules
+    pcbv = 4
+    if version == 20171130:
+        pcbv = 5
+    elif version == 20211014:
+        pcbv = 6
+    elif version >= 20220000:
+        pcbv = 6.99
     #load_sketch=False
     # sayerr(len(mypcb.gr_line))
     # say(len(mypcb.gr_arc))
@@ -12020,12 +12027,24 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
             #HoleList = getPads(board_elab,pcbThickness)
             # pad
             virtual=0
-            if hasattr(m, 'attr'):
-                if 'virtual' in m.attr:
+            if pcbv <= 5:
+                if hasattr(m, 'attr'):
+                    if 'virtual' in m.attr:
+                        #say('virtual module')
+                        virtual=1
+                else:
+                    virtual=0
+            elif pcbv > 5:
+                if hasattr(m, 'attr'):
+                    if 'bom' in m.attr or 'pos' in m.attr:
+                        # 'exclude_from_pos_files' or 'exclude_from_bom'
+                        virtual=1
+                    else:
+                        #say('non virtual module')
+                        virtual=0
+                else: # missing attribute (old 'virtual') -> 'other'
                     #say('virtual module')
                     virtual=1
-            else:
-                virtual=0
             m_x = float(m.at[0])
             m_y = float(m.at[1]) * (-1)
             m_rot = float(m_angle)
