@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.6.0"
+___ver___ = "10.6.1"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -20659,7 +20659,7 @@ def push3D2pcb(s,cnt,tsp):
                     old_val_angle = 0
                     if len(val_values) == 3:
                         #print(pad_values[2])
-                        if ref_values[2] != 'unlocked':
+                        if val_values[2] != 'unlocked':
                             old_val_angle = (float(val_values[2]))
                     #else:
                     #    old_val_angle = 0
