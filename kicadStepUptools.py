@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.6.1"
+___ver___ = "10.6.2"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -4571,6 +4571,9 @@ def Load_models(pcbThickness,modules):
                                 Part.insert(module_path,FreeCAD.ActiveDocument.Name)
                             else:
                                 ImportGui.insert(module_path,FreeCAD.ActiveDocument.Name)
+                                # on FC0.20+ there is an issue in inserting a 'compound'
+                                # FreeCAD.ActiveDocument.ActiveObject.recompute(True)
+                                # say('model imported w ImportGui')
                             #FreeCADGui.Selection.clearSelection()
                             imported_obj_list = []
                             counterTmp=0
@@ -6891,18 +6894,21 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                 ReadShapeCompoundMode_status=paramGetVS.GetBool("ReadShapeCompoundMode")
                 #sayerr("checking ReadShapeCompoundMode")
                 sayw("ReadShapeCompoundMode status "+str(ReadShapeCompoundMode_status))
+                #FreeCAD.Console.PrintLog("ReadShapeCompoundMode status "+str(ReadShapeCompoundMode_status)+"\n")
+                #stop
                 enable_ReadShapeCompoundMode=False
-                if ReadShapeCompoundMode_status and allow_compound=='True':
+                if ReadShapeCompoundMode_status and allow_compound=='True' \
+                   or ReadShapeCompoundMode_status and allow_compound=='Hierarchy':
                     paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
                     paramGetVS.SetBool("ReadShapeCompoundMode",False)
                     sayw("disabling ReadShapeCompoundMode")
                     enable_ReadShapeCompoundMode=True
-                if not ReadShapeCompoundMode_status and allow_compound=='Simplified':
+                elif not ReadShapeCompoundMode_status and allow_compound=='Simplified':
                     paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
                     paramGetVS.SetBool("ReadShapeCompoundMode",True)
                     sayw("enabling ReadShapeCompoundMode -> Simplified Mode")
                     enable_ReadShapeCompoundMode=True
-                
+                #paramGetVS.SetBool("ReadShapeCompoundMode",False)
                 if load_sketch:
                     FreeCADGui.ActiveDocument.getObject(newname).Visibility=False # hidden Sketch
                 ##Load 3D models
@@ -7008,7 +7014,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                     STEP_UseAppPart_available = True #new STEP import export mode available
                     say('STEP UseAppPart available')
             if hasattr(prefs, 'GetBools'):
-                if 'UseAppPart' in prefs.GetBools() and STEP_UseAppPart_available:
+                if 'UseAppPart' in prefs.GetBools() and STEP_UseAppPart_available or len (prefs.GetBools()==0):
                     if not prefs.GetBool('UseAppPart') or prefs.GetBool('UseLegacyImporter') or not prefs.GetBool('UseBaseName')\
                         or prefs.GetBool('ExportLegacy') or ReadShapeCompoundMode_status or prefs.GetBool('UseLinkGroup'):
                         msg = "Please set your preferences for STEP Import Export as in the displayed image\n"
@@ -7051,10 +7057,11 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
         ''' removing objects after delay ''' 
         from kicadStepUptools import removesubtree
         doc=FreeCAD.ActiveDocument
-        doc.openTransaction('rmv_objs_kicad')
-        for tbr in objs_toberemoved:
-            removesubtree(tbr)
-        doc.commitTransaction()
+        if doc is not None:
+            doc.openTransaction('rmv_objs_kicad')
+            for tbr in objs_toberemoved:
+                removesubtree(tbr)
+            doc.commitTransaction()
         # doc.undo()
         # doc.undo()
         # adding a timer to allow double transactions during the python code
