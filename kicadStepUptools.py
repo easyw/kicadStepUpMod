@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.6.2"
+___ver___ = "10.6.3"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -7014,7 +7014,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                     STEP_UseAppPart_available = True #new STEP import export mode available
                     say('STEP UseAppPart available')
             if hasattr(prefs, 'GetBools'):
-                if 'UseAppPart' in prefs.GetBools() and STEP_UseAppPart_available or len (prefs.GetBools()==0):
+                if 'UseAppPart' in prefs.GetBools() and STEP_UseAppPart_available or len (prefs.GetBools()) == 0:
                     if not prefs.GetBool('UseAppPart') or prefs.GetBool('UseLegacyImporter') or not prefs.GetBool('UseBaseName')\
                         or prefs.GetBool('ExportLegacy') or ReadShapeCompoundMode_status or prefs.GetBool('UseLinkGroup'):
                         msg = "Please set your preferences for STEP Import Export as in the displayed image\n"
