@@ -8,12 +8,15 @@ it is to implement a parser in an almost declarative way.
 A usage demonstration is available in `test.py`
 '''
 
-from .sexp_parser import *
+try:
+    from .sexp_parser import *
+except ImportError:
+    from sexp_parser.sexp_parser import *
 
 __author__ = "Zheng, Lei"
 __copyright__ = "Copyright 2016, Zheng, Lei"
 __license__ = "MIT"
-__version__ = "1.1.0"
+__version__ = "1.1.1" #maui
 __email__ = "realthunder.dev@gmail.com"
 __status__ = "Prototype"
 
@@ -43,7 +46,7 @@ class KicadPCB_module(SexpParser):
     _default_bools = 'locked'
     _parse_fp_text = KicadPCB_gr_text
     _parse_pad = KicadPCB_pad
-    
+
 
 class KicadPCB(SexpParser):
 
@@ -88,7 +91,9 @@ class KicadPCB(SexpParser):
         return getSexpError(self)
 
     @staticmethod
-    def load(filename):
+    def load(filename, quote_no_parse=None):
+#        with open(filename,'r') as f:
+#            return KicadPCB(parseSexp(f.read(), quote_no_parse))
         with open(filename,'rb') as f:  # maui
-            return KicadPCB(parseSexp(f.read().decode("UTF-8"))) # maui
+            return KicadPCB(parseSexp(f.read().decode("UTF-8"), quote_no_parse)) # maui
 

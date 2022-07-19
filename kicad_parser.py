@@ -34,7 +34,7 @@ from fcad_parser import unquote #maui
 
 
 # from kicadStepUptools import KicadPCB,SexpList
-__kicad_parser_version__ = '2.1.3'
+__kicad_parser_version__ = '2.1.4'
 # https://github.com/realthunder/fcad_pcb/issues/20#issuecomment-586042341
 print('kicad_parser_version '+__kicad_parser_version__)
 # maui
@@ -121,7 +121,10 @@ def makeColor(*color):
 def makeVect(l):
     return Vector(l[0],-l[1],0)
 
-def getAt(at):
+def getAt(sexp):
+    at = getattr(sexp, 'at', None)
+    if not at:
+        return Vector(0,0,0),0
     v = makeVect(at)
     return (v,0) if len(at)==2 else (v,at[2])
 
@@ -506,6 +509,7 @@ class KicadFcad:
         self.copper_thickness = 0.05
         self.board_thickness = None
         self.stackup = None
+        self.quote_no_parse = None
 
         # set -1 to disable via in pads, 0 to enable as normal, >0 to use as
         # a ratio to via radius for creating a square to simplify via
@@ -546,7 +550,48 @@ class KicadFcad:
 
         if not self.part_path:
             self.part_path = getKicadPath(self.path_env)
-        self.pcb = KicadPCB.load(self.filename)
+        self.pcb = KicadPCB.load(self.filename, self.quote_no_parse)
+
+        if self.pcb._key == 'module':
+            # this is a kicad_mod file, make it look like a kicad_pcb
+            pcb = KicadPCB(parseSexp('''
+                    (kicad_pcb
+                        (general
+                            (thickness 0.3)
+                            (drawings 0)
+                            (tracks 0)
+                            (zones 0)
+                            (modules 1)
+                            (nets 0)
+                        )
+                        (layers
+                            (0 F.Cu signal)
+                            (31 B.Cu signal)
+                            (32 B.Adhes user)
+                            (33 F.Adhes user)
+                            (34 B.Paste user)
+                            (35 F.Paste user)
+                            (36 B.SilkS user)
+                            (37 F.SilkS user)
+                            (38 B.Mask user)
+                            (39 F.Mask user)
+                            (40 Dwgs.User user)
+                            (41 Cmts.User user)
+                            (42 Eco1.User user)
+                            (43 Eco2.User user)
+                            (44 Edge.Cuts user)
+                            (45 Margin user)
+                            (46 B.CrtYd user)
+                            (47 F.CrtYd user)
+                            (48 B.Fab user)
+                            (49 F.Fab user)
+                        )
+                    )'''))
+            self.module = self.pcb
+            pcb.module._append(self.pcb)
+            self.pcb = pcb
+        else:
+            self.module = None
 
         if not self.board_thickness:
             try:
@@ -613,32 +658,48 @@ class KicadFcad:
 
     def _initStackUp(self):
         if self.stackup is None:
+            self._log('{}','kicad version='+str(self.pcb.version),level='info') # maui 
             self.stackup = []
-            try:
-                # If no stackup given by user, extract stack info from setup
-                offset = 0.0
-                last_copper = 0.0
-                for layer in self.pcb.setup.stackup.layer:
-                    layer_type, _ = self.findLayer(layer[0], 99)
-                    t = getattr(layer, 'thickness',
-                            self.copper_thickness if layer_type<=32 else self.layer_thickness)
-                    if layer_type <= 31:
-                        last_copper = offset
-                    offset -= t
-                    self.stackup.append([unquote(layer[0]), offset, t])
-                # adjust offset to make the last copper's upper face at z = 0.
-                # In other word, make the last dielectric layer reset at z = 0.
-                # Right now, makeBoard() always assume it is at z = 0.
-                for entry in self.stackup:
-                    entry[1] -= last_copper
-            except Exception:
-                pass
-
+            if self.pcb.version > 20171130: # > kv5 maui start
+                try:
+                    # If no stackup given by user, extract stack info from setup
+                    offset = 0.0
+                    last_copper = 0.0
+                    for layer in self.pcb.setup.stackup.layer:
+                        layer_type, _ = self.findLayer(layer[0], 99)
+                        t = getattr(layer, 'thickness',
+                                self.copper_thickness if layer_type<=32 else self.layer_thickness)
+                        if layer_type <= 31:
+                            last_copper = offset
+                        # Some layer may have more than one thickness field.
+                        if isinstance(t, SexpList):
+                            t = t[0]
+                        # And for some thickness field, there may be additional
+                        # attribute, like (thickness, 0.05, locked).
+                        if not isinstance(t, (float, int)):
+                            t = t[0]
+    
+                        offset -= t
+                        self.stackup.append([unquote(layer[0]), offset, t])
+                    # adjust offset to make the last copper's upper face at z = 0.
+                    # In other word, make the last dielectric layer reset at z = 0.
+                    # Right now, makeBoard() always assume it is at z = 0.
+                    for entry in self.stackup:
+                        entry[1] -= last_copper
+                except Exception as e:# maui logging error and keeping kv5 compatibility
+                    # raise
+                    # self._log('{}',e,level='error') # maui 
+                    # traceback.print_exc() # maui 
+                    error_message = traceback.format_exc() #maui
+                    self._log('{}',error_message,level='error') # maui 
+                    pass  # maui keeping kv5 compatibility
+            else:
+                self._log('{}','kicad v5 stack missing',level='error') # maui end
         board_thickness = 0.0
         accumulate = None
         for item in self.stackup:
             layer, name = self.findLayer(item[0], 99)
-            self._stackup_map[item[0]] = item
+            self._stackup_map[unquote(name)] = item
             thickness = item[2]
             if layer <= 31: # is copper layer
                 if accumulate is not None:
@@ -655,9 +716,9 @@ class KicadFcad:
         coppers = self._copperLayers()
         if self.stackup:
             for _,name in coppers:
-                if name not in self._stackup_map:
+                if unquote(name) not in self._stackup_map:
                     self._log('stackup info ignored because copper layer {} is not found',
-                              level='warning')
+                              name, level='warning')
                     self.stackup = []
                     self._stackup_map = {}
                     break
@@ -676,7 +737,7 @@ class KicadFcad:
                 offset -= step
 
         # setup dielectric layer offset and thickness. Going backwards, because
-        # makeBoard() assumes the first dielectric layer to be located at z=0 
+        # makeBoard() assumes the first dielectric layer to be located at z=0
         current = 1000.0
         for _, name in reversed(coppers):
             _, offset, thickness = self._stackup_map[name]
@@ -1086,13 +1147,16 @@ class KicadFcad:
             obj.Placement = Placement(pos,r)
             obj.purgeTouched()
 
-    def _makeEdgeCuts(self, sexp, ctx, wires, non_closed, at=None):
-        try:
-            # get layer name for Edge.Cuts
-            _,layer = self.findLayer(44)
-        except Exception:
-            raise RuntimeError('No Edge.Cuts layer found')
-        return self._makeShape(sexp, ctx, wires, non_closed, layer, at)
+    def _makeEdgeCuts(self, sexp, ctx, wires, non_closed, at=None, layers=None):
+        if not layers:
+            # default to layer Edge.Cuts
+            layers = [44]
+        for l in layers:
+            try:
+                _,layer = self.findLayer(l)
+            except Exception:
+                continue
+            self._makeShape(sexp, ctx, wires, non_closed, layer, at)
 
     def _makeShape(self, sexp, ctx, wires, non_closed=None, layer=None, at=None):
         edges = []
@@ -1209,13 +1273,21 @@ class KicadFcad:
         self._makeEdgeCuts(self.pcb, 'gr', wires, non_closed)
 
         self._pushLog('checking footprints...',prefix=prefix)
-        for m in self.pcb.module:
-            self._makeEdgeCuts(m, 'fp', wires, non_closed, m.at)
+        if self.module:
+            # try Edge.Cuts first
+            self._makeEdgeCuts(self.module, 'fp', wires, non_closed)
+            # try F.CrtYd and B.CrtYd
+            self._makeEdgeCuts(self.module, 'fp', wires, non_closed, layers=(46, 47))
+        else:
+            for m in self.pcb.module:
+                self._makeEdgeCuts(m, 'fp', wires, non_closed, getattr(m, 'at', None))
+
         self._popLog()
 
         if not wires and not non_closed:
-            self._popLog('no board edges found')
-            return
+            if not wires and not non_closed:
+                self._popLog('no board edges found')
+                return
 
         def _addHoles(objs):
             h = self._cutHoles(None,holes,None,
@@ -1343,7 +1415,7 @@ class KicadFcad:
         if not offset:
             offset = self.hole_size_offset;
         for m in self.pcb.module:
-            m_at,m_angle = getAt(m.at)
+            m_at,m_angle = getAt(m)
             for p in m.pad:
                 if 'drill' not in p:
                     continue
@@ -1376,7 +1448,7 @@ class KicadFcad:
                 else:
                     skip_count += 1
                     continue
-                at,angle = getAt(p.at)
+                at,angle = getAt(p)
                 angle -= m_angle;
                 if not isZero(angle):
                     w.rotate(Vector(),Vector(0,0,1),angle)
@@ -1426,7 +1498,7 @@ class KicadFcad:
                             via_skip += 1
                     else: # maui
                         via_skip += 1
-                        self._log('drill missing', level='warning')
+                        self._log('drill missing', level='warning') #maui
             skip_count += via_skip
             self._log('via holes: {}, skipped: {}',len(self.pcb.via),via_skip)
 
@@ -1595,7 +1667,7 @@ class KicadFcad:
                 if t[0] == 'reference':
                     ref = t[1]
                     break;
-            m_at,m_angle = getAt(m.at)
+            m_at,m_angle = getAt(m)
             pads = []
             count += len(m.pad)
 
@@ -1630,7 +1702,7 @@ class KicadFcad:
                 if 'drill' in p and 'offset' in p.drill:
                     w.translate(makeVect(p.drill.offset))
 
-                at,angle = getAt(p.at)
+                at,angle = getAt(p)
                 angle -= m_angle;
                 if not isZero(angle):
                     w.rotate(Vector(),Vector(0,0,1),angle)
@@ -2115,7 +2187,7 @@ class KicadFcad:
                 if t[0] == 'value':
                     value = t[1]
 
-            m_at,m_angle = getAt(m.at)
+            m_at,m_angle = getAt(m)
             m_at += Vector(0,0,z)
             objs = []
             for (model_idx,model) in enumerate(m.model):
