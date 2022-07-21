@@ -1133,6 +1133,8 @@ class KicadFcad:
             cut.ViewObject.ShapeColor = base.ViewObject.ShapeColor
         else:
             cut = base.cut(tool)
+            #cut = base.cut(tool,0.00006) # maui fuzzy cut ,0.01)
+            #print('cutting test?')
         self._log('cut done')
         return cut
 

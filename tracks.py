@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global tracks_version
-tracks_version = '2.4.6'
+tracks_version = '2.4.7'
 
 import kicad_parser
 #import kicad_parser; import importlib; importlib.reload(kicad_parser)
@@ -12,6 +12,7 @@ import PySide
 from PySide import QtGui, QtCore
 import sys,os
 import FreeCAD, FreeCADGui
+import Draft, Part
 global start_time, last_pcb_path, min_drill_size
 global FC_export_min_version
 FC_export_min_version="11670"  #11670 latest JM
@@ -163,6 +164,36 @@ def mkColor(*color):
 #           'copper':{0:makeColor(200,117,51)},
 #        }
 
+def extrude_holes (holes,w):
+
+    drl = Draft.makeShape2DView(holes, FreeCAD.Vector(0.0, 0.0, 1.0))
+    try:
+        FreeCAD.ActiveDocument.ActiveObject.recompute()
+    except:
+        FreeCAD.ActiveDocument.ActiveObject.recompute(True)
+    FreeCAD.ActiveDocument.addObject("Part::Extrusion","Extrude_drills")
+    extrude_d_name=FreeCAD.ActiveDocument.ActiveObject.Name
+    FreeCAD.ActiveDocument.getObject(extrude_d_name).Base = FreeCAD.ActiveDocument.getObject(drl.Name)
+    FreeCAD.ActiveDocument.getObject(extrude_d_name).Dir = (0,0,w)
+    FreeCAD.ActiveDocument.getObject(extrude_d_name).Solid = (True)
+    FreeCAD.ActiveDocument.getObject(extrude_d_name).TaperAngle = (0)
+    FreeCAD.ActiveDocument.getObject(extrude_d_name).Symmetric = True
+    FreeCADGui.ActiveDocument.getObject(drl.Name).Visibility = False
+    FreeCAD.ActiveDocument.getObject(extrude_d_name).Label = 'solid_drills'
+    extrude_drill_name=FreeCAD.ActiveDocument.ActiveObject.Name
+    try:
+        FreeCAD.ActiveDocument.ActiveObject.recompute()
+    except:
+        FreeCAD.ActiveDocument.ActiveObject.recompute(True)
+    FreeCADGui.ActiveDocument.getObject(holes.Name).Visibility = False
+#
+
+def cut_fuzzy(base,tool,ftol):
+
+    Part.show(base.Shape.cut(tool.Shape, ftol))
+    
+#
+
 def cut_out_tracks (pcbsk,tracks,tname_sfx):
     
     # import tracks; import importlib;importlib.reload(tracks)
@@ -308,6 +339,7 @@ def addtracks(fname = None):
         import kicad_parser 
         # reload_lib(kicad_parser)
         pcb = kicad_parser.KicadFcad(filename)
+        ## pcb = kicad_parser.KicadFcad(filename, arc_fit_accuracy=1e-4) #to increase accuracy 
         # pcbThickness = pcb.board_thickness ## this doesn't always give the full board thickness
         # print(pcbThickness,'pcbThickness')
         
@@ -355,6 +387,7 @@ def addtracks(fname = None):
             objsNum = len(FreeCAD.ActiveDocument.Objects)
         else:
             objsNum = 0
+        #pcb.makePads(shape_type='face',thickness=0.05,holes=True,fit_arcs=True) #,prefix='')
         pcb.makePads(shape_type='face',thickness=0.05,holes=True,fit_arcs=True) #,prefix='')
         if FreeCAD.ActiveDocument is not None:
             if objsNum < len(FreeCAD.ActiveDocument.Objects):
@@ -367,20 +400,30 @@ def addtracks(fname = None):
                 topPads = new_obj
         if FreeCAD.ActiveDocument is not None:
             objsNum = len(FreeCAD.ActiveDocument.Objects)
-        pcb.makeTracks(shape_type='face',fit_arcs=True,thickness=0.05,holes=True) #,prefix='')
+        # pcb.makeTracks(shape_type='face',fit_arcs=True,thickness=0.05,holes=True) #,prefix='')
+        # pcb.makeTracks(shape_type='face',fit_arcs=True,thickness=0.05,holes=True) #,prefix='')
+        pcb.makeTracks(shape_type='face',fit_arcs=True,thickness=0.05,holes=False) # holes=True) #,prefix='')
+        tracks_=FreeCAD.ActiveDocument.ActiveObject
+        holes=pcb.makeHoles()
+        extrude_holes(holes,pcbThickness*3)
+        holes_ = FreeCAD.ActiveDocument.ActiveObject
+        cut_fuzzy(tracks_,holes_,0.00006) #6e-5 fuzzy tolerance
         if FreeCAD.ActiveDocument is not None:
             if objsNum < len(FreeCAD.ActiveDocument.Objects):
                 say_time()
                 tracks=FreeCAD.ActiveDocument.ActiveObject
                 tracks.Placement.Base.z+=deltaz
+                tracks.ViewObject.ShapeColor=mkColor(trk_col)
                 new_obj = simple_cpy(tracks,'topTracks'+ftname_sfx)
                 say_time()
                 # removesubtree([tracks])
                 add_toberemoved.append([tracks])
+                add_toberemoved.append([holes,tracks_,holes_])
                 topTracks = new_obj
                 #stop
         if FreeCAD.ActiveDocument is not None:
             objsNum = len(FreeCAD.ActiveDocument.Objects)
+        #pcb.makeZones(shape_type='face',thickness=0.05, fit_arcs=True,holes=True) #,prefix='')
         pcb.makeZones(shape_type='face',thickness=0.05, fit_arcs=True,holes=True) #,prefix='')
         if FreeCAD.ActiveDocument is not None:
             if objsNum < len(FreeCAD.ActiveDocument.Objects):
@@ -441,7 +484,8 @@ def addtracks(fname = None):
             objsNum = len(FreeCAD.ActiveDocument.Objects)
         else:
             objsNum = 0
-        pcb.makePads(shape_type='face',thickness=0.05,holes=True,fit_arcs=True,prefix='')
+        #pcb.makePads(shape_type='face',thickness=0.05,holes=True,fit_arcs=True,prefix='')
+        pcb.makePads(shape_type='face',thickness=0.05,holes=True,fit_arcs=True) #,prefix='')
         if FreeCAD.ActiveDocument is not None:
             if objsNum < len(FreeCAD.ActiveDocument.Objects):
                 doc=FreeCAD.ActiveDocument
@@ -454,20 +498,29 @@ def addtracks(fname = None):
                 botPads = new_obj
         if FreeCAD.ActiveDocument is not None:
             objsNum = len(FreeCAD.ActiveDocument.Objects)
-        pcb.makeTracks(shape_type='face',fit_arcs=True,thickness=0.05,holes=True,prefix='')
+        # pcb.makeTracks(shape_type='face',fit_arcs=True,thickness=0.05,holes=True,prefix='')
+        pcb.makeTracks(shape_type='face',fit_arcs=True,thickness=0.05,holes=False) # holes=True) #,prefix='')
+        tracks_=FreeCAD.ActiveDocument.ActiveObject
+        holesB=pcb.makeHoles()
+        extrude_holes(holesB,pcbThickness*3)
+        holesB_ = FreeCAD.ActiveDocument.ActiveObject
+        cut_fuzzy(tracks_,holesB_,0.00006) #6e-5 fuzzy tolerance
         if FreeCAD.ActiveDocument is not None:
             if objsNum < len(FreeCAD.ActiveDocument.Objects):
                 say_time()
                 tracks=FreeCAD.ActiveDocument.ActiveObject
                 tracks.Placement.Base.z = tracks.Placement.Base.z - (pcbThickness + deltaz)
+                tracks.ViewObject.ShapeColor=mkColor(trk_col)
                 new_obj = simple_cpy(tracks,'botTracks'+ftname_sfx)
                 say_time()
                 # removesubtree([tracks])
                 add_toberemoved.append([tracks])
+                add_toberemoved.append([holesB,tracks_,holesB_])
                 botTracks = new_obj
                 #stop
         if FreeCAD.ActiveDocument is not None:
             objsNum = len(FreeCAD.ActiveDocument.Objects)
+        #pcb.makeZones(shape_type='face',thickness=0.05, fit_arcs=True,holes=True) # ,prefix='')
         pcb.makeZones(shape_type='face',thickness=0.05, fit_arcs=True,holes=True) # ,prefix='')
         if FreeCAD.ActiveDocument is not None:
             if objsNum < len(FreeCAD.ActiveDocument.Objects):
