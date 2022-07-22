@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #****************************************************************************
 
-# maui full integration of fcad_pcb from @realthunder
+# maui full integration of fcad_pcb from @realthunder commit 121 #maui
 ## from __future__ import (absolute_import, division,
 ##         print_function, unicode_literals)
 #from builtins import *
@@ -34,7 +34,7 @@ from fcad_parser import unquote #maui
 
 
 # from kicadStepUptools import KicadPCB,SexpList
-__kicad_parser_version__ = '2.1.4'
+__kicad_parser_version__ = '2.1.5'
 # https://github.com/realthunder/fcad_pcb/issues/20#issuecomment-586042341
 print('kicad_parser_version '+__kicad_parser_version__)
 # maui
@@ -660,6 +660,7 @@ class KicadFcad:
         if self.stackup is None:
             self._log('{}','kicad version='+str(self.pcb.version),level='info') # maui 
             self.stackup = []
+            # if hasattr(self.pcb.setup, 'stackup'): # maui
             if self.pcb.version > 20171130: # > kv5 maui start
                 try:
                     # If no stackup given by user, extract stack info from setup
@@ -671,8 +672,19 @@ class KicadFcad:
                                 self.copper_thickness if layer_type<=32 else self.layer_thickness)
                         if layer_type <= 31:
                             last_copper = offset
-                        # Some layer may have more than one thickness field.
+                        # Some layer (e.g. dielectric) may have more than one
+                        # thickness field. Add them all.
                         if isinstance(t, SexpList):
+                            total = 0.0
+                            for tt in t:
+                                # And for some thickness field, there may be additional
+                                # attribute, like (thickness, 0.05, locked).
+                                if isinstance(tt, (float, int)):
+                                    total += tt
+                                else:
+                                    total += tt[0]
+                            t = total
+                        elif not isinstance(t, (float, int)):
                             t = t[0]
                         # And for some thickness field, there may be additional
                         # attribute, like (thickness, 0.05, locked).
@@ -688,7 +700,7 @@ class KicadFcad:
                         entry[1] -= last_copper
                 except Exception as e:# maui logging error and keeping kv5 compatibility
                     # raise
-                    # self._log('{}',e,level='error') # maui 
+                    # self._log('Failed parsing stackup info: {}', str(e), level='warning') # maui 
                     # traceback.print_exc() # maui 
                     error_message = traceback.format_exc() #maui
                     self._log('{}',error_message,level='error') # maui 

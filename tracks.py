@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global tracks_version
-tracks_version = '2.4.7'
+tracks_version = '2.4.8'
 
 import kicad_parser
 #import kicad_parser; import importlib; importlib.reload(kicad_parser)
@@ -396,6 +396,7 @@ def addtracks(fname = None):
                 new_obj = simple_cpy(pads,'topPads'+ftname_sfx)
                 say_time()
                 # removesubtree([pads])
+                pads.ViewObject.Visibility = False
                 add_toberemoved.append([pads])
                 topPads = new_obj
         if FreeCAD.ActiveDocument is not None:
@@ -417,6 +418,9 @@ def addtracks(fname = None):
                 new_obj = simple_cpy(tracks,'topTracks'+ftname_sfx)
                 say_time()
                 # removesubtree([tracks])
+                tracks.ViewObject.Visibility = False
+                holes.ViewObject.Visibility = False
+                holes_.ViewObject.Visibility = False
                 add_toberemoved.append([tracks])
                 add_toberemoved.append([holes,tracks_,holes_])
                 topTracks = new_obj
@@ -433,6 +437,7 @@ def addtracks(fname = None):
                 new_obj = simple_cpy(zones,'topZones'+ftname_sfx)
                 say_time()
                 # removesubtree([zones])
+                zones.ViewObject.Visibility = False
                 add_toberemoved.append([zones])
                 topZones = new_obj
             if len (FreeCAD.ActiveDocument.getObjectsByLabel('Pcb'+ftname_sfx)) >0:
@@ -494,6 +499,7 @@ def addtracks(fname = None):
                 new_obj = simple_cpy(pads,'botPads'+ftname_sfx)
                 say_time()
                 # removesubtree([pads])
+                pads.ViewObject.Visibility = False
                 add_toberemoved.append([pads])
                 botPads = new_obj
         if FreeCAD.ActiveDocument is not None:
@@ -514,6 +520,9 @@ def addtracks(fname = None):
                 new_obj = simple_cpy(tracks,'botTracks'+ftname_sfx)
                 say_time()
                 # removesubtree([tracks])
+                tracks.ViewObject.Visibility = False
+                holesB.ViewObject.Visibility = False
+                holesB_.ViewObject.Visibility = False
                 add_toberemoved.append([tracks])
                 add_toberemoved.append([holesB,tracks_,holesB_])
                 botTracks = new_obj
@@ -530,6 +539,7 @@ def addtracks(fname = None):
                 new_obj = simple_cpy(zones,'botZones'+ftname_sfx)
                 say_time()
                 # removesubtree([zones])
+                zones.ViewObject.Visibility = False
                 add_toberemoved.append([zones])
                 botZones = new_obj
             if len (FreeCAD.ActiveDocument.getObjectsByLabel('Pcb'+ftname_sfx)) >0:

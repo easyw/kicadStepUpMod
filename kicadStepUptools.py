@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.6.3"
+___ver___ = "10.6.4"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -702,7 +702,7 @@ def sayw(msg):
     
 def sayerr(msg):
     FreeCAD.Console.PrintError(msg)
-    FreeCAD.Console.PrintWarning('\n')
+    FreeCAD.Console.PrintMessage('\n')
 ##
 
 global use_AppPart, use_Links, use_LinkGroups
@@ -6889,6 +6889,14 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                 #    paramGetPoM.SetBool("EnableObserver",False)
                         sayw("disabling PoM Observer")
         
+                prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import")
+                ImportMode_status = 0
+                if hasattr(prefs, 'GetInts'):
+                    if len(prefs.GetInts()) > 0:
+                        if prefs.GetInt('ImportMode') != 0:
+                            ImportMode_status = prefs.GetInt('ImportMode')
+                            prefs.SetInt('ImportMode', 0)
+                            sayerr('STEP ImportMode NOT as \'Single document\''+'\n')
                 ##ReadShapeCompoundMode
                 paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
                 ReadShapeCompoundMode_status=paramGetVS.GetBool("ReadShapeCompoundMode")
@@ -7004,6 +7012,8 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
             prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import")
             paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
             ReadShapeCompoundMode_status=paramGetVS.GetBool("ReadShapeCompoundMode")
+            if ImportMode_status != 0:
+                prefs.SetInt('ImportMode',ImportMode_status)
             FCV_date = ''
             STEP_UseAppPart_available = False
             if len (FreeCAD.Version()) >= 5:
@@ -7014,9 +7024,9 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                     STEP_UseAppPart_available = True #new STEP import export mode available
                     say('STEP UseAppPart available')
             if hasattr(prefs, 'GetBools'):
-                if 'UseAppPart' in prefs.GetBools() and STEP_UseAppPart_available or len (prefs.GetBools()) == 0:
-                    if not prefs.GetBool('UseAppPart') or prefs.GetBool('UseLegacyImporter') or not prefs.GetBool('UseBaseName')\
-                        or prefs.GetBool('ExportLegacy') or ReadShapeCompoundMode_status or prefs.GetBool('UseLinkGroup'):
+                if (('UseAppPart' in prefs.GetBools() or 'UseLinkGroup' in prefs.GetBools()) and STEP_UseAppPart_available) or len (prefs.GetBools()) == 0:
+                    if (not prefs.GetBool('UseAppPart') and not ('UseLinkGroup' in prefs.GetBools()))  or prefs.GetBool('UseLegacyImporter') or not prefs.GetBool('UseBaseName')\
+                        or prefs.GetBool('ExportLegacy') or ReadShapeCompoundMode_status or prefs.GetBool('UseLinkGroup'): #  or ImportMode_status != 0:
                         msg = "Please set your preferences for STEP Import Export as in the displayed image\n"
                         msg += "(you can disable this warning on StepUp preferences)\n"
                         if 'help_warning_enabled' in prefsKSU.GetBools():
@@ -12092,10 +12102,16 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                     model=md[0] # py3 .decode("utf-8")
                 #print (model, ' MODEL', type(model)) #maui test py3
                 md_hide = False
-                if len(md) >4: #hide attribute on 3d model
-                    if md[1] == 'hide':
-                        md_hide = True
-                        #print(md[0],'hidden')
+                # print('md value',md, len(md))
+                #hide attribute on 3d model kv6+
+                try:
+                    if len(md) >4: #hide attribute on 3d model
+                        if md[1] == 'hide':
+                            md_hide = True
+                            #print(md[0],'hidden')
+                except:
+                    sayerr ('hide attribute on 3d model missing')
+                    pass
                 if (virtual==1 and addVirtual==0):
                     model_name='no3Dmodel'
                     side='noLayer'
