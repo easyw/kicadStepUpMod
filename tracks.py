@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global tracks_version
-tracks_version = '2.4.8'
+tracks_version = '2.4.9'
 
 import kicad_parser
 #import kicad_parser; import importlib; importlib.reload(kicad_parser)
@@ -494,37 +494,32 @@ def addtracks(fname = None):
         if FreeCAD.ActiveDocument is not None:
             if objsNum < len(FreeCAD.ActiveDocument.Objects):
                 doc=FreeCAD.ActiveDocument
-                pads=FreeCAD.ActiveDocument.ActiveObject
-                pads.Placement.Base.z = pads.Placement.Base.z - (pcbThickness + 2*deltaz)
-                new_obj = simple_cpy(pads,'botPads'+ftname_sfx)
+                padsB=FreeCAD.ActiveDocument.ActiveObject
+                padsB.Placement.Base.z = padsB.Placement.Base.z - (pcbThickness + 2*deltaz)
+                new_obj = simple_cpy(padsB,'botPads'+ftname_sfx)
                 say_time()
                 # removesubtree([pads])
-                pads.ViewObject.Visibility = False
-                add_toberemoved.append([pads])
+                padsB.ViewObject.Visibility = False
+                add_toberemoved.append([padsB])
                 botPads = new_obj
         if FreeCAD.ActiveDocument is not None:
             objsNum = len(FreeCAD.ActiveDocument.Objects)
         # pcb.makeTracks(shape_type='face',fit_arcs=True,thickness=0.05,holes=True,prefix='')
         pcb.makeTracks(shape_type='face',fit_arcs=True,thickness=0.05,holes=False) # holes=True) #,prefix='')
-        tracks_=FreeCAD.ActiveDocument.ActiveObject
-        holesB=pcb.makeHoles()
-        extrude_holes(holesB,pcbThickness*3)
-        holesB_ = FreeCAD.ActiveDocument.ActiveObject
-        cut_fuzzy(tracks_,holesB_,0.00006) #6e-5 fuzzy tolerance
         if FreeCAD.ActiveDocument is not None:
             if objsNum < len(FreeCAD.ActiveDocument.Objects):
                 say_time()
-                tracks=FreeCAD.ActiveDocument.ActiveObject
-                tracks.Placement.Base.z = tracks.Placement.Base.z - (pcbThickness + deltaz)
-                tracks.ViewObject.ShapeColor=mkColor(trk_col)
-                new_obj = simple_cpy(tracks,'botTracks'+ftname_sfx)
+                tracksB=FreeCAD.ActiveDocument.ActiveObject
+                tracksB.Placement.Base.z = tracksB.Placement.Base.z - (pcbThickness + deltaz)
+                tracksB.ViewObject.ShapeColor=mkColor(trk_col)
+                new_obj = simple_cpy(tracksB,'botTracks'+ftname_sfx)
                 say_time()
                 # removesubtree([tracks])
-                tracks.ViewObject.Visibility = False
+                tracksB.ViewObject.Visibility = False
                 holesB.ViewObject.Visibility = False
                 holesB_.ViewObject.Visibility = False
-                add_toberemoved.append([tracks])
-                add_toberemoved.append([holesB,tracks_,holesB_])
+                add_toberemoved.append([tracksB])
+                add_toberemoved.append([holesB,tracksB_,holesB_])
                 botTracks = new_obj
                 #stop
         if FreeCAD.ActiveDocument is not None:
@@ -534,13 +529,13 @@ def addtracks(fname = None):
         if FreeCAD.ActiveDocument is not None:
             if objsNum < len(FreeCAD.ActiveDocument.Objects):
                 say_time()
-                zones=FreeCAD.ActiveDocument.ActiveObject
-                zones.Placement.Base.z = zones.Placement.Base.z - (pcbThickness + deltaz)
-                new_obj = simple_cpy(zones,'botZones'+ftname_sfx)
+                zonesB=FreeCAD.ActiveDocument.ActiveObject
+                zonesB.Placement.Base.z = zonesB.Placement.Base.z - (pcbThickness + deltaz)
+                new_obj = simple_cpy(zonesB,'botZones'+ftname_sfx)
                 say_time()
                 # removesubtree([zones])
-                zones.ViewObject.Visibility = False
-                add_toberemoved.append([zones])
+                zonesB.ViewObject.Visibility = False
+                add_toberemoved.append([zonesB])
                 botZones = new_obj
             if len (FreeCAD.ActiveDocument.getObjectsByLabel('Pcb'+ftname_sfx)) >0:
                 #PCB_Sketch_5737
