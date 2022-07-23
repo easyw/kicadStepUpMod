@@ -32,12 +32,13 @@ else:  #py2
 import ksu_locator
 from kicadStepUpCMD import *
 
+
 ksuWBpath = os.path.dirname(ksu_locator.__file__)
 #sys.path.append(ksuWB + '/Gui')
 ksuWB_icons_path =  os.path.join( ksuWBpath, 'Resources', 'icons')
 ksuWB_ui_path = os.path.join( ksuWBpath, 'Resources','ui' )
 
-# FreeCADGui.addLanguagePath(ksuWBpath+"/translations")
+FreeCADGui.addLanguagePath(ksuWBpath+"/translations")
 
 global main_ksu_Icon
 main_ksu_Icon = os.path.join( ksuWB_icons_path , 'kicad-StepUp-tools-WB.svg')
