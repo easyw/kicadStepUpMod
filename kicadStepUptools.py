@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.6.4"
+___ver___ = "10.6.5"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -6435,6 +6435,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
     from fcad_parser import KicadPCB,SexpList
     import kicad_parser
     objs_toberemoved = []
+    ImportMode_status=0
 
     pull_sketch = False
     override_pcb = None
