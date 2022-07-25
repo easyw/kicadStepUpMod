@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global tracks_version
-tracks_version = '2.4.9'
+tracks_version = '2.5.0'
 
 import kicad_parser
 #import kicad_parser; import importlib; importlib.reload(kicad_parser)
@@ -404,13 +404,13 @@ def addtracks(fname = None):
         # pcb.makeTracks(shape_type='face',fit_arcs=True,thickness=0.05,holes=True) #,prefix='')
         # pcb.makeTracks(shape_type='face',fit_arcs=True,thickness=0.05,holes=True) #,prefix='')
         pcb.makeTracks(shape_type='face',fit_arcs=True,thickness=0.05,holes=False) # holes=True) #,prefix='')
-        tracks_=FreeCAD.ActiveDocument.ActiveObject
-        holes=pcb.makeHoles()
-        extrude_holes(holes,pcbThickness*3)
-        holes_ = FreeCAD.ActiveDocument.ActiveObject
-        cut_fuzzy(tracks_,holes_,0.00006) #6e-5 fuzzy tolerance
         if FreeCAD.ActiveDocument is not None:
             if objsNum < len(FreeCAD.ActiveDocument.Objects):
+                tracks_=FreeCAD.ActiveDocument.ActiveObject
+                holes=pcb.makeHoles()
+                extrude_holes(holes,pcbThickness*3)
+                holes_ = FreeCAD.ActiveDocument.ActiveObject
+                cut_fuzzy(tracks_,holes_,0.00006) #6e-5 fuzzy tolerance
                 say_time()
                 tracks=FreeCAD.ActiveDocument.ActiveObject
                 tracks.Placement.Base.z+=deltaz
@@ -508,9 +508,14 @@ def addtracks(fname = None):
         pcb.makeTracks(shape_type='face',fit_arcs=True,thickness=0.05,holes=False) # holes=True) #,prefix='')
         if FreeCAD.ActiveDocument is not None:
             if objsNum < len(FreeCAD.ActiveDocument.Objects):
+                tracksB_=FreeCAD.ActiveDocument.ActiveObject
+                holesB=pcb.makeHoles()
+                extrude_holes(holesB,pcbThickness*3)
+                holesB_ = FreeCAD.ActiveDocument.ActiveObject
+                cut_fuzzy(tracksB_,holesB_,0.00006) #6e-5 fuzzy tolerance
                 say_time()
                 tracksB=FreeCAD.ActiveDocument.ActiveObject
-                tracksB.Placement.Base.z = tracksB.Placement.Base.z - (pcbThickness + deltaz)
+                tracksB.Placement.Base.z-=(pcbThickness + deltaz)
                 tracksB.ViewObject.ShapeColor=mkColor(trk_col)
                 new_obj = simple_cpy(tracksB,'botTracks'+ftname_sfx)
                 say_time()
