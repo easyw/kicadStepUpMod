@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global tracks_version
-tracks_version = '2.5.0'
+tracks_version = '2.5.1'
 
 import kicad_parser
 #import kicad_parser; import importlib; importlib.reload(kicad_parser)
@@ -407,10 +407,17 @@ def addtracks(fname = None):
         if FreeCAD.ActiveDocument is not None:
             if objsNum < len(FreeCAD.ActiveDocument.Objects):
                 tracks_=FreeCAD.ActiveDocument.ActiveObject
+                objsNum = len(FreeCAD.ActiveDocument.Objects)
+                #print(objsNum,len(FreeCAD.ActiveDocument.Objects))
                 holes=pcb.makeHoles()
-                extrude_holes(holes,pcbThickness*3)
-                holes_ = FreeCAD.ActiveDocument.ActiveObject
-                cut_fuzzy(tracks_,holes_,0.00006) #6e-5 fuzzy tolerance
+                #print(objsNum,len(FreeCAD.ActiveDocument.Objects))
+                if (objsNum) < len(FreeCAD.ActiveDocument.Objects):
+                    extrude_holes(holes,pcbThickness*3)
+                    holes_ = FreeCAD.ActiveDocument.ActiveObject
+                    cut_fuzzy(tracks_,holes_,0.00006) #6e-5 fuzzy tolerance
+                    holes.ViewObject.Visibility = False
+                    holes_.ViewObject.Visibility = False
+                    add_toberemoved.append([holes,holes_])
                 say_time()
                 tracks=FreeCAD.ActiveDocument.ActiveObject
                 tracks.Placement.Base.z+=deltaz
@@ -419,10 +426,7 @@ def addtracks(fname = None):
                 say_time()
                 # removesubtree([tracks])
                 tracks.ViewObject.Visibility = False
-                holes.ViewObject.Visibility = False
-                holes_.ViewObject.Visibility = False
-                add_toberemoved.append([tracks])
-                add_toberemoved.append([holes,tracks_,holes_])
+                add_toberemoved.append([tracks,tracks_])
                 topTracks = new_obj
                 #stop
         if FreeCAD.ActiveDocument is not None:
@@ -509,10 +513,15 @@ def addtracks(fname = None):
         if FreeCAD.ActiveDocument is not None:
             if objsNum < len(FreeCAD.ActiveDocument.Objects):
                 tracksB_=FreeCAD.ActiveDocument.ActiveObject
+                objsNum = len(FreeCAD.ActiveDocument.Objects)
                 holesB=pcb.makeHoles()
-                extrude_holes(holesB,pcbThickness*3)
-                holesB_ = FreeCAD.ActiveDocument.ActiveObject
-                cut_fuzzy(tracksB_,holesB_,0.00006) #6e-5 fuzzy tolerance
+                if (objsNum) < len(FreeCAD.ActiveDocument.Objects):
+                    extrude_holes(holesB,pcbThickness*3)
+                    holesB_ = FreeCAD.ActiveDocument.ActiveObject
+                    cut_fuzzy(tracksB_,holesB_,0.00006) #6e-5 fuzzy tolerance
+                    holesB.ViewObject.Visibility = False
+                    holesB_.ViewObject.Visibility = False
+                    add_toberemoved.append([holesB,holesB_])
                 say_time()
                 tracksB=FreeCAD.ActiveDocument.ActiveObject
                 tracksB.Placement.Base.z-=(pcbThickness + deltaz)
@@ -521,10 +530,7 @@ def addtracks(fname = None):
                 say_time()
                 # removesubtree([tracks])
                 tracksB.ViewObject.Visibility = False
-                holesB.ViewObject.Visibility = False
-                holesB_.ViewObject.Visibility = False
-                add_toberemoved.append([tracksB])
-                add_toberemoved.append([holesB,tracksB_,holesB_])
+                add_toberemoved.append([tracksB,tracksB_])
                 botTracks = new_obj
                 #stop
         if FreeCAD.ActiveDocument is not None:
