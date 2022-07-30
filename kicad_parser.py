@@ -34,7 +34,7 @@ from fcad_parser import unquote #maui
 
 
 # from kicadStepUptools import KicadPCB,SexpList
-__kicad_parser_version__ = '2.1.5'
+__kicad_parser_version__ = '2.1.6'
 # https://github.com/realthunder/fcad_pcb/issues/20#issuecomment-586042341
 print('kicad_parser_version '+__kicad_parser_version__)
 # maui
@@ -1187,20 +1187,26 @@ class KicadFcad:
                 continue;
             primitives = SexpList(primitives)
             self._log('making {} {}s',len(primitives), tp)
-            make_shape = globals()['make_gr_{}'.format(tp)]
-            for l in primitives:
-                if not layer:
-                    if self.filterNets(l) or self.filterLayer(l):
+            try:
+                make_shape = globals()['make_gr_{}'.format(tp)]
+                for l in primitives:
+                    if not layer:
+                        if self.filterNets(l) or self.filterLayer(l):
+                            continue
+                    elif l.layer != layer:
                         continue
-                elif l.layer != layer:
-                    continue
-                shape = make_shape(l)
-                if angle:
-                    shape.rotate(Vector(),Vector(0,0,1),angle)
-                if at:
-                    shape.translate(at)
-                edges += [[getattr(l,'width',1e-7), e] for e in shape.Edges]
-
+                    shape = make_shape(l)
+                    if angle:
+                        shape.rotate(Vector(),Vector(0,0,1),angle)
+                    if at:
+                        shape.translate(at)
+                    edges += [[getattr(l,'width',1e-7), e] for e in shape.Edges]
+            except Exception as e:# maui logging error
+                # raise
+                # traceback.print_exc() # maui 
+                error_message = traceback.format_exc() #maui
+                self._log('{}',error_message,level='error') # maui 
+                pass  # maui logging error
         # The line width in edge cuts are important. When milling, the line
         # width can represent the diameter of the drill bits to use. The user
         # can use lines thick enough for hole cutting. In addition, the
