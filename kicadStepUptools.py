@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.6.5"
+___ver___ = "10.6.7"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -20113,6 +20113,7 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                     repl = re.sub('\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE)
                     repl = re.sub('\s\(gr_arc(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_arc(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_arc(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE)
                     repl = re.sub('\s\(gr_circle(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_circle(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_circle(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE)
+                    repl = re.sub('\s\(gr_rect(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_rect(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_rect(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE)
                     repl = re.sub('\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE|re. DOTALL)
                     #sayerr(replace)
                     k = repl.rfind(")")  #removing latest ')'
