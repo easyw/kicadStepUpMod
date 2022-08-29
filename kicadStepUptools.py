@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.6.7"
+___ver___ = "10.6.8"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -4919,7 +4919,7 @@ def Load_models(pcbThickness,modules):
                                     modelTop_nbr+=1
                                 elif use_LinkGroups:
                                     #FreeCAD.ActiveDocument.getObject(impPart.Name).adjustRelativeLinks(FreeCAD.ActiveDocument.getObject('Top'))
-                                    FreeCAD.ActiveDocument.getObject(top_name).ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),None,'',[])
+                                    FreeCAD.ActiveDocument.getObject(top_name).ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),FreeCAD.ActiveDocument.getObject(impPart.Name),'',[])
                                     modelTop_nbr+=1
                                 else:
                                     FreeCAD.ActiveDocument.getObject(stepM_name).addObject(impPart)
@@ -4930,7 +4930,7 @@ def Load_models(pcbThickness,modules):
                                     virtualTop_nbr+=1
                                 elif use_LinkGroups:
                                     #FreeCAD.ActiveDocument.getObject(impPart.Name).adjustRelativeLinks(FreeCAD.ActiveDocument.getObject('TopV'))
-                                    FreeCAD.ActiveDocument.getObject(topV_name).ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),None,'',[])
+                                    FreeCAD.ActiveDocument.getObject(topV_name).ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),FreeCAD.ActiveDocument.getObject(impPart.Name),'',[])
                                     virtualTop_nbr+=1
                                 else:
                                     FreeCAD.ActiveDocument.getObject(stepV_name).addObject(impPart)
@@ -4985,7 +4985,7 @@ def Load_models(pcbThickness,modules):
                                     modelBot_nbr+=1
                                 elif use_LinkGroups:
                                     #FreeCAD.ActiveDocument.getObject(impPart.Name).adjustRelativeLinks(FreeCAD.ActiveDocument.getObject('Bot'))
-                                    FreeCAD.ActiveDocument.getObject(bot_name).ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),None,'',[])
+                                    FreeCAD.ActiveDocument.getObject(bot_name).ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),FreeCAD.ActiveDocument.getObject(impPart.Name),'',[])
                                     modelBot_nbr+=1
                                 else:
                                     FreeCAD.ActiveDocument.getObject(stepM_name).addObject(impPart)
@@ -4995,7 +4995,7 @@ def Load_models(pcbThickness,modules):
                                     virtualBot_nbr+=1
                                 elif use_LinkGroups:
                                     #FreeCAD.ActiveDocument.getObject(impPart.Name).adjustRelativeLinks(FreeCAD.ActiveDocument.getObject('BotV'))
-                                    FreeCAD.ActiveDocument.getObject(botV_name).ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),None,'',[])
+                                    FreeCAD.ActiveDocument.getObject(botV_name).ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),FreeCAD.ActiveDocument.getObject(impPart.Name),'',[])
                                     virtualBot_nbr+=1
                                 else:
                                     FreeCAD.ActiveDocument.getObject(stepV_name).addObject(impPart)
@@ -5229,8 +5229,9 @@ def Load_models(pcbThickness,modules):
             QtGui.QApplication.restoreOverrideCursor()
             wmsg="""<font color=red>"""
             wmsg+="too many missing modules <b>["
-            wmsg+=str(len (missings))+"]<br></b></font><font color=blue><b>Have configured your KISYS3DMOD path<br>or 3d model prefix path?</font></b>"
+            wmsg+=str(len (missings))+"]<br></b></font><font color=blue><b>Have you configured your KISYS3DMOD path<br>or 3d model prefix path?</font></b>"
             wmsg+="<br>StepUp configuration options are located in the preferences system of FreeCAD."
+            wmsg+="<br></b></font><font color=blue><b>Are you on FC Snap or Flatpack?</b></font><br><i>You may need to \'bind mount\' your 3d models folder</i>"
             reply = QtGui.QMessageBox.information(None,"Error ...",wmsg)
     #if blacklisted_model_elements != '':
     #    FreeCAD.Console.PrintMessage("black-listed module "+ '\n'.join(map(str, blacklisted_models)))
@@ -6609,7 +6610,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                     if use_AppPart and not force_oldGroups and not use_LinkGroups:
                         doc.getObject(board_name).addObject(doc.getObject(boardG_name))
                     elif use_LinkGroups:
-                        doc.getObject(board_name).ViewObject.dropObject(doc.getObject(boardG_name),None,'',[])
+                        doc.getObject(board_name).ViewObject.dropObject(doc.getObject(boardG_name),doc.getObject(boardG_name),'',[])
                 if SketchLayer == 'Edge.Cuts':
                     FreeCAD.ActiveDocument.getObject(board_name).Label = fname
                 pcbThickness=float(mypcb.general.thickness)
@@ -6745,7 +6746,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                         FreeCAD.ActiveDocument.getObject(newname).exposeInternalGeometry(gi)
                     gi+=1
                 if use_LinkGroups and SketchLayer == 'Edge.Cuts':
-                    FreeCAD.ActiveDocument.getObject(boardG_name).ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(newname),None,'',[])
+                    FreeCAD.ActiveDocument.getObject(boardG_name).ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(newname),FreeCAD.ActiveDocument.getObject(newname),'',[])
                     FreeCADGui.Selection.clearSelection()
                     sl = FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.getObject(newname))
                     #FreeCADGui.runCommand('Std_HideSelection',0)
@@ -6851,17 +6852,17 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                     botVG=doc.ActiveObject
                     botVG.Label = botV_name
                     #doc.getObject('Top').adjustRelativeLinks(doc.getObject('Step_Models'))
-                    doc.getObject(stepM_name).ViewObject.dropObject(doc.getObject(top_name),None,'',[])
+                    doc.getObject(stepM_name).ViewObject.dropObject(doc.getObject(top_name),doc.getObject(top_name),'',[])
                     #doc.getObject('TopV').adjustRelativeLinks(doc.getObject('Step_Virtual_Models'))
-                    doc.getObject(stepV_name).ViewObject.dropObject(doc.getObject(topV_name),None,'',[])
+                    doc.getObject(stepV_name).ViewObject.dropObject(doc.getObject(topV_name),doc.getObject(topV_name),'',[])
                     #doc.getObject('Bot').adjustRelativeLinks(doc.getObject('Step_Models'))
-                    doc.getObject(stepM_name).ViewObject.dropObject(doc.getObject(bot_name),None,'',[])
+                    doc.getObject(stepM_name).ViewObject.dropObject(doc.getObject(bot_name),doc.getObject(bot_name),'',[])
                     #doc.getObject('BotV').adjustRelativeLinks(doc.getObject('Step_Virtual_Models'))
-                    doc.getObject(stepV_name).ViewObject.dropObject(doc.getObject(botV_name),None,'',[])
+                    doc.getObject(stepV_name).ViewObject.dropObject(doc.getObject(botV_name),doc.getObject(botV_name),'',[])
                     #doc.getObject('Step_Models').adjustRelativeLinks(doc.getObject('Board'))
-                    doc.getObject(board_name).ViewObject.dropObject(doc.getObject(stepM_name),None,'',[])
+                    doc.getObject(board_name).ViewObject.dropObject(doc.getObject(stepM_name),doc.getObject(stepM_name),'',[])
                     #doc.getObject('Step_Virtual_Models').adjustRelativeLinks(doc.getObject('Board'))
-                    doc.getObject(board_name).ViewObject.dropObject(doc.getObject(stepV_name),None,'',[])
+                    doc.getObject(board_name).ViewObject.dropObject(doc.getObject(stepV_name),doc.getObject(stepV_name),'',[])
                     FreeCADGui.Selection.clearSelection()
                 else:
                     #sayerr("creating flat groups")
@@ -13235,15 +13236,15 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                     #FreeCAD.ActiveDocument.getObject("Step_Virtual_Models").addObject(impPart)
                     # doc.getObject("Board").addObject(doc.Board_Geoms)
                     #doc.getObject('Board_Geoms').adjustRelativeLinks(doc.getObject('Board'))
-                    doc.getObject(board_name).ViewObject.dropObject(doc.getObject(boardG_name),None,'',[])
+                    doc.getObject(board_name).ViewObject.dropObject(doc.getObject(boardG_name),doc.getObject(boardG_name),'',[])
                 FreeCADGui.Selection.clearSelection()
                 #grp.addObject(pcb_board)
                 #doc.getObject('Pcb').adjustRelativeLinks(doc.getObject('Board_Geoms'))
                 #doc.getObject('Board_Geoms').ViewObject.dropObject(doc.getObject('Pcb'),None,'',[])
-                doc.getObject(boardG_name).ViewObject.dropObject(doc.getObject(pcb_name),None,'',[])
+                doc.getObject(boardG_name).ViewObject.dropObject(doc.getObject(pcb_name),doc.getObject(pcb_name),'',[])
                 try:
                     #LCS.adjustRelativeLinks(doc.getObject('Board_Geoms'))
-                    doc.getObject(boardG_name).ViewObject.dropObject(LCS,None,'',[])
+                    doc.getObject(boardG_name).ViewObject.dropObject(LCS,LCS,'',[])
                     FreeCADGui.Selection.clearSelection()
                     FreeCADGui.Selection.addSelection(LCS)
                     FreeCADGui.runCommand('Std_ToggleVisibility',0)
