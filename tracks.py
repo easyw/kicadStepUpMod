@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global tracks_version
-tracks_version = '2.5.2'
+tracks_version = '2.5.3'
 
 import kicad_parser
 #import kicad_parser; import importlib; importlib.reload(kicad_parser)
@@ -482,11 +482,11 @@ def addtracks(fname = None):
                             FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).addObject(topZones)
                     elif use_LinkGroups:
                         if topPads is not None:
-                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(topPads,None,'',[])
+                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(topPads,topPads,'',[])
                         if topTracks is not None:
-                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(topTracks,None,'',[])
+                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(topTracks,topTracks,'',[])
                         if topZones is not None:
-                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(topZones,None,'',[])
+                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(topZones,topZones,'',[])
         #try:    #doing bot tracks layer
         #pcb.setLayer(LvlBotName)
         pcb.setLayer(Bot_lvl)
@@ -593,11 +593,11 @@ def addtracks(fname = None):
                             FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).addObject(botZones)
                     elif use_LinkGroups:
                         if botPads is not None:
-                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(botPads,None,'',[])
+                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(botPads,botPads,'',[])
                         if botTracks is not None:
-                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(botTracks,None,'',[])
+                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(botTracks,botTracks,'',[])
                         if botZones is not None:
-                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(botZones,None,'',[])
+                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(botZones,botZones,'',[])
         say_time()
         
         if FreeCAD.ActiveDocument is not None:
