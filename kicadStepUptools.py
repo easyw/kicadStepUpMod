@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.7.0"
+___ver___ = "10.7.1"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -6543,10 +6543,15 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                     if doc is None:
                         doc=FreeCAD.newDocument(fname)
                         override_pcb = False
+                        try:
+                            doc.removeObject(LCS_name)
+                        except:
+                            pass
                     elif override_pcb == True:
                         if doc.getObject(boardG_name) in doc.Objects: #if 1: #try:
                             if keep_pcb_sketch==True:
-                                doc.getObject(boardG_name).removeObject(doc.getObject(sketch_name_sfx)) #keep sketck & constrains
+                                #doc.getObject(boardG_name).removeObject(doc.getObject(sketch_name_sfx)) #keep sketck & constrains
+                                doc.getObject(boardG_name).ViewObject.dragObject(doc.getObject(sketch_name_sfx))
                                 #objs_toberemoved.append([doc.getObject(sketch_name_sfx)])
                             removesubtree([doc.getObject(boardG_name)])
                             #objs_toberemoved.append([doc.getObject(boardG_name)])
@@ -13228,11 +13233,12 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                     except:
                         pass
                     doc.getObject(board_name).addObject(doc.getObject(boardG_name))
-                try:
-                    #doc.getObject(boardG_name).addObject(LCS)
-                    doc.getObject(board_name).addObject(LCS)
-                except:
-                    pass
+                else:
+                    try:
+                        #doc.getObject(boardG_name).addObject(LCS)
+                        doc.getObject(board_name).addObject(LCS)
+                    except:
+                        pass
                 doc.getObject(boardG_name).addObject(doc.getObject(pcb_name))
                 #FreeCADGui.activeView().setActiveObject('Board_Geoms', doc.Board_Geoms)
                 ## end hierarchy
@@ -13260,16 +13266,17 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                     except:
                         pass
                     doc.getObject(board_name).ViewObject.dropObject(doc.getObject(boardG_name),doc.getObject(boardG_name),'',[])
-                try:
-                    #LCS.adjustRelativeLinks(doc.getObject('Board_Geoms'))
-                    #doc.getObject(boardG_name).ViewObject.dropObject(LCS,LCS,'',[])
-                    doc.getObject(board_name).ViewObject.dropObject(LCS,LCS,'',[])
-                    FreeCADGui.Selection.clearSelection()
-                    FreeCADGui.Selection.addSelection(LCS)
-                    FreeCADGui.runCommand('Std_ToggleVisibility',0)
-                    #stop
-                except:
-                    pass
+                else:
+                    try:
+                        #LCS.adjustRelativeLinks(doc.getObject('Board_Geoms'))
+                        #doc.getObject(boardG_name).ViewObject.dropObject(LCS,LCS,'',[])
+                        doc.getObject(board_name).ViewObject.dropObject(LCS,LCS,'',[])
+                        FreeCADGui.Selection.clearSelection()
+                        FreeCADGui.Selection.addSelection(LCS)
+                        FreeCADGui.runCommand('Std_ToggleVisibility',0)
+                        #stop
+                    except:
+                        pass
                 FreeCADGui.Selection.clearSelection()
                 #grp.addObject(pcb_board)
                 #doc.getObject('Pcb').adjustRelativeLinks(doc.getObject('Board_Geoms'))
