@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.7.1"
+___ver___ = "10.7.2"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -13230,6 +13230,9 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                     try:
                         #doc.getObject(boardG_name).addObject(LCS)
                         doc.getObject(board_name).addObject(LCS)
+                        LCS.MapMode = 'ObjectXY'
+                        LCS.MapReversed = False
+                        LCS.Support = [(doc.getObject(board_name).Origin.OriginFeatures[0],'')]
                     except:
                         pass
                     doc.getObject(board_name).addObject(doc.getObject(boardG_name))
@@ -13237,6 +13240,9 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                     try:
                         #doc.getObject(boardG_name).addObject(LCS)
                         doc.getObject(board_name).addObject(LCS)
+                        LCS.MapMode = 'ObjectXY'
+                        LCS.MapReversed = False
+                        LCS.Support = [(doc.getObject(board_name).Origin.OriginFeatures[0],'')]
                     except:
                         pass
                 doc.getObject(boardG_name).addObject(doc.getObject(pcb_name))
@@ -13259,6 +13265,10 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                         #LCS.adjustRelativeLinks(doc.getObject('Board_Geoms'))
                         #doc.getObject(boardG_name).ViewObject.dropObject(LCS,LCS,'',[])
                         doc.getObject(board_name).ViewObject.dropObject(LCS,LCS,'',[])
+                        # LinkGroups don't have 'Origin' Feature
+                        # LCS.MapMode = 'ObjectXY'
+                        # LCS.MapReversed = False
+                        # LCS.Support = [(doc.getObject(board_name).Origin.OriginFeatures[0],'')]
                         FreeCADGui.Selection.clearSelection()
                         FreeCADGui.Selection.addSelection(LCS)
                         FreeCADGui.runCommand('Std_ToggleVisibility',0)
@@ -13271,6 +13281,10 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                         #LCS.adjustRelativeLinks(doc.getObject('Board_Geoms'))
                         #doc.getObject(boardG_name).ViewObject.dropObject(LCS,LCS,'',[])
                         doc.getObject(board_name).ViewObject.dropObject(LCS,LCS,'',[])
+                        # LinkGroups don't have 'Origin' Feature
+                        # LCS.MapMode = 'ObjectXY'
+                        # LCS.MapReversed = False
+                        # LCS.Support = [(doc.getObject(board_name).Origin.OriginFeatures[0],'')]
                         FreeCADGui.Selection.clearSelection()
                         FreeCADGui.Selection.addSelection(LCS)
                         FreeCADGui.runCommand('Std_ToggleVisibility',0)
