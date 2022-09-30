@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.2.1'
+ksuCMD_version__='2.2.3'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -1847,14 +1847,16 @@ class ksuToolsResetPartPlacement:
             currState = {} #initialize a dictionary to store current object placements
             sel = FreeCADGui.Selection.getSelection()
             for obj in sel: ## App.ActiveDocument.Objects: #going through active document objects
-                if "Placement" in obj.PropertiesList: #if object has a Placement property
+                if "Placement" in obj.PropertiesList and obj.TypeId != 'Sketcher::SketchObject' \
+                   and 'body object' not in str(obj.InList): #if object has a Placement property
                     #FreeCAD.Console.PrintWarning(obj.TypeId)
                     if hasattr(obj,'getGlobalPlacement'):
                         currState[obj] = obj.getGlobalPlacement() #store the object pointer with its global placement
                     #elif obj.TypeId == 'App::Link':
                     #    obj.getLinkGlobalPlacement()
                 for o in obj.OutListRecursive:
-                    if "Placement" in o.PropertiesList: #if object has a Placement property
+                    if "Placement" in o.PropertiesList and o.TypeId != 'Sketcher::SketchObject' \
+                      and 'body object' not in str(o.InList): #if object has a Placement property
                         #FreeCAD.Console.PrintWarning(o.TypeId)
                         if hasattr(o,'getGlobalPlacement'):
                             currState[o] = o.getGlobalPlacement() #store the object pointer with its global placement

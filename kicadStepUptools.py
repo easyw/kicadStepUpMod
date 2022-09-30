@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.7.2"
+___ver___ = "10.7.3"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -1806,47 +1806,55 @@ def light2(x,y,z):
   return light
 
 def simple_copy_link(obj): #simple copy with incremental placement
-    __shape = Part.getShape(obj,'',needSubElement=False,refine=False)
-    FreeCAD.ActiveDocument.addObject('Part::Feature','LinkGroup').Shape=__shape
-    nobj = FreeCAD.ActiveDocument.ActiveObject
-    nobjV = FreeCADGui.ActiveDocument.ActiveObject
-    nobj.Label=obj.Label
-    if obj.TypeId == 'App::Part':
-        for subobj in obj.OutList:
-            if hasattr(FreeCADGui.ActiveDocument.getObject(subobj.Name),'ShapeColor'):
-                nobjV.ShapeColor=FreeCADGui.ActiveDocument.getObject(subobj.Name).ShapeColor
-                if hasattr(FreeCADGui.ActiveDocument.getObject(subobj.Name),'LineColor'):
-                    #FreeCAD.Console.PrintMessage(subobj.Label);FreeCAD.Console.PrintMessage(' LineColor ' +str(FreeCADGui.ActiveDocument.getObject(subobj.Name).LineColor)+ '\n')
-                    nobjV.LineColor=FreeCADGui.ActiveDocument.getObject(subobj.Name).LineColor
-                    nobjV.PointColor=FreeCADGui.ActiveDocument.getObject(subobj.Name).PointColor
-                if hasattr(FreeCADGui.ActiveDocument.getObject(subobj.Name),'DiffuseColor'):
-                    #FreeCAD.Console.PrintMessage(subobj.Label);FreeCAD.Console.PrintMessage(' DiffuseColor ' +str(FreeCADGui.ActiveDocument.getObject(subobj.Name).DiffuseColor)+ '\n')
-                    nobjV.DiffuseColor=FreeCADGui.ActiveDocument.getObject(subobj.Name).DiffuseColor
-                if hasattr(FreeCADGui.ActiveDocument.getObject(subobj.Name),'Transparency'):
-                    #FreeCAD.Console.PrintMessage(subobj.Label);FreeCAD.Console.PrintMessage(' Transparency ' +str(FreeCADGui.ActiveDocument.getObject(subobj.Name).Transparency)+ '\n')
-                    nobjV.Transparency=FreeCADGui.ActiveDocument.getObject(subobj.Name).Transparency
-    else:
-        nobj.ViewObject.ShapeColor=getattr(obj.getLinkedObject(True).ViewObject,'ShapeColor',nobj.ViewObject.ShapeColor)
-        nobj.ViewObject.LineColor= getattr(obj.getLinkedObject(True).ViewObject,'LineColor' ,nobj.ViewObject.LineColor)
-        nobj.ViewObject.PointColor=getattr(obj.getLinkedObject(True).ViewObject,'PointColor',nobj.ViewObject.PointColor)
-    FreeCAD.ActiveDocument.recompute()
+    if obj.ViewObject.Visibility != False:
+        __shape = Part.getShape(obj,'',needSubElement=False,refine=False)
+        FreeCAD.ActiveDocument.addObject('Part::Feature','LinkGroup').Shape=__shape
+        nobj = FreeCAD.ActiveDocument.ActiveObject
+        nobjV = FreeCADGui.ActiveDocument.ActiveObject
+        nobj.Label=obj.Label
+        if obj.TypeId == 'App::Part':
+            for subobj in obj.OutList:
+                if hasattr(FreeCADGui.ActiveDocument.getObject(subobj.Name),'ShapeColor'):
+                    nobjV.ShapeColor=FreeCADGui.ActiveDocument.getObject(subobj.Name).ShapeColor
+                    if hasattr(FreeCADGui.ActiveDocument.getObject(subobj.Name),'LineColor'):
+                        #FreeCAD.Console.PrintMessage(subobj.Label);FreeCAD.Console.PrintMessage(' LineColor ' +str(FreeCADGui.ActiveDocument.getObject(subobj.Name).LineColor)+ '\n')
+                        nobjV.LineColor=FreeCADGui.ActiveDocument.getObject(subobj.Name).LineColor
+                        nobjV.PointColor=FreeCADGui.ActiveDocument.getObject(subobj.Name).PointColor
+                    if hasattr(FreeCADGui.ActiveDocument.getObject(subobj.Name),'DiffuseColor'):
+                        #FreeCAD.Console.PrintMessage(subobj.Label);FreeCAD.Console.PrintMessage(' DiffuseColor ' +str(FreeCADGui.ActiveDocument.getObject(subobj.Name).DiffuseColor)+ '\n')
+                        nobjV.DiffuseColor=FreeCADGui.ActiveDocument.getObject(subobj.Name).DiffuseColor
+                    if hasattr(FreeCADGui.ActiveDocument.getObject(subobj.Name),'Transparency'):
+                        #FreeCAD.Console.PrintMessage(subobj.Label);FreeCAD.Console.PrintMessage(' Transparency ' +str(FreeCADGui.ActiveDocument.getObject(subobj.Name).Transparency)+ '\n')
+                        nobjV.Transparency=FreeCADGui.ActiveDocument.getObject(subobj.Name).Transparency
+        else:
+            nobj.ViewObject.ShapeColor=getattr(obj.getLinkedObject(True).ViewObject,'ShapeColor',nobj.ViewObject.ShapeColor)
+            nobj.ViewObject.LineColor= getattr(obj.getLinkedObject(True).ViewObject,'LineColor' ,nobj.ViewObject.LineColor)
+            nobj.ViewObject.PointColor=getattr(obj.getLinkedObject(True).ViewObject,'PointColor',nobj.ViewObject.PointColor)
+        FreeCAD.ActiveDocument.recompute()
 
 def simple_cpy_plc(obj,proot): #simple copy with incremental placement
 
-    s=obj.Shape
-    t=s.copy()
-    r=s.copy()
-    r.Placement=FreeCAD.Placement(proot)
-    t.Placement=r.Placement.multiply(t.Placement)  #incremental Placement
-    FreeCAD.ActiveDocument.addObject('Part::Feature',obj.Name+"_cp").Shape=t
-    FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.getObject(obj.Name).ShapeColor
-    FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(obj.Name).LineColor
-    FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(obj.Name).PointColor
-    FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.getObject(obj.Name).DiffuseColor
-    FreeCADGui.ActiveDocument.ActiveObject.Transparency=FreeCADGui.ActiveDocument.getObject(obj.Name).Transparency
-    new_label=make_string(obj.Label)+"_cp"
-    FreeCAD.ActiveDocument.ActiveObject.Label=new_label
-    #stop
+    if '::CoordinateSystem' not in obj.TypeId and '::DocumentObjectGroup' not in obj.TypeId \
+     and '::FeaturePython' not in obj.TypeId and 'GeoFeature' not in obj.TypeId and 'Origin' not in obj.TypeId and obj.ViewObject.Visibility != False:
+        s=obj.Shape
+        t=s.copy()
+        r=s.copy()
+        r.Placement=FreeCAD.Placement(proot)
+        t.Placement=r.Placement.multiply(t.Placement)  #incremental Placement
+        FreeCAD.ActiveDocument.addObject('Part::Feature',obj.Name+"_cp").Shape=t
+        if hasattr(FreeCADGui.ActiveDocument.getObject(obj.Name),'ShapeColor'):
+            FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.getObject(obj.Name).ShapeColor
+        if hasattr(FreeCADGui.ActiveDocument.getObject(obj.Name),'LineColor'):
+            FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(obj.Name).LineColor
+        if hasattr(FreeCADGui.ActiveDocument.getObject(obj.Name),'PointColor'):
+            FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(obj.Name).PointColor
+        if hasattr(FreeCADGui.ActiveDocument.getObject(obj.Name),'DiffuseColor'):
+            FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.getObject(obj.Name).DiffuseColor
+        if hasattr(FreeCADGui.ActiveDocument.getObject(obj.Name),'Transparency'):
+            FreeCADGui.ActiveDocument.ActiveObject.Transparency=FreeCADGui.ActiveDocument.getObject(obj.Name).Transparency
+        new_label=make_string(obj.Label)+"_cp"
+        FreeCAD.ActiveDocument.ActiveObject.Label=new_label
+        #stop
 
 def get_node_plc(o,obj):  # get node placement in App::Part
     
@@ -2766,8 +2774,14 @@ def exportStep(objs, ffPathName):
     if exportS:
         ## resetting placement TBD for Part & Shape
         if 'App::Part' not in objs[0].TypeId:
-            newobj=reset_prop_shapes(FreeCAD.ActiveDocument.getObject(objs[0].Name),FreeCAD.ActiveDocument, FreeCAD,FreeCADGui)
-            new_name=FreeCAD.ActiveDocument.ActiveObject.Name
+            ## evaluate to modify reset placement 
+            base_shape = FreeCAD.ActiveDocument.getObject(objs[0].Name)
+            if base_shape.Placement.Base != FreeCAD.Vector(0,0,0) or base_shape.Placement.Rotation != FreeCAD.Rotation (0.0, 0.0, 0.0, 1.0):
+                newobj=reset_prop_shapes(FreeCAD.ActiveDocument.getObject(objs[0].Name),FreeCAD.ActiveDocument, FreeCAD,FreeCADGui)
+                new_name=FreeCAD.ActiveDocument.ActiveObject.Name
+            else:
+                newobj=objs[0]
+                new_name=objs[0].Name
             #newobj.Label="TEST"
             newobj_list=[FreeCAD.ActiveDocument.getObject(new_name)]
         else:
@@ -3326,7 +3340,12 @@ def reset_prop_shapes(obj,doc,App,Gui):
     #    removesubtree(obj)
     #else:
     #    FreeCAD.ActiveDocument.removeObject(obj.Name)
-    FreeCAD.ActiveDocument.removeObject(obj.Name)
+    # if 0:
+    #     FreeCAD.ActiveDocument.removeObject(obj.Name)
+    # else:
+    say('renaming not in Origin object')
+    FreeCAD.ActiveDocument.getObject(obj.Name).ViewObject.Visibility = False
+    FreeCAD.ActiveDocument.getObject(obj.Name).Label = new_label + '_'
     FreeCAD.ActiveDocument.recompute()
     FreeCAD.ActiveDocument.ActiveObject.Label=new_label
     rstObj=FreeCAD.ActiveDocument.ActiveObject
@@ -11513,7 +11532,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
     conv_offs=1.0
     if version >= 20171114:
         conv_offs=25.4
-    #getting pcb version for the interal use of 'virtual' modules
+    #getting pcb version for the internal use of 'virtual' modules
     pcbv = 4
     if version == 20171130:
         pcbv = 5
@@ -12056,6 +12075,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
             #HoleList = getPads(board_elab,pcbThickness)
             # pad
             virtual=0
+            # say(str(pcbv))
             if pcbv <= 5:
                 if hasattr(m, 'attr'):
                     if 'virtual' in m.attr:
@@ -12065,8 +12085,9 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                     virtual=0
             elif pcbv > 5:
                 if hasattr(m, 'attr'):
-                    if 'bom' in m.attr or 'pos' in m.attr:
+                    if 'smd' not in str(m.attr) and 'through_hole' not in str(m.attr):
                         # 'exclude_from_pos_files' or 'exclude_from_bom'
+                        # say('virtual module k>5')
                         virtual=1
                     else:
                         #say('non virtual module')

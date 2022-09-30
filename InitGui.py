@@ -10,13 +10,13 @@
 #*  Kicad STEPUP (TM) is a TradeMark and cannot be freely usable            *
 #*                                                                          *
 
-ksu_wb_version='v 10.15.1'
+ksu_wb_version='v 10.15.2'
 global myurlKWB, ksuWBpath
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=558 # v10.15.1
+mycommitsKWB=559 # v10.15.2
 global verKSU
-verKSU="10.7.2"
+verKSU="10.7.3"
 
 import FreeCAD, FreeCADGui, Part, os, sys
 import re, time
@@ -35,6 +35,8 @@ ksuWBpath = os.path.dirname(ksu_locator.__file__)
 #sys.path.append(ksuWB + '/Gui')
 ksuWB_icons_path =  os.path.join( ksuWBpath, 'Resources', 'icons')
 ksuWB_ui_path = os.path.join( ksuWBpath, 'Resources','ui' )
+
+# FreeCADGui.addLanguagePath(ksuWBpath+"/translations")
 
 global main_ksu_Icon
 main_ksu_Icon = os.path.join( ksuWB_icons_path , 'kicad-StepUp-tools-WB.svg')
