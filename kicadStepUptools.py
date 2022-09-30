@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.7.3"
+___ver___ = "10.7.4"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -3307,7 +3307,7 @@ def reset_prop(obj,doc,App,Gui):
     #
     return rstObj
 ###
-def reset_prop_shapes(obj,doc,App,Gui):
+def reset_prop_shapes(obj,doc,App,Gui,rmv=None):
 
     s=obj.Shape
     #say('resetting props #2')
@@ -3344,8 +3344,11 @@ def reset_prop_shapes(obj,doc,App,Gui):
     #     FreeCAD.ActiveDocument.removeObject(obj.Name)
     # else:
     say('renaming not in Origin object')
-    FreeCAD.ActiveDocument.getObject(obj.Name).ViewObject.Visibility = False
-    FreeCAD.ActiveDocument.getObject(obj.Name).Label = new_label + '_'
+    if rmv == True:
+        FreeCAD.ActiveDocument.removeObject(obj.Name)
+    else:
+        FreeCAD.ActiveDocument.getObject(obj.Name).ViewObject.Visibility = False
+        FreeCAD.ActiveDocument.getObject(obj.Name).Label = new_label + '_'
     FreeCAD.ActiveDocument.recompute()
     FreeCAD.ActiveDocument.ActiveObject.Label=new_label
     rstObj=FreeCAD.ActiveDocument.ActiveObject
@@ -4630,7 +4633,7 @@ def Load_models(pcbThickness,modules):
                             #print(myStep.Label)
                             #impLabel = myStep.Label
                             if (allow_compound != 'Hierarchy' or not Links_available) or not mp_found :
-                                newStep=reset_prop_shapes(FreeCAD.ActiveDocument.ActiveObject,FreeCAD.ActiveDocument, FreeCAD,FreeCADGui)
+                                newStep=reset_prop_shapes(FreeCAD.ActiveDocument.ActiveObject,FreeCAD.ActiveDocument, FreeCAD,FreeCADGui,True)
                                 myStep=newStep
                                 if wrl_model != '':
                                     wrl_module_path = module_path[:module_path.rfind(u'.')]+wrl_model[-4:]
