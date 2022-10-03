@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.2.3'
+ksuCMD_version__='2.2.4'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -3226,8 +3226,8 @@ class ksuToolsCheckSolid:
                 for o in sel:
                     if hasattr(o,"Shape"):
                         if '.[compsolid]' in o.Label or '.[solid]' in o.Label or '.[shell]' in o.Label\
-                                 or '.[compound]' in o.Label:
-                            o.Label=mk_str(o.Label).replace('.[solid]','').replace('.[shell]','').replace('.[compsolid]','').replace('.[compound]','')
+                                 or '.[compound]' in o.Label or '.[face]' in o.Label:
+                            o.Label=mk_str(o.Label).replace('.[solid]','').replace('.[shell]','').replace('.[compsolid]','').replace('.[compound]','').replace('.[face]','')
                         else:
                             if len(o.Shape.Solids)>0:
                                 i_say(mk_str(o.Label)+' Solid object(s) NBR : '+str(len(o.Shape.Solids)))
@@ -3250,6 +3250,11 @@ class ksuToolsCheckSolid:
                                 if '.[compsolid]' not in o.Label and '.[solid]' not in o.Label and '.[shell]' not in o.Label\
                                     and '.[compound]' not in o.Label:
                                     o.Label=mk_str(o.Label)+'.[compsolid]'
+                            if len(o.Shape.Faces)>0:
+                                i_say(mk_str(o.Label)+' Faces object(s) NBR : '+str(len(o.Shape.Faces)))
+                                if '.[compsolid]' not in o.Label and '.[solid]' not in o.Label and '.[shell]' not in o.Label\
+                                    and '.[compound]' not in o.Label and '.[face]' not in o.Label:
+                                    o.Label=mk_str(o.Label)+'.[face]'
                     else:
                         FreeCAD.Console.PrintWarning("Select object with a \"Shape\" to be checked!\n")
                 # if len (non_solids)>0:
