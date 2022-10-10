@@ -953,7 +953,7 @@ Allowing or not Loading Multi Parts objects</string>
           <rect>
            <x>9</x>
            <y>295</y>
-           <width>463</width>
+           <width>225</width>
            <height>20</height>
           </rect>
          </property>
@@ -1148,6 +1148,37 @@ Allowing or not Loading Multi Parts objects</string>
          </property>
          <property name="prefEntry" stdset="0">
           <cstring>transparency_material_led_enabled</cstring>
+         </property>
+         <property name="prefPath" stdset="0">
+          <cstring>Mod/kicadStepUpGui</cstring>
+         </property>
+        </widget>
+        <widget class="Gui::PrefCheckBox" name="cb_skip_zones">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="geometry">
+          <rect>
+           <x>270</x>
+           <y>295</y>
+           <width>245</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Skip importing pcb zone(s)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string notr="true">Skip importing pcb zone(s)</string>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
+         </property>
+         <property name="tristate">
+          <bool>false</bool>
+         </property>
+         <property name="prefEntry" stdset="0">
+          <cstring>skip_import_zones</cstring>
          </property>
          <property name="prefPath" stdset="0">
           <cstring>Mod/kicadStepUpGui</cstring>
