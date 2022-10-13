@@ -10,11 +10,11 @@
 #*  Kicad STEPUP (TM) is a TradeMark and cannot be freely usable            *
 #*                                                                          *
 
-ksu_wb_version='v 10.15.7'
+ksu_wb_version='v 10.15.8'
 global myurlKWB, ksuWBpath
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=564 # v10.15.7
+mycommitsKWB=565 # v10.15.8
 global verKSU
 verKSU="10.7.4"
 
@@ -157,7 +157,7 @@ class KiCadStepUpWB ( Workbench ):
                            "ksuToolsColoredBinder", "ksuToolsReLinkBinder", "ksuToolsCheckSolid"])
                            #, "ksuToolsPushMoved","ksuToolsSync3DModels"])
         self.appendToolbar("ksu Sketching", ["ksuTools3D2D", "ksuTools2D2Sketch", "ksuTools2DtoFace",\
-                           "ksuToolsLoopSelection","ksuToolsEdges2Sketch","ksuToolsMoveSketch","ksuToolsOffset2D","ksuToolsExtrude","ksuToolsMergeSketches",\
+                           "ksuToolsLoopSelection","ksuToolsEdges2Sketch","ksuToolsMoveSketch","ksuToolsOffset2D","ksuToolsExtrude","Create_BoundBox","ksuToolsMergeSketches",\
                            "ksuToolsSimplifySketck", "ksuToolsBsplineNormalize", "ksuToolsConstrainator", "ksuToolsSkValidate", "ksuToolsDiscretize",\
                            "ksuToolsContour2Poly", "Arcs2Circles", "approximateCenter"])
                            #, "ksuToolsPushMoved","ksuToolsSync3DModels"])

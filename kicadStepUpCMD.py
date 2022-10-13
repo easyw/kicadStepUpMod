@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.2.4'
+ksuCMD_version__='2.2.5'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -4241,4 +4241,81 @@ class approximateCenter():
             return True
 
 FreeCADGui.addCommand('approximateCenter',approximateCenter())
+
+class Create_BoundBox():
+    "Create BoundBox of the Selected Object"
+
+    def GetResources(self):
+        mybtn_tooltip ="Create BoundBox of the Selected Object"
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'BoundBox.svg') , # the name of a svg file available in the resources
+                     'MenuText': mybtn_tooltip ,
+                     'ToolTip' : mybtn_tooltip}
+
+    def IsActive(self):
+        doc = FreeCAD.ActiveDocument
+        if doc is not None:
+            if FreeCADGui.Selection.getSelection():
+                sel=FreeCADGui.Selection.getSelection()
+                if len(sel)==1:        
+                    return True
+        return
+
+    def Activated(self):        
+        doc = FreeCAD.ActiveDocument
+        if FreeCADGui.Selection.getSelection():
+            sel=FreeCADGui.Selection.getSelection()
+            if len(sel)!=1:
+                msg="Select one tree object with Shape or a Mesh'\n"
+                reply = QtGui.QMessageBox.information(None,"Warning", msg)
+                FreeCAD.Console.PrintWarning(msg)             
+            else:
+                selObj = sel[0]
+                bbLbl = selObj.Label+"-BBox"
+                bb = None
+                if hasattr(selObj, 'Shape'):
+                    bb = selObj.Shape.BoundBox
+                elif hasattr(selObj, 'Mesh'):
+                    bb = selObj.ViewObject.getBoundingBox()
+                if bb is not None:
+                    if len(FreeCAD.ActiveDocument.getObjectsByLabel(bbLbl))==0:
+                        FreeCAD.ActiveDocument.addObject("Part::Box","Box")
+                        bbO = FreeCAD.ActiveDocument.ActiveObject
+                    else:
+                        bbO = FreeCAD.ActiveDocument.getObjectsByLabel(bbLbl)[0]
+                    bbO.Label = bbLbl
+                    # selObj.Label+"-BB"
+                    bbO.ViewObject.Transparency=90
+                    bbO.ViewObject.Visibility=True
+                    # bbO.ViewObject.ShapeColor = (0.67,0.00,0.00) # (0.00,0.00,0.50)
+                    sel_Old = sel[0]
+                    FreeCADGui.Selection.clearSelection()
+                    FreeCADGui.Selection.addSelection(bbO)
+                    FreeCADGui.runCommand('Std_RandomColor')
+                    # FreeCADGui.Selection.clearSelection()
+                    # FreeCADGui.Selection.addSelection(selObj)
+                    
+                    bbO.Placement.Base.x = bb.XMin
+                    bbO.Placement.Base.y = bb.YMin
+                    bbO.Placement.Base.z = bb.ZMin
+                    if bb.XLength > 0:
+                        bbO.Length=bb.XLength 
+                    else:
+                        bbO.Length=0.01
+                    if bb.YLength > 0:
+                        bbO.Width=bb.YLength
+                    else:
+                        bbO.Width=0.01
+                    if bb.ZLength > 0:
+                        bbO.Height=bb.ZLength
+                    else:
+                        bbO.Height=0.01
+                    FreeCAD.Console.PrintMessage('BB data x:'+str(bb.XLength)+", y:"+str(bb.YLength)+", z:"+str(bb.ZLength)+'\n')
+                    FreeCAD.ActiveDocument.recompute()
+                    FreeCADGui.SendMsgToActiveView("ViewFit")
+                else:
+                    msg="Select one tree object with Shape or a Mesh'\n"
+                    reply = QtGui.QMessageBox.information(None,"Warning", msg)
+                    FreeCAD.Console.PrintWarning(msg)                
+                    
+FreeCADGui.addCommand('Create_BoundBox',Create_BoundBox())
 
