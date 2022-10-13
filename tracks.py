@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global tracks_version
-tracks_version = '2.5.5'
+tracks_version = '2.5.6'
 
 import kicad_parser
 #import kicad_parser; import importlib; importlib.reload(kicad_parser)
@@ -287,7 +287,9 @@ def addtracks(fname = None):
     global start_time, last_pcb_path, min_drill_size
     global use_LinkGroups, use_AppPart, tracks_version
     import sys
-    
+    import kicad_parser
+    FreeCAD.Console.PrintMessage('kicad_parser_version '+kicad_parser.__kicad_parser_version__+'\n') # maui 
+
     # cfg_read_all() it doesn't work through different files
     # print (min_drill_size)
     
