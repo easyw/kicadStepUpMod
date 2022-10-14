@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.2.6'
+ksuCMD_version__='2.2.7'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -4280,11 +4280,18 @@ class Create_BoundBox():
             bbLbl = selObj.Label+"-BBox"
             bb = None
             if hasattr(selObj, 'Shape'):
-                if hasattr(selObj, 'Type'):
-                    if 'Assembly' not in selObj.Type and selObj.Label != 'Model':
-                        bb = selObj.Shape.BoundBox
+                combined_path = '\t'.join(sys.path)
+                if 'Assembly4' in combined_path:
+                    import showHideLcsCmd
+                    showHideLcsCmd.showHide(0)
+                    FreeCAD.Console.PrintMessage('hiding LCs\n')
+                    #FreeCADGui.runCommand('Asm4_hideLcs',0)
                 else:
-                    bb = selObj.Shape.BoundBox
+                    for e in selObj.OutList:
+                        if e.TypeId == 'PartDesign::CoordinateSystem':
+                            FreeCAD.Console.PrintMessage('hiding LCs\n')
+                            e.ViewObject.Visibility = False
+                bb = selObj.Shape.BoundBox
             elif hasattr(selObj, 'Mesh'):
                 bb = selObj.ViewObject.getBoundingBox()
             if bb is not None:
@@ -4333,11 +4340,18 @@ class Create_BoundBox():
                 if hasattr(o.ViewObject, 'Visibility'):
                     if o.ViewObject.Visibility==True:
                         if hasattr(o, 'Shape'):
-                            if hasattr(o, 'Type'):
-                                if 'Assembly' not in o.Type and o.Label != 'Model':
-                                    cmpd_objs.append(o)
+                            combined_path = '\t'.join(sys.path)
+                            if 'Assembly4' in combined_path:
+                                import showHideLcsCmd
+                                showHideLcsCmd.showHide(0)
+                                FreeCAD.Console.PrintMessage('hiding LCs\n')
+                                #FreeCADGui.runCommand('Asm4_hideLcs',0)
                             else:
-                                cmpd_objs.append(o)
+                                for e in o.OutList:
+                                    if e.TypeId == 'PartDesign::CoordinateSystem':
+                                        FreeCAD.Console.PrintMessage('hiding LCs\n')
+                                        e.ViewObject.Visibility = False
+                            cmpd_objs.append(o)
                         elif hasattr(o, 'Mesh'):
                             sm = make_shape_from_mesh (doc,o)
                             cmpd_objs.append(sm)
