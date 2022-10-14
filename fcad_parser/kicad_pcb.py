@@ -16,7 +16,7 @@ except ImportError:
 __author__ = "Zheng, Lei"
 __copyright__ = "Copyright 2016, Zheng, Lei"
 __license__ = "MIT"
-__version__ = "1.1.1" #maui
+__version__ = "1.1.2" #maui
 __email__ = "realthunder.dev@gmail.com"
 __status__ = "Prototype"
 
@@ -74,6 +74,7 @@ class KicadPCB(SexpParser):
                 'segment',
                 'arc',
                 'via',
+                'module',
                 ['module'] + _module,
                 ['footprint'] + _module,
                 ('zone',
