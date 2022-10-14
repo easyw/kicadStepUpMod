@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.2.5'
+ksuCMD_version__='2.2.6'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -4256,66 +4256,128 @@ class Create_BoundBox():
         if doc is not None:
             if FreeCADGui.Selection.getSelection():
                 sel=FreeCADGui.Selection.getSelection()
-                if len(sel)==1:        
+                if len(sel)>=1:        
                     return True
         return
 
     def Activated(self):        
+        def make_shape_from_mesh (d,m):
+            d.addObject('Part::Feature', 'Shape-Mesh')
+            sm = d.ActiveObject
+            __shape__ = Part.Shape()
+            __shape__.makeShapeFromMesh(m.Mesh.Topology, 0.100000, False)
+            sm.Shape = __shape__
+            sm.purgeTouched()
+            del __shape__
+            return sm
+
+        import Part
         doc = FreeCAD.ActiveDocument
         if FreeCADGui.Selection.getSelection():
             sel=FreeCADGui.Selection.getSelection()
-            if len(sel)!=1:
-                msg="Select one tree object with Shape or a Mesh'\n"
-                reply = QtGui.QMessageBox.information(None,"Warning", msg)
-                FreeCAD.Console.PrintWarning(msg)             
-            else:
-                selObj = sel[0]
-                bbLbl = selObj.Label+"-BBox"
-                bb = None
-                if hasattr(selObj, 'Shape'):
-                    bb = selObj.Shape.BoundBox
-                elif hasattr(selObj, 'Mesh'):
-                    bb = selObj.ViewObject.getBoundingBox()
-                if bb is not None:
-                    if len(FreeCAD.ActiveDocument.getObjectsByLabel(bbLbl))==0:
-                        FreeCAD.ActiveDocument.addObject("Part::Box","Box")
-                        bbO = FreeCAD.ActiveDocument.ActiveObject
-                    else:
-                        bbO = FreeCAD.ActiveDocument.getObjectsByLabel(bbLbl)[0]
-                    bbO.Label = bbLbl
-                    # selObj.Label+"-BB"
-                    bbO.ViewObject.Transparency=90
-                    bbO.ViewObject.Visibility=True
-                    # bbO.ViewObject.ShapeColor = (0.67,0.00,0.00) # (0.00,0.00,0.50)
-                    sel_Old = sel[0]
-                    FreeCADGui.Selection.clearSelection()
-                    FreeCADGui.Selection.addSelection(bbO)
-                    FreeCADGui.runCommand('Std_RandomColor')
-                    # FreeCADGui.Selection.clearSelection()
-                    # FreeCADGui.Selection.addSelection(selObj)
-                    
-                    bbO.Placement.Base.x = bb.XMin
-                    bbO.Placement.Base.y = bb.YMin
-                    bbO.Placement.Base.z = bb.ZMin
-                    if bb.XLength > 0:
-                        bbO.Length=bb.XLength 
-                    else:
-                        bbO.Length=0.01
-                    if bb.YLength > 0:
-                        bbO.Width=bb.YLength
-                    else:
-                        bbO.Width=0.01
-                    if bb.ZLength > 0:
-                        bbO.Height=bb.ZLength
-                    else:
-                        bbO.Height=0.01
-                    FreeCAD.Console.PrintMessage('BB data x:'+str(bb.XLength)+", y:"+str(bb.YLength)+", z:"+str(bb.ZLength)+'\n')
-                    FreeCAD.ActiveDocument.recompute()
-                    FreeCADGui.SendMsgToActiveView("ViewFit")
+        if len(sel)==1:
+            selObj = sel[0]
+            bbLbl = selObj.Label+"-BBox"
+            bb = None
+            if hasattr(selObj, 'Shape'):
+                if hasattr(selObj, 'Type'):
+                    if 'Assembly' not in selObj.Type and selObj.Label != 'Model':
+                        bb = selObj.Shape.BoundBox
                 else:
-                    msg="Select one tree object with Shape or a Mesh'\n"
-                    reply = QtGui.QMessageBox.information(None,"Warning", msg)
-                    FreeCAD.Console.PrintWarning(msg)                
+                    bb = selObj.Shape.BoundBox
+            elif hasattr(selObj, 'Mesh'):
+                bb = selObj.ViewObject.getBoundingBox()
+            if bb is not None:
+                if len(FreeCAD.ActiveDocument.getObjectsByLabel(bbLbl))==0:
+                    FreeCAD.ActiveDocument.addObject("Part::Box","Box")
+                    bbO = FreeCAD.ActiveDocument.ActiveObject
+                else:
+                    bbO = FreeCAD.ActiveDocument.getObjectsByLabel(bbLbl)[0]
+                bbO.Label = bbLbl
+                # selObj.Label+"-BB"
+                bbO.ViewObject.Transparency=90
+                bbO.ViewObject.Visibility=True
+                # bbO.ViewObject.ShapeColor = (0.67,0.00,0.00) # (0.00,0.00,0.50)
+                sel_Old = sel[0]
+                FreeCADGui.Selection.clearSelection()
+                FreeCADGui.Selection.addSelection(bbO)
+                FreeCADGui.runCommand('Std_RandomColor')
+                # FreeCADGui.Selection.clearSelection()
+                # FreeCADGui.Selection.addSelection(selObj)
+                
+                bbO.Placement.Base.x = bb.XMin
+                bbO.Placement.Base.y = bb.YMin
+                bbO.Placement.Base.z = bb.ZMin
+                if bb.XLength > 0:
+                    bbO.Length=bb.XLength 
+                else:
+                    bbO.Length=0.01
+                if bb.YLength > 0:
+                    bbO.Width=bb.YLength
+                else:
+                    bbO.Width=0.01
+                if bb.ZLength > 0:
+                    bbO.Height=bb.ZLength
+                else:
+                    bbO.Height=0.01
+                FreeCAD.Console.PrintMessage('BB data x:'+str(bb.XLength)+", y:"+str(bb.YLength)+", z:"+str(bb.ZLength)+'\n')
+                FreeCAD.ActiveDocument.recompute()
+                FreeCADGui.SendMsgToActiveView("ViewFit")
+        else:
+            doc.addObject("Part::Compound","BBox-Compound")
+            BBCompound= doc.ActiveObject
+            sel_Old = sel
+            cmpd_objs = []
+            toDel_objs = []
+            for o in sel:
+                if hasattr(o.ViewObject, 'Visibility'):
+                    if o.ViewObject.Visibility==True:
+                        if hasattr(o, 'Shape'):
+                            if hasattr(o, 'Type'):
+                                if 'Assembly' not in o.Type and o.Label != 'Model':
+                                    cmpd_objs.append(o)
+                            else:
+                                cmpd_objs.append(o)
+                        elif hasattr(o, 'Mesh'):
+                            sm = make_shape_from_mesh (doc,o)
+                            cmpd_objs.append(sm)
+                            toDel_objs.append(sm)
+            BBCompound.Links = cmpd_objs # sel
+            doc.recompute()
+            bb = BBCompound.Shape.BoundBox
+            doc.addObject("Part::Box","Box")
+            bbO = doc.ActiveObject
+            bbO.Label = "BBox-multiObjects"
+            bbO.ViewObject.Transparency=90
+            bbO.ViewObject.Visibility=True
+            FreeCADGui.Selection.clearSelection()
+            FreeCADGui.Selection.addSelection(bbO)
+            FreeCADGui.runCommand('Std_RandomColor')
+            bbO.ViewObject.LineColor = bbO.ViewObject.ShapeColor
+            bbO.Placement.Base.x = bb.XMin
+            bbO.Placement.Base.y = bb.YMin
+            bbO.Placement.Base.z = bb.ZMin
+            if bb.XLength > 0:
+                bbO.Length=bb.XLength 
+            else:
+                bbO.Length=0.01
+            if bb.YLength > 0:
+                bbO.Width=bb.YLength
+            else:
+                bbO.Width=0.01
+            if bb.ZLength > 0:
+                bbO.Height=bb.ZLength
+            else:
+                bbO.Height=0.01
+            FreeCAD.Console.PrintMessage('BB data x:'+str(bb.XLength)+", y:"+str(bb.YLength)+", z:"+str(bb.ZLength)+'\n')
+            doc.recompute()
+            for o in cmpd_objs:
+                o.ViewObject.Visibility=True
+            FreeCADGui.SendMsgToActiveView("ViewFit")
+            doc.removeObject(BBCompound.Name)
+            for o in toDel_objs:
+                doc.removeObject(o.Name)
+            doc.recompute()
                     
 FreeCADGui.addCommand('Create_BoundBox',Create_BoundBox())
 
