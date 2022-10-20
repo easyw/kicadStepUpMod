@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.7.4"
+___ver___ = "10.7.5"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -20095,10 +20095,11 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                 sayw('found '+ssklayer+' element(s)')
             #stop
             if ssklayer == 'Edge':
-                if hasattr(mypcb.setup, 'edge_width'): #maui edge width
-                    edge_width=mypcb.setup.edge_width
-                elif hasattr(mypcb.setup, 'edge_cuts_line_width'): #maui edge cuts new width k 5.99
-                    edge_width=mypcb.setup.edge_cuts_line_width
+                if hasattr(mypcb, 'setup'):
+                    if hasattr(mypcb.setup, 'edge_width'): #maui edge width
+                        edge_width=mypcb.setup.edge_width
+                    elif hasattr(mypcb.setup, 'edge_cuts_line_width'): #maui edge cuts new width k 5.99
+                        edge_width=mypcb.setup.edge_cuts_line_width
                 #else:
                 #    edge_width=0.16
             oft=None
