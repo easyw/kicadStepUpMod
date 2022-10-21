@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.7.5"
+___ver___ = "10.7.6"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -6604,10 +6604,15 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                 grid_orig_warn=False
                 if (grid_orig==1):
                     #xp=getAuxAxisOrigin()[0]; yp=-getAuxAxisOrigin()[1]  #offset of the board & modules
-                    if hasattr(mypcb.setup, 'grid_origin'):
-                        #say('aux_axis_origin' + str(mypcb.setup.aux_axis_origin))
-                        xp=-mypcb.setup.grid_origin[0]; yp=mypcb.setup.grid_origin[1]
-                        sayw('grid origin found @ ('+str(xp)+', '+str(yp)+')') 
+                    if hasattr(mypcb, 'setup'):
+                        if hasattr(mypcb.setup, 'grid_origin'):
+                            #say('aux_axis_origin' + str(mypcb.setup.aux_axis_origin))
+                            xp=-mypcb.setup.grid_origin[0]; yp=mypcb.setup.grid_origin[1]
+                            sayw('grid origin found @ ('+str(xp)+', '+str(yp)+')') 
+                        else:
+                            say('grid origin not set\nusing default top left corner')
+                            xp=0;yp=0
+                            grid_orig_warn=True
                     else:
                         say('grid origin not set\nusing default top left corner')
                         xp=0;yp=0
@@ -6617,10 +6622,14 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                     off_x=-xp;off_y=-yp
                 if (aux_orig==1):
                     #xp=getAuxAxisOrigin()[0]; yp=-getAuxAxisOrigin()[1]  #offset of the board & modules
-                    if hasattr(mypcb.setup, 'aux_axis_origin'):
-                        #say('aux_axis_origin' + str(mypcb.setup.aux_axis_origin))
-                        sayw('aux origin used: '+str(mypcb.setup.aux_axis_origin)) 
-                        xp=-mypcb.setup.aux_axis_origin[0]; yp=mypcb.setup.aux_axis_origin[1]
+                    if hasattr(mypcb, 'setup'):
+                        if hasattr(mypcb.setup, 'aux_axis_origin'):
+                            #say('aux_axis_origin' + str(mypcb.setup.aux_axis_origin))
+                            sayw('aux origin used: '+str(mypcb.setup.aux_axis_origin)) 
+                            xp=-mypcb.setup.aux_axis_origin[0]; yp=mypcb.setup.aux_axis_origin[1]
+                        else:
+                            say('aux origin not used') 
+                            xp=-148.5;yp=98.5
                     else:
                         say('aux origin not used') 
                         xp=-148.5;yp=98.5
@@ -6645,7 +6654,10 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                         doc.getObject(board_name).ViewObject.dropObject(doc.getObject(boardG_name),doc.getObject(boardG_name),'',[])
                 if SketchLayer == 'Edge.Cuts':
                     FreeCAD.ActiveDocument.getObject(board_name).Label = fname
-                pcbThickness=float(mypcb.general.thickness)
+                if hasattr(mypcb, 'general'):
+                    pcbThickness=float(mypcb.general.thickness)
+                else:
+                    pcbThickness=1.6
                 ## stop  #test parser
                 check_requirements()
                 #stop
@@ -6673,10 +6685,11 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
             yMax=center_y+bb_y/2
             ymin=center_y-bb_y/2
             #off_x=0; off_y=0  #offset of the board & modules
-            if hasattr(mypcb.setup, 'edge_width'): #maui edge width
-                edge_width=mypcb.setup.edge_width
-            elif hasattr(mypcb.setup, 'edge_cuts_line_width'): #maui edge cuts new width k 5.99
-                edge_width=mypcb.setup.edge_cuts_line_width
+            if hasattr(mypcb, 'setup'):
+                if hasattr(mypcb.setup, 'edge_width'): #maui edge width
+                    edge_width=mypcb.setup.edge_width
+                elif hasattr(mypcb.setup, 'edge_cuts_line_width'): #maui edge cuts new width k 5.99
+                    edge_width=mypcb.setup.edge_cuts_line_width
             #if (grid_orig==1):
             #    #xp=getAuxAxisOrigin()[0]; yp=-getAuxAxisOrigin()[1]  #offset of the board & modules
             #    if hasattr(mypcb.setup, 'grid_origin'):
@@ -11513,7 +11526,10 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
     edges=[]
     PCBs = []
     #print (mypcb.general) #maui errorchecking
-    totalHeight=float(mypcb.general.thickness)
+    if hasattr(mypcb, 'general'):
+        totalHeight=float(mypcb.general.thickness)
+    else:
+        totalHeight=1.6
     missingHeight = False
     if totalHeight == 0:
         totalHeight = 1.6
@@ -11626,34 +11642,40 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
         
     #stop
     #sayerr(mypcb.layers['0'])
-    for lynbr in mypcb.layers: #getting layers name
-        if float(lynbr) == Top_lvl:
-            LvlTopName=(mypcb.layers['{0}'.format(str(lynbr))][0])
-        if float(lynbr) == Edge_Cuts_lvl:
-            LvlEdgeName=(mypcb.layers['{0}'.format(str(lynbr))][0])
-
+    if hasattr(mypcb, 'layers'):
+        for lynbr in mypcb.layers: #getting layers name
+            if float(lynbr) == Top_lvl:
+                LvlTopName=(mypcb.layers['{0}'.format(str(lynbr))][0])
+            if float(lynbr) == Edge_Cuts_lvl:
+                LvlEdgeName=(mypcb.layers['{0}'.format(str(lynbr))][0])
+    else:
+        LvlTopName = 'F.Cu'
+        LvlEdgeName = 'Edge.Cuts'
     #    #    sayerr(lyr[0])
     #    #    sayerr('top')
-    if hasattr(mypcb.general, 'area'):
-        say('board area '+str(mypcb.general.area))
+    if hasattr(mypcb, 'general'):
+        if hasattr(mypcb.general, 'area'):
+            say('board area '+str(mypcb.general.area))
     #sayerr('aux_axis_origin' + str(mypcb.setup.aux_axis_origin))
     #stop
     origin = None
-    if hasattr(mypcb.setup, 'aux_axis_origin'):
-        say('aux_axis_origin' + str(mypcb.setup.aux_axis_origin))
-        origin = 'aux origin'
-        #say(mypcb.setup.aux_axis_origin)
-        #xp=mypcb.setup.aux_axis_origin[0]; yp=-mypcb.setup.aux_axis_origin[1]
-    else:
-        say('aux origin not found')
-    if hasattr(mypcb.setup, 'grid_origin'):
-        say('grid_origin' + str(mypcb.setup.grid_origin))
-        origin = 'grid origin'
-        #say(mypcb.setup.aux_axis_origin)
-        #xp=mypcb.setup.aux_axis_origin[0]; yp=-mypcb.setup.aux_axis_origin[1]
+    if hasattr(mypcb, 'setup'):
+        if hasattr(mypcb.setup, 'grid_origin'):
+            say('grid_origin' + str(mypcb.setup.grid_origin))
+            origin = 'grid origin'
+            #say(mypcb.setup.aux_axis_origin)
+            #xp=mypcb.setup.aux_axis_origin[0]; yp=-mypcb.setup.aux_axis_origin[1]
+        elif hasattr(mypcb.setup, 'aux_axis_origin'):
+            say('aux_axis_origin' + str(mypcb.setup.aux_axis_origin))
+            origin = 'aux origin'
+            #say(mypcb.setup.aux_axis_origin)
+            #xp=mypcb.setup.aux_axis_origin[0]; yp=-mypcb.setup.aux_axis_origin[1]
+        else:
+            say('aux or grid origin not found')
+            origin = 'grid origin'  #temp workaround for kv6 missing aux origin
     else:
         say('grid origin not set\ndefault value on top left corner')
-        origin = 'aux origin'  #temp workaround for kv6 missing aux origin
+        origin = 'grid origin'  #temp workaround for kv6 missing aux origin
     #if hasattr(mypcb.setup, 'aux origin'):
     #    say('aux origin' + str(mypcb.setup.aux_axis_origin))
     #else:
@@ -15878,12 +15900,18 @@ def PullMoved():
                         #    pcb_pull=False
                         oft=None
                         if aux_orig == 1:
-                            if hasattr(mypcb.setup, 'aux_axis_origin'):
-                                oft = mypcb.setup.aux_axis_origin 
-                                #oft=getAuxOrigin(data)
+                            if hasattr(mypcb, 'setup'):
+                                if hasattr(mypcb.setup, 'aux_axis_origin'):
+                                    oft = mypcb.setup.aux_axis_origin 
+                                    #oft=getAuxOrigin(data)
+                                else:
+                                    oft = [0.0,0.0]
                         elif grid_orig == 1:
-                            if hasattr(mypcb.setup, 'grid_origin'):
-                                oft=mypcb.setup.grid_origin
+                            if hasattr(mypcb, 'setup'):
+                                if hasattr(mypcb.setup, 'grid_origin'):
+                                    oft=mypcb.setup.grid_origin
+                                else:
+                                    oft = [0.0,0.0]
                             else:
                                 oft = [0.0,0.0]
                                 #oft=getGridOrigin(data)
