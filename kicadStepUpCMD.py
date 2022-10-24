@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.2.7'
+ksuCMD_version__='2.2.8'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -424,7 +424,7 @@ class Ui_Offset_value(object):
         self.checkBox.setText("Arc")
         self.checkBox.setChecked(True)
         self.checkBox.setObjectName("checkBox")
-        self.gridLayout.addWidget(self.checkBox, 1, 0, 1, 1)
+        self.gridLayout.addWidget(self.checkBox, 2, 0, 1, 1)
         
         self.offset_label_2 = QtWidgets.QLabel(self.gridLayoutWidget)
         self.offset_label_2.setMinimumSize(QtCore.QSize(0, 0))
@@ -770,22 +770,42 @@ class ksuToolsMoveSketch:
                 ui.setupUi(offsetDlg)
                 ui.offset_label.setText("Select a Sketch and Parameters to<br>move the sketch.<br>Offset X:")
                 ui.lineEdit_offset.setText("10.0")
-                ui.checkBox.setVisible(False)
                 ui.offset_label_2.setText("Offset Y [mm]:")
                 ui.lineEdit_offset_2.setToolTip("Offset Y value [+/- mm]")
                 ui.lineEdit_offset_2.setText("0.0")
+                ui.checkBox.setText("reset Placement")
+                ui.checkBox.setVisible(True)
+                ui.checkBox.setChecked(False)
+                ui.checkBox.setToolTip("reset Placement of Sketch,\nmoving the internal geometry\nignoring offset imput fields")
                 reply=offsetDlg.exec_()
+                skip=False
                 if reply==1: # ok
-                    offsetX=float(ui.lineEdit_offset.text().replace(',','.'))
-                    offsetY=float(ui.lineEdit_offset_2.text().replace(',','.'))
-                    doc.openTransaction('moveSk')
-                    n = doc.getObject(s.Name).GeometryCount
-                    mv = []
-                    for j in range (n):
-                        mv.append(j)
-                    doc.getObject(s.Name).addMove(mv, FreeCAD.Vector(offsetX, offsetY, 0))
-                    doc.commitTransaction()
-                    doc.recompute() # ([s])
+                    if ui.checkBox.isChecked():
+                        if s.Placement.Rotation == FreeCAD.Rotation(0.0,0.0,0.0,1.0):
+                            offsetX=s.Placement.Base.x
+                            offsetY=s.Placement.Base.y
+                        else:
+                            #print(s.Placement.Rotation)
+                            print('available only on Angle (0,0,0)')
+                            msg="""available only on Angle (0,0,0)"""
+                            QtGui.QApplication.restoreOverrideCursor()
+                            QtGui.QMessageBox.information(None,"Info ...",msg)
+                            skip=True
+                    else:
+                        offsetX=float(ui.lineEdit_offset.text().replace(',','.'))
+                        offsetY=float(ui.lineEdit_offset_2.text().replace(',','.'))
+                    if not skip:
+                        doc.openTransaction('moveSk')
+                        n = doc.getObject(s.Name).GeometryCount
+                        mv = []
+                        for j in range (n):
+                            mv.append(j)
+                        doc.getObject(s.Name).addMove(mv, FreeCAD.Vector(offsetX, offsetY, 0))
+                        doc.commitTransaction()
+                        doc.recompute() # ([s])
+                        if ui.checkBox.isChecked():
+                            s.Placement.Base.x=0
+                            s.Placement.Base.y=0
                 else:
                     print('Cancel')
             else:
@@ -824,7 +844,7 @@ class ksuToolsOffset2D:
             reply=offsetDlg.exec_()
             if reply==1: # ok
                 offset=float(ui.lineEdit_offset.text().replace(',','.'))
-                if ui.checkBox.isChecked:
+                if ui.checkBox.isChecked():
                     offset_method = 'Arc'
                 else:
                     offset_method = 'Intersection'
