@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.2.8'
+ksuCMD_version__='2.2.9'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -801,11 +801,11 @@ class ksuToolsMoveSketch:
                         for j in range (n):
                             mv.append(j)
                         doc.getObject(s.Name).addMove(mv, FreeCAD.Vector(offsetX, offsetY, 0))
-                        doc.commitTransaction()
-                        doc.recompute() # ([s])
                         if ui.checkBox.isChecked():
                             s.Placement.Base.x=0
                             s.Placement.Base.y=0
+                        doc.recompute([s])
+                        doc.commitTransaction()
                 else:
                     print('Cancel')
             else:
