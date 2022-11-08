@@ -27,16 +27,17 @@ sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 #from . import KicadPCB,SexpList
 # maui
 import fcad_parser
-from fcad_parser import KicadPCB,SexpList
+from fcad_parser import KicadPCB,SexpList,SexpParser,parseSexp
 #from .fcad_parser import KicadPCB,SexpList
 #from .kicad_parser import unquote
 from fcad_parser import unquote #maui
 
 
 # from kicadStepUptools import KicadPCB,SexpList
-__kicad_parser_version__ = '2.1.5'
+__kicad_parser_version__ = '2.1.7'
 # https://github.com/realthunder/fcad_pcb/issues/20#issuecomment-586042341
-print('kicad_parser_version '+__kicad_parser_version__)
+# FreeCAD.Console.PrintLog('kicad_parser_version '+__kicad_parser_version__+'\n') # maui 
+# print('kicad_parser_version '+__kicad_parser_version__)
 # maui
 
 PY3 = sys.version_info[0] == 3
@@ -660,13 +661,13 @@ class KicadFcad:
         if self.stackup is None:
             self._log('{}','kicad version='+str(self.pcb.version),level='info') # maui 
             self.stackup = []
-            # if hasattr(self.pcb.setup, 'stackup'): # maui
-            if self.pcb.version > 20171130: # > kv5 maui start
+            stackup = getattr(getattr(self.pcb, 'setup', None), 'stackup', None)
+            if stackup:
                 try:
                     # If no stackup given by user, extract stack info from setup
                     offset = 0.0
                     last_copper = 0.0
-                    for layer in self.pcb.setup.stackup.layer:
+                    for layer in stackup.layer:
                         layer_type, _ = self.findLayer(layer[0], 99)
                         t = getattr(layer, 'thickness',
                                 self.copper_thickness if layer_type<=32 else self.layer_thickness)
@@ -686,13 +687,10 @@ class KicadFcad:
                             t = total
                         elif not isinstance(t, (float, int)):
                             t = t[0]
-                        # And for some thickness field, there may be additional
-                        # attribute, like (thickness, 0.05, locked).
-                        if not isinstance(t, (float, int)):
-                            t = t[0]
-    
+
                         offset -= t
                         self.stackup.append([unquote(layer[0]), offset, t])
+
                     # adjust offset to make the last copper's upper face at z = 0.
                     # In other word, make the last dielectric layer reset at z = 0.
                     # Right now, makeBoard() always assume it is at z = 0.
@@ -1187,20 +1185,26 @@ class KicadFcad:
                 continue;
             primitives = SexpList(primitives)
             self._log('making {} {}s',len(primitives), tp)
-            make_shape = globals()['make_gr_{}'.format(tp)]
-            for l in primitives:
-                if not layer:
-                    if self.filterNets(l) or self.filterLayer(l):
+            try:
+                make_shape = globals()['make_gr_{}'.format(tp)]
+                for l in primitives:
+                    if not layer:
+                        if self.filterNets(l) or self.filterLayer(l):
+                            continue
+                    elif l.layer != layer:
                         continue
-                elif l.layer != layer:
-                    continue
-                shape = make_shape(l)
-                if angle:
-                    shape.rotate(Vector(),Vector(0,0,1),angle)
-                if at:
-                    shape.translate(at)
-                edges += [[getattr(l,'width',1e-7), e] for e in shape.Edges]
-
+                    shape = make_shape(l)
+                    if angle:
+                        shape.rotate(Vector(),Vector(0,0,1),angle)
+                    if at:
+                        shape.translate(at)
+                    edges += [[getattr(l,'width',1e-7), e] for e in shape.Edges]
+            except Exception as e:# maui logging error
+                # raise
+                # traceback.print_exc() # maui 
+                error_message = traceback.format_exc() #maui
+                self._log('{}',error_message,level='error') # maui 
+                pass  # maui logging error
         # The line width in edge cuts are important. When milling, the line
         # width can represent the diameter of the drill bits to use. The user
         # can use lines thick enough for hole cutting. In addition, the
@@ -1740,6 +1744,9 @@ class KicadFcad:
             self._place(obj,m_at,m_angle)
             objs.append(obj)
 
+        cut_wires = None
+        cut_non_closed = None
+
         via_skip = 0
         vias = []
         if self.via_bound < 0:
@@ -1889,35 +1896,28 @@ class KicadFcad:
         fitView();
         return objs
 
+    def _makePolygons(self, fields, name, poly_holes,
+            shape_type='face', thickness=0.05, prefix=''):
 
-    def makeZones(self,shape_type='face',thickness=0.05, fit_arcs=True,
-                    holes=False,prefix=''):
+        if not fields:
+            return
 
-        self._pushLog('making zones...',prefix=prefix)
-
-        z = None
-        zone_holes = []
+        count = len(fields)
+        self._pushLog(f'making {count} polygons...',prefix=prefix)
 
         def _wire(obj,fill=False):
-            # NOTE: It is weird that kicad_pcb's zone fillpolygon is 0.127mm
-            # thinner than the actual copper region shown in pcbnew or the
-            # generated gerber. Why is this so? Is this 0.127 hardcoded or
-            # related to some setup parameter? I am guessing this is half the
-            # zone.min_thickness setting here.
 
-            offset = self.zone_inflate + z.min_thickness*0.5
+            offset = self.zone_inflate + thickness*0.5
 
-            if not zone_holes or (
-              self.add_feature and self.make_sketch and self.zone_merge_holes):
-                obj = [obj]+zone_holes
-            elif zone_holes:
-                obj = (self._makeWires(obj,'zone_outline', label=z.net_name),
-                       self._makeWires(zone_holes,'zone_hole',label=z.net_name))
-                return self._makeArea(obj,'zone',offset=offset,
-                        op=1, fill=fill,label=z.net_name)
+            if not poly_holes \
+                    or (self.add_feature and self.make_sketch and self.zone_merge_holes):
+                obj = [obj]+poly_holes
+            elif poly_holes:
+                obj = (self._makeWires(obj,f'{name}_outline'),
+                       self._makeWires(poly_holes,f'{name}_hole'))
+                return self._makeArea(obj,name,offset=offset, op=1, fill=fill)
 
-            return self._makeWires(obj,'zone',fill=fill,
-                            offset=offset,label=z.net_name)
+            return self._makeWires(obj,name,fill=fill, offset=offset)
 
 
         def _face(obj):
@@ -1931,77 +1931,115 @@ class KicadFcad:
             raise ValueError('invalid shape type: {}'.format(shape_type))
 
         objs = []
-        for z in self.pcb.zone:
-            if self.filterNets(z) or self.filterLayer(z):
+        for idx,p in enumerate(fields):
+            if (hasattr(p, 'layer') or hasattr(p, 'layers')) and self.filterLayer(p):
                 continue
-            count = len(z.filled_polygon)
-            self._pushLog('making zone {}...', z.net_name)
-            for idx,p in enumerate(z.filled_polygon):
-                if (hasattr(p, 'layer') or hasattr(p, 'layers')) and self.filterLayer(p):
-                    continue
-                zone_holes = []
-                table = {}
-                pts = SexpList(p.pts.xy)
+            poly_holes = []
+            table = {}
+            pts = SexpList(p.pts.xy)
 
-                # close the polygon
-                pts._append(p.pts.xy._get(0))
+            # close the polygon
+            pts._append(p.pts.xy._get(0))
 
-                # `table` uses a pair of vertex as the key to store the index of
-                # an edge.
-                for i in range(len(pts)-1):
-                    table[str((pts[i],pts[i+1]))] = i
+            # `table` uses a pair of vertex as the key to store the index of
+            # an edge.
+            for i in range(len(pts)-1):
+                table[str((pts[i],pts[i+1]))] = i
 
-                # This is how kicad represents holes in zone polygon
-                #  ---------------------------
-                #  |    -----      ----      |
-                #  |    |   |======|  |      |
-                #  |====|   |      |  |      |
-                #  |    -----      ----      |
-                #  |                         |
-                #  ---------------------------
-                # It uses a single polygon with coincide edges of oppsite
-                # direction (shown with '=' above) to dig a hole. And one hole
-                # can lead to another, and so forth. The following `build()`
-                # function is used to recursively discover those holes, and
-                # cancel out those '=' double edges, which will surely cause
-                # problem if left alone. The algorithm assumes we start with a
-                # point of the outer polygon.
-                def build(start,end):
-                    results = []
-                    while start<end:
-                        # We used the reverse edge as key to search for an
-                        # identical edge of oppsite direction. NOTE: the
-                        # algorithm only works if the following assumption is
-                        # true, that those hole digging double edges are of
-                        # equal length without any branch in the middle
-                        key = str((pts[start+1],pts[start]))
-                        try:
-                            i = table[key]
-                            del table[key]
-                        except KeyError:
-                            # `KeyError` means its a normal edge, add the line.
-                            results.append(Part.makeLine(
-                                makeVect(pts[start]),makeVect(pts[start+1])))
-                            start += 1
-                            continue
+            # This is how kicad represents holes in zone polygon
+            #  ---------------------------
+            #  |    -----      ----      |
+            #  |    |   |======|  |      |
+            #  |====|   |      |  |      |
+            #  |    -----      ----      |
+            #  |                         |
+            #  ---------------------------
+            # It uses a single polygon with coincide edges of oppsite
+            # direction (shown with '=' above) to dig a hole. And one hole
+            # can lead to another, and so forth. The following `build()`
+            # function is used to recursively discover those holes, and
+            # cancel out those '=' double edges, which will surely cause
+            # problem if left alone. The algorithm assumes we start with a
+            # point of the outer polygon.
+            def build(start,end):
+                results = []
+                while start<end:
+                    # We used the reverse edge as key to search for an
+                    # identical edge of oppsite direction. NOTE: the
+                    # algorithm only works if the following assumption is
+                    # true, that those hole digging double edges are of
+                    # equal length without any branch in the middle
+                    key = str((pts[start+1],pts[start]))
+                    try:
+                        i = table[key]
+                        del table[key]
+                    except KeyError:
+                        # `KeyError` means its a normal edge, add the line.
+                        results.append(Part.makeLine(
+                            makeVect(pts[start]),makeVect(pts[start+1])))
+                        start += 1
+                        continue
 
-                        # We found the start of a double edge, treat all edges
-                        # in between as holes and recurse. Both of the double
-                        # edges are skipped.
-                        h = build(start+1,i)
-                        if h:
-                            zone_holes.append(Part.Wire(h))
-                        start = i+1
-                    return results
+                    # We found the start of a double edge, treat all edges
+                    # in between as holes and recurse. Both of the double
+                    # edges are skipped.
+                    h = build(start+1,i)
+                    if h:
+                        poly_holes.append(Part.Wire(h))
+                    start = i+1
+                return results
 
-                edges = build(0,len(pts)-1)
+            edges = build(0,len(pts)-1)
 
-                self._log('region {}/{}, holes: {}',idx+1,count,len(zone_holes))
+            self._log('region {}/{}, holes: {}',idx+1,count,len(poly_holes))
 
-                objs.append(func(Part.Wire(edges)))
+            objs.append(func(Part.Wire(edges)))
 
             self._popLog()
 
+        self._popLog(f'polygons done')
+        return objs
+
+    def makePolys(self,shape_type='face',thickness=0.05, fit_arcs=True, holes=False, prefix=''):
+        '''For making outlier gr_poly as if it was zone, e.g. export from Gerber viewer
+        '''
+        poly_holes = []
+        objs = self._makePolygons(getattr(self.pcb, 'gr_poly', None), 'poly',
+                                    poly_holes, shape_type, thickness, prefix)
+        if not objs:
+            return
+
+        objs = self._cutHoles(objs,holes,'polys')
+        if shape_type == 'solid':
+            objs = self._makeSolid(objs,'polys',thickness,fit_arcs=fit_arcs)
+        else:
+            objs = self._makeCompound(objs,'polys',
+                            fuse=holes,fit_arcs=fit_arcs)
+        self.setColor(objs,'zone')
+        fitView();
+        return objs
+
+    def makeZones(self,shape_type='face',thickness=0.05, fit_arcs=True,
+                    holes=False, prefix=''):
+
+        self._pushLog('making zones...',prefix=prefix)
+
+        z = None
+        zone_holes = []
+        objs = []
+        for z in self.pcb.zone:
+            if self.filterNets(z) or self.filterLayer(z):
+                continue
+            try: #maui
+                objs += self._makePolygons(z.filled_polygon, 'zone', zone_holes,
+                                       shape_type, thickness, prefix)
+            except Exception as e:# maui logging error
+                # traceback.print_exc() # maui 
+                error_message = traceback.format_exc() #maui
+                # self._log('{}',error_message,level='error') # maui 
+                self._log('{}','error on \'self._makePolygons\' on Zones',level='warning') # maui
+                pass  # maui logging error
+                
         if objs:
             objs = self._cutHoles(objs,holes,'zones')
             if shape_type == 'solid':
@@ -2040,7 +2078,8 @@ class KicadFcad:
 
         for (name,offset) in (('Pads',thickness),
                               ('Tracks',0.5*thickness),
-                              ('Zones',0)):
+                              ('Zones',0),
+                              ('Polys',thickness)):
 
             obj = getattr(self,'make{}'.format(name))(fit_arcs=sub_fit_arcs,
                         holes=holes,shape_type=shape_type,prefix=None,

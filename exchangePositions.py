@@ -6,7 +6,7 @@
 # App.Rotation(10,20,30) = Euler Angle 
 ## https://forum.freecadweb.org/viewtopic.php?t=11799
 
-__version_exchPos__ = "1.2.1"
+__version_exchPos__ = "1.2.2"
 
 
 import FreeCAD, FreeCADGui,sys, os 
@@ -278,7 +278,8 @@ def expPos(doc=None):  ## export positions
                 line=o.Label[:o.Label.find('_')]+', P.Mtx('+ str(rMtx)+')'
                 positions_content.append(line+'\n')
                 print (line)
-            if o.Label == 'PCB_Sketch':
+            #if o.Label == 'PCB_Sketch':
+            if 'PCB_Sketch_' in o.Label:
                 line='Sketch geometry -------------------'
                 sketch_content_header.append(line+'\n')
                 print('Sketch geometry -------------------')
@@ -301,7 +302,8 @@ def expPos(doc=None):  ## export positions
                 line='-----------------------------------'
                 sketch_content.append(line+'\n')
                 print(line)
-            if o.Label == 'Pcb':
+            #if o.Label == 'Pcb':
+            if 'Pcb_' in o.Label:
                 line='Pcb Volume -------------------'
                 sketch_content.append(line+'\n')
                 print(line)
@@ -391,7 +393,8 @@ def cmpPos(doc=None):  ## compare exported positions with the selected doc
                 line=o.Label[:o.Label.find('_')]+', P.Mtx('+ str(rMtx)+')'
                 positions_content.append(line+'\n')
                 #print (line)    
-        if o.Label == 'PCB_Sketch':
+        # if o.Label == 'PCB_Sketch':
+        if 'PCB_Sketch_' in o.Label:
             line='Sketch geometry -------------------'
             sketch_content_header.append(line+'\n')
             #print('Sketch geometry -------------------')
@@ -419,7 +422,8 @@ def cmpPos(doc=None):  ## compare exported positions with the selected doc
             line='-----------------------------------'
             sketch_content.append(line+'\n')
             #print(line)
-        if o.Label == 'Pcb':
+        # if o.Label == 'Pcb':
+        if 'Pcb_' in o.Label:
             line='Pcb Volume -------------------'
             sketch_content.append(line+'\n')
             #print(line)

@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global tracks_version
-tracks_version = '2.4.9'
+tracks_version = '2.5.6'
 
 import kicad_parser
 #import kicad_parser; import importlib; importlib.reload(kicad_parser)
@@ -98,6 +98,13 @@ def reload_lib(lib):
     else:
         reload (lib)
 
+def recompute_active_object():
+    try:
+        FreeCAD.ActiveDocument.ActiveObject.recompute(True)
+    except:
+        FreeCAD.ActiveDocument.ActiveObject.recompute()
+##    
+
 def crc_gen_t(data):
     import binascii
     import re
@@ -166,25 +173,17 @@ def mkColor(*color):
 
 def extrude_holes (holes,w):
 
-    drl = Draft.makeShape2DView(holes, FreeCAD.Vector(0.0, 0.0, 1.0))
-    try:
-        FreeCAD.ActiveDocument.ActiveObject.recompute()
-    except:
-        FreeCAD.ActiveDocument.ActiveObject.recompute(True)
     FreeCAD.ActiveDocument.addObject("Part::Extrusion","Extrude_drills")
     extrude_d_name=FreeCAD.ActiveDocument.ActiveObject.Name
-    FreeCAD.ActiveDocument.getObject(extrude_d_name).Base = FreeCAD.ActiveDocument.getObject(drl.Name)
+    FreeCAD.ActiveDocument.getObject(extrude_d_name).Base = FreeCAD.ActiveDocument.getObject(holes.Name)
     FreeCAD.ActiveDocument.getObject(extrude_d_name).Dir = (0,0,w)
     FreeCAD.ActiveDocument.getObject(extrude_d_name).Solid = (True)
     FreeCAD.ActiveDocument.getObject(extrude_d_name).TaperAngle = (0)
     FreeCAD.ActiveDocument.getObject(extrude_d_name).Symmetric = True
-    FreeCADGui.ActiveDocument.getObject(drl.Name).Visibility = False
+    FreeCADGui.ActiveDocument.getObject(holes.Name).Visibility = False
     FreeCAD.ActiveDocument.getObject(extrude_d_name).Label = 'solid_drills'
     extrude_drill_name=FreeCAD.ActiveDocument.ActiveObject.Name
-    try:
-        FreeCAD.ActiveDocument.ActiveObject.recompute()
-    except:
-        FreeCAD.ActiveDocument.ActiveObject.recompute(True)
+    recompute_active_object()
     FreeCADGui.ActiveDocument.getObject(holes.Name).Visibility = False
 #
 
@@ -288,7 +287,9 @@ def addtracks(fname = None):
     global start_time, last_pcb_path, min_drill_size
     global use_LinkGroups, use_AppPart, tracks_version
     import sys
-    
+    import kicad_parser
+    FreeCAD.Console.PrintMessage('kicad_parser_version '+kicad_parser.__kicad_parser_version__+'\n') # maui 
+
     # cfg_read_all() it doesn't work through different files
     # print (min_drill_size)
     
@@ -404,13 +405,26 @@ def addtracks(fname = None):
         # pcb.makeTracks(shape_type='face',fit_arcs=True,thickness=0.05,holes=True) #,prefix='')
         # pcb.makeTracks(shape_type='face',fit_arcs=True,thickness=0.05,holes=True) #,prefix='')
         pcb.makeTracks(shape_type='face',fit_arcs=True,thickness=0.05,holes=False) # holes=True) #,prefix='')
-        tracks_=FreeCAD.ActiveDocument.ActiveObject
-        holes=pcb.makeHoles()
-        extrude_holes(holes,pcbThickness*3)
-        holes_ = FreeCAD.ActiveDocument.ActiveObject
-        cut_fuzzy(tracks_,holes_,0.00006) #6e-5 fuzzy tolerance
         if FreeCAD.ActiveDocument is not None:
             if objsNum < len(FreeCAD.ActiveDocument.Objects):
+                tracks_=FreeCAD.ActiveDocument.ActiveObject
+                objsNum = len(FreeCAD.ActiveDocument.Objects)
+                #print(objsNum,len(FreeCAD.ActiveDocument.Objects))
+                holes=pcb.makeHoles(oval=True)
+                #print(objsNum,len(FreeCAD.ActiveDocument.Objects))
+                if (objsNum) < len(FreeCAD.ActiveDocument.Objects):
+                    drl = Draft.makeShape2DView(holes, FreeCAD.Vector(0.0, 0.0, 1.0))
+                    recompute_active_object()
+                    holesSk = Draft.make_sketch(FreeCAD.ActiveDocument.ActiveObject, autoconstraints=True)
+                    recompute_active_object()
+                    extrude_holes(holesSk,pcbThickness*3)
+                    holes_ = FreeCAD.ActiveDocument.ActiveObject
+                    cut_fuzzy(tracks_,holes_,0.00006) #6e-5 fuzzy tolerance
+                    holes.ViewObject.Visibility = False
+                    holes_.ViewObject.Visibility = False
+                    holesSk.ViewObject.Visibility = False
+                    drl.ViewObject.Visibility = False
+                    add_toberemoved.append([holes,holes_,holesSk,drl])
                 say_time()
                 tracks=FreeCAD.ActiveDocument.ActiveObject
                 tracks.Placement.Base.z+=deltaz
@@ -419,16 +433,17 @@ def addtracks(fname = None):
                 say_time()
                 # removesubtree([tracks])
                 tracks.ViewObject.Visibility = False
-                holes.ViewObject.Visibility = False
-                holes_.ViewObject.Visibility = False
-                add_toberemoved.append([tracks])
-                add_toberemoved.append([holes,tracks_,holes_])
+                tracks_.ViewObject.Visibility = False
+                add_toberemoved.append([tracks,tracks_])
                 topTracks = new_obj
                 #stop
         if FreeCAD.ActiveDocument is not None:
             objsNum = len(FreeCAD.ActiveDocument.Objects)
         #pcb.makeZones(shape_type='face',thickness=0.05, fit_arcs=True,holes=True) #,prefix='')
-        pcb.makeZones(shape_type='face',thickness=0.05, fit_arcs=True,holes=True) #,prefix='')
+        prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+        skip_import_zones = prefs.GetBool('skip_import_zones')
+        if skip_import_zones != True:
+            pcb.makeZones(shape_type='face',thickness=0.05, fit_arcs=True,holes=True) #,prefix='')
         if FreeCAD.ActiveDocument is not None:
             if objsNum < len(FreeCAD.ActiveDocument.Objects):
                 say_time()
@@ -472,11 +487,11 @@ def addtracks(fname = None):
                             FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).addObject(topZones)
                     elif use_LinkGroups:
                         if topPads is not None:
-                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(topPads,None,'',[])
+                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(topPads,topPads,'',[])
                         if topTracks is not None:
-                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(topTracks,None,'',[])
+                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(topTracks,topTracks,'',[])
                         if topZones is not None:
-                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(topZones,None,'',[])
+                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(topZones,topZones,'',[])
         #try:    #doing bot tracks layer
         #pcb.setLayer(LvlBotName)
         pcb.setLayer(Bot_lvl)
@@ -508,24 +523,39 @@ def addtracks(fname = None):
         pcb.makeTracks(shape_type='face',fit_arcs=True,thickness=0.05,holes=False) # holes=True) #,prefix='')
         if FreeCAD.ActiveDocument is not None:
             if objsNum < len(FreeCAD.ActiveDocument.Objects):
+                tracksB_=FreeCAD.ActiveDocument.ActiveObject
+                objsNum = len(FreeCAD.ActiveDocument.Objects)
+                holesB=pcb.makeHoles(oval=True)
+                if (objsNum) < len(FreeCAD.ActiveDocument.Objects):
+                    drlB = Draft.makeShape2DView(holesB, FreeCAD.Vector(0.0, 0.0, 1.0))
+                    recompute_active_object()
+                    holesSkB = Draft.make_sketch(FreeCAD.ActiveDocument.ActiveObject, autoconstraints=True)
+                    recompute_active_object()
+                    extrude_holes(holesSkB,pcbThickness*3)
+                    holesB_ = FreeCAD.ActiveDocument.ActiveObject
+                    cut_fuzzy(tracksB_,holesB_,0.00006) #6e-5 fuzzy tolerance
+                    holesB.ViewObject.Visibility = False
+                    holesB_.ViewObject.Visibility = False
+                    holesSkB.ViewObject.Visibility = False
+                    drlB.ViewObject.Visibility = False
+                    add_toberemoved.append([holesB,holesB_,holesSkB,drlB])
                 say_time()
                 tracksB=FreeCAD.ActiveDocument.ActiveObject
-                tracksB.Placement.Base.z = tracksB.Placement.Base.z - (pcbThickness + deltaz)
+                tracksB.Placement.Base.z-=(pcbThickness + deltaz)
                 tracksB.ViewObject.ShapeColor=mkColor(trk_col)
                 new_obj = simple_cpy(tracksB,'botTracks'+ftname_sfx)
                 say_time()
                 # removesubtree([tracks])
                 tracksB.ViewObject.Visibility = False
-                holesB.ViewObject.Visibility = False
-                holesB_.ViewObject.Visibility = False
-                add_toberemoved.append([tracksB])
-                add_toberemoved.append([holesB,tracksB_,holesB_])
+                tracksB_.ViewObject.Visibility = False
+                add_toberemoved.append([tracksB,tracksB_])
                 botTracks = new_obj
                 #stop
         if FreeCAD.ActiveDocument is not None:
             objsNum = len(FreeCAD.ActiveDocument.Objects)
         #pcb.makeZones(shape_type='face',thickness=0.05, fit_arcs=True,holes=True) # ,prefix='')
-        pcb.makeZones(shape_type='face',thickness=0.05, fit_arcs=True,holes=True) # ,prefix='')
+        if skip_import_zones != True:
+            pcb.makeZones(shape_type='face',thickness=0.05, fit_arcs=True,holes=True) # ,prefix='')
         if FreeCAD.ActiveDocument is not None:
             if objsNum < len(FreeCAD.ActiveDocument.Objects):
                 say_time()
@@ -569,11 +599,13 @@ def addtracks(fname = None):
                             FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).addObject(botZones)
                     elif use_LinkGroups:
                         if botPads is not None:
-                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(botPads,None,'',[])
+                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(botPads,botPads,'',[])
                         if botTracks is not None:
-                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(botTracks,None,'',[])
+                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(botTracks,botTracks,'',[])
                         if botZones is not None:
-                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(botZones,None,'',[])
+                            FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(botZones,botZones,'',[])
+        if skip_import_zones == True:
+            FreeCAD.Console.PrintWarning('import Zone(s) skipped'+'\n')
         say_time()
         
         if FreeCAD.ActiveDocument is not None:

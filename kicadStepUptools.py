@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.6.4"
+___ver___ = "10.7.6"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -1806,47 +1806,55 @@ def light2(x,y,z):
   return light
 
 def simple_copy_link(obj): #simple copy with incremental placement
-    __shape = Part.getShape(obj,'',needSubElement=False,refine=False)
-    FreeCAD.ActiveDocument.addObject('Part::Feature','LinkGroup').Shape=__shape
-    nobj = FreeCAD.ActiveDocument.ActiveObject
-    nobjV = FreeCADGui.ActiveDocument.ActiveObject
-    nobj.Label=obj.Label
-    if obj.TypeId == 'App::Part':
-        for subobj in obj.OutList:
-            if hasattr(FreeCADGui.ActiveDocument.getObject(subobj.Name),'ShapeColor'):
-                nobjV.ShapeColor=FreeCADGui.ActiveDocument.getObject(subobj.Name).ShapeColor
-                if hasattr(FreeCADGui.ActiveDocument.getObject(subobj.Name),'LineColor'):
-                    #FreeCAD.Console.PrintMessage(subobj.Label);FreeCAD.Console.PrintMessage(' LineColor ' +str(FreeCADGui.ActiveDocument.getObject(subobj.Name).LineColor)+ '\n')
-                    nobjV.LineColor=FreeCADGui.ActiveDocument.getObject(subobj.Name).LineColor
-                    nobjV.PointColor=FreeCADGui.ActiveDocument.getObject(subobj.Name).PointColor
-                if hasattr(FreeCADGui.ActiveDocument.getObject(subobj.Name),'DiffuseColor'):
-                    #FreeCAD.Console.PrintMessage(subobj.Label);FreeCAD.Console.PrintMessage(' DiffuseColor ' +str(FreeCADGui.ActiveDocument.getObject(subobj.Name).DiffuseColor)+ '\n')
-                    nobjV.DiffuseColor=FreeCADGui.ActiveDocument.getObject(subobj.Name).DiffuseColor
-                if hasattr(FreeCADGui.ActiveDocument.getObject(subobj.Name),'Transparency'):
-                    #FreeCAD.Console.PrintMessage(subobj.Label);FreeCAD.Console.PrintMessage(' Transparency ' +str(FreeCADGui.ActiveDocument.getObject(subobj.Name).Transparency)+ '\n')
-                    nobjV.Transparency=FreeCADGui.ActiveDocument.getObject(subobj.Name).Transparency
-    else:
-        nobj.ViewObject.ShapeColor=getattr(obj.getLinkedObject(True).ViewObject,'ShapeColor',nobj.ViewObject.ShapeColor)
-        nobj.ViewObject.LineColor= getattr(obj.getLinkedObject(True).ViewObject,'LineColor' ,nobj.ViewObject.LineColor)
-        nobj.ViewObject.PointColor=getattr(obj.getLinkedObject(True).ViewObject,'PointColor',nobj.ViewObject.PointColor)
-    FreeCAD.ActiveDocument.recompute()
+    if obj.ViewObject.Visibility != False:
+        __shape = Part.getShape(obj,'',needSubElement=False,refine=False)
+        FreeCAD.ActiveDocument.addObject('Part::Feature','LinkGroup').Shape=__shape
+        nobj = FreeCAD.ActiveDocument.ActiveObject
+        nobjV = FreeCADGui.ActiveDocument.ActiveObject
+        nobj.Label=obj.Label
+        if obj.TypeId == 'App::Part':
+            for subobj in obj.OutList:
+                if hasattr(FreeCADGui.ActiveDocument.getObject(subobj.Name),'ShapeColor'):
+                    nobjV.ShapeColor=FreeCADGui.ActiveDocument.getObject(subobj.Name).ShapeColor
+                    if hasattr(FreeCADGui.ActiveDocument.getObject(subobj.Name),'LineColor'):
+                        #FreeCAD.Console.PrintMessage(subobj.Label);FreeCAD.Console.PrintMessage(' LineColor ' +str(FreeCADGui.ActiveDocument.getObject(subobj.Name).LineColor)+ '\n')
+                        nobjV.LineColor=FreeCADGui.ActiveDocument.getObject(subobj.Name).LineColor
+                        nobjV.PointColor=FreeCADGui.ActiveDocument.getObject(subobj.Name).PointColor
+                    if hasattr(FreeCADGui.ActiveDocument.getObject(subobj.Name),'DiffuseColor'):
+                        #FreeCAD.Console.PrintMessage(subobj.Label);FreeCAD.Console.PrintMessage(' DiffuseColor ' +str(FreeCADGui.ActiveDocument.getObject(subobj.Name).DiffuseColor)+ '\n')
+                        nobjV.DiffuseColor=FreeCADGui.ActiveDocument.getObject(subobj.Name).DiffuseColor
+                    if hasattr(FreeCADGui.ActiveDocument.getObject(subobj.Name),'Transparency'):
+                        #FreeCAD.Console.PrintMessage(subobj.Label);FreeCAD.Console.PrintMessage(' Transparency ' +str(FreeCADGui.ActiveDocument.getObject(subobj.Name).Transparency)+ '\n')
+                        nobjV.Transparency=FreeCADGui.ActiveDocument.getObject(subobj.Name).Transparency
+        else:
+            nobj.ViewObject.ShapeColor=getattr(obj.getLinkedObject(True).ViewObject,'ShapeColor',nobj.ViewObject.ShapeColor)
+            nobj.ViewObject.LineColor= getattr(obj.getLinkedObject(True).ViewObject,'LineColor' ,nobj.ViewObject.LineColor)
+            nobj.ViewObject.PointColor=getattr(obj.getLinkedObject(True).ViewObject,'PointColor',nobj.ViewObject.PointColor)
+        FreeCAD.ActiveDocument.recompute()
 
 def simple_cpy_plc(obj,proot): #simple copy with incremental placement
 
-    s=obj.Shape
-    t=s.copy()
-    r=s.copy()
-    r.Placement=FreeCAD.Placement(proot)
-    t.Placement=r.Placement.multiply(t.Placement)  #incremental Placement
-    FreeCAD.ActiveDocument.addObject('Part::Feature',obj.Name+"_cp").Shape=t
-    FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.getObject(obj.Name).ShapeColor
-    FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(obj.Name).LineColor
-    FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(obj.Name).PointColor
-    FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.getObject(obj.Name).DiffuseColor
-    FreeCADGui.ActiveDocument.ActiveObject.Transparency=FreeCADGui.ActiveDocument.getObject(obj.Name).Transparency
-    new_label=make_string(obj.Label)+"_cp"
-    FreeCAD.ActiveDocument.ActiveObject.Label=new_label
-    #stop
+    if '::CoordinateSystem' not in obj.TypeId and '::DocumentObjectGroup' not in obj.TypeId \
+     and '::FeaturePython' not in obj.TypeId and 'GeoFeature' not in obj.TypeId and 'Origin' not in obj.TypeId and obj.ViewObject.Visibility != False:
+        s=obj.Shape
+        t=s.copy()
+        r=s.copy()
+        r.Placement=FreeCAD.Placement(proot)
+        t.Placement=r.Placement.multiply(t.Placement)  #incremental Placement
+        FreeCAD.ActiveDocument.addObject('Part::Feature',obj.Name+"_cp").Shape=t
+        if hasattr(FreeCADGui.ActiveDocument.getObject(obj.Name),'ShapeColor'):
+            FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.getObject(obj.Name).ShapeColor
+        if hasattr(FreeCADGui.ActiveDocument.getObject(obj.Name),'LineColor'):
+            FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(obj.Name).LineColor
+        if hasattr(FreeCADGui.ActiveDocument.getObject(obj.Name),'PointColor'):
+            FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(obj.Name).PointColor
+        if hasattr(FreeCADGui.ActiveDocument.getObject(obj.Name),'DiffuseColor'):
+            FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.getObject(obj.Name).DiffuseColor
+        if hasattr(FreeCADGui.ActiveDocument.getObject(obj.Name),'Transparency'):
+            FreeCADGui.ActiveDocument.ActiveObject.Transparency=FreeCADGui.ActiveDocument.getObject(obj.Name).Transparency
+        new_label=make_string(obj.Label)+"_cp"
+        FreeCAD.ActiveDocument.ActiveObject.Label=new_label
+        #stop
 
 def get_node_plc(o,obj):  # get node placement in App::Part
     
@@ -2766,8 +2774,14 @@ def exportStep(objs, ffPathName):
     if exportS:
         ## resetting placement TBD for Part & Shape
         if 'App::Part' not in objs[0].TypeId:
-            newobj=reset_prop_shapes(FreeCAD.ActiveDocument.getObject(objs[0].Name),FreeCAD.ActiveDocument, FreeCAD,FreeCADGui)
-            new_name=FreeCAD.ActiveDocument.ActiveObject.Name
+            ## evaluate to modify reset placement 
+            base_shape = FreeCAD.ActiveDocument.getObject(objs[0].Name)
+            if base_shape.Placement.Base != FreeCAD.Vector(0,0,0) or base_shape.Placement.Rotation != FreeCAD.Rotation (0.0, 0.0, 0.0, 1.0):
+                newobj=reset_prop_shapes(FreeCAD.ActiveDocument.getObject(objs[0].Name),FreeCAD.ActiveDocument, FreeCAD,FreeCADGui)
+                new_name=FreeCAD.ActiveDocument.ActiveObject.Name
+            else:
+                newobj=objs[0]
+                new_name=objs[0].Name
             #newobj.Label="TEST"
             newobj_list=[FreeCAD.ActiveDocument.getObject(new_name)]
         else:
@@ -3293,7 +3307,7 @@ def reset_prop(obj,doc,App,Gui):
     #
     return rstObj
 ###
-def reset_prop_shapes(obj,doc,App,Gui):
+def reset_prop_shapes(obj,doc,App,Gui,rmv=None):
 
     s=obj.Shape
     #say('resetting props #2')
@@ -3326,7 +3340,15 @@ def reset_prop_shapes(obj,doc,App,Gui):
     #    removesubtree(obj)
     #else:
     #    FreeCAD.ActiveDocument.removeObject(obj.Name)
-    FreeCAD.ActiveDocument.removeObject(obj.Name)
+    # if 0:
+    #     FreeCAD.ActiveDocument.removeObject(obj.Name)
+    # else:
+    say('renaming not in Origin object')
+    if rmv == True:
+        FreeCAD.ActiveDocument.removeObject(obj.Name)
+    else:
+        FreeCAD.ActiveDocument.getObject(obj.Name).ViewObject.Visibility = False
+        FreeCAD.ActiveDocument.getObject(obj.Name).Label = new_label + '_'
     FreeCAD.ActiveDocument.recompute()
     FreeCAD.ActiveDocument.ActiveObject.Label=new_label
     rstObj=FreeCAD.ActiveDocument.ActiveObject
@@ -4611,7 +4633,7 @@ def Load_models(pcbThickness,modules):
                             #print(myStep.Label)
                             #impLabel = myStep.Label
                             if (allow_compound != 'Hierarchy' or not Links_available) or not mp_found :
-                                newStep=reset_prop_shapes(FreeCAD.ActiveDocument.ActiveObject,FreeCAD.ActiveDocument, FreeCAD,FreeCADGui)
+                                newStep=reset_prop_shapes(FreeCAD.ActiveDocument.ActiveObject,FreeCAD.ActiveDocument, FreeCAD,FreeCADGui,True)
                                 myStep=newStep
                                 if wrl_model != '':
                                     wrl_module_path = module_path[:module_path.rfind(u'.')]+wrl_model[-4:]
@@ -4919,7 +4941,7 @@ def Load_models(pcbThickness,modules):
                                     modelTop_nbr+=1
                                 elif use_LinkGroups:
                                     #FreeCAD.ActiveDocument.getObject(impPart.Name).adjustRelativeLinks(FreeCAD.ActiveDocument.getObject('Top'))
-                                    FreeCAD.ActiveDocument.getObject(top_name).ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),None,'',[])
+                                    FreeCAD.ActiveDocument.getObject(top_name).ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),FreeCAD.ActiveDocument.getObject(impPart.Name),'',[])
                                     modelTop_nbr+=1
                                 else:
                                     FreeCAD.ActiveDocument.getObject(stepM_name).addObject(impPart)
@@ -4930,7 +4952,7 @@ def Load_models(pcbThickness,modules):
                                     virtualTop_nbr+=1
                                 elif use_LinkGroups:
                                     #FreeCAD.ActiveDocument.getObject(impPart.Name).adjustRelativeLinks(FreeCAD.ActiveDocument.getObject('TopV'))
-                                    FreeCAD.ActiveDocument.getObject(topV_name).ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),None,'',[])
+                                    FreeCAD.ActiveDocument.getObject(topV_name).ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),FreeCAD.ActiveDocument.getObject(impPart.Name),'',[])
                                     virtualTop_nbr+=1
                                 else:
                                     FreeCAD.ActiveDocument.getObject(stepV_name).addObject(impPart)
@@ -4985,7 +5007,7 @@ def Load_models(pcbThickness,modules):
                                     modelBot_nbr+=1
                                 elif use_LinkGroups:
                                     #FreeCAD.ActiveDocument.getObject(impPart.Name).adjustRelativeLinks(FreeCAD.ActiveDocument.getObject('Bot'))
-                                    FreeCAD.ActiveDocument.getObject(bot_name).ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),None,'',[])
+                                    FreeCAD.ActiveDocument.getObject(bot_name).ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),FreeCAD.ActiveDocument.getObject(impPart.Name),'',[])
                                     modelBot_nbr+=1
                                 else:
                                     FreeCAD.ActiveDocument.getObject(stepM_name).addObject(impPart)
@@ -4995,7 +5017,7 @@ def Load_models(pcbThickness,modules):
                                     virtualBot_nbr+=1
                                 elif use_LinkGroups:
                                     #FreeCAD.ActiveDocument.getObject(impPart.Name).adjustRelativeLinks(FreeCAD.ActiveDocument.getObject('BotV'))
-                                    FreeCAD.ActiveDocument.getObject(botV_name).ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),None,'',[])
+                                    FreeCAD.ActiveDocument.getObject(botV_name).ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(impPart.Name),FreeCAD.ActiveDocument.getObject(impPart.Name),'',[])
                                     virtualBot_nbr+=1
                                 else:
                                     FreeCAD.ActiveDocument.getObject(stepV_name).addObject(impPart)
@@ -5229,8 +5251,9 @@ def Load_models(pcbThickness,modules):
             QtGui.QApplication.restoreOverrideCursor()
             wmsg="""<font color=red>"""
             wmsg+="too many missing modules <b>["
-            wmsg+=str(len (missings))+"]<br></b></font><font color=blue><b>Have configured your KISYS3DMOD path<br>or 3d model prefix path?</font></b>"
+            wmsg+=str(len (missings))+"]<br></b></font><font color=blue><b>Have you configured your KISYS3DMOD path<br>or 3d model prefix path?</font></b>"
             wmsg+="<br>StepUp configuration options are located in the preferences system of FreeCAD."
+            wmsg+="<br></b></font><font color=blue><b>Are you on FC Snap or Flatpack?</b></font><br><i>You may need to \'bind mount\' your 3d models folder</i>"
             reply = QtGui.QMessageBox.information(None,"Error ...",wmsg)
     #if blacklisted_model_elements != '':
     #    FreeCAD.Console.PrintMessage("black-listed module "+ '\n'.join(map(str, blacklisted_models)))
@@ -6435,6 +6458,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
     from fcad_parser import KicadPCB,SexpList
     import kicad_parser
     objs_toberemoved = []
+    ImportMode_status=0
 
     pull_sketch = False
     override_pcb = None
@@ -6512,6 +6536,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                 sketch_name_sfx = 'PCB_Sketch'+fname_sfx
                 board_name='Board'+fname_sfx
                 boardG_name='Board_Geoms'+fname_sfx
+                LCS_name = 'Local_CS'+fname_sfx
                 #say(fname_sfx)
                 #fpth = os.path.dirname(os.path.abspath(__file__))
                 fpth = os.path.dirname(os.path.abspath(name))
@@ -6540,14 +6565,23 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                     if doc is None:
                         doc=FreeCAD.newDocument(fname)
                         override_pcb = False
+                        try:
+                            doc.removeObject(LCS_name)
+                        except:
+                            pass
                     elif override_pcb == True:
                         if doc.getObject(boardG_name) in doc.Objects: #if 1: #try:
                             if keep_pcb_sketch==True:
-                                doc.getObject(boardG_name).removeObject(doc.getObject(sketch_name_sfx)) #keep sketck & constrains
+                                #doc.getObject(boardG_name).removeObject(doc.getObject(sketch_name_sfx)) #keep sketck & constrains
+                                doc.getObject(boardG_name).ViewObject.dragObject(doc.getObject(sketch_name_sfx))
                                 #objs_toberemoved.append([doc.getObject(sketch_name_sfx)])
                             removesubtree([doc.getObject(boardG_name)])
                             #objs_toberemoved.append([doc.getObject(boardG_name)])
                             #doc.recompute()
+                            try:
+                                doc.removeObject(LCS_name)
+                            except:
+                                pass
                             sayw('old Pcb removed')
                             #stop
                         else: #except:
@@ -6570,10 +6604,15 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                 grid_orig_warn=False
                 if (grid_orig==1):
                     #xp=getAuxAxisOrigin()[0]; yp=-getAuxAxisOrigin()[1]  #offset of the board & modules
-                    if hasattr(mypcb.setup, 'grid_origin'):
-                        #say('aux_axis_origin' + str(mypcb.setup.aux_axis_origin))
-                        xp=-mypcb.setup.grid_origin[0]; yp=mypcb.setup.grid_origin[1]
-                        sayw('grid origin found @ ('+str(xp)+', '+str(yp)+')') 
+                    if hasattr(mypcb, 'setup'):
+                        if hasattr(mypcb.setup, 'grid_origin'):
+                            #say('aux_axis_origin' + str(mypcb.setup.aux_axis_origin))
+                            xp=-mypcb.setup.grid_origin[0]; yp=mypcb.setup.grid_origin[1]
+                            sayw('grid origin found @ ('+str(xp)+', '+str(yp)+')') 
+                        else:
+                            say('grid origin not set\nusing default top left corner')
+                            xp=0;yp=0
+                            grid_orig_warn=True
                     else:
                         say('grid origin not set\nusing default top left corner')
                         xp=0;yp=0
@@ -6583,10 +6622,14 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                     off_x=-xp;off_y=-yp
                 if (aux_orig==1):
                     #xp=getAuxAxisOrigin()[0]; yp=-getAuxAxisOrigin()[1]  #offset of the board & modules
-                    if hasattr(mypcb.setup, 'aux_axis_origin'):
-                        #say('aux_axis_origin' + str(mypcb.setup.aux_axis_origin))
-                        sayw('aux origin used: '+str(mypcb.setup.aux_axis_origin)) 
-                        xp=-mypcb.setup.aux_axis_origin[0]; yp=mypcb.setup.aux_axis_origin[1]
+                    if hasattr(mypcb, 'setup'):
+                        if hasattr(mypcb.setup, 'aux_axis_origin'):
+                            #say('aux_axis_origin' + str(mypcb.setup.aux_axis_origin))
+                            sayw('aux origin used: '+str(mypcb.setup.aux_axis_origin)) 
+                            xp=-mypcb.setup.aux_axis_origin[0]; yp=mypcb.setup.aux_axis_origin[1]
+                        else:
+                            say('aux origin not used') 
+                            xp=-148.5;yp=98.5
                     else:
                         say('aux origin not used') 
                         xp=-148.5;yp=98.5
@@ -6608,10 +6651,13 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                     if use_AppPart and not force_oldGroups and not use_LinkGroups:
                         doc.getObject(board_name).addObject(doc.getObject(boardG_name))
                     elif use_LinkGroups:
-                        doc.getObject(board_name).ViewObject.dropObject(doc.getObject(boardG_name),None,'',[])
+                        doc.getObject(board_name).ViewObject.dropObject(doc.getObject(boardG_name),doc.getObject(boardG_name),'',[])
                 if SketchLayer == 'Edge.Cuts':
                     FreeCAD.ActiveDocument.getObject(board_name).Label = fname
-                pcbThickness=float(mypcb.general.thickness)
+                if hasattr(mypcb, 'general'):
+                    pcbThickness=float(mypcb.general.thickness)
+                else:
+                    pcbThickness=1.6
                 ## stop  #test parser
                 check_requirements()
                 #stop
@@ -6639,10 +6685,11 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
             yMax=center_y+bb_y/2
             ymin=center_y-bb_y/2
             #off_x=0; off_y=0  #offset of the board & modules
-            if hasattr(mypcb.setup, 'edge_width'): #maui edge width
-                edge_width=mypcb.setup.edge_width
-            elif hasattr(mypcb.setup, 'edge_cuts_line_width'): #maui edge cuts new width k 5.99
-                edge_width=mypcb.setup.edge_cuts_line_width
+            if hasattr(mypcb, 'setup'):
+                if hasattr(mypcb.setup, 'edge_width'): #maui edge width
+                    edge_width=mypcb.setup.edge_width
+                elif hasattr(mypcb.setup, 'edge_cuts_line_width'): #maui edge cuts new width k 5.99
+                    edge_width=mypcb.setup.edge_cuts_line_width
             #if (grid_orig==1):
             #    #xp=getAuxAxisOrigin()[0]; yp=-getAuxAxisOrigin()[1]  #offset of the board & modules
             #    if hasattr(mypcb.setup, 'grid_origin'):
@@ -6744,7 +6791,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                         FreeCAD.ActiveDocument.getObject(newname).exposeInternalGeometry(gi)
                     gi+=1
                 if use_LinkGroups and SketchLayer == 'Edge.Cuts':
-                    FreeCAD.ActiveDocument.getObject(boardG_name).ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(newname),None,'',[])
+                    FreeCAD.ActiveDocument.getObject(boardG_name).ViewObject.dropObject(FreeCAD.ActiveDocument.getObject(newname),FreeCAD.ActiveDocument.getObject(newname),'',[])
                     FreeCADGui.Selection.clearSelection()
                     sl = FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.getObject(newname))
                     #FreeCADGui.runCommand('Std_HideSelection',0)
@@ -6850,17 +6897,17 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                     botVG=doc.ActiveObject
                     botVG.Label = botV_name
                     #doc.getObject('Top').adjustRelativeLinks(doc.getObject('Step_Models'))
-                    doc.getObject(stepM_name).ViewObject.dropObject(doc.getObject(top_name),None,'',[])
+                    doc.getObject(stepM_name).ViewObject.dropObject(doc.getObject(top_name),doc.getObject(top_name),'',[])
                     #doc.getObject('TopV').adjustRelativeLinks(doc.getObject('Step_Virtual_Models'))
-                    doc.getObject(stepV_name).ViewObject.dropObject(doc.getObject(topV_name),None,'',[])
+                    doc.getObject(stepV_name).ViewObject.dropObject(doc.getObject(topV_name),doc.getObject(topV_name),'',[])
                     #doc.getObject('Bot').adjustRelativeLinks(doc.getObject('Step_Models'))
-                    doc.getObject(stepM_name).ViewObject.dropObject(doc.getObject(bot_name),None,'',[])
+                    doc.getObject(stepM_name).ViewObject.dropObject(doc.getObject(bot_name),doc.getObject(bot_name),'',[])
                     #doc.getObject('BotV').adjustRelativeLinks(doc.getObject('Step_Virtual_Models'))
-                    doc.getObject(stepV_name).ViewObject.dropObject(doc.getObject(botV_name),None,'',[])
+                    doc.getObject(stepV_name).ViewObject.dropObject(doc.getObject(botV_name),doc.getObject(botV_name),'',[])
                     #doc.getObject('Step_Models').adjustRelativeLinks(doc.getObject('Board'))
-                    doc.getObject(board_name).ViewObject.dropObject(doc.getObject(stepM_name),None,'',[])
+                    doc.getObject(board_name).ViewObject.dropObject(doc.getObject(stepM_name),doc.getObject(stepM_name),'',[])
                     #doc.getObject('Step_Virtual_Models').adjustRelativeLinks(doc.getObject('Board'))
-                    doc.getObject(board_name).ViewObject.dropObject(doc.getObject(stepV_name),None,'',[])
+                    doc.getObject(board_name).ViewObject.dropObject(doc.getObject(stepV_name),doc.getObject(stepV_name),'',[])
                     FreeCADGui.Selection.clearSelection()
                 else:
                     #sayerr("creating flat groups")
@@ -11479,7 +11526,10 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
     edges=[]
     PCBs = []
     #print (mypcb.general) #maui errorchecking
-    totalHeight=float(mypcb.general.thickness)
+    if hasattr(mypcb, 'general'):
+        totalHeight=float(mypcb.general.thickness)
+    else:
+        totalHeight=1.6
     missingHeight = False
     if totalHeight == 0:
         totalHeight = 1.6
@@ -11501,7 +11551,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
     conv_offs=1.0
     if version >= 20171114:
         conv_offs=25.4
-    #getting pcb version for the interal use of 'virtual' modules
+    #getting pcb version for the internal use of 'virtual' modules
     pcbv = 4
     if version == 20171130:
         pcbv = 5
@@ -11592,34 +11642,40 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
         
     #stop
     #sayerr(mypcb.layers['0'])
-    for lynbr in mypcb.layers: #getting layers name
-        if float(lynbr) == Top_lvl:
-            LvlTopName=(mypcb.layers['{0}'.format(str(lynbr))][0])
-        if float(lynbr) == Edge_Cuts_lvl:
-            LvlEdgeName=(mypcb.layers['{0}'.format(str(lynbr))][0])
-
+    if hasattr(mypcb, 'layers'):
+        for lynbr in mypcb.layers: #getting layers name
+            if float(lynbr) == Top_lvl:
+                LvlTopName=(mypcb.layers['{0}'.format(str(lynbr))][0])
+            if float(lynbr) == Edge_Cuts_lvl:
+                LvlEdgeName=(mypcb.layers['{0}'.format(str(lynbr))][0])
+    else:
+        LvlTopName = 'F.Cu'
+        LvlEdgeName = 'Edge.Cuts'
     #    #    sayerr(lyr[0])
     #    #    sayerr('top')
-    if hasattr(mypcb.general, 'area'):
-        say('board area '+str(mypcb.general.area))
+    if hasattr(mypcb, 'general'):
+        if hasattr(mypcb.general, 'area'):
+            say('board area '+str(mypcb.general.area))
     #sayerr('aux_axis_origin' + str(mypcb.setup.aux_axis_origin))
     #stop
     origin = None
-    if hasattr(mypcb.setup, 'aux_axis_origin'):
-        say('aux_axis_origin' + str(mypcb.setup.aux_axis_origin))
-        origin = 'aux origin'
-        #say(mypcb.setup.aux_axis_origin)
-        #xp=mypcb.setup.aux_axis_origin[0]; yp=-mypcb.setup.aux_axis_origin[1]
-    else:
-        say('aux origin not found')
-    if hasattr(mypcb.setup, 'grid_origin'):
-        say('grid_origin' + str(mypcb.setup.grid_origin))
-        origin = 'grid origin'
-        #say(mypcb.setup.aux_axis_origin)
-        #xp=mypcb.setup.aux_axis_origin[0]; yp=-mypcb.setup.aux_axis_origin[1]
+    if hasattr(mypcb, 'setup'):
+        if hasattr(mypcb.setup, 'grid_origin'):
+            say('grid_origin' + str(mypcb.setup.grid_origin))
+            origin = 'grid origin'
+            #say(mypcb.setup.aux_axis_origin)
+            #xp=mypcb.setup.aux_axis_origin[0]; yp=-mypcb.setup.aux_axis_origin[1]
+        elif hasattr(mypcb.setup, 'aux_axis_origin'):
+            say('aux_axis_origin' + str(mypcb.setup.aux_axis_origin))
+            origin = 'aux origin'
+            #say(mypcb.setup.aux_axis_origin)
+            #xp=mypcb.setup.aux_axis_origin[0]; yp=-mypcb.setup.aux_axis_origin[1]
+        else:
+            say('aux or grid origin not found')
+            origin = 'grid origin'  #temp workaround for kv6 missing aux origin
     else:
         say('grid origin not set\ndefault value on top left corner')
-        origin = 'aux origin'  #temp workaround for kv6 missing aux origin
+        origin = 'grid origin'  #temp workaround for kv6 missing aux origin
     #if hasattr(mypcb.setup, 'aux origin'):
     #    say('aux origin' + str(mypcb.setup.aux_axis_origin))
     #else:
@@ -12044,6 +12100,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
             #HoleList = getPads(board_elab,pcbThickness)
             # pad
             virtual=0
+            # say(str(pcbv))
             if pcbv <= 5:
                 if hasattr(m, 'attr'):
                     if 'virtual' in m.attr:
@@ -12053,8 +12110,9 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                     virtual=0
             elif pcbv > 5:
                 if hasattr(m, 'attr'):
-                    if 'bom' in m.attr or 'pos' in m.attr:
+                    if 'smd' not in str(m.attr) and 'through_hole' not in str(m.attr):
                         # 'exclude_from_pos_files' or 'exclude_from_bom'
+                        # say('virtual module k>5')
                         virtual=1
                     else:
                         #say('non virtual module')
@@ -13214,11 +13272,25 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                     board= doc.ActiveObject
                     board.Label = board_name
                     #FreeCAD.ActiveDocument.getObject("Step_Virtual_Models").addObject(impPart)
+                    # doc.getObject(board_name).addObject(doc.getObject(boardG_name))
+                    try:
+                        #doc.getObject(boardG_name).addObject(LCS)
+                        doc.getObject(board_name).addObject(LCS)
+                        LCS.MapMode = 'ObjectXY'
+                        LCS.MapReversed = False
+                        LCS.Support = [(doc.getObject(board_name).Origin.OriginFeatures[0],'')]
+                    except:
+                        pass
                     doc.getObject(board_name).addObject(doc.getObject(boardG_name))
-                try:
-                    doc.getObject(boardG_name).addObject(LCS)
-                except:
-                    pass
+                else:
+                    try:
+                        #doc.getObject(boardG_name).addObject(LCS)
+                        doc.getObject(board_name).addObject(LCS)
+                        LCS.MapMode = 'ObjectXY'
+                        LCS.MapReversed = False
+                        LCS.Support = [(doc.getObject(board_name).Origin.OriginFeatures[0],'')]
+                    except:
+                        pass
                 doc.getObject(boardG_name).addObject(doc.getObject(pcb_name))
                 #FreeCADGui.activeView().setActiveObject('Board_Geoms', doc.Board_Geoms)
                 ## end hierarchy
@@ -13234,21 +13306,42 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                     #FreeCAD.ActiveDocument.getObject("Step_Virtual_Models").addObject(impPart)
                     # doc.getObject("Board").addObject(doc.Board_Geoms)
                     #doc.getObject('Board_Geoms').adjustRelativeLinks(doc.getObject('Board'))
-                    doc.getObject(board_name).ViewObject.dropObject(doc.getObject(boardG_name),None,'',[])
+                    # doc.getObject(board_name).ViewObject.dropObject(doc.getObject(boardG_name),doc.getObject(boardG_name),'',[])
+                    try:
+                        #LCS.adjustRelativeLinks(doc.getObject('Board_Geoms'))
+                        #doc.getObject(boardG_name).ViewObject.dropObject(LCS,LCS,'',[])
+                        doc.getObject(board_name).ViewObject.dropObject(LCS,LCS,'',[])
+                        # LinkGroups don't have 'Origin' Feature
+                        # LCS.MapMode = 'ObjectXY'
+                        # LCS.MapReversed = False
+                        # LCS.Support = [(doc.getObject(board_name).Origin.OriginFeatures[0],'')]
+                        FreeCADGui.Selection.clearSelection()
+                        FreeCADGui.Selection.addSelection(LCS)
+                        FreeCADGui.runCommand('Std_ToggleVisibility',0)
+                        #stop
+                    except:
+                        pass
+                    doc.getObject(board_name).ViewObject.dropObject(doc.getObject(boardG_name),doc.getObject(boardG_name),'',[])
+                else:
+                    try:
+                        #LCS.adjustRelativeLinks(doc.getObject('Board_Geoms'))
+                        #doc.getObject(boardG_name).ViewObject.dropObject(LCS,LCS,'',[])
+                        doc.getObject(board_name).ViewObject.dropObject(LCS,LCS,'',[])
+                        # LinkGroups don't have 'Origin' Feature
+                        # LCS.MapMode = 'ObjectXY'
+                        # LCS.MapReversed = False
+                        # LCS.Support = [(doc.getObject(board_name).Origin.OriginFeatures[0],'')]
+                        FreeCADGui.Selection.clearSelection()
+                        FreeCADGui.Selection.addSelection(LCS)
+                        FreeCADGui.runCommand('Std_ToggleVisibility',0)
+                        #stop
+                    except:
+                        pass
                 FreeCADGui.Selection.clearSelection()
                 #grp.addObject(pcb_board)
                 #doc.getObject('Pcb').adjustRelativeLinks(doc.getObject('Board_Geoms'))
                 #doc.getObject('Board_Geoms').ViewObject.dropObject(doc.getObject('Pcb'),None,'',[])
-                doc.getObject(boardG_name).ViewObject.dropObject(doc.getObject(pcb_name),None,'',[])
-                try:
-                    #LCS.adjustRelativeLinks(doc.getObject('Board_Geoms'))
-                    doc.getObject(boardG_name).ViewObject.dropObject(LCS,None,'',[])
-                    FreeCADGui.Selection.clearSelection()
-                    FreeCADGui.Selection.addSelection(LCS)
-                    FreeCADGui.runCommand('Std_ToggleVisibility',0)
-                    #stop
-                except:
-                    pass
+                doc.getObject(boardG_name).ViewObject.dropObject(doc.getObject(pcb_name),doc.getObject(pcb_name),'',[])
                 FreeCADGui.Selection.clearSelection()
                 #FreeCADGui.activeView().setActiveObject('Board_Geoms', doc.Board_Geoms)
                 ## end hierarchy        
@@ -15807,12 +15900,18 @@ def PullMoved():
                         #    pcb_pull=False
                         oft=None
                         if aux_orig == 1:
-                            if hasattr(mypcb.setup, 'aux_axis_origin'):
-                                oft = mypcb.setup.aux_axis_origin 
-                                #oft=getAuxOrigin(data)
+                            if hasattr(mypcb, 'setup'):
+                                if hasattr(mypcb.setup, 'aux_axis_origin'):
+                                    oft = mypcb.setup.aux_axis_origin 
+                                    #oft=getAuxOrigin(data)
+                                else:
+                                    oft = [0.0,0.0]
                         elif grid_orig == 1:
-                            if hasattr(mypcb.setup, 'grid_origin'):
-                                oft=mypcb.setup.grid_origin
+                            if hasattr(mypcb, 'setup'):
+                                if hasattr(mypcb.setup, 'grid_origin'):
+                                    oft=mypcb.setup.grid_origin
+                                else:
+                                    oft = [0.0,0.0]
                             else:
                                 oft = [0.0,0.0]
                                 #oft=getGridOrigin(data)
@@ -20024,10 +20123,11 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                 sayw('found '+ssklayer+' element(s)')
             #stop
             if ssklayer == 'Edge':
-                if hasattr(mypcb.setup, 'edge_width'): #maui edge width
-                    edge_width=mypcb.setup.edge_width
-                elif hasattr(mypcb.setup, 'edge_cuts_line_width'): #maui edge cuts new width k 5.99
-                    edge_width=mypcb.setup.edge_cuts_line_width
+                if hasattr(mypcb, 'setup'):
+                    if hasattr(mypcb.setup, 'edge_width'): #maui edge width
+                        edge_width=mypcb.setup.edge_width
+                    elif hasattr(mypcb.setup, 'edge_cuts_line_width'): #maui edge cuts new width k 5.99
+                        edge_width=mypcb.setup.edge_cuts_line_width
                 #else:
                 #    edge_width=0.16
             oft=None
@@ -20112,6 +20212,7 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                     repl = re.sub('\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE)
                     repl = re.sub('\s\(gr_arc(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_arc(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_arc(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE)
                     repl = re.sub('\s\(gr_circle(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_circle(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_circle(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE)
+                    repl = re.sub('\s\(gr_rect(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_rect(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_rect(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE)
                     repl = re.sub('\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE|re. DOTALL)
                     #sayerr(replace)
                     k = repl.rfind(")")  #removing latest ')'

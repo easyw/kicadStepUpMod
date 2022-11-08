@@ -29,7 +29,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.2.1'
+ksuCMD_version__='2.2.9'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -425,7 +425,7 @@ class Ui_Offset_value(object):
         self.checkBox.setText(translate("ksu","Arc"))
         self.checkBox.setChecked(True)
         self.checkBox.setObjectName("checkBox")
-        self.gridLayout.addWidget(self.checkBox, 1, 0, 1, 1)
+        self.gridLayout.addWidget(self.checkBox, 2, 0, 1, 1)
         
         self.offset_label_2 = QtWidgets.QLabel(self.gridLayoutWidget)
         self.offset_label_2.setMinimumSize(QtCore.QSize(0, 0))
@@ -771,22 +771,42 @@ class ksuToolsMoveSketch:
                 ui.setupUi(offsetDlg)
                 ui.offset_label.setText(translate("ksu","Select a Sketch and Parameters to<br>move the sketch.<br>Offset X:"))
                 ui.lineEdit_offset.setText("10.0")
-                ui.checkBox.setVisible(False)
                 ui.offset_label_2.setText("Offset Y [mm]:")
                 ui.lineEdit_offset_2.setToolTip("Offset Y value [+/- mm]")
                 ui.lineEdit_offset_2.setText("0.0")
+                ui.checkBox.setText("reset Placement")
+                ui.checkBox.setVisible(True)
+                ui.checkBox.setChecked(False)
+                ui.checkBox.setToolTip("reset Placement of Sketch,\nmoving the internal geometry\nignoring offset imput fields")
                 reply=offsetDlg.exec_()
+                skip=False
                 if reply==1: # ok
-                    offsetX=float(ui.lineEdit_offset.text().replace(',','.'))
-                    offsetY=float(ui.lineEdit_offset_2.text().replace(',','.'))
-                    doc.openTransaction('moveSk')
-                    n = doc.getObject(s.Name).GeometryCount
-                    mv = []
-                    for j in range (n):
-                        mv.append(j)
-                    doc.getObject(s.Name).addMove(mv, FreeCAD.Vector(offsetX, offsetY, 0))
-                    doc.commitTransaction()
-                    doc.recompute() # ([s])
+                    if ui.checkBox.isChecked():
+                        if s.Placement.Rotation == FreeCAD.Rotation(0.0,0.0,0.0,1.0):
+                            offsetX=s.Placement.Base.x
+                            offsetY=s.Placement.Base.y
+                        else:
+                            #print(s.Placement.Rotation)
+                            print('available only on Angle (0,0,0)')
+                            msg="""available only on Angle (0,0,0)"""
+                            QtGui.QApplication.restoreOverrideCursor()
+                            QtGui.QMessageBox.information(None,"Info ...",msg)
+                            skip=True
+                    else:
+                        offsetX=float(ui.lineEdit_offset.text().replace(',','.'))
+                        offsetY=float(ui.lineEdit_offset_2.text().replace(',','.'))
+                    if not skip:
+                        doc.openTransaction('moveSk')
+                        n = doc.getObject(s.Name).GeometryCount
+                        mv = []
+                        for j in range (n):
+                            mv.append(j)
+                        doc.getObject(s.Name).addMove(mv, FreeCAD.Vector(offsetX, offsetY, 0))
+                        if ui.checkBox.isChecked():
+                            s.Placement.Base.x=0
+                            s.Placement.Base.y=0
+                        doc.recompute([s])
+                        doc.commitTransaction()
                 else:
                     print('Cancel')
             else:
@@ -825,7 +845,7 @@ class ksuToolsOffset2D:
             reply=offsetDlg.exec_()
             if reply==1: # ok
                 offset=float(ui.lineEdit_offset.text().replace(',','.'))
-                if ui.checkBox.isChecked:
+                if ui.checkBox.isChecked():
                     offset_method = 'Arc'
                 else:
                     offset_method = 'Intersection'
@@ -1848,14 +1868,16 @@ class ksuToolsResetPartPlacement:
             currState = {} #initialize a dictionary to store current object placements
             sel = FreeCADGui.Selection.getSelection()
             for obj in sel: ## App.ActiveDocument.Objects: #going through active document objects
-                if "Placement" in obj.PropertiesList: #if object has a Placement property
+                if "Placement" in obj.PropertiesList and obj.TypeId != 'Sketcher::SketchObject' \
+                   and 'body object' not in str(obj.InList): #if object has a Placement property
                     #FreeCAD.Console.PrintWarning(obj.TypeId)
                     if hasattr(obj,'getGlobalPlacement'):
                         currState[obj] = obj.getGlobalPlacement() #store the object pointer with its global placement
                     #elif obj.TypeId == 'App::Link':
                     #    obj.getLinkGlobalPlacement()
                 for o in obj.OutListRecursive:
-                    if "Placement" in o.PropertiesList: #if object has a Placement property
+                    if "Placement" in o.PropertiesList and o.TypeId != 'Sketcher::SketchObject' \
+                      and 'body object' not in str(o.InList): #if object has a Placement property
                         #FreeCAD.Console.PrintWarning(o.TypeId)
                         if hasattr(o,'getGlobalPlacement'):
                             currState[o] = o.getGlobalPlacement() #store the object pointer with its global placement
@@ -3225,8 +3247,8 @@ class ksuToolsCheckSolid:
                 for o in sel:
                     if hasattr(o,"Shape"):
                         if '.[compsolid]' in o.Label or '.[solid]' in o.Label or '.[shell]' in o.Label\
-                                 or '.[compound]' in o.Label:
-                            o.Label=mk_str(o.Label).replace('.[solid]','').replace('.[shell]','').replace('.[compsolid]','').replace('.[compound]','')
+                                 or '.[compound]' in o.Label or '.[face]' in o.Label:
+                            o.Label=mk_str(o.Label).replace('.[solid]','').replace('.[shell]','').replace('.[compsolid]','').replace('.[compound]','').replace('.[face]','')
                         else:
                             if len(o.Shape.Solids)>0:
                                 i_say(mk_str(o.Label)+' Solid object(s) NBR : '+str(len(o.Shape.Solids)))
@@ -3249,6 +3271,11 @@ class ksuToolsCheckSolid:
                                 if '.[compsolid]' not in o.Label and '.[solid]' not in o.Label and '.[shell]' not in o.Label\
                                     and '.[compound]' not in o.Label:
                                     o.Label=mk_str(o.Label)+'.[compsolid]'
+                            if len(o.Shape.Faces)>0:
+                                i_say(mk_str(o.Label)+' Faces object(s) NBR : '+str(len(o.Shape.Faces)))
+                                if '.[compsolid]' not in o.Label and '.[solid]' not in o.Label and '.[shell]' not in o.Label\
+                                    and '.[compound]' not in o.Label and '.[face]' not in o.Label:
+                                    o.Label=mk_str(o.Label)+'.[face]'
                     else:
                         FreeCAD.Console.PrintWarning("Select object with a \"Shape\" to be checked!\n")
                 # if len (non_solids)>0:
@@ -4235,4 +4262,157 @@ class approximateCenter():
             return True
 
 FreeCADGui.addCommand('approximateCenter',approximateCenter())
+
+class Create_BoundBox():
+    "Create BoundBox of the Selected Object"
+
+    def GetResources(self):
+        mybtn_tooltip ="Create BoundBox of the Selected Object"
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'BoundBox.svg') , # the name of a svg file available in the resources
+                     'MenuText': mybtn_tooltip ,
+                     'ToolTip' : mybtn_tooltip}
+
+    def IsActive(self):
+        doc = FreeCAD.ActiveDocument
+        if doc is not None:
+            if FreeCADGui.Selection.getSelection():
+                sel=FreeCADGui.Selection.getSelection()
+                if len(sel)>=1:        
+                    return True
+        return
+
+    def Activated(self):        
+        def make_shape_from_mesh (d,m):
+            d.addObject('Part::Feature', 'Shape-Mesh')
+            sm = d.ActiveObject
+            __shape__ = Part.Shape()
+            __shape__.makeShapeFromMesh(m.Mesh.Topology, 0.100000, False)
+            sm.Shape = __shape__
+            sm.purgeTouched()
+            del __shape__
+            return sm
+
+        import Part
+        doc = FreeCAD.ActiveDocument
+        if FreeCADGui.Selection.getSelection():
+            sel=FreeCADGui.Selection.getSelection()
+        if len(sel)==1:
+            selObj = sel[0]
+            bbLbl = selObj.Label+"-BBox"
+            bb = None
+            if hasattr(selObj, 'Shape'):
+                combined_path = '\t'.join(sys.path)
+                if 'Assembly4' in combined_path:
+                    import showHideLcsCmd
+                    showHideLcsCmd.showHide(0)
+                    FreeCAD.Console.PrintMessage('hiding LCs\n')
+                    #FreeCADGui.runCommand('Asm4_hideLcs',0)
+                else:
+                    for e in selObj.OutList:
+                        if e.TypeId == 'PartDesign::CoordinateSystem':
+                            FreeCAD.Console.PrintMessage('hiding LCs\n')
+                            e.ViewObject.Visibility = False
+                bb = selObj.Shape.BoundBox
+            elif hasattr(selObj, 'Mesh'):
+                bb = selObj.ViewObject.getBoundingBox()
+            if bb is not None:
+                if len(FreeCAD.ActiveDocument.getObjectsByLabel(bbLbl))==0:
+                    FreeCAD.ActiveDocument.addObject("Part::Box","Box")
+                    bbO = FreeCAD.ActiveDocument.ActiveObject
+                else:
+                    bbO = FreeCAD.ActiveDocument.getObjectsByLabel(bbLbl)[0]
+                bbO.Label = bbLbl
+                # selObj.Label+"-BB"
+                bbO.ViewObject.Transparency=90
+                bbO.ViewObject.Visibility=True
+                # bbO.ViewObject.ShapeColor = (0.67,0.00,0.00) # (0.00,0.00,0.50)
+                sel_Old = sel[0]
+                FreeCADGui.Selection.clearSelection()
+                FreeCADGui.Selection.addSelection(bbO)
+                FreeCADGui.runCommand('Std_RandomColor')
+                # FreeCADGui.Selection.clearSelection()
+                # FreeCADGui.Selection.addSelection(selObj)
+                
+                bbO.Placement.Base.x = bb.XMin
+                bbO.Placement.Base.y = bb.YMin
+                bbO.Placement.Base.z = bb.ZMin
+                if bb.XLength > 0:
+                    bbO.Length=bb.XLength 
+                else:
+                    bbO.Length=0.01
+                if bb.YLength > 0:
+                    bbO.Width=bb.YLength
+                else:
+                    bbO.Width=0.01
+                if bb.ZLength > 0:
+                    bbO.Height=bb.ZLength
+                else:
+                    bbO.Height=0.01
+                FreeCAD.Console.PrintMessage('BB data x:'+str(bb.XLength)+", y:"+str(bb.YLength)+", z:"+str(bb.ZLength)+'\n')
+                FreeCAD.ActiveDocument.recompute()
+                FreeCADGui.SendMsgToActiveView("ViewFit")
+        else:
+            doc.addObject("Part::Compound","BBox-Compound")
+            BBCompound= doc.ActiveObject
+            sel_Old = sel
+            cmpd_objs = []
+            toDel_objs = []
+            for o in sel:
+                if hasattr(o.ViewObject, 'Visibility'):
+                    if o.ViewObject.Visibility==True:
+                        if hasattr(o, 'Shape'):
+                            combined_path = '\t'.join(sys.path)
+                            if 'Assembly4' in combined_path:
+                                import showHideLcsCmd
+                                showHideLcsCmd.showHide(0)
+                                FreeCAD.Console.PrintMessage('hiding LCs\n')
+                                #FreeCADGui.runCommand('Asm4_hideLcs',0)
+                            else:
+                                for e in o.OutList:
+                                    if e.TypeId == 'PartDesign::CoordinateSystem':
+                                        FreeCAD.Console.PrintMessage('hiding LCs\n')
+                                        e.ViewObject.Visibility = False
+                            cmpd_objs.append(o)
+                        elif hasattr(o, 'Mesh'):
+                            sm = make_shape_from_mesh (doc,o)
+                            cmpd_objs.append(sm)
+                            toDel_objs.append(sm)
+            BBCompound.Links = cmpd_objs # sel
+            doc.recompute()
+            bb = BBCompound.Shape.BoundBox
+            doc.addObject("Part::Box","Box")
+            bbO = doc.ActiveObject
+            bbO.Label = "BBox-multiObjects"
+            bbO.ViewObject.Transparency=90
+            bbO.ViewObject.Visibility=True
+            FreeCADGui.Selection.clearSelection()
+            FreeCADGui.Selection.addSelection(bbO)
+            FreeCADGui.runCommand('Std_RandomColor')
+            bbO.ViewObject.LineColor = bbO.ViewObject.ShapeColor
+            bbO.Placement.Base.x = bb.XMin
+            bbO.Placement.Base.y = bb.YMin
+            bbO.Placement.Base.z = bb.ZMin
+            if bb.XLength > 0:
+                bbO.Length=bb.XLength 
+            else:
+                bbO.Length=0.01
+            if bb.YLength > 0:
+                bbO.Width=bb.YLength
+            else:
+                bbO.Width=0.01
+            if bb.ZLength > 0:
+                bbO.Height=bb.ZLength
+            else:
+                bbO.Height=0.01
+            FreeCAD.Console.PrintMessage('BB data x:'+str(bb.XLength)+", y:"+str(bb.YLength)+", z:"+str(bb.ZLength)+'\n')
+            doc.recompute()
+            for o in cmpd_objs:
+                o.ViewObject.Visibility=True
+            FreeCADGui.SendMsgToActiveView("ViewFit")
+            doc.removeObject(BBCompound.Name)
+            for o in toDel_objs:
+                doc.removeObject(o.Name)
+            doc.recompute()
+                    
+FreeCADGui.addCommand('Create_BoundBox',Create_BoundBox())
 
