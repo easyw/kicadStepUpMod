@@ -20,7 +20,7 @@ use_AppPart=False # False
 use_Links=False
 global FC_export_min_version
 FC_export_min_version="11670"  #11670 latest JM
-silks_version = '1.1'
+silks_version = '1.2'
 
 use_LinkGroups = False
 if 'LinkView' in dir(FreeCADGui):
@@ -117,6 +117,16 @@ silks_diffuse = (0.98,0.92,0.84)
 # brass     0.329412    0.223529    0.027451    0.780392    0.568627    0.113725    0.992157    0.941176    0.807843    0.21794872
 brass_diffuse = (0.780392,0.568627,0.113725)
 
+def simple_cpy (obj,lbl):
+    copy = FreeCAD.ActiveDocument.addObject('Part::Feature',obj.Name)
+    copy.Label = lbl
+    copy.Shape = obj.Shape
+    copy.ViewObject.ShapeColor   = obj.ViewObject.ShapeColor
+    copy.ViewObject.LineColor    = obj.ViewObject.LineColor
+    copy.ViewObject.PointColor   = obj.ViewObject.PointColor
+    copy.ViewObject.DiffuseColor = obj.ViewObject.DiffuseColor
+    return copy
+
 
 import importDXF
 from kicadStepUptools import make_unicode, make_string
@@ -141,6 +151,7 @@ def makeFaceDXF():
     for fname in fn:
         path, name = os.path.split(fname)
         filename=os.path.splitext(name)[0]
+        say("filename = "+str(filename))
         #importDXF.open(os.path.join(dirname,filename))
         if len(fname) > 0:
             #importDXF.open(fname)
@@ -189,20 +200,29 @@ def makeFaceDXF():
                 layerName = 'Silks'
             else:
                 layerName = 'Tracks'
-            if 'F.' in filename or 'F_' in filename:
+            if 'F.Silk' in filename or 'F_Silk' in filename:
                 layerName = 'top'+layerName
-            if 'B.' in filename or 'B_' in filename:
+            elif 'B.Silk' in filename or 'B_Silk' in filename:
                 layerName = 'bot'+layerName
-        
-            doc.addObject('Part::Feature',layerName+ftname_sfx).Shape=f
+            elif 'F.' in filename or 'F_' in filename:
+                layerName = 'top'+layerName
+            elif 'B.' in filename or 'B_' in filename:
+                layerName = 'bot'+layerName
+
+            doc.addObject('Part::Feature',layerName+ftname_sfx).Shape=f # +'tmp').Shape=f
             newShape=doc.ActiveObject
+            # doc.recompute(None,True,True)
             botOffset = 1.6
             if 'Silk' in layerName:
                 docG.getObject(newShape.Name).ShapeColor = silks_diffuse
             else:
                 docG.getObject(newShape.Name).ShapeColor = brass_diffuse #copper_diffuse  #(0.78,0.56,0.11)
             pcb_name = find_pcb_name()
+            # new_obj = simple_cpy(newShape,layerName+ftname_sfx)
+            # doc.removeObject(newShape.Name)
+            # newShape = new_obj
             if len (doc.getObjectsByLabel(pcb_name)) > 0:
+                ### shifting placement to be removed if dxf is exported with drill place file origin
                 newShape.Placement = doc.getObjectsByLabel(pcb_name)[0].Placement
                 #botTracks.Placement = doc.Pcb.Placement
                 board_geom_name='Board_Geoms'+pcb_name[pcb_name.rfind('_'):]
@@ -224,6 +244,7 @@ def makeFaceDXF():
             timeD = time.time() - t - timeP
             say("displaying time = "+str(timeD) + "s")
     FreeCADGui.SendMsgToActiveView("ViewFit")
+    # doc.recompute(None,True,True)
     docG.activeView().viewAxonometric()
 ##
 def checkDXFsettings():

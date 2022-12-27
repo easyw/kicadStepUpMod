@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.2.9'
+ksuCMD_version__='2.3.0'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -386,6 +386,8 @@ def ksu_edges2sketch():
             conv_started = False
             if lg < max_geo_admitted:
                 doc.recompute()
+        else:
+            print('Select coplanar edge(s) or Face(s) or a single Vertex \nof a coplanar outline to get a corresponding Sketch\n')
     # for ob in FreeCAD.ActiveDocument.Objects:
     #     FreeCADGui.Selection.removeSelection(ob)
 ##
@@ -3847,8 +3849,14 @@ class ksuToolsAddSilks:
     def Activated(self):
         # do something here...
         import makefacedxf
+        if FreeCAD.ActiveDocument is not None:
+            doc = FreeCAD.ActiveDocument
+        else:
+            doc = FreeCAD.newDocument()
         if makefacedxf.checkDXFsettings():
+            doc.openTransaction('add_silks')
             makefacedxf.makeFaceDXF()
+            doc.commitTransaction()
         else:
             msg = """<b>DXF import setting NOT as required.</b><br>Please check to have selected:<br>
             - DXF Legacy Importer<br>

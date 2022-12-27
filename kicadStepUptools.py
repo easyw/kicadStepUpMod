@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.7.6"
+___ver___ = "10.7.7"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -2986,7 +2986,7 @@ def cfg_read_all():
     global ksu_config_fname, default_ksu_config_ini, applymaterials
     ##ksu pre-set
     global models3D_prefix, models3D_prefix2, models3D_prefix3, models3D_prefix4
-    global blacklisted_model_elements, col, colr, colg, colb
+    global blacklisted_model_elements, col, colr, colg, colb, whitelisted_3Dmodels
     global bbox, volume_minimum, height_minimum, idf_to_origin, aux_orig
     global base_orig, base_point, bbox_all, bbox_list, whitelisted_model_elements
     global fusion, addVirtual, blacklisted_models, exportFusing, min_drill_size
@@ -3219,6 +3219,21 @@ def cfg_read_all():
         blacklisted_models= bklist_m
         #say(blacklisted_models)
     #print('bklist',bklist,'height_minimum',height_minimum,'volume_minimum',volume_minimum)
+    whitelist = prefs.GetString('whitelist')
+    whitel_none=False
+    whitelisted_3Dmodels=''
+    if whitelist.lower().find('none') !=-1 or len(whitelist) == 0:
+        whitelisted_3Dmodels=''
+        whitel_none=True
+    if whitelist.find(';') !=-1 or not whitel_none:
+        whitelisted_3Dmodels=whitelist.strip('\r\n')
+        #say(bklist);
+        whitelist_m=[x for x in whitelisted_3Dmodels.split(";") if x]
+        ##removing empty elements
+        #blacklisted_models=blacklisted_model_elements.split(";")
+        whitelisted_3Dmodels= whitelist_m
+    #say(whitelisted_3Dmodels)
+    
     pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
     dock_mode = pg.GetInt("dockingMode")
     if dock_mode == 0:
@@ -3503,7 +3518,7 @@ def Display_info(blacklisted_models):
     global height_minimum, volume_minimum, idf_to_origin, ksu_config_fname
     global board_base_point_x, board_base_point_y, real_board_pos_x, real_board_pos_y
     global animate_result, apply_reflex, apply_reflex_all, addVirtual, fname_sfx
-    global running_time, missingHeight
+    global running_time, missingHeight, whitelisted_3Dmodels
     
     say('info message')
     if blacklisted_model_elements != '':
@@ -3512,7 +3527,9 @@ def Display_info(blacklisted_models):
             QtGui.QApplication.restoreOverrideCursor()
             reply = QtGui.QMessageBox.information(None,"Info ...","... black-listed module(s)\r\n"+ ''.join(map(str, blacklisted_models)).replace(',','\n'))
         #FreeCAD.Console.PrintMessage("black-listed module "+ '\r\n'.join(map(str, blacklisted_models)))    
-    
+    if whitelisted_3Dmodels != '':
+        #ssay(whitelisted_3Dmodels)
+        sayw("whitelisted_3Dmodels: "+ str(whitelisted_3Dmodels))
     msg="""<b>kicad StepUp</b> ver. """
     msg+=___ver___
     #if len(msgpath)>15:
@@ -4316,7 +4333,7 @@ def Load_models(pcbThickness,modules):
     global off_x, off_y, volume_minimum, height_minimum, bbox_all, bbox_list
     global whitelisted_model_elements
     global models3D_prefix, models3D_prefix2, models3D_prefix3, models3D_prefix4
-    global last_pcb_path, full_placement
+    global last_pcb_path, full_placement, whitelisted_3Dmodels
     global allow_compound, compound_found, bklist, force_transparency, warning_nbr, use_AppPart
     global conv_offs, use_Links, links_imp_mode, use_pypro, use_LinkGroups, fname_sfx
     
@@ -4543,7 +4560,8 @@ def Load_models(pcbThickness,modules):
         blacklisted=0
         if blacklisted_model_elements != '':
             if blacklisted_model_elements.find(model_name) != -1:
-                blacklisted=1
+                if model_name not in whitelisted_3Dmodels:
+                    blacklisted=1
         ###
 
         if (blacklisted==0):
@@ -4732,19 +4750,20 @@ def Load_models(pcbThickness,modules):
                                 newobj=createSolidBBox3(newobj)
                         skip_status="not"
                         #tobefixed volume for App::Part
-                        if volume_minimum != 0 or height_minimum != 0: #if checking volume or height
-                            if newobj.Shape.Volume>volume_minimum:  #mauitemp min vol
-                                if abs(newobj.Shape.BoundBox.ZLength)>height_minimum:  #mauitemp min height
-                                    if (height_minimum!=0):
-                                        say("height > Min height "+ str(newobj.Shape.BoundBox.ZLength) + " "+newobj.Label)
-                                    if (volume_minimum!=0):
-                                        say("Volume > Min Volume "+ str(newobj.Shape.Volume) + " "+newobj.Label)
+                        if model_name not in whitelisted_3Dmodels:
+                            if volume_minimum != 0 or height_minimum != 0: #if checking volume or height
+                                if newobj.Shape.Volume>volume_minimum:  #mauitemp min vol
+                                    if abs(newobj.Shape.BoundBox.ZLength)>height_minimum:  #mauitemp min height
+                                        if (height_minimum!=0):
+                                            say("height > Min height "+ str(newobj.Shape.BoundBox.ZLength) + " "+newobj.Label)
+                                        if (volume_minimum!=0):
+                                            say("Volume > Min Volume "+ str(newobj.Shape.Volume) + " "+newobj.Label)
+                                    else:
+                                        skip_status="skip"
+                                        say("height <= Min height "+ str(newobj.Shape.BoundBox.ZLength) + " "+newobj.Label)
                                 else:
                                     skip_status="skip"
-                                    say("height <= Min height "+ str(newobj.Shape.BoundBox.ZLength) + " "+newobj.Label)
-                            else:
-                                skip_status="skip"
-                                say("Volume <= Min Volume "+ str(newobj.Shape.BoundBox.ZLength) + " "+newobj.Label)
+                                    say("Volume <= Min Volume "+ str(newobj.Shape.BoundBox.ZLength) + " "+newobj.Label)
                         loaded_models_skipped.append(skip_status)
                         use_cache=0
                         #say("NO use_cache")
@@ -6445,7 +6464,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
     global aux_orig, base_orig, base_point, idf_to_origin, off_x, off_y, export_board_2step
     global real_board_pos_x, real_board_pos_y, board_base_point_x, board_base_point_y
     global models3D_prefix, models3D_prefix2, models3D_prefix3, models3D_prefix4
-    global blacklisted_model_elements, col, colr, colg, colb
+    global blacklisted_model_elements, col, colr, colg, colb, whitelisted_3Dmodels
     global bbox, volume_minimum, height_minimum, idf_to_origin, aux_orig
     global base_orig, base_point, bbox_all, bbox_list, whitelisted_model_elements
     global fusion, addVirtual, blacklisted_models, exportFusing, min_drill_size

@@ -53,7 +53,7 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>0</y>
+        <y>-38</y>
         <width>519</width>
         <height>900</height>
        </rect>
@@ -76,7 +76,7 @@
          <x>0</x>
          <y>0</y>
          <width>538</width>
-         <height>856</height>
+         <height>816</height>
         </rect>
        </property>
        <property name="title">
@@ -196,7 +196,7 @@ or 'KICAD6_3DMODEL_DIR'</string>
           <x>-1</x>
           <y>195</y>
           <width>524</width>
-          <height>261</height>
+          <height>296</height>
          </rect>
         </property>
         <property name="title">
@@ -685,14 +685,65 @@ default '0.01mm'</string>
           </item>
          </layout>
         </widget>
+        <widget class="QWidget" name="layoutWidget_10">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>255</y>
+           <width>491</width>
+           <height>30</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_10">
+          <item>
+           <widget class="QLabel" name="label_5">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;White List:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;put here your model names that you must load (e.g. smallest ones)&lt;/p&gt;&lt;p&gt;separated by a semicolon.&lt;/p&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Examples:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;LED_D5.0mm_IRBlack;USB_Mini-B_Lumberg_2486_01_Horizontal&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;An empty list means all the models will behave as usual.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="text">
+             <string>White List</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_13">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="Gui::PrefLineEdit" name="lineEdit_whiteList">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;White List:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;put here your model names that you must load (e.g. smallest ones)&lt;/p&gt;&lt;p&gt;separated by a semicolon.&lt;/p&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Examples:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;LED_D5.0mm_IRBlack;USB_Mini-B_Lumberg_2486_01_Horizontal&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;An empty list means all the models will behave as usual.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="prefEntry" stdset="0">
+             <cstring>whitelist</cstring>
+            </property>
+            <property name="prefPath" stdset="0">
+             <cstring>Mod/kicadStepUpGui</cstring>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
        </widget>
        <widget class="QGroupBox" name="imp_exp_setting">
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>460</y>
+          <y>491</y>
           <width>525</width>
-          <height>341</height>
+          <height>331</height>
          </rect>
         </property>
         <property name="title">
@@ -1185,44 +1236,6 @@ Allowing or not Loading Multi Parts objects</string>
          </property>
         </widget>
        </widget>
-       <widget class="QGroupBox" name="mcad_compare">
-        <property name="geometry">
-         <rect>
-          <x>0</x>
-          <y>805</y>
-          <width>525</width>
-          <height>46</height>
-         </rect>
-        </property>
-        <property name="title">
-         <string>Mechanical Check</string>
-        </property>
-        <widget class="Gui::PrefCheckBox" name="cb_gen_sketch">
-         <property name="geometry">
-          <rect>
-           <x>8</x>
-           <y>25</y>
-           <width>463</width>
-           <height>20</height>
-          </rect>
-         </property>
-         <property name="toolTip">
-          <string>Generate Sketches for differences on PCB Edge</string>
-         </property>
-         <property name="text">
-          <string>Generate Sketches for differences on PCB Edge</string>
-         </property>
-         <property name="checked">
-          <bool>false</bool>
-         </property>
-         <property name="prefEntry" stdset="0">
-          <cstring>generate_sketch</cstring>
-         </property>
-         <property name="prefPath" stdset="0">
-          <cstring>Mod/kicadStepUpGui</cstring>
-         </property>
-        </widget>
-       </widget>
        <widget class="QWidget" name="horizontalLayoutWidget_4">
         <property name="geometry">
          <rect>
@@ -1330,6 +1343,44 @@ Allowing or not Loading Multi Parts objects</string>
           </widget>
          </item>
         </layout>
+       </widget>
+      </widget>
+      <widget class="QGroupBox" name="mcad_compare">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>820</y>
+         <width>525</width>
+         <height>51</height>
+        </rect>
+       </property>
+       <property name="title">
+        <string>Mechanical Check</string>
+       </property>
+       <widget class="Gui::PrefCheckBox" name="cb_gen_sketch">
+        <property name="geometry">
+         <rect>
+          <x>11</x>
+          <y>25</y>
+          <width>463</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="toolTip">
+         <string>Generate Sketches for differences on PCB Edge</string>
+        </property>
+        <property name="text">
+         <string>Generate Sketches for differences on PCB Edge</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+        <property name="prefEntry" stdset="0">
+         <cstring>generate_sketch</cstring>
+        </property>
+        <property name="prefPath" stdset="0">
+         <cstring>Mod/kicadStepUpGui</cstring>
+        </property>
        </widget>
       </widget>
      </widget>
