@@ -1624,15 +1624,21 @@ class KicadFcad:
 
     def _makeCustomPad(self, params):
         wires = []
-        for key in params.primitives:
-            wire,width = makePrimitve(key, getattr(params.primitives, key))
-            if not width:
-                if isinstance(wire, Part.Edge):
-                    wire = Part.Wire(wire)
-                wires.append(wire)
-            else:
-                wire = self._makeWires(wire, name=None, offset=width*0.5)
-                wires += wire.Wires
+        primitive_types = params.primitives
+        for key in primitive_types:
+            # If there are multiple primitives of the same type (e.g. gr_arc), the node is parsed
+            # to a SexpList, otherwise for a single primitive it's a SexpValueDict. Wrap in a
+            # SexpList if necessary so we can handle both cases the same way.
+            primitives = SexpList(getattr(primitive_types, key))
+            for primitive in primitives:
+                wire,width = makePrimitve(key, primitive)
+                if not width:
+                    if isinstance(wire, Part.Edge):
+                        wire = Part.Wire(wire)
+                    wires.append(wire)
+                else:
+                    wire = self._makeWires(wire, name=None, offset=width*0.5)
+                    wires += wire.Wires
         if not wires:
             return
         if len(wires) == 1:
