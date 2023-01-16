@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.7.7"
+___ver___ = "10.7.8"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -7168,6 +7168,7 @@ def routineR_XYZ(axe,alpha):
     objs = [selobj.Object for selobj in selEx]
     if len(objs) == 1:
     #if len(sel[0]) == 1:
+        doc.openTransaction('rot')
         check_AP()
         selEx = FreeCADGui.Selection.getSelectionEx()
         objs = [selobj.Object for selobj in selEx]
@@ -7202,7 +7203,9 @@ def routineR_XYZ(axe,alpha):
         FreeCADGui.Selection.addSelection(objs[0])
         FreeCAD.activeDocument().recompute()
         if resetP==True:
+            #doc.commitTransaction()
             routineResetPlacement()
+        doc.commitTransaction()
         #say("end of rotineZ!")
     else:
         say("Select ONE single part object !")
@@ -7222,6 +7225,7 @@ def routineT_XYZ(axe,v):
     selEx = FreeCADGui.Selection.getSelectionEx()
     objs = [selobj.Object for selobj in selEx]
     if len(objs) == 1:
+        doc.openTransaction('trs')
         check_AP()
         selEx = FreeCADGui.Selection.getSelectionEx()
         objs = [selobj.Object for selobj in selEx]
@@ -7242,6 +7246,7 @@ def routineT_XYZ(axe,v):
         FreeCAD.activeDocument().recompute()
         if resetP==True:
             routineResetPlacement()
+        doc.commitTransaction()
         #say("end of rotineT!")
     else:
         say("Select ONE single part object !")
@@ -7250,11 +7255,13 @@ def routineT_XYZ(axe,v):
 ###  end TranslateXYZ
 
 def routineResetPlacement(keepWB=None):
+    
     objs=[]
-    if "Assembly2Workbench" not in FreeCADGui.activeWorkbench().name():
-        if "PartWorkbench" not in FreeCADGui.activeWorkbench().name():
-            if keepWB is None:
-                FreeCADGui.activateWorkbench("PartWorkbench")
+    if 0:
+        if "Assembly2Workbench" not in FreeCADGui.activeWorkbench().name():
+            if "PartWorkbench" not in FreeCADGui.activeWorkbench().name():
+                if keepWB is None:
+                    FreeCADGui.activateWorkbench("PartWorkbench")
     #FreeCADGui.SendMsgToActiveView("ViewFit")
     ##FreeCADGui.activeDocument().activeView().viewTop()
     doc = FreeCAD.ActiveDocument
@@ -7262,22 +7269,36 @@ def routineResetPlacement(keepWB=None):
     objs = [selobj.Object for selobj in selEx]
     #print 'here'
     if len(objs) == 1:
+        # doc.openTransaction('rst')
         say('routine reset Placement properties')
-
-        s=objs[0].Shape
-        r=[]
-        t=s.copy()
-        for i in t.childShapes():
-            c=i.copy()
-            c.Placement=t.Placement.multiply(c.Placement)
-            r.append((i,c))
-
-        w=t.replaceShape(r)
-        w.Placement=FreeCAD.Placement()
-        Part.show(w)
-        #say(w)
-
+        CpyName =  ''; RefName = ''
+        if objs[0] != 'App::Part': # using std method
+            if len(objs[0].Shape.Compounds) != 1 or objs[0].TypeId == 'Part::MultiFuse': # workaround for issue in resetting pacement for STEP 'merge' importing
+                say('routine reset Placement std')
+                s=objs[0].Shape
+                r=[]
+                t=s.copy()
+                for i in t.childShapes():
+                    c=i.copy()
+                    c.Placement=t.Placement.multiply(c.Placement)
+                    r.append((i,c))
+                w=t.replaceShape(r)
+                w.Placement=FreeCAD.Placement()
+                Part.show(w)
+                CpyName = FreeCAD.ActiveDocument.ActiveObject.Name
+                #say(w)
+            else:  # workaround for issue in resetting pacement for STEP 'merge' importing
+                say('routine reset Placement refining')
+                FreeCAD.ActiveDocument.addObject('Part::Refine','Refined').Source=FreeCAD.ActiveDocument.getObject(objs[0].Name)
+                RefName = FreeCAD.ActiveDocument.ActiveObject.Name
+                FreeCAD.ActiveDocument.recompute()
+                __shape = Part.getShape(FreeCAD.ActiveDocument.getObject(RefName),'',needSubElement=False,refine=False)
+                FreeCAD.ActiveDocument.addObject('Part::Feature','sc').Shape=__shape
+                #FreeCAD.ActiveDocument.recompute()
+                CpyName = FreeCAD.ActiveDocument.ActiveObject.Name
+                # FreeCAD.ActiveDocument.ActiveObject.Label=FreeCAD.ActiveDocument.getObject('Part__Feature001').Label
         if hasattr(FreeCADGui.ActiveDocument.getObject(objs[0].Name),'ShapeColor'):
+            say('has shapecolor')
             FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).ShapeColor
             FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).LineColor
             FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).PointColor
@@ -7285,12 +7306,19 @@ def routineResetPlacement(keepWB=None):
         FreeCADGui.ActiveDocument.ActiveObject.Transparency=FreeCADGui.ActiveDocument.getObject(objs[0].Name).Transparency
 
         new_label=objs[0].Label
-        FreeCAD.ActiveDocument.removeObject(objs[0].Name)
-        FreeCAD.ActiveDocument.recompute()
+        if RefName != '':
+            FreeCAD.ActiveDocument.removeObject(RefName)
+        if objs[0].TypeId == 'PartDesign::Body' or 'PartDesign::' in objs[0].TypeId or len(objs[0].OutList)>0:
+            FreeCAD.ActiveDocument.getObject(objs[0].Name).ViewObject.Visibility=False
+        else:
+            FreeCAD.ActiveDocument.removeObject(objs[0].Name)
+            FreeCAD.ActiveDocument.recompute()
         FreeCAD.ActiveDocument.ActiveObject.Label=new_label
-        rObj=FreeCAD.ActiveDocument.ActiveObject
+        rObj=FreeCAD.ActiveDocument.getObject(CpyName)
         del objs
-        FreeCADGui.Selection.addSelection(rObj)
+        FreeCADGui.Selection.clearSelection()
+        FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.getObject(CpyName))
+        #doc.commitTransaction()
         #FreeCAD.activeDocument().recompute()
         #say("end of rotineRP!")
     else:
@@ -7468,6 +7496,7 @@ def routineC_XYZ(axe):
     selEx = FreeCADGui.Selection.getSelectionEx()
     objs = [selobj.Object for selobj in selEx]
     if len(objs) == 1:
+        doc.openTransaction('cntr')
         check_AP()
         selEx = FreeCADGui.Selection.getSelectionEx()
         objs = [selobj.Object for selobj in selEx]
@@ -7518,6 +7547,7 @@ def routineC_XYZ(axe):
         if resetP==True:
             routineResetPlacement()
             #say("pos reset done")
+        doc.commitTransaction()
         #say("done")
     else:
         say("Select an object !")
@@ -7539,6 +7569,7 @@ def routineP_XYZ(axe):
     selEx = FreeCADGui.Selection.getSelectionEx()
     objs = [selobj.Object for selobj in selEx]
     if len(objs) == 1:
+        doc.openTransaction('plc')
         check_AP()
         selEx = FreeCADGui.Selection.getSelectionEx()
         objs = [selobj.Object for selobj in selEx]
@@ -7585,6 +7616,7 @@ def routineP_XYZ(axe):
         #return [oripl_X, oripl_Y, oripl_Z,p.Base[0],p.Base[1],p.Base[2]];
         if resetP==True:
             routineResetPlacement()
+        doc.commitTransaction()
     else:
         say("Select ONE single part object !")
         say_single_obj()
@@ -7724,6 +7756,7 @@ def routineM_XYZ(axe,v):
     selEx = FreeCADGui.Selection.getSelectionEx()
     objs = [selobj.Object for selobj in selEx]
     if len(objs) == 1:
+        doc.openTransaction('move')
         check_AP()
         selEx = FreeCADGui.Selection.getSelectionEx()
         objs = [selobj.Object for selobj in selEx]
@@ -7755,6 +7788,7 @@ def routineM_XYZ(axe,v):
         FreeCAD.activeDocument().recompute()
         if resetP==True:
             routineResetPlacement()
+        doc.commitTransaction()
         #say("end of rotineM!")
     else:
         say("Select an object !")

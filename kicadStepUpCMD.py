@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.3.0'
+ksuCMD_version__='2.3.1'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -1865,44 +1865,55 @@ class ksuToolsResetPartPlacement:
             FreeCAD.Console.Print("No Active Document found")
             return
         else:
-            FreeCAD.ActiveDocument.openTransaction("Absolufy") #open a transaction for undo management
             currState = {} #initialize a dictionary to store current object placements
             sel = FreeCADGui.Selection.getSelection()
-            for obj in sel: ## App.ActiveDocument.Objects: #going through active document objects
-                if "Placement" in obj.PropertiesList and obj.TypeId != 'Sketcher::SketchObject' \
-                   and 'body object' not in str(obj.InList): #if object has a Placement property
-                    #FreeCAD.Console.PrintWarning(obj.TypeId)
-                    if hasattr(obj,'getGlobalPlacement'):
-                        currState[obj] = obj.getGlobalPlacement() #store the object pointer with its global placement
-                    #elif obj.TypeId == 'App::Link':
-                    #    obj.getLinkGlobalPlacement()
-                for o in obj.OutListRecursive:
-                    if "Placement" in o.PropertiesList and o.TypeId != 'Sketcher::SketchObject' \
-                      and 'body object' not in str(o.InList): #if object has a Placement property
-                        #FreeCAD.Console.PrintWarning(o.TypeId)
-                        if hasattr(o,'getGlobalPlacement'):
-                            currState[o] = o.getGlobalPlacement() #store the object pointer with its global placement
-                        elif o.TypeId == 'App::Link':
-                            plc = self.getLinkGlobalPlacement(o)
-                            print(plc)
-                            currState[o] = plc
+            if sel[0].Placement != FreeCAD.Placement(FreeCAD.Vector(0,0,0),FreeCAD.Rotation(0,0,0)):
+                FreeCAD.ActiveDocument.openTransaction("Absolufy") #open a transaction for undo management
+                for obj in sel: ## App.ActiveDocument.Objects: #going through active document objects
+                    if "Placement" in obj.PropertiesList and obj.TypeId != 'Sketcher::SketchObject' \
+                    and 'body object' not in str(obj.InList): #if object has a Placement property
+                        #FreeCAD.Console.PrintWarning(obj.TypeId)
+                        if hasattr(obj,'getGlobalPlacement'):
+                            currState[obj] = obj.getGlobalPlacement() #store the object pointer with its global placement
+                        #elif obj.TypeId == 'App::Link':
+                        #    obj.getLinkGlobalPlacement()
+                    for o in obj.OutListRecursive:
+                        if "Placement" in o.PropertiesList and o.TypeId != 'Sketcher::SketchObject' \
+                        and 'body object' not in str(o.InList): #if object has a Placement property
+                            #FreeCAD.Console.PrintWarning(o.TypeId)
+                            if hasattr(o,'getGlobalPlacement'):
+                                currState[o] = o.getGlobalPlacement() #store the object pointer with its global placement
+                            elif o.TypeId == 'App::Link':
+                                plc = self.getLinkGlobalPlacement(o)
+                                print(plc)
+                                currState[o] = plc
                             
-            # FreeCAD.ActiveDocument.openTransaction("Absolufy") #open a transaction for undo management
-            
-            for obj, plac in currState.items(): #going through all moveable objects
-                if obj.isDerivedFrom("App::Part"): #if object is a part container
-                    obj.Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,0),FreeCAD.Rotation(0,0,0)) #reset its placement to global document origin
-                elif obj.TypeId[:5] == "App::" and obj.TypeId != 'App::Link': #if object is another App type (typically an origin axis or plane)
-                    None #do nothing
-                else: #for all other objects
-                    obj.Placement = plac #replace them at their global (absolute) placement
-            
-            FreeCAD.ActiveDocument.commitTransaction() #commit transaction
+                # FreeCAD.ActiveDocument.openTransaction("Absolufy") #open a transaction for undo management
+                for obj, plac in currState.items(): #going through all moveable objects
+                    if obj.isDerivedFrom("App::Part"): #if object is a part container
+                        obj.Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,0),FreeCAD.Rotation(0,0,0)) #reset its placement to global document origin
+                    elif obj.TypeId[:5] == "App::" and obj.TypeId != 'App::Link': #if object is another App type (typically an origin axis or plane)
+                        None #do nothing
+                    else: #for all other objects
+                        obj.Placement = plac #replace them at their global (absolute) placement
+                FreeCAD.ActiveDocument.commitTransaction() #commit transaction
+            else:
+                FreeCAD.Console.PrintMessage("Placement already Zero\n")
         return
 
     def IsActive(self):
+        import FreeCAD, FreeCADGui, Part
         doc = FreeCAD.activeDocument()
-        if doc is None: return False
+        if doc is None:
+            return False
+        else:
+            sel = FreeCADGui.Selection.getSelection()
+            if len(sel) >1 or len(sel)==0:
+                return False
+            elif len(sel)==1:
+                if hasattr(sel[0], 'TypeId'):
+                    if (sel[0].TypeId) != 'App::Part':
+                        return False
         return True
 FreeCADGui.addCommand('ksuToolsResetPartPlacement',ksuToolsResetPartPlacement())
 ##
@@ -1916,6 +1927,13 @@ class ksuToolsResetPlacement:
                      'ToolTip' : "ksu Reset Placement for a Shape"}
  
     def IsActive(self):
+        doc = FreeCAD.activeDocument()
+        if doc is None: return False
+        sel = FreeCADGui.Selection.getSelection()
+        if len(sel) >1 or len(sel)==0:
+            return False
+        elif sel[0].TypeId == 'App::Part':
+            return False
         return True
  
     def Activated(self):
@@ -1925,11 +1943,14 @@ class ksuToolsResetPlacement:
             reply = QtGui.QMessageBox.information(None,"Warning", "select one single object to Reset its Placement")
             FreeCAD.Console.PrintError('select one single object to Reset its Placement\n')
         else:
-            FreeCAD.ActiveDocument.openTransaction("Absolufy") #open a transaction for undo management
-            import kicadStepUptools
-            kicadStepUptools.routineResetPlacement(keepWB=True)
-            FreeCAD.ActiveDocument.commitTransaction()
-
+            if sel[0].Placement != FreeCAD.Placement(FreeCAD.Vector(0,0,0),FreeCAD.Rotation(0,0,0)):
+                FreeCAD.ActiveDocument.openTransaction("Absolufy") #open a transaction for undo management
+                import kicadStepUptools
+                FreeCAD.ActiveDocument.openTransaction('rst')
+                kicadStepUptools.routineResetPlacement(keepWB=True)
+                FreeCAD.ActiveDocument.commitTransaction()
+            else:
+                FreeCAD.Console.PrintMessage("Placement already Zero\n")
 FreeCADGui.addCommand('ksuToolsResetPlacement',ksuToolsResetPlacement())
 ##
 
