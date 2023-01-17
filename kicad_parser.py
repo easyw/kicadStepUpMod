@@ -34,7 +34,7 @@ from fcad_parser import unquote #maui
 
 
 # from kicadStepUptools import KicadPCB,SexpList
-__kicad_parser_version__ = '2.1.7'
+__kicad_parser_version__ = '2.1.8'
 # https://github.com/realthunder/fcad_pcb/issues/20#issuecomment-586042341
 # FreeCAD.Console.PrintLog('kicad_parser_version '+__kicad_parser_version__+'\n') # maui 
 # print('kicad_parser_version '+__kicad_parser_version__)
@@ -1624,6 +1624,7 @@ class KicadFcad:
 
     def _makeCustomPad(self, params):
         wires = []
+        # maui 
         primitive_types = params.primitives
         for key in primitive_types:
             # If there are multiple primitives of the same type (e.g. gr_arc), the node is parsed
@@ -1639,6 +1640,7 @@ class KicadFcad:
                 else:
                     wire = self._makeWires(wire, name=None, offset=width*0.5)
                     wires += wire.Wires
+        # maui end
         if not wires:
             return
         if len(wires) == 1:
