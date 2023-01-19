@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.3.1'
+ksuCMD_version__='2.3.2'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -3009,6 +3009,7 @@ class ksuToolsRemoveFromTree:
             doc=FreeCAD.ActiveDocument
             #if "App::Part" in doc.getObject(sel[0].Name).TypeId or "App::LinkGroup" in doc.getObject(sel[0].Name).TypeId:
             if "App::Part" in sel[0].TypeId or "App::LinkGroup" in sel[0].TypeId:
+                doc.openTransaction('rmvTree')
                 base=doc.getObject(sel[0].Name)
                 for o in sel:
                     if o.Name != sel[0].Name:
@@ -3040,6 +3041,7 @@ class ksuToolsRemoveFromTree:
                                 elif "App::LinkGroup" in item.TypeId:
                                     #doc.getObject(item.Name).ViewObject.dropObject(doc.getObject(o.Name))
                                     item.ViewObject.dropObject(o)
+                doc.commitTransaction()
             else:
                 #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
                 reply = QtGui.QMessageBox.information(None,"Warning", "Select one Container and some object(s) to be Removed from the Tree.")
@@ -3069,6 +3071,7 @@ class ksuToolsAddToTree:
             doc=FreeCAD.ActiveDocument
             #if "App::Part" in doc.getObject(sel[0].Name).TypeId:
             if "App::Part" in sel[0].TypeId or "App::LinkGroup" in sel[0].TypeId:
+                doc.openTransaction('addTree')
                 base=doc.getObject(sel[0].Name)
                 for o in sel:
                     if o.Name != sel[0].Name:
@@ -3086,6 +3089,7 @@ class ksuToolsAddToTree:
                             #doc.getObject(sel[0].Name).addObject(doc.getObject(o.Name))
                         elif "App::LinkGroup" in sel[0].TypeId:
                             sel[0].ViewObject.dropObject(o)
+                doc.commitTransaction()
             else:
                 #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
                 reply = QtGui.QMessageBox.information(None,"Warning", "Select one Container and some object(s) to be Added to the Tree.")
@@ -3783,14 +3787,11 @@ class ksuToolsRemoveSubTree:
  
     def Activated(self):
         # do something here...
-        from PySide import QtGui, QtCore
-        reply = QtGui.QMessageBox.question(None, "DelTree","Remove Sub Tree?\n[Undo WILL NOT work!]", QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
-        if reply == QtGui.QMessageBox.Ok:
-            #print('OK clicked.')
-            import kicadStepUptools
-            kicadStepUptools.removesubtree(FreeCADGui.Selection.getSelection())
-        else:
-            FreeCAD.Console.PrintMessage('Cancel clicked.')
+        FreeCAD.ActiveDocument.openTransaction('rmvSubTree')
+        import kicadStepUptools
+        kicadStepUptools.removesubtree(FreeCADGui.Selection.getSelection())
+        FreeCAD.ActiveDocument.commitTransaction()
+        
 FreeCADGui.addCommand('ksuToolsRemoveSubTree',ksuToolsRemoveSubTree())
 ####
 class ksuToolsAddTracks:
