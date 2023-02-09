@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.7.9"
+___ver___ = "10.8.0"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -14704,12 +14704,12 @@ class Ui_DockWidget(object):
             #ini_content=read_ini_file()
             font_color="""<font color=black>"""
             import FreeCAD, FreeCADGui
-            paramGet = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/MainWindow")
-            if 'dark' in paramGet.GetString("StyleSheet").lower(): #we are using a StyleSheet
-                font_color="""<font color=ghostwhite>"""
-                from PySide2 import QtGui
-                font_color="""<font color="""+ FreeCADGui.getMainWindow().palette().text().color().name()
-                #FreeCADGui.getMainWindow().palette().background().color()
+            # paramGet = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/MainWindow")
+            # if 'dark' in paramGet.GetString("StyleSheet").lower(): #we are using a StyleSheet
+            font_color="""<font color=ghostwhite>"""
+            from PySide2 import QtGui
+            font_color="""<font color="""+ FreeCADGui.getMainWindow().palette().text().color().name()
+            #FreeCADGui.getMainWindow().palette().background().color()
             sayw("kicad StepUp version "+str(___ver___))
             help_txt="""<font color=GoldenRod><b>kicad StepUp version """+___ver___+"""</font></b><br>"""
             help_txt+=font_color
@@ -15149,7 +15149,7 @@ class Ui_LayerSelection(object):
         pass
         
     def on_combobox_changed(self, value):
-        print('combo change',value)
+        #print('combo change',value)
         if value != 'Edge.Cuts':
             self.radioBtn_newdoc.setChecked(True)
             self.radioBtn_replace_pcb.setEnabled(False)
@@ -15219,7 +15219,7 @@ class Ui_LayerSelectionOut(object):
         pass
         
     def on_combobox_changed(self, value):
-        print('combo change',value)
+        #print('combo change',value)
         if 'Zone' in value:
             self.lineEdit_width.setEnabled(False)
             self.width_label.setEnabled(False)
@@ -20279,7 +20279,8 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                     repl = re.sub('\s\(gr_arc(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_arc(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_arc(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE)
                     repl = re.sub('\s\(gr_circle(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_circle(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_circle(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE)
                     repl = re.sub('\s\(gr_rect(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_rect(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_rect(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE)
-                    repl = re.sub('\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE|re. DOTALL)
+                    repl = re.sub('\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE)
+                    
                     #sayerr(replace)
                     k = repl.rfind(")")  #removing latest ')'
                     newcontent = repl[:k]

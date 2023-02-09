@@ -10,12 +10,12 @@ ksuWBpath = os.path.dirname(ksu_locator.__file__)
 font_color="""<font color=black>"""
 
 import FreeCAD, FreeCADGui
-paramGet = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/MainWindow")
-if 'dark' in paramGet.GetString("StyleSheet").lower(): #we are using a StyleSheet
-    font_color="""<font color=ghostwhite>"""
-    from PySide2 import QtGui
-    font_color="""<font color="""+ FreeCADGui.getMainWindow().palette().text().color().name()
-    #FreeCADGui.getMainWindow().palette().background().color()
+# paramGet = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/MainWindow")
+# if 'dark' in paramGet.GetString("StyleSheet").lower(): #we are using a StyleSheet
+font_color="""<font color=ghostwhite>"""
+from PySide2 import QtGui
+font_color="""<font color="""+ FreeCADGui.getMainWindow().palette().text().color().name()
+#FreeCADGui.getMainWindow().palette().background().color()
 
 #help_txt="""<font color=GoldenRod><b>kicad StepUp version """+verKSU+"""</font></b><br>"""
 help_txt="""<font color=black>"""
