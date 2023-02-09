@@ -15,7 +15,9 @@
 # ___ver___ = "6.0.4.5"
 ## idf import dropped
 
-FreeCAD.addImportType("Kicad pcb board/mod File Type (*.kicad_pcb *.kicad_mod)","kicadStepUptools") 
+#FreeCAD.addImportType("Kicad pcb board/mod File Type (*.kicad_pcb *.kicad_mod)","kicadStepUptools") 
+FreeCAD.addImportType("Kicad pcb board File Type (*.kicad_pcb)","kicadStepUptools") 
+FreeCAD.addImportType("Kicad pcb mod File Type (*.kicad_mod)","kicadStepUptools") 
 
 FreeCAD.addImportType("zip of STEP/FCStd File Type (*.zip)","ZipStepImport")
 

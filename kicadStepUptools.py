@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.7.8"
+___ver___ = "10.7.9"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -9577,6 +9577,7 @@ def createPad3(x,y,sx,sy,dcx,dcy,dx,dy,type,layer, ratio=None):
         if test_flag_pads==True:
             Part.show(extr)
             FreeCAD.ActiveDocument.ActiveObject.Label="drilled_pad"
+        #Part.show(extr)
         FreeCAD.ActiveDocument.removeObject(pad_name)
         FreeCAD.ActiveDocument.recompute()
     else:
@@ -11981,76 +11982,79 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
         #edges.append(makeArc(makeVect(l.start),makeVect(l.end),l.angle))
         [xs, ys] = a.start
         [x1, y1] = a.end
-        if hasattr (a, 'mid'):
-            [xm, ym] = a.mid 
-            arc1 = Part.Edge(Part.Arc(Base.Vector(xs,-ys,0),Base.Vector(xm,-ym,0),Base.Vector(x1,-y1,0)))
-            curve = arc1.Curve.AngleXU/pi*180
-            #curve = arc1.AngleXU/pi*180
-            #print(curve)
-            if curve > 0:
-                curve = -1*curve
-                #print('inverting')
-                #arc1.reverse();
-            #Part.show(arc1);print(curve) #;stop
-            [x2, y2] = rotPoint2([x1, y1], [xs, ys], curve)
-        else:
-            curve = a.angle
-            [x2, y2] = rotPoint2([x1, y1], [xs, ys], curve)
-            arc1 = Part.Edge(Part.Arc(Base.Vector(x2,-y2,0),mid_point(Base.Vector(x2,-y2,0),Base.Vector(x1,-y1,0),curve),Base.Vector(x1,-y1,0)))
-        # if curve>0:
-        #     arc = Part.makeCircle(r,center,Vector(0,0,1),a-angle,a)
-        #     arc.reverse();
-        # else:
-        #     arc = Part.makeCircle(r,center,Vector(0,0,1),a,a-angle)
-        Cntr = arc1.Curve.Center
-        #Cntr = arc1.Center
-        cx=Cntr.x;cy=Cntr.y
-        #print cx,cy
-        r = arc1.Curve.Radius
-        #r = arc1.Radius
-        #r=arcRadius(xs, ys, x1, y1, curve)
-        #sa = arc1.Curve.FirstAngle
-        #ea = arc1.Curve.LastAngle
-        #sa,ea = arcAngles2(xs, ys, x1, y1, cx, cy, curve)
-        sa,ea = arcAngles2(arc1,curve)
-        #print sa,';',ea
-        #print mid_point(Base.Vector(x2,-y2,0),Base.Vector(x1,-y1,0),curve)
-        #[mx,my]=arcMidPoint([xs,ys], [x1,y1], curve)
-        #c=arc1.Curve.Center
-        #print c
-        
-        #App.ActiveDocument.PCB_SketchN.addGeometry(Part.Arc(Base.Vector(x2,-y2,0),mid_point(Base.Vector(x2,-y2,0),Base.Vector(x1,-y1,0),curve),Base.Vector(x1,-y1,0)))
-        if load_sketch:
-            if aux_orig ==1 or grid_orig ==1:
-                #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx-off_x,cy-off_y,0),FreeCAD.Vector(0,0,1),r),sa,ea),False)
-                #PCB_Geo.append(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx-off_x,cy-off_y,0),FreeCAD.Vector(0,0,1),r),sa,ea))
-                if hasattr (a, 'mid'):
-                    PCB_Geo.append(Part.ArcOfCircle(kicad_parser.makeVect([a.start[0]-off_x,a.start[1]+off_y]),
-                                                    kicad_parser.makeVect([a.mid[0]-off_x,a.mid[1]+off_y]),
-                                                    kicad_parser.makeVect([a.end[0]-off_x,a.end[1]+off_y])))
-                    # print('a.start=',a.start,'a.mid=',a.mid,'a.end=',a.end, 'off_x=',off_x, 'off_y=',off_y)
-                    # Part.show(Part.ArcOfCircle(kicad_parser.makeVect([a.start[0]-off_x,a.start[1]+off_y]),
-                    #                                 kicad_parser.makeVect([a.mid[0]-off_x,a.mid[1]+off_y]),
-                    #                                 kicad_parser.makeVect([a.end[0]-off_x,a.end[1]+off_y])).toShape())
-                else:
-                    PCB_Geo.append(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx-off_x,cy-off_y,0),FreeCAD.Vector(0,0,1),r),sa,ea))
+        try:
+            if hasattr (a, 'mid'):
+                [xm, ym] = a.mid 
+                arc1 = Part.Edge(Part.Arc(Base.Vector(xs,-ys,0),Base.Vector(xm,-ym,0),Base.Vector(x1,-y1,0)))
+                curve = arc1.Curve.AngleXU/pi*180
+                #curve = arc1.AngleXU/pi*180
+                #print(curve)
+                if curve > 0:
+                    curve = -1*curve
+                    #print('inverting')
+                    #arc1.reverse();
+                #Part.show(arc1);print(curve) #;stop
+                [x2, y2] = rotPoint2([x1, y1], [xs, ys], curve)
             else:
-                if hasattr (a, 'mid'):
-                    PCB_Geo.append(Part.ArcOfCircle(kicad_parser.makeVect(a.start),
-                                                    kicad_parser.makeVect(a.mid),
-                                                    kicad_parser.makeVect(a.end)))
+                curve = a.angle
+                [x2, y2] = rotPoint2([x1, y1], [xs, ys], curve)
+                arc1 = Part.Edge(Part.Arc(Base.Vector(x2,-y2,0),mid_point(Base.Vector(x2,-y2,0),Base.Vector(x1,-y1,0),curve),Base.Vector(x1,-y1,0)))
+            # if curve>0:
+            #     arc = Part.makeCircle(r,center,Vector(0,0,1),a-angle,a)
+            #     arc.reverse();
+            # else:
+            #     arc = Part.makeCircle(r,center,Vector(0,0,1),a,a-angle)
+            Cntr = arc1.Curve.Center
+            #Cntr = arc1.Center
+            cx=Cntr.x;cy=Cntr.y
+            #print cx,cy
+            r = arc1.Curve.Radius
+            #r = arc1.Radius
+            #r=arcRadius(xs, ys, x1, y1, curve)
+            #sa = arc1.Curve.FirstAngle
+            #ea = arc1.Curve.LastAngle
+            #sa,ea = arcAngles2(xs, ys, x1, y1, cx, cy, curve)
+            sa,ea = arcAngles2(arc1,curve)
+            #print sa,';',ea
+            #print mid_point(Base.Vector(x2,-y2,0),Base.Vector(x1,-y1,0),curve)
+            #[mx,my]=arcMidPoint([xs,ys], [x1,y1], curve)
+            #c=arc1.Curve.Center
+            #print c
+            #App.ActiveDocument.PCB_SketchN.addGeometry(Part.Arc(Base.Vector(x2,-y2,0),mid_point(Base.Vector(x2,-y2,0),Base.Vector(x1,-y1,0),curve),Base.Vector(x1,-y1,0)))
+            if load_sketch:
+                if aux_orig ==1 or grid_orig ==1:
+                    #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx-off_x,cy-off_y,0),FreeCAD.Vector(0,0,1),r),sa,ea),False)
+                    #PCB_Geo.append(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx-off_x,cy-off_y,0),FreeCAD.Vector(0,0,1),r),sa,ea))
+                    if hasattr (a, 'mid'):
+                        PCB_Geo.append(Part.ArcOfCircle(kicad_parser.makeVect([a.start[0]-off_x,a.start[1]+off_y]),
+                                                        kicad_parser.makeVect([a.mid[0]-off_x,a.mid[1]+off_y]),
+                                                        kicad_parser.makeVect([a.end[0]-off_x,a.end[1]+off_y])))
+                        # print('a.start=',a.start,'a.mid=',a.mid,'a.end=',a.end, 'off_x=',off_x, 'off_y=',off_y)
+                        # Part.show(Part.ArcOfCircle(kicad_parser.makeVect([a.start[0]-off_x,a.start[1]+off_y]),
+                        #                                 kicad_parser.makeVect([a.mid[0]-off_x,a.mid[1]+off_y]),
+                        #                                 kicad_parser.makeVect([a.end[0]-off_x,a.end[1]+off_y])).toShape())
+                    else:
+                        PCB_Geo.append(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx-off_x,cy-off_y,0),FreeCAD.Vector(0,0,1),r),sa,ea))
                 else:
-                    #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx,cy,0),FreeCAD.Vector(0,0,1),r),sa,ea),False)
-                    PCB_Geo.append(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx,cy,0),FreeCAD.Vector(0,0,1),r),sa,ea))
-        #mp=mid_point(Base.Vector(x2,-y2,0),Base.Vector(x1,-y1,0),curve)
-        #msg1= "App.ActiveDocument.PCB_SketchN.addGeometry(Part.Arc(Base.Vector({0},-{1},0),{4},Base.Vector({2},-{3},0)))".format(x2,y2,x1,y1,mp)
-        #print msg1
-        #App.ActiveDocument.Sketch.addGeometry(Part.Arc(App.Vector(33.0,66.5,0.3),App.Vector(32.85857864376269,66.44142135623731,0.3),App.Vector(32.8,66.3,0.3)))
-        edges.append(arc1)
-        PCB.append(['Arc',x1, -y1, x2, -y2, curve])
-        if show_border:
-            Part.show(arc1)
-        
+                    if hasattr (a, 'mid'):
+                        PCB_Geo.append(Part.ArcOfCircle(kicad_parser.makeVect(a.start),
+                                                        kicad_parser.makeVect(a.mid),
+                                                        kicad_parser.makeVect(a.end)))
+                    else:
+                        #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx,cy,0),FreeCAD.Vector(0,0,1),r),sa,ea),False)
+                        PCB_Geo.append(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx,cy,0),FreeCAD.Vector(0,0,1),r),sa,ea))
+            #mp=mid_point(Base.Vector(x2,-y2,0),Base.Vector(x1,-y1,0),curve)
+            #msg1= "App.ActiveDocument.PCB_SketchN.addGeometry(Part.Arc(Base.Vector({0},-{1},0),{4},Base.Vector({2},-{3},0)))".format(x2,y2,x1,y1,mp)
+            #print msg1
+            #App.ActiveDocument.Sketch.addGeometry(Part.Arc(App.Vector(33.0,66.5,0.3),App.Vector(32.85857864376269,66.44142135623731,0.3),App.Vector(32.8,66.3,0.3)))
+            edges.append(arc1)
+            PCB.append(['Arc',x1, -y1, x2, -y2, curve])
+            if show_border:
+                Part.show(arc1)
+        except:
+            sayw('skipping wrong geometry')
+            pass
+
     ## NB use always float() to guarantee number not string!!!
     for c in mypcb.gr_circle: #pcb circles
         # if c.layer != 'Edge.Cuts':
@@ -14698,12 +14702,20 @@ class Ui_DockWidget(object):
             self.textEdit.setToolTip("Help Start Guide")
             centerOnScreen (KSUWidget)
             #ini_content=read_ini_file()
+            font_color="""<font color=black>"""
+            import FreeCAD, FreeCADGui
+            paramGet = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/MainWindow")
+            if 'dark' in paramGet.GetString("StyleSheet").lower(): #we are using a StyleSheet
+                font_color="""<font color=ghostwhite>"""
+                from PySide2 import QtGui
+                font_color="""<font color="""+ FreeCADGui.getMainWindow().palette().text().color().name()
+                #FreeCADGui.getMainWindow().palette().background().color()
             sayw("kicad StepUp version "+str(___ver___))
             help_txt="""<font color=GoldenRod><b>kicad StepUp version """+___ver___+"""</font></b><br>"""
-            help_txt+="""<font color=black>"""
+            help_txt+=font_color
             help_txt+="""<b>Kicad StepUp</b> is a tool set to easily <b>collaborate between kicad pcb EDA</b> (board and 3D parts) as STEP models <b>and FreeCAD MCAD</b> modeler.<br>"""
             help_txt+="""</font>"""
-            help_txt+="<font color=black>"
+            help_txt+=font_color
             home = expanduser("~")
             ini_file_full_path=home+os.sep+'ksu-config.ini'
             ini_fname='ksu-config.ini'
@@ -14780,7 +14792,8 @@ class Ui_DockWidget(object):
             help_txt+="<br><b>NB<br>STEP model has to be fused in single object</b><br>(Part Boolean Union of objects)"
             help_txt+="<br><b>or a Compoud</b> (Part Makecompound of objects)</b>"
             help_txt+="<hr><b>enable 'Report view' Panel to see helping messages</b>"
-            help_txt+="</font><br>"
+            help_txt+="</font>"
+            help_txt+="<br>"
             self.textEdit.setText(help_txt)
             #self.textEdit.setTextColor(QtGui.QColor('black'))
             #self.textEdit.setStyleSheet("background-color: rgb(255, 255, 255)"); 
