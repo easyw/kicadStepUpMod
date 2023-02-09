@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.8.0"
+___ver___ = "10.8.1"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -14708,7 +14708,7 @@ class Ui_DockWidget(object):
             # if 'dark' in paramGet.GetString("StyleSheet").lower(): #we are using a StyleSheet
             font_color="""<font color=ghostwhite>"""
             from PySide2 import QtGui
-            font_color="""<font color="""+ FreeCADGui.getMainWindow().palette().text().color().name()
+            font_color="""<font color="""+ FreeCADGui.getMainWindow().palette().text().color().name()+""">"""
             #FreeCADGui.getMainWindow().palette().background().color()
             sayw("kicad StepUp version "+str(___ver___))
             help_txt="""<font color=GoldenRod><b>kicad StepUp version """+___ver___+"""</font></b><br>"""

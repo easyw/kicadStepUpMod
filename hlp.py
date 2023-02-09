@@ -14,11 +14,12 @@ import FreeCAD, FreeCADGui
 # if 'dark' in paramGet.GetString("StyleSheet").lower(): #we are using a StyleSheet
 font_color="""<font color=ghostwhite>"""
 from PySide2 import QtGui
-font_color="""<font color="""+ FreeCADGui.getMainWindow().palette().text().color().name()
+font_color="""<font color="""+ FreeCADGui.getMainWindow().palette().text().color().name()+""">"""
 #FreeCADGui.getMainWindow().palette().background().color()
 
 #help_txt="""<font color=GoldenRod><b>kicad StepUp version """+verKSU+"""</font></b><br>"""
 help_txt="""<font color=black>"""
+help_txt+=font_color
 help_txt+="""<b>Kicad StepUp</b> is a tool set to easily <b>collaborate between kicad pcb EDA</b> (board and 3D parts) as STEP models <b>and FreeCAD MCAD</b> modeler.<br>"""
 help_txt+="""</font>"""
 help_txt+=font_color
