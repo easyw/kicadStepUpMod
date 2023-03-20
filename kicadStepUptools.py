@@ -3341,11 +3341,27 @@ def reset_prop_shapes(obj,doc,App,Gui,rmv=None):
     #Part.show(w1)
     #say(w)
     #
-    FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.getObject(obj.Name).ShapeColor
-    FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(obj.Name).LineColor
-    FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(obj.Name).PointColor
-    FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.getObject(obj.Name).DiffuseColor
-    FreeCADGui.ActiveDocument.ActiveObject.Transparency=FreeCADGui.ActiveDocument.getObject(obj.Name).Transparency
+    
+    try:
+        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.getObject(obj.Name).ShapeColor
+    except BaseException as e:
+        sayerr(f"Failed to set Shape Color: {e}")
+    try:
+        FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(obj.Name).LineColor
+    except BaseException as e:
+        sayerr(f"Failed to set Line Color: {e}")
+    try:
+        FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(obj.Name).PointColor
+    except BaseException as e:
+        sayerr(f"Failed to set Point Color: {e}")
+    try:
+        FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.getObject(obj.Name).DiffuseColor
+    except BaseException as e:
+        sayerr(f"Failed to set Diffuse Color: {e}")
+    try:
+        FreeCADGui.ActiveDocument.ActiveObject.Transparency=FreeCADGui.ActiveDocument.getObject(obj.Name).Transparency
+    except BaseException as e:
+        sayerr(f"Failed to set Transparency: {e}")
     #FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.getObject(obj.Name).ShapeColor
     #FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(obj.Name).LineColor
     #FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(obj.Name).PointColor
@@ -3392,10 +3408,22 @@ def reset_prop_shapes2(obj,doc,App,Gui):
     #FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.Part__Feature.LineColor
     #FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.Part__Feature.PointColor
     #FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.Part__Feature.DiffuseColor
-    FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.getObject(obj.Name).ShapeColor
-    FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(obj.Name).LineColor
-    FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(obj.Name).PointColor
-    FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.getObject(obj.Name).DiffuseColor
+    try:
+        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.getObject(obj.Name).ShapeColor
+    except BaseException as e:
+        sayerr(f"Failed to set Shape Color: {e}")
+    try:
+        FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(obj.Name).LineColor
+    except BaseException as e:
+        sayerr(f"Failed to set Line Color: {e}")
+    try:
+        FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(obj.Name).PointColor
+    except BaseException as e:
+        sayerr(f"Failed to set Point Color: {e}")
+    try:
+        FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.getObject(obj.Name).DiffuseColor
+    except BaseException as e:
+        sayerr(f"Failed to set Diffuse Color: {e}")
     #FreeCADGui.ActiveDocument.ActiveObject.Transparency=FreeCADGui.ActiveDocument.getObject(obj.Name).Transparency
     new_label=obj.Label
     FreeCAD.ActiveDocument.removeObject(obj.Name)
@@ -3412,10 +3440,22 @@ def copy_objs(obj,doc):
     FreeCAD.ActiveDocument.addObject('Part::Feature',obj.Label).Shape=obj.Shape
     #App.ActiveDocument.ActiveObject.Label=obj.Label
     
-    FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.getObject(obj.Name).ShapeColor
-    FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(obj.Name).LineColor
-    FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(obj.Name).PointColor
-    FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.getObject(obj.Name).DiffuseColor
+    try:
+        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.getObject(obj.Name).ShapeColor
+    except BaseException as e:
+        sayerr(f"Failed to set Shape Color: {e}")
+    try:
+        FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(obj.Name).LineColor
+    except BaseException as e:
+        sayerr(f"Failed to set Line Color: {e}")
+    try:
+        FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(obj.Name).PointColor
+    except BaseException as e:
+        sayerr(f"Failed to set Point Color: {e}")
+    try:
+        FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.getObject(obj.Name).DiffuseColor
+    except BaseException as e:
+        sayerr(f"Failed to set Diffuse Color: {e}")
     #FreeCADGui.ActiveDocument.ActiveObject.Transparency=FreeCADGui.ActiveDocument.getObject(obj.Name).Transparency
     FreeCAD.ActiveDocument.recompute()
     #App.ActiveDocument.ActiveObject.ViewObject.Visibility = False
