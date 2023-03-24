@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.3.2'
+ksuCMD_version__='2.3.3'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -1188,17 +1188,47 @@ class ksuToolsPushPCB:
             if 'Sketcher' in sel[0].TypeId:
                 #FreeCADGui.ActiveDocument.ActiveView.setCameraOrientation(sel[0].Placement.Rotation)
                 #FreeCAD.ActiveDocument.recompute(None,True,True)
-                s = sel[0].Shape
-                sk = Draft.make_sketch(s.Edges, autoconstraints=True)
+                FreeCAD.ActiveDocument.openTransaction('pushpcb')
+                from pivy import coin
+                print('getting camera view')
+                pcam = FreeCADGui.ActiveDocument.ActiveView.getCamera()
+                # 
+                sketch = sel[0]
+                rot = sketch.getGlobalPlacement().Rotation
+                cam = FreeCADGui.ActiveDocument.ActiveView.getCameraNode()
+                cam.orientation.setValue(coin.SbVec3f(rot.Axis.x, rot.Axis.y, rot.Axis.z), rot.Angle)
+                FreeCADGui.ActiveDocument.ActiveView.fitAll()
+                print('evaluate to recompute')
+                ## s = sel[0].Shape
+                ## sk = Draft.make_sketch(s.Edges, autoconstraints=True)
+                sk = Draft.make_sketch(sketch, autoconstraints=True)
                 sk_obj = FreeCAD.ActiveDocument.ActiveObject
+                FreeCAD.ActiveDocument.recompute()
+                FreeCADGui.Selection.clearSelection()
+                FreeCADGui.Selection.addSelection(sk_obj)
+                FreeCADGui.ActiveDocument.ActiveView.viewTop()
+                sel[0].ViewObject.Visibility = False
+                FreeCADGui.ActiveDocument.ActiveView.fitAll()
+                # print('evaluate to recompute')
+                # FreeCAD.ActiveDocument.recompute()
+                # print(sel[0].Label)
+                
                 # tol = 0.0001
                 # constr = 'coincident'
                 # add_constraints(sk_obj.Name, tol, constr)
                 # FreeCAD.ActiveDocument.recompute(None,True,True)
+                FreeCAD.ActiveDocument.recompute() #we must recompute first
                 FreeCADGui.Selection.clearSelection()
                 FreeCADGui.Selection.addSelection(sk_obj)
                 kicadStepUptools.PushPCB()
                 FreeCAD.ActiveDocument.removeObject(sk_obj.Name)
+                print('restoring cam view')
+                FreeCADGui.ActiveDocument.ActiveView.setCamera(pcam)
+                print('restoring sk visibility')
+                sel[0].ViewObject.Visibility = True
+                # FreeCADGui.ActiveDocument.ActiveView.setCamera(pcam)
+                FreeCAD.ActiveDocument.commitTransaction()
+                FreeCADGui.runCommand('Std_Undo',0)
             else:
                 msg="""select one Sketch to be pushed to kicad board!"""
                 FreeCAD.Console.PrintError(msg)
@@ -1244,6 +1274,7 @@ class ksuToolsPullPCB:
         #from kicadStepUptools import onPushPCB
         #FreeCAD.Console.PrintWarning( 'active :)\n' )
         kicadStepUptools.PullPCB()
+        #FreeCAD.ActiveDocument.commitTransaction()
         # ppcb=kicadStepUptools.KSUWidget
         # ppcb.onPushPCB()
  
@@ -1884,19 +1915,52 @@ class ksuToolsResetPartPlacement:
                             if hasattr(o,'getGlobalPlacement'):
                                 currState[o] = o.getGlobalPlacement() #store the object pointer with its global placement
                             elif o.TypeId == 'App::Link':
-                                plc = self.getLinkGlobalPlacement(o)
-                                print(plc)
-                                currState[o] = plc
+                                plc = Part.getShape(o.Parents[0][0],o.Parents[0][1]).Placement #getLinkGlobalPlacement(o)
+                                # print(o.Label+' App::Link')
+                                # print(plc)
+                                #pp.inverse().multiply(plp)
+                                if len(o.OutList) == 1:
+                                    if 'Part object' in str(o.OutList[0]): #Link Part container
+                                        #print(o.Parents[0][0].Label+' Part-base calc plac',o.Parents[0][0].Placement)
+                                        # print(o.OutList[0].Label+' Part-base calc plac',o.OutList[0].Placement)
+                                        # print(o.Label+' Part-App::Link plac',o.Placement)
+                                        #comp_plc = o.Placement.multiply(o.Parents[0][0].Placement.inverse()) # plc.inverse().multiply(o.Placement) #o.Parents[0][0].Placement.inverse().multiply(o.Placement)
+                                        comp_plc = o.Placement.multiply(o.OutList[0].Placement.inverse())
+                                        # print(o.Label+' Part-App::Link calc plac',comp_plc)
+                                        currState[o] = comp_plc
+                                    else:
+                                        currState[o] = plc
                             
                 # FreeCAD.ActiveDocument.openTransaction("Absolufy") #open a transaction for undo management
                 for obj, plac in currState.items(): #going through all moveable objects
                     if obj.isDerivedFrom("App::Part"): #if object is a part container
                         obj.Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,0),FreeCAD.Rotation(0,0,0)) #reset its placement to global document origin
+                    # or obj.isDerivedFrom("App::Link")
+                    #elif len(obj.OutList) == 1:
+                    #    if 'Part object' in str(obj.OutList[0]): #Link Part container
+                    #        print(obj.Label+' Part-App::Link new plac',plac)
+                    #        obj.Placement = plac
+                    #        # obj.Placement = mainP_origP.inverse().multiply(plac)
+                    #    else: #for all other objects Link obj
+                    #        obj.Placement = plac
                     elif obj.TypeId[:5] == "App::" and obj.TypeId != 'App::Link': #if object is another App type (typically an origin axis or plane)
                         None #do nothing
-                    else: #for all other objects
-                        obj.Placement = plac #replace them at their global (absolute) placement
+                    else: #for all other objects Link obj
+                        obj.Placement = plac
+                    #  elif not(obj.isDerivedFrom("App::Link")):
+                    #      obj.Placement = plac
+                    #  else:
+                    #      obj.Placement = sel[0].Placement.multiply(plac) #replace them at their global (absolute) placement
+                        # if hasattr(obj, 'LinkedObject'):
+                        #     print(obj.LinkedObject)
+                        #     if 'Part::PartFeature' not in str(obj.LinkedObject):
+                        #     # if obj.LinkedObject == 'Part::PartFeature':
+                        #         print(obj.LinkedObject,'here')
+                        #         obj.Placement = plac #replace them at their global (absolute) placement
+                        #     else:
+                        #         None
                 FreeCAD.ActiveDocument.commitTransaction() #commit transaction
+                FreeCAD.ActiveDocument.recompute()
             else:
                 FreeCAD.Console.PrintMessage("Placement already Zero\n")
         return
@@ -3521,6 +3585,8 @@ class ksuToolsEditPrefs:
     def Activated(self):
         # do something here...
         #import kicadStepUptools
+        # import hlp
+        # reload_lib(hlp)
         FreeCADGui.runCommand("Std_DlgPreferences")
         
 FreeCADGui.addCommand('ksuToolsEditPrefs',ksuToolsEditPrefs())
@@ -4150,7 +4216,7 @@ class Arcs2Circles():
         o = sel[0]
         centers=[];rads=[]
         for idx,g in enumerate(o.Geometry):
-            if 'Circle' in str(g) and not kicadStepUptools.isConstruction(g):
+            if 'Circle' in str(g) and kicadStepUptools.isConstruction(g) == False:
                 found=False
                 for i,c in enumerate(centers):
                 #if not (g.Center in centers and g.Radius in rads):
@@ -4445,3 +4511,42 @@ class Create_BoundBox():
                     
 FreeCADGui.addCommand('Create_BoundBox',Create_BoundBox())
 
+#####
+class ksuToolsImportFootprint:
+    "ksu tools Load Footprint object"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'importFPs.svg') , # the name of a svg file available in the resources
+                     'MenuText': "Load FootPrint" ,
+                     'ToolTip' : "ksu Load KiCad PCB FootPrint"}
+ 
+    def IsActive(self):
+        #if FreeCAD.ActiveDocument == None:
+        #    return False
+        #else:
+        #    return True
+        #import kicadStepUptools
+        return True
+ 
+    def Activated(self):
+        # do something here...
+        import kicadStepUptools
+        #if not kicadStepUptools.checkInstance():
+        #    reload( kicadStepUptools )
+        if 1: #reload_Gui:
+            reload_lib( kicadStepUptools )
+        #FreeCAD.Console.PrintWarning( 'active :)\n' )
+        if 0:
+            kicadStepUptools.KSUWidget.activateWindow()
+            kicadStepUptools.KSUWidget.show()
+            kicadStepUptools.KSUWidget.raise_()
+            kicadStepUptools.onLoadFootprint()
+        import fps
+        reload_lib( fps )
+        doc = FreeCAD.ActiveDocument
+        fps.addfootprint()
+        
+FreeCADGui.addCommand('ksuToolsImportFootprint',ksuToolsImportFootprint())
+##
+
+#####

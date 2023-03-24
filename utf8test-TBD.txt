@@ -33,4 +33,10 @@ kicadStepUptools.KicadPCB.load('C:\\Users\\userC\\AppData\\Roaming\\FreeCAD\\Mod
 kicadStepUptools.KicadPCB.load('C:\\Temp\\demo-v5.kicad_pcb')
 
 
-2) footprint v7 use fcad_pcb istead of regex
+    1) footprint v7 use fcad_pcb instead of regex (done)
+2) push-pull 3d pos improving for not zero 3d model placement (rotation on x,y or at least added a warning)
+    3) reset placement part and shape recompute (done)
+4) reset placement part issue
+    5) fix reset part placement for AppLink Part models not on zero placement (partially done for x,y,z translations)
+    6) push fp NPTH and half circle pads (done)
+    7) readme support FC >= 018 (done)

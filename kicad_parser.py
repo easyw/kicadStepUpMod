@@ -46,6 +46,20 @@ if PY3:
 else:
     string_types = basestring,
 
+def _disableElementMapping(_):
+    pass
+
+disableTopoNaming = getattr(Part, 'disableElementMapping', _disableElementMapping)
+
+def addObject(doc, tp, name):
+    obj = doc.addObject(tp, name)
+    disableTopoNaming(obj)
+    try:
+        obj.ValidateShape = False
+        obj.FixShape = 0
+    except Exception:
+        pass
+    return obj
 
 def updateGui():
     try:
@@ -294,6 +308,15 @@ def make_gr_poly(params):
     # KiCAD polygon runs in clockwise, but FreeCAD wants CCW, so must reverse.
     return Part.makePolygon([makeVect(p) for p in reversed(points)])
 
+# maui
+def make_fp_poly(params):
+    points = SexpList(params.pts.xy)
+    # close the polygon
+    points._append(params.pts.xy._get(0))
+    # KiCAD polygon runs in clockwise, but FreeCAD wants CCW, so must reverse.
+    return Part.makePolygon([makeVect(p) for p in reversed(points)])
+# maui
+
 def make_gr_line(params):
     return Part.makeLine(makeVect(params.start),makeVect(params.end))
 
@@ -315,6 +338,27 @@ def make_gr_circle(params, width=0):
         return Part.makeCircle(r+width*0.5, center)
     return Part.makeCompound([Part.Wire(Part.makeCircle(r+width*0.5,center)),
                               Part.Wire(Part.makeCircle(r-width*0.5,center,Vector(0,0,-1)))])
+# maui
+def make_gr_circle_outl(params, width=0):
+    center = makeVect(params.center)
+    end = makeVect(params.end)
+    r = center.distanceToPoint(end)
+    if not width or r <= width*0.5:
+        return Part.makeCircle(r+width*0.5, center)
+    return [Part.makeCircle(r+width*0.5, center), Part.makeCircle(r-width*0.5,center)]
+    
+# def make_gr_circle_outl(params, width=0):
+#     center = makeVect(params.center)
+#     end = makeVect(params.end)
+#     r = center.distanceToPoint(end)
+#     #print(r,width*0.5)
+#     if (r <= abs(width*0.5) and width<0):
+#         return None #Part.makeCircle(0.01, center)
+#     else:
+#         return Part.makeCircle(r+width*0.5, center)
+#     #return Part.makeCompound([Part.Wire(Part.makeCircle(r+width*0.5,center)),
+#     #                          Part.Wire(Part.makeCircle(r-width*0.5,center,Vector(0,0,-1)))])
+# maui
 
 def make_gr_rect(params):
     start = makeVect(params.start)
@@ -322,16 +366,29 @@ def make_gr_rect(params):
     return Part.makePolygon([start, Vector(start.x, end.y), end, Vector(end.x, start.y), start])
 
 def makePrimitve(key, params):
-    try:
-        width = getattr(params,'width',0)
-        if width and key == 'gr_circle':
-            return make_gr_circle(params, width), 0
-        else:
-            make_shape = globals()['make_{}'.format(key)]
-            return make_shape(params), width
-    except KeyError:
-        logger.warning('Unknown primitive {} in custom pad'.format(key))
-        return None, None
+    for param in SexpList(params):
+        try:
+            width = getattr(param,'width',0)
+            if width and key == 'gr_circle':
+                return make_gr_circle(param, width), 0
+            else:
+                make_shape = globals()['make_{}'.format(key)]
+                #if key == 'gr_poly':
+                #    Part.show(Part.Face(make_fp_poly(params)))
+                return make_shape(param), width
+        except KeyError:
+            logger.warning('Unknown primitive {} in custom pad'.format(key))
+            return None, None
+    #try:
+    #    width = getattr(params,'width',0)
+    #    if width and key == 'gr_circle':
+    #        return make_gr_circle(params, width), 0
+    #    else:
+    #        make_shape = globals()['make_{}'.format(key)]
+    #        return make_shape(params), width
+    #except KeyError:
+    #    logger.warning('Unknown primitive {} in custom pad'.format(key))
+    #    return None, None
 
 def makeThickLine(p1,p2,width):
     length = p1.distanceToPoint(p2)
@@ -472,7 +529,7 @@ def loadModel(filename):
     try:
         ImportGui.insert(filename,doc.Name)
         dobjs = doc.Objects[count:]
-        obj = doc.addObject('Part::Compound','tmp')
+        obj = addObject(doc,'Part::Compound','tmp')
         obj.Links = dobjs
         recomputeObj(obj)
         dobjs = [obj]+dobjs
@@ -537,6 +594,20 @@ class KicadFcad:
                 'zone':{0:makeColor(0,80,0)},
                 'track':{0:makeColor(0,120,0)},
                 'copper':{0:makeColor(200,117,51)},
+                'F.Cu':{0:makeColor(200,117,51)}, # maui start color
+                'B.Cu':{0:makeColor(200,117,51)},
+                'F.SilkS':{0:makeColor(0,0,255)},
+                'B.SilkS':{0:makeColor(0,0,255)},
+                'F.CrtYd':{0:makeColor(255,170,255)},
+                'B.CrtYd':{0:makeColor(255,170,255)},
+                'F.Fab':{0:makeColor(0,255,0)},
+                'B.Fab':{0:makeColor(0,255,0)},
+                'F.Adhes':{0:makeColor(0,127,255)},
+                'B.Adhes':{0:makeColor(127,0,255)},
+                'Edge.Cuts':{0:makeColor(255,0,0)},
+                'Margin':{0:makeColor(255,170,170)},
+                'holes':{0:makeColor(170,255,127)},
+                'NetTie':{0:makeColor(255,114,12)}, # maui end color
         }
         self.layer_type = 0
         self.layer_match = None

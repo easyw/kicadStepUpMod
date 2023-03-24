@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.8.1"
+___ver___ = "10.8.2"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -770,11 +770,15 @@ else:
 
 def isConstruction(geo):
     if hasattr(geo,'Construction'):
+        # print(geo.Construction,'geo.Construction')
         return geo.Construction
     else:
-        if 'geometryModeFlags="00000000000000000000000000000010"/>' in geo.Content:
+        # print('geo.Content',geo.Content)
+        if 'geometryModeFlags="00000000000000000000000000000010"' in geo.Content:
+            # print('geometryModeFlags', True)
             return True
         else:
+            # print('geometryModeFlags', False)
             return False
 #
 
@@ -1749,7 +1753,10 @@ def open(filename,insert=None):
         KSUWidget.activateWindow()
         KSUWidget.show()
         KSUWidget.raise_()
-        onLoadFootprint(filename)
+        import fps
+        fps.addfootprint(filename)
+        # onLoadFootprint(filename)
+        
 
 def make_unicode(input):
     if (sys.version_info > (3, 0)):  #py3
@@ -4030,7 +4037,7 @@ def removesubtree(objs):
                 try:
                     toremove.remove(obj)
                 except:
-                    print('exception')
+                    print('exception remove tree')
                     pass
                 break
         else:
@@ -4039,7 +4046,7 @@ def removesubtree(objs):
         try:
             obj.Document.removeObject(obj.Name)
         except:
-            print('exception')
+            print('exception remove tree')
             pass
 
 ###
@@ -4646,7 +4653,6 @@ def Load_models(pcbThickness,modules):
                                         for o in actObjs[counterObj:]:
                                             doc1.getObject(newStep.Name).addObject(doc1.getObject(o.Name))
                                             #print(o.Label)
-                                        
                             #myStep = FreeCAD.ActiveDocument.ActiveObject
                             #print(myStep.Label)
                             #impLabel = myStep.Label
@@ -4656,7 +4662,8 @@ def Load_models(pcbThickness,modules):
                                 if wrl_model != '':
                                     wrl_module_path = module_path[:module_path.rfind(u'.')]+wrl_model[-4:]
                                     step_transparency = check_wrl_transparency(wrl_module_path)
-                                    FreeCADGui.ActiveDocument.getObject(myStep.Name).Transparency = step_transparency
+                                    if step_transparency != 0: #keeping transparency if found in step file
+                                        FreeCADGui.ActiveDocument.getObject(myStep.Name).Transparency = step_transparency
                                 impLabel = make_string(myStep.Label)
                             #use_pypro=False
                             if use_pypro:  #use python property for timestamp
@@ -6608,7 +6615,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                             say('Pcb not present')
                 else:
                     doc=FreeCAD.newDocument(fname)
-                doc.commitTransaction()
+                # doc.commitTransaction()
                 doc.openTransaction('opening_kicad')
                 say('opening Transaction \'opening_kicad\'')
                 pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
@@ -10934,7 +10941,8 @@ def Process_board_outline(doc,board_outline,drills,board_thickness):
         doc.Pcb.ViewObject.ShapeColor = (colr,colg,colb)
         say_time()
         #say(str(start_time));say('*'+str(end_milli_time)+'start-end')
-        FreeCADGui.activeDocument().activeView().viewAxometric()
+        #FreeCADGui.activeDocument().activeView().viewAxometric()
+        FreeCADGui.activeDocument().activeView().viewTop()
         if (zfit):
             FreeCADGui.SendMsgToActiveView("ViewFit")
         #doc.Pcb.ViewObject.ShapeColor=(0.0, 0.5, 0.0, 0.0)
@@ -13415,7 +13423,8 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
     if k_index == 1:
         FreeCAD.ActiveDocument.removeObject(ndsk.Name)
 
-    FreeCADGui.activeDocument().activeView().viewAxometric()
+    #FreeCADGui.activeDocument().activeView().viewAxometric()
+    FreeCADGui.activeDocument().activeView().viewTop()
     if (zfit):
         FreeCADGui.SendMsgToActiveView("ViewFit")
     #FreeCADGui.SendMsgToActiveView("ViewFit")
@@ -15251,6 +15260,25 @@ def PushPCB():
         if len (sel) == 1:
             #sayw(doc.Name)
             if "Sketch" in sel[0].TypeId:
+                if 0:
+                    from pivy import coin
+                    from math import degrees
+                    print('getting camera view')
+                    pcam = FreeCADGui.ActiveDocument.ActiveView.getCamera()
+                    sketch = sel[0]
+                    rot = sketch.getGlobalPlacement().Rotation
+                    print(rot,degrees(rot.Angle), float(rot.Angle))
+                    cam = FreeCADGui.ActiveDocument.ActiveView.getCameraNode()
+                    if rot.Angle < 0.001:
+                        rot.Angle = 0
+                        print ('forcing rotAngle to 0')
+                    cam.orientation.setValue(coin.SbVec3f(rot.Axis.x, rot.Axis.y, rot.Axis.z), rot.Angle) #-pi)
+                    FreeCADGui.ActiveDocument.ActiveView.fitAll()
+                    print('evaluate to recompute')
+                    FreeCAD.ActiveDocument.recompute()
+                    #sel[0].ViewObject.Visibility = False
+                    #print(sel[0].Label)
+                    #sel[0].recompute(True)
                 cfg_read_all()
                 if len(last_pcb_path) == 0:
                     last_pcb_path = ""
@@ -15289,13 +15317,28 @@ def PushPCB():
                             start_time=current_milli_time()
                             export_pcb(name,SketchLayer,skname)
                         else:
-                            msg="""Save to <b>an EXISTING KiCad pcb file</b> to update your Edge!"""
-                            say_warning(msg)
-                            msg="Save to an EXISTING KiCad pcb file to update your Edge!"
-                            sayerr(msg)
+                            msg="""Saving to <b>an empty KiCad pcb file</b>"""+'\n'+name
+                            sayw(msg)
+                            last_pcb_path=os.path.dirname(name)
+                            pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
+                            pg.SetString("last_pcb_path",make_string(last_pcb_path))
+                            import ksu_locator
+                            ksuWBpath = os.path.dirname(ksu_locator.__file__)
+                            ksuWB_demo_path =  os.path.join( ksuWBpath, 'demo')
+                            copyfile(os.path.join(ksuWB_demo_path,'empty-kv5.kicad_pcb'), name)
+                            start_time=current_milli_time()
+                            export_pcb(name,SketchLayer,skname)
+                            # msg="""Save to <b>an EXISTING KiCad pcb file</b> to update your Edge!"""
+                            # say_warning(msg)
+                            # msg="Save to an EXISTING KiCad pcb file to update your Edge!"
+                            # sayerr(msg)
                 else:  #cancel
                     print('Cancel')
                     pass    
+                if 0:
+                    print('restoring cam view')
+                    FreeCADGui.ActiveDocument.ActiveView.setCamera(pcam)
+                    # sel[0].ViewObject.Visibility = True
             else:
                 msg="""select one Sketch to be pushed to kicad board!"""
                 sayerr(msg)
@@ -16107,7 +16150,7 @@ def PushFootprint():
                             centers=[];rads=[]
                             for idx,g in enumerate(o.Geometry):
                                 #if 'ArcOfCircle' in str(g) and not isConstruction(g): #o.getConstruction(idx): #g.Construction:
-                                if 'Circle' in str(g) and not isConstruction(g):
+                                if 'Circle' in str(g) and isConstruction(g) == False:
                                     if not (g.Center in centers and g.Radius in rads):
                                         centers.append(g.Center);rads.append(g.Radius)
                             #print(len(centers), centers)
@@ -16200,6 +16243,9 @@ def PushFootprint():
                             skd_name=FreeCAD.ActiveDocument.ActiveObject.Name
                             FreeCAD.ActiveDocument.ActiveObject.Label = skLabel #workaround to keep '=' in Label
                             sk_temp.append(FreeCAD.ActiveDocument.ActiveObject)
+                            sk_to_convert.append(FreeCAD.ActiveDocument.ActiveObject)
+                            FreeCADGui.Selection.removeSelection(o)
+                            sk_to_reselect.append(o)
                             #FreeCAD.ActiveDocument.getObject(skd_name).Placement = FreeCAD.Placement(FreeCAD.Vector(0.000000, 0.000000, 0.000000), FreeCAD.Rotation(0.000000, 0.000000, 0.000000, 1.000000))
                             #FreeCAD.ActiveDocument.getObject(skd_name).MapMode = "Deactivated"
                             for i,c in enumerate(centers):
@@ -16386,6 +16432,7 @@ def PushFootprint():
                     #print(s.Label,'added')
                 for s in sk_to_discr:
                     FreeCADGui.Selection.removeSelection(s)
+                #stop
                 if not testing:
                     Filter=""
                     name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Push Footprint to KiCad module ...",
@@ -16396,6 +16443,7 @@ def PushFootprint():
                     elif os.path.isdir("c:/Temp/"):
                         name='c:/Temp/ex2.kicad_mod'                        
                 #say(name)
+                # stop
                 if name:
                     #if os.path.exists(name):
                     last_fp_path=os.path.dirname(name)
@@ -20248,6 +20296,7 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                     off_x=0;off_y=0
                 if ksu_found==True or testing==True:
                     if pcb_found==True:
+                        #FreeCAD.ActiveDocument.getObject(skname).recompute(True)
                         #bbpx=-FreeCAD.ActiveDocument.getObject('Pcb').Placement.Base[0]+FreeCAD.ActiveDocument.getObject(skt_name).Placement.Base[0]
                         #bbpy=FreeCAD.ActiveDocument.getObject('Pcb').Placement.Base[1]-FreeCAD.ActiveDocument.getObject(skt_name).Placement.Base[1]
                         bbpx=-FreeCAD.ActiveDocument.getObject(skname).Placement.Base[0]+FreeCAD.ActiveDocument.getObject(skt_name).Placement.Base[0]
@@ -20309,6 +20358,9 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                 ##                FreeCAD.ActiveDocument.getObject(j.Name).Placement = FreeCAD.Placement(FreeCAD.Vector(148.5,-98.5,0), App.Rotation(0,0,0), App.Vector(0,0,0)) #[Pos=(-148.5,98,5), Yaw-Pitch-Roll=(0,0,0)]
                             
                             #shift_sketch(j.Name,offset)
+                #sel = FreeCADGui.Selection.getSelection()
+                #if len (sel) >0:
+                #    sel[0].recompute(True)
                 FreeCAD.ActiveDocument.recompute()
                 if (zfit):
                     FreeCADGui.SendMsgToActiveView("ViewFit")
@@ -20643,6 +20695,10 @@ def pull3D2dsn(s,mdls,tsp,nMd,gof,pcbThickness):
             #print(mdl[12])
             #print(wrl_pos)
             #print(wrl_rot)
+            if wrl_rot[0] != 0:
+                sayw('3D model X rotation != 0 (rotX='+str(wrl_rot[0])+')')
+            if wrl_rot[1] != 0:
+                sayw('3D model Y rotation != 0 (rotY='+str(wrl_rot[0])+')')
             dummyshape = Part.Shape()
             print(s.Label,': model found! Placing it!')
             if 'Top' not in mdl_layer:
@@ -20802,13 +20858,26 @@ def push3D2pcb(s,cnt,tsp):
                         ln_r=cnt[idxF+ik+3]
                         #      (rotate (xyz 0 0 0))
                         #print(ln_r)#;stop
-                        idz = ln_r.find('xyz');z_rot=ln_r[idz+3:] #lstrip('xyz')
-                        idz = z_rot.find('))');z_rot=z_rot[:idz] 
+                        idz1 = ln_r.find('xyz');z_rot=ln_r[idz1+3:] #lstrip('xyz')
+                        idz2 = z_rot.find('))');z_rot=z_rot[:idz2] 
                         #z_rot = z_rot.rstrip('))')
                         z_rot = z_rot.lstrip(' ').split(' ')
                         #sayerr(z_rot)
                         if len(z_rot)==3:
+                            all_rot=z_rot
                             z_rot=float(z_rot[2])
+                            if float(all_rot[0]) != 0:
+                                sayerr('3D model X rotation NOT supported ATM!')
+                                sayw('X rot='+all_rot[0])
+                                msg="""3D model <b>X rotation NOT supported<b> ATM!<br>Please fix your 3D model rotation X to '0'"""
+                                say_warning(msg)
+                                stop
+                            if float(all_rot[1]) != 0:
+                                sayerr('3D model Y rotation NOT supported ATM!')
+                                sayw('Y rot='+all_rot[1])
+                                msg="""3D model <b>Y rotation NOT supported<b> ATM!<br>Please fix your 3D model rotation Y to '0'"""
+                                say_warning(msg)
+                                stop
                         else:
                             z_rot=0
                         #print(z_rot);stop

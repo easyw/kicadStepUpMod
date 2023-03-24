@@ -10,13 +10,13 @@
 #*  Kicad STEPUP (TM) is a TradeMark and cannot be freely usable            *
 #*                                                                          *
 
-ksu_wb_version='v 10.17.4'
+ksu_wb_version='v 10.17.5'
 global myurlKWB, ksuWBpath
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=583 #  v10.17.4
+mycommitsKWB=584 #  v10.17.5
 global verKSU
-verKSU="10.8.1"
+verKSU="10.8.2"
 
 import FreeCAD, FreeCADGui, Part, os, sys
 import re, time
@@ -71,13 +71,20 @@ class kSU_MainPrefPage:
 
     def __init__(self, parent=None):
         from PySide import QtGui, QtCore
-        import os, hlp
+        import os, hlp, sys
         global ksuWBpath
+        def reload_lib(lib):
+            if (sys.version_info > (3, 0)):
+                import importlib
+                importlib.reload(lib)
+            else:
+                reload (lib)
+        
         print ("Created kSU Auxiliary Pref page")
         #help_t = hlp.help_txt
+        #reload_lib(hlp)
         header_txt="""<font color=GoldenRod><b>kicad StepUp version """+verKSU+"""</font></b><br>"""
         help_t = header_txt+hlp.help_txt
-
         self.form = QtGui.QWidget()
         self.form.setWindowTitle("kSU \'Help Tips\'")
         self.form.verticalLayoutWidget = QtGui.QWidget(self.form)
@@ -150,7 +157,7 @@ class KiCadStepUpWB ( Workbench ):
         dirs = self.ListDemos()
 
         #self.appendToolbar("ksu Tools", ["ksuTools"])
-        self.appendToolbar("ksu Tools", ["ksuToolsEditPrefs","ksuTools","ksuToolsOpenBoard","ksuToolsLoadFootprint",\
+        self.appendToolbar("ksu Tools", ["ksuToolsEditPrefs","ksuTools","ksuToolsOpenBoard","ksuToolsImportFootprint",\
                            "ksuToolsExportModel","ksuToolsPushPCB","ksuToolsFootprintGen","Separator","ksuToolsAddTracks","ksuToolsAddSilks","Separator",\
                            "ksuToolsCollisions","ksuToolsImport3DStep","ksuToolsExport3DStep","ksuToolsMakeUnion",\
                            "ksuToolsMakeCompound", "ksuToolsUnion", "ksuToolsSimpleCopy", "ksuToolsDeepCopy", "ksuToolsColoredClone",\
@@ -163,7 +170,7 @@ class KiCadStepUpWB ( Workbench ):
                            #, "ksuToolsPushMoved","ksuToolsSync3DModels"])
         ksuTB = ["ksuToolsOpenBoard","ksuToolsPushPCB","ksuToolsPushMoved","ksuToolsSync3DModels","ksuToolsPullPCB","ksuToolsPullMoved","ksuAsm2Part",\
                  "Separator","ksuToolsGeneratePositions","ksuToolsComparePositions",\
-                 "Separator","ksuToolsToggleTreeView","Separator","ksuRemoveTimeStamp","ksuRemoveSuffix","Separator","ksuToolsLoadFootprint","ksuToolsFootprintGen"]
+                 "Separator","ksuToolsToggleTreeView","Separator","ksuRemoveTimeStamp","ksuRemoveSuffix","Separator","ksuToolsImportFootprint","ksuToolsFootprintGen"]
         #ksuTB.extend(["Separator","ksuToolsAligner","ksuToolsMover","ksuToolsCaliper"])
         self.appendToolbar("ksu PushPull", ksuTB)
         combined_path = '\t'.join(sys.path)
@@ -183,7 +190,7 @@ class KiCadStepUpWB ( Workbench ):
         self.appendMenu("ksu PushPull", ["ksuToolsOpenBoard","ksuToolsPushPCB","ksuToolsPushMoved","ksuToolsSync3DModels","ksuToolsPullPCB","ksuToolsPullMoved",\
                         "Separator","ksuToolsGeneratePositions","ksuToolsComparePositions",\
                         "Separator","ksuRemoveTimeStamp","ksuRemoveSuffix",\
-                        "Separator","ksuToolsLoadFootprint","ksuToolsFootprintGen"])
+                        "Separator","ksuToolsImportFootprint","ksuToolsFootprintGen"])
         self.appendMenu(["ksu Tools", "Demo"], submenu)
         
         #FreeCADGui.addPreferencePage( a2plib.pathOfModule() + '/GuiA2p/ui/a2p_prefs.ui','A2plus' )

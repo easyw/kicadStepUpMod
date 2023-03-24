@@ -1,0 +1,1387 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>kSUGui::DlgSettingskStepUp</class>
+ <widget class="QWidget" name="kSUGui::DlgSettingskStepUp">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>558</width>
+    <height>882</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>General</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout1">
+   <property name="leftMargin">
+    <number>9</number>
+   </property>
+   <property name="topMargin">
+    <number>9</number>
+   </property>
+   <property name="rightMargin">
+    <number>9</number>
+   </property>
+   <property name="bottomMargin">
+    <number>9</number>
+   </property>
+   <property name="spacing">
+    <number>6</number>
+   </property>
+   <item row="0" column="0">
+    <widget class="QScrollArea" name="scrollArea">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>600</height>
+      </size>
+     </property>
+     <property name="verticalScrollBarPolicy">
+      <enum>Qt::ScrollBarAlwaysOn</enum>
+     </property>
+     <property name="widgetResizable">
+      <bool>true</bool>
+     </property>
+     <widget class="QWidget" name="scrollAreaWidgetContents">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>519</width>
+        <height>900</height>
+       </rect>
+      </property>
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>900</height>
+       </size>
+      </property>
+      <widget class="QGroupBox" name="prefix_3d_group">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>538</width>
+         <height>856</height>
+        </rect>
+       </property>
+       <property name="title">
+        <string>3D Prefix working folder</string>
+       </property>
+       <widget class="QWidget" name="horizontalLayoutWidget_2">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>25</y>
+          <width>501</width>
+          <height>34</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <item>
+          <widget class="QLabel" name="label_prefix3d_1">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;your &lt;span style=&quot; font-weight:600;&quot;&gt;KISYS3DMOD&lt;/span&gt; path&lt;/p&gt;&lt;p&gt;or 3D model &lt;span style=&quot; font-weight:600;&quot;&gt;main prefix path&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>main 3D folder location 'KISYS3DMOD'
+or 'KICAD6_3DMODEL_DIR'</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="Gui::PrefFileChooser" name="main_prefix" native="true">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="baseSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;main 3D folder location&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;'KISYS3DMOD'&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="prefEntry" stdset="0">
+            <cstring>prefix3d_1</cstring>
+           </property>
+           <property name="prefPath" stdset="0">
+            <cstring>Mod/kicadStepUpGui</cstring>
+           </property>
+              <property name="mode">
+              <enum>Gui::FileChooser::Directory</enum>
+              </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="horizontalLayoutWidget_3">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>65</y>
+          <width>501</width>
+          <height>34</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <item>
+          <widget class="QLabel" name="label_prefix3d_2">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;your &lt;span style=&quot; font-weight:600;&quot;&gt;ALIAS&lt;/span&gt; 3D&lt;/p&gt;&lt;p&gt;model prefix path&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>secondary 3D folder loc
+'ALT2 3DMOD'</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="Gui::PrefFileChooser" name="alias_prefix" native="true">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="baseSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;secondary 3D folder location&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;'ALT3DMOD'&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="prefEntry" stdset="0">
+            <cstring>prefix3d_2</cstring>
+           </property>
+           <property name="prefPath" stdset="0">
+            <cstring>Mod/kicadStepUpGui</cstring>
+           </property>
+              <property name="mode">
+              <enum>Gui::FileChooser::Directory</enum>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QGroupBox" name="pcb_settings">
+        <property name="geometry">
+         <rect>
+          <x>-1</x>
+          <y>195</y>
+          <width>524</width>
+          <height>261</height>
+         </rect>
+        </property>
+        <property name="title">
+         <string>PCB settings</string>
+        </property>
+        <widget class="QWidget" name="layoutWidget_2">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>20</y>
+           <width>491</width>
+           <height>26</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_12">
+          <item>
+           <widget class="QLabel" name="label_20">
+            <property name="toolTip">
+             <string>PCB color</string>
+            </property>
+            <property name="text">
+             <string>PCB color</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_5">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="Gui::PrefComboBox" name="gui::prefcombobox_1">
+            <property name="toolTip">
+             <string>PCB color</string>
+            </property>
+            <property name="currentIndex">
+             <number>0</number>
+            </property>
+            <property name="prefEntry" stdset="0">
+             <cstring>pcb_color</cstring>
+            </property>
+            <property name="prefPath" stdset="0">
+             <cstring>Mod/kicadStepUpGui</cstring>
+            </property>
+            <item>
+             <property name="text">
+              <string>Green</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Blue</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Red</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Purple</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>DarkGreen</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>DarkBlue</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>LightBlue</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Yellow</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Black</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>White</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="layoutWidget_3">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>50</y>
+           <width>491</width>
+           <height>26</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_13">
+          <item>
+           <widget class="QLabel" name="label_21">
+            <property name="toolTip">
+             <string>PCB Reference Placement in mechanical environment</string>
+            </property>
+            <property name="text">
+             <string>PCB Placement</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_6">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="Gui::PrefComboBox" name="gui::prefcombobox_2">
+            <property name="toolTip">
+             <string>PCB Reference Placement in mechanical environment</string>
+            </property>
+            <property name="currentIndex">
+             <number>0</number>
+            </property>
+            <property name="prefEntry" stdset="0">
+             <cstring>pcb_placement</cstring>
+            </property>
+            <property name="prefPath" stdset="0">
+             <cstring>Mod/kicadStepUpGui</cstring>
+            </property>
+            <item>
+             <property name="text">
+              <string>Grid Origin</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Aux Origin</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Pcb Center (approx)</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="layoutWidget_4">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>80</y>
+           <width>491</width>
+           <height>26</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_14">
+          <item>
+           <widget class="QLabel" name="label_22">
+            <property name="toolTip">
+             <string>Constraints to be added to PCB Sketch</string>
+            </property>
+            <property name="text">
+             <string>PCB Sketch mode (constraints)</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_7">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="Gui::PrefComboBox" name="gui::prefcombobox_3">
+            <property name="toolTip">
+             <string>Constraints to be added to PCB Sketch</string>
+            </property>
+            <property name="currentIndex">
+             <number>0</number>
+            </property>
+            <property name="prefEntry" stdset="0">
+             <cstring>sketch_constraints</cstring>
+            </property>
+            <property name="prefPath" stdset="0">
+             <cstring>Mod/kicadStepUpGui</cstring>
+            </property>
+            <item>
+             <property name="text">
+              <string>Coincident</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>V&amp;H, Coincident</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Full</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>None</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="Gui::PrefCheckBox" name="cb_virtual">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>140</y>
+           <width>463</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string>Enable/Disable Virtual 3D
+(mechanical) models</string>
+         </property>
+         <property name="text">
+          <string>Virtual 3D Models loading</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+         <property name="prefEntry" stdset="0">
+          <cstring>mode_virtual</cstring>
+         </property>
+         <property name="prefPath" stdset="0">
+          <cstring>Mod/kicadStepUpGui</cstring>
+         </property>
+        </widget>
+        <widget class="QWidget" name="layoutWidget_5">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>165</y>
+           <width>491</width>
+           <height>30</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_4">
+          <item>
+           <widget class="QLabel" name="label">
+            <property name="toolTip">
+             <string>minimum Drill size applied to PCB
+'0.0' -&gt; all drills are loaded
+'-1' -&gt; all drills and vias are loaded</string>
+            </property>
+            <property name="text">
+             <string>minimum Drill size applied to PCB</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_8">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="Gui::PrefLineEdit" name="lineEdit_drills">
+            <property name="toolTip">
+             <string>minimum Drill size applied to PCB
+'0.0' -&gt; all drills are loaded
+'-1' -&gt; all drills and vias are loaded</string>
+            </property>
+            <property name="text">
+             <string>0.0</string>
+            </property>
+            <property name="prefEntry" stdset="0">
+             <cstring>drill_size</cstring>
+            </property>
+            <property name="prefPath" stdset="0">
+             <cstring>Mod/kicadStepUpGui</cstring>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="layoutWidget_7">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>195</y>
+           <width>491</width>
+           <height>30</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_6">
+          <item>
+           <widget class="QLabel" name="label_3">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Bounding Box LIST:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;configure which 3D models will be converted to Bounding Box&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Examples:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ALL&lt;/span&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;-&amp;gt; all models will be converted to bounding boxes&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LIST&lt;/span&gt; DSUB-15-HD_FH, DSUB-9_FH &lt;span style=&quot; font-style:italic;&quot;&gt;-&amp;gt; these two models will NOT be converted to BBox&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;(list of 3D model's names separated by a semicolon)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="text">
+             <string>Bounding Boxes</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_10">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="Gui::PrefLineEdit" name="lineEdit_bbox">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Bounding Box LIST:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;configure which 3D models will be converted to Bounding Box&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Examples:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ALL&lt;/span&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;-&amp;gt; all models will be converted to bounding boxes&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LIST&lt;/span&gt; DSUB-15-HD_FH, DSUB-9_FH &lt;span style=&quot; font-style:italic;&quot;&gt;-&amp;gt; these two models will NOT be converted to BBox&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;(list of 3D model's names separated by a semicolon)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="prefEntry" stdset="0">
+             <cstring>bbox_list</cstring>
+            </property>
+            <property name="prefPath" stdset="0">
+             <cstring>Mod/kicadStepUpGui</cstring>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="layoutWidget_8">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>225</y>
+           <width>491</width>
+           <height>30</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_7">
+          <item>
+           <widget class="QLabel" name="label_4">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Black List:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;put here your model names that you don't want to load (e.g. smallest ones)&lt;/p&gt;&lt;p&gt;separated by a semicolon.&lt;/p&gt;&lt;p&gt;volume and height are also configurable.&lt;/p&gt;&lt;p&gt;(volume=1 means all models with a volume &amp;lt; 1mm3 will not be included)&lt;/p&gt;&lt;p&gt;(height=1 means all models with a height &amp;lt; 1mm will not be included)&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Examples:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;r_0603;r_0402;c_0402;c_0603&lt;/p&gt;&lt;p&gt;height=1.0&lt;/p&gt;&lt;p&gt;volume=1.0&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;An empty list means all the models will be parsed.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="text">
+             <string>Black List</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_11">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="Gui::PrefLineEdit" name="lineEdit_blackList">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Black List:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;put here your model names that you don't want to load (e.g. smallest ones)&lt;/p&gt;&lt;p&gt;separated by a semicolon.&lt;/p&gt;&lt;p&gt;volume and height are also configurable.&lt;/p&gt;&lt;p&gt;(volume=1 means all models with a volume &amp;lt; 1mm3 will not be included)&lt;/p&gt;&lt;p&gt;(height=1 means all models with a height &amp;lt; 1mm will not be included)&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Examples:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;r_0603;r_0402;c_0402;c_0603&lt;/p&gt;&lt;p&gt;height=1.0&lt;/p&gt;&lt;p&gt;volume=1.0&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;An empty list means all the models will be parsed.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="prefEntry" stdset="0">
+             <cstring>blacklist</cstring>
+            </property>
+            <property name="prefPath" stdset="0">
+             <cstring>Mod/kicadStepUpGui</cstring>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="layoutWidget_9">
+         <property name="geometry">
+          <rect>
+           <x>9</x>
+           <y>110</y>
+           <width>491</width>
+           <height>30</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_5">
+          <item>
+           <widget class="QLabel" name="label_2">
+            <property name="toolTip">
+             <string>minimum Edge Tolerance applied to PCB
+default '0.01mm'</string>
+            </property>
+            <property name="text">
+             <string>minimum edge tolerance</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_12">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="Gui::PrefLineEdit" name="lineEdit_edgeTolerance">
+            <property name="toolTip">
+             <string>minimum Edge Tolerance applied to PCB
+default '0.01mm'</string>
+            </property>
+            <property name="text">
+             <string>0.01</string>
+            </property>
+            <property name="prefEntry" stdset="0">
+             <cstring>edge_tolerance</cstring>
+            </property>
+            <property name="prefPath" stdset="0">
+             <cstring>Mod/kicadStepUpGui</cstring>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+       <widget class="QGroupBox" name="imp_exp_setting">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>460</y>
+          <width>525</width>
+          <height>341</height>
+         </rect>
+        </property>
+        <property name="title">
+         <string>Import/Export settings</string>
+        </property>
+        <widget class="Gui::PrefCheckBox" name="cb_make_union">
+         <property name="geometry">
+          <rect>
+           <x>8</x>
+           <y>25</y>
+           <width>463</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enable/Disable &lt;span style=&quot; font-weight:600;&quot;&gt;fusion (union)&lt;/span&gt; of all 3D models.&lt;/p&gt;&lt;p&gt;Be careful ... fusion can be heavy or generate FC crash with a lot of objects.&lt;/p&gt;&lt;p&gt;Please consider to use bbox or blacklist small objects&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>Make a Union of 3D models</string>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
+         </property>
+         <property name="prefEntry" stdset="0">
+          <cstring>make_union</cstring>
+         </property>
+         <property name="prefPath" stdset="0">
+          <cstring>Mod/kicadStepUpGui</cstring>
+         </property>
+        </widget>
+        <widget class="Gui::PrefCheckBox" name="cb_exp_step">
+         <property name="geometry">
+          <rect>
+           <x>8</x>
+           <y>50</y>
+           <width>463</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Directly &lt;span style=&quot; font-weight:600;&quot;&gt;Export STEP&lt;/span&gt; after Loading&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>Directly Export STEP after Loading</string>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
+         </property>
+         <property name="prefEntry" stdset="0">
+          <cstring>exp_step</cstring>
+         </property>
+         <property name="prefPath" stdset="0">
+          <cstring>Mod/kicadStepUpGui</cstring>
+         </property>
+        </widget>
+        <widget class="QWidget" name="layoutWidget">
+         <property name="geometry">
+          <rect>
+           <x>9</x>
+           <y>80</y>
+           <width>491</width>
+           <height>26</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_11">
+          <item>
+           <widget class="QLabel" name="label_19">
+            <property name="toolTip">
+             <string>STEP export mode</string>
+            </property>
+            <property name="text">
+             <string>STEP export mode</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_4">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="Gui::PrefComboBox" name="gui::prefcombobox_4">
+            <property name="toolTip">
+             <string>STEP export mode</string>
+            </property>
+            <property name="currentIndex">
+             <number>0</number>
+            </property>
+            <property name="prefEntry" stdset="0">
+             <cstring>step_exp_mode</cstring>
+            </property>
+            <property name="prefPath" stdset="0">
+             <cstring>Mod/kicadStepUpGui</cstring>
+            </property>
+            <item>
+             <property name="text">
+              <string>Hierarchy</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Flat</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>One Container</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="layoutWidget_6">
+         <property name="geometry">
+          <rect>
+           <x>8</x>
+           <y>110</y>
+           <width>491</width>
+           <height>26</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_15">
+          <item>
+           <widget class="QLabel" name="label_23">
+            <property name="toolTip">
+             <string>3D Loading mode</string>
+            </property>
+            <property name="text">
+             <string>3D Loading mode</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_9">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="Gui::PrefComboBox" name="gui::prefcombobox_5">
+            <property name="toolTip">
+             <string>3D_loading_mode
+Allowing or not Loading Multi Parts objects</string>
+            </property>
+            <property name="currentIndex">
+             <number>0</number>
+            </property>
+            <property name="prefEntry" stdset="0">
+             <cstring>3D_loading_mode</cstring>
+            </property>
+            <property name="prefPath" stdset="0">
+             <cstring>Mod/kicadStepUpGui</cstring>
+            </property>
+            <item>
+             <property name="text">
+              <string>Hierarchy</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Simplified</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>NotMultiParts</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Standard</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="Gui::PrefCheckBox" name="cb_asm3_links">
+         <property name="geometry">
+          <rect>
+           <x>8</x>
+           <y>145</y>
+           <width>246</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string>Assembly3 Links allowed</string>
+         </property>
+         <property name="text">
+          <string>Assembly3 Links allowed</string>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
+         </property>
+         <property name="prefEntry" stdset="0">
+          <cstring>asm3_links</cstring>
+         </property>
+         <property name="prefPath" stdset="0">
+          <cstring>Mod/kicadStepUpGui</cstring>
+         </property>
+        </widget>
+        <widget class="Gui::PrefCheckBox" name="cb_vrml_materials">
+         <property name="geometry">
+          <rect>
+           <x>8</x>
+           <y>170</y>
+           <width>463</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string notr="true">Enable Materials for VRML exporting</string>
+         </property>
+         <property name="statusTip">
+          <string notr="true"/>
+         </property>
+         <property name="text">
+          <string notr="true">Enable Materials for VRML exporting</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+         <property name="tristate">
+          <bool>false</bool>
+         </property>
+         <property name="prefEntry" stdset="0">
+          <cstring>vrml_materials</cstring>
+         </property>
+         <property name="prefPath" stdset="0">
+          <cstring>Mod/kicadStepUpGui</cstring>
+         </property>
+        </widget>
+        <widget class="Gui::PrefCheckBox" name="cb_turntable">
+         <property name="geometry">
+          <rect>
+           <x>9</x>
+           <y>295</y>
+           <width>225</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string>Start Turntable after loading</string>
+         </property>
+         <property name="text">
+          <string>Start Turntable after loading</string>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
+         </property>
+         <property name="prefEntry" stdset="0">
+          <cstring>turntable</cstring>
+         </property>
+         <property name="prefPath" stdset="0">
+          <cstring>Mod/kicadStepUpGui</cstring>
+         </property>
+        </widget>
+        <widget class="Gui::PrefCheckBox" name="cb_asm3_links_2">
+         <property name="geometry">
+          <rect>
+           <x>267</x>
+           <y>145</y>
+           <width>246</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string>Assembly3 LinkGroups allowed</string>
+         </property>
+         <property name="text">
+          <string>Assembly3 LinkGroups allowed</string>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
+         </property>
+         <property name="prefEntry" stdset="0">
+          <cstring>asm3_linkGroups</cstring>
+         </property>
+         <property name="prefPath" stdset="0">
+          <cstring>Mod/kicadStepUpGui</cstring>
+         </property>
+        </widget>
+        <widget class="Gui::PrefCheckBox" name="cb_stpz_export">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="geometry">
+          <rect>
+           <x>8</x>
+           <y>220</y>
+           <width>463</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string notr="true">Enable compressed STEP file ('.stpZ') generation exporting</string>
+         </property>
+         <property name="text">
+          <string notr="true">Enable compressed STEP file ('.stpZ') generation exporting</string>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
+         </property>
+         <property name="tristate">
+          <bool>false</bool>
+         </property>
+         <property name="prefEntry" stdset="0">
+          <cstring>stpz_export_enabled</cstring>
+         </property>
+         <property name="prefPath" stdset="0">
+          <cstring>Mod/kicadStepUpGui</cstring>
+         </property>
+        </widget>
+        <widget class="Gui::PrefCheckBox" name="cb_wrz_export">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="geometry">
+          <rect>
+           <x>8</x>
+           <y>195</y>
+           <width>463</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string notr="true">Enable compressed VRML file ('.wrz') generation exporting</string>
+         </property>
+         <property name="text">
+          <string notr="true">Enable compressed VRML file ('.wrz') generation exporting</string>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
+         </property>
+         <property name="tristate">
+          <bool>false</bool>
+         </property>
+         <property name="prefEntry" stdset="0">
+          <cstring>wrz_export_enabled</cstring>
+         </property>
+         <property name="prefPath" stdset="0">
+          <cstring>Mod/kicadStepUpGui</cstring>
+         </property>
+        </widget>
+        <widget class="Gui::PrefCheckBox" name="cb_help_warn">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="geometry">
+          <rect>
+           <x>8</x>
+           <y>270</y>
+           <width>463</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string notr="true">Display STEP import settings warning</string>
+         </property>
+         <property name="text">
+          <string notr="true">Display STEP import settings warning</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+         <property name="tristate">
+          <bool>false</bool>
+         </property>
+         <property name="prefEntry" stdset="0">
+          <cstring>help_warning_enabled</cstring>
+         </property>
+         <property name="prefPath" stdset="0">
+          <cstring>Mod/kicadStepUpGui</cstring>
+         </property>
+        </widget>
+        <widget class="Gui::PrefCheckBox" name="cb_transparency_export_glass">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="geometry">
+          <rect>
+           <x>8</x>
+           <y>245</y>
+           <width>264</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Apply Transparency for 'Glass' Materials:&lt;/p&gt;&lt;p&gt;Force Transparency to STEP model if 'Glass' is found in '.wrl' model&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string notr="true">Apply Transparency for 'Glass' Materials</string>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
+         </property>
+         <property name="tristate">
+          <bool>false</bool>
+         </property>
+         <property name="prefEntry" stdset="0">
+          <cstring>transparency_material_glass_enabled</cstring>
+         </property>
+         <property name="prefPath" stdset="0">
+          <cstring>Mod/kicadStepUpGui</cstring>
+         </property>
+        </widget>
+        <widget class="Gui::PrefCheckBox" name="cb_transparency_export_led">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="geometry">
+          <rect>
+           <x>270</x>
+           <y>245</y>
+           <width>264</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Apply Transparency for 'Led' Materials:&lt;/p&gt;&lt;p&gt;Force Transparency to STEP model if 'Led' is found in '.wrl' model&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string notr="true">Apply Transparency for 'Led' Materials</string>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
+         </property>
+         <property name="tristate">
+          <bool>false</bool>
+         </property>
+         <property name="prefEntry" stdset="0">
+          <cstring>transparency_material_led_enabled</cstring>
+         </property>
+         <property name="prefPath" stdset="0">
+          <cstring>Mod/kicadStepUpGui</cstring>
+         </property>
+        </widget>
+        <widget class="Gui::PrefCheckBox" name="cb_skip_zones">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="geometry">
+          <rect>
+           <x>270</x>
+           <y>295</y>
+           <width>245</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Skip importing pcb zone(s)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string notr="true">Skip importing pcb zone(s)</string>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
+         </property>
+         <property name="tristate">
+          <bool>false</bool>
+         </property>
+         <property name="prefEntry" stdset="0">
+          <cstring>skip_import_zones</cstring>
+         </property>
+         <property name="prefPath" stdset="0">
+          <cstring>Mod/kicadStepUpGui</cstring>
+         </property>
+        </widget>
+       </widget>
+       <widget class="QGroupBox" name="mcad_compare">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>805</y>
+          <width>525</width>
+          <height>46</height>
+         </rect>
+        </property>
+        <property name="title">
+         <string>Mechanical Check</string>
+        </property>
+        <widget class="Gui::PrefCheckBox" name="cb_gen_sketch">
+         <property name="geometry">
+          <rect>
+           <x>8</x>
+           <y>25</y>
+           <width>463</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string>Generate Sketches for differences on PCB Edge</string>
+         </property>
+         <property name="text">
+          <string>Generate Sketches for differences on PCB Edge</string>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
+         </property>
+         <property name="prefEntry" stdset="0">
+          <cstring>generate_sketch</cstring>
+         </property>
+         <property name="prefPath" stdset="0">
+          <cstring>Mod/kicadStepUpGui</cstring>
+         </property>
+        </widget>
+       </widget>
+       <widget class="QWidget" name="horizontalLayoutWidget_4">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>105</y>
+          <width>501</width>
+          <height>34</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_8">
+         <item>
+          <widget class="QLabel" name="label_prefix3d_3">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;your &lt;span style=&quot; font-weight:600;&quot;&gt;ALIAS&lt;/span&gt; 3D&lt;/p&gt;&lt;p&gt;model prefix path&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>third 3D folder loc
+'ALT3 3DMOD'</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="Gui::PrefFileChooser" name="alias_prefix_2" native="true">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="baseSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;secondary 3D folder location&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;'ALT3DMOD'&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="prefEntry" stdset="0">
+            <cstring>prefix3d_3</cstring>
+           </property>
+           <property name="prefPath" stdset="0">
+            <cstring>Mod/kicadStepUpGui</cstring>
+           </property>
+              <property name="mode">
+              <enum>Gui::FileChooser::Directory</enum>
+           </property>
+           </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="horizontalLayoutWidget_5">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>145</y>
+          <width>501</width>
+          <height>34</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_9">
+         <item>
+          <widget class="QLabel" name="label_prefix3d_4">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;your &lt;span style=&quot; font-weight:600;&quot;&gt;ALIAS&lt;/span&gt; 3D&lt;/p&gt;&lt;p&gt;model prefix path&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>fourth 3D folder loc
+'ALT4 3DMOD'</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="Gui::PrefFileChooser" name="alias_prefix_3" native="true">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="baseSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;secondary 3D folder location&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;'ALT3DMOD'&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="prefEntry" stdset="0">
+            <cstring>prefix3d_4</cstring>
+           </property>
+           <property name="prefPath" stdset="0">
+            <cstring>Mod/kicadStepUpGui</cstring>
+           </property>
+              <property name="mode">
+              <enum>Gui::FileChooser::Directory</enum>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>Gui::FileChooser</class>
+   <extends>QWidget</extends>
+   <header>Gui/FileDialog.h</header>
+  </customwidget>
+  <customwidget>
+   <class>Gui::PrefFileChooser</class>
+   <extends>Gui::FileChooser</extends>
+   <header>Gui/PrefWidgets.h</header>
+  </customwidget>
+  <customwidget>
+   <class>Gui::PrefCheckBox</class>
+   <extends>QCheckBox</extends>
+   <header>Gui/PrefWidgets.h</header>
+  </customwidget>
+  <customwidget>
+   <class>Gui::PrefComboBox</class>
+   <extends>QComboBox</extends>
+   <header>Gui/PrefWidgets.h</header>
+  </customwidget>
+  <customwidget>
+   <class>Gui::PrefLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>Gui/PrefWidgets.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+ <designerdata>
+  <property name="gridDeltaX">
+   <number>5</number>
+  </property>
+  <property name="gridDeltaY">
+   <number>5</number>
+  </property>
+  <property name="gridSnapX">
+   <bool>false</bool>
+  </property>
+  <property name="gridSnapY">
+   <bool>true</bool>
+  </property>
+  <property name="gridVisible">
+   <bool>true</bool>
+  </property>
+ </designerdata>
+</ui>

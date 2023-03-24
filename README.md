@@ -28,7 +28,7 @@ Installing
 
 Download and install your corresponding version of FreeCAD from [wiki Download page](http://www.freecadweb.org/wiki/Download) and either install
 
-- automatically using the [FreeCAD Add-on Manager](https://github.com/FreeCAD/FreeCAD-addons) (bundled in to 0.17 dev version under Tools Menu)
+- automatically using the [FreeCAD Add-on Manager](https://github.com/FreeCAD/FreeCAD-addons) (bundled in to FreeCAD under Tools Menu)
 - manually by copying the kicadStepUpMod folder to the Mod sub-directory of the FreeCAD application.
 
 StepUp Cheat sheet
@@ -38,13 +38,15 @@ StepUp Cheat sheet
 
 ### Requirements
 
-- **FreeCAD** **0.17 >= 11707**, **0.18**, **0.19**, **0.20**, **0.21**
+- **FreeCAD** **0.18, 0.19, 0.20, 0.21**
 
-- **KiCAD** **5.1**, **6.x**, **7 nigthly** (partially supported)
+- **KiCAD** **5.1**, **6.x**, **7.x**
+
+- **KiCAD *nigthly* (partially supported)**
 
 ### Known issues
 
-- on Linux FreeCAD Snap and Flatpack you may need to use 'mount bind' to have access to KiCad 3D models path
+- on Linux *FreeCAD Snap and Flatpack* you may need to use 'mount bind' to have access to KiCad 3D models path
 
 ### License
 
