@@ -40,3 +40,4 @@ kicadStepUptools.KicadPCB.load('C:\\Temp\\demo-v5.kicad_pcb')
     5) fix reset part placement for AppLink Part models not on zero placement (partially done for x,y,z translations)
     6) push fp NPTH and half circle pads (done)
     7) readme support FC >= 018 (done)
+8) kicad7 new default 3D paths

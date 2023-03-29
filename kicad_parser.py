@@ -34,7 +34,7 @@ from fcad_parser import unquote #maui
 
 
 # from kicadStepUptools import KicadPCB,SexpList
-__kicad_parser_version__ = '2.1.8'
+__kicad_parser_version__ = '2.1.9'
 # https://github.com/realthunder/fcad_pcb/issues/20#issuecomment-586042341
 # FreeCAD.Console.PrintLog('kicad_parser_version '+__kicad_parser_version__+'\n') # maui 
 # print('kicad_parser_version '+__kicad_parser_version__)
@@ -623,13 +623,15 @@ class KicadFcad:
         if not self.part_path:
             self.part_path = getKicadPath(self.path_env)
         self.pcb = KicadPCB.load(self.filename, self.quote_no_parse)
-
+        #print(str(self.pcb))
+        if self.pcb._key == 'footprint':
+            self.pcb._key = 'module'
         if self.pcb._key == 'module':
             # this is a kicad_mod file, make it look like a kicad_pcb
             pcb = KicadPCB(parseSexp('''
                     (kicad_pcb
                         (general
-                            (thickness 0.3)
+                            (thickness 1.6)  # maui
                             (drawings 0)
                             (tracks 0)
                             (zones 0)
@@ -661,6 +663,7 @@ class KicadFcad:
                     )'''))
             self.module = self.pcb
             pcb.module._append(self.pcb)
+            #print(str(self.pcb))
             self.pcb = pcb
         else:
             self.module = None
@@ -671,7 +674,7 @@ class KicadFcad:
             except Exception:
                 pass
             if not self.board_thickness:
-                self.board_thickness = 2.0
+                self.board_thickness = 1.6 # maui
 
         self._dielectric_layers = []
         self._stackup_map = {}
@@ -893,7 +896,7 @@ class KicadFcad:
                 and self.layer_match not in layers \
                 and '*' not in layers:
             self._log('skip layer {}, {}, {}',
-                    self.layer, self.layer_match, layers, level='log')
+                    self.layer, self.layer_match, layers, level='trace')
             return True
 
     def netName(self,p):
@@ -935,7 +938,7 @@ class KicadFcad:
     def _makeObject(self,otype,name,
             label=None,links=None,shape=None):
         doc = getActiveDoc()
-        obj = doc.addObject(otype,name)
+        obj = addObject(doc,otype,name)
         self._makeLabel(obj,label)
         if links is not None:
             setattr(obj,links,shape)
@@ -962,7 +965,7 @@ class KicadFcad:
 
         doc = getActiveDoc()
 
-        nobj = doc.addObject("Sketcher::SketchObject", '{}_sketch'.format(name))
+        nobj = addObject(doc,"Sketcher::SketchObject", '{}_sketch'.format(name))
         self._makeLabel(nobj,label)
         nobj.ViewObject.Autoconstraints = False
 
@@ -1214,7 +1217,7 @@ class KicadFcad:
             cut.ViewObject.ShapeColor = base.ViewObject.ShapeColor
         else:
             cut = base.cut(tool)
-            #cut = base.cut(tool,0.00006) # maui fuzzy cut ,0.01)
+            #cut = base.cut(tool,0.00006) # maui fuzzy cut ,0.01) # maui
             #print('cutting test?')
         self._log('cut done')
         return cut
@@ -1256,7 +1259,7 @@ class KicadFcad:
                 continue;
             primitives = SexpList(primitives)
             self._log('making {} {}s',len(primitives), tp)
-            try:
+            try: # maui
                 make_shape = globals()['make_gr_{}'.format(tp)]
                 for l in primitives:
                     if not layer:
@@ -1506,6 +1509,7 @@ class KicadFcad:
         for m in self.pcb.module:
             m_at,m_angle = getAt(m)
             for p in m.pad:
+                #print (str(p))
                 if 'drill' not in p:
                     continue
                 if self.filterNets(p):
@@ -1521,9 +1525,19 @@ class KicadFcad:
                         skip_count += 1
                         continue
                     ofs = -abs(offset)
+                #if 'oval' in str(p.drill):
+                #print(str(p.drill))
+                # print(p.drill.oval)
+                #if hasattr(p.drill, 'oval'):
+                #if p.drill.oval: #if 'oval' in str(p.drill): #p.drill.oval:
                 if p.drill.oval:
                     if not oval:
                         continue
+                    #print(str(p.drill[1]))
+                    #if isinstance(p.drill, list):
+                    #    print('list')
+                    #print(str(p.drill[1]))
+                    #size = Vector(p.drill[1],p.drill[2])
                     size = Vector(p.drill[0],p.drill[1])
                     w = make_oval(size+Vector(ofs,ofs))
                     ovals[min(size.x,size.y)].append(w)
@@ -1643,6 +1657,8 @@ class KicadFcad:
                     objs = self._makeCompound(objs,'holes',label=label)
                 self._place(objs,FreeCAD.Vector(0,0,pos))
 
+        if objs:  #maui
+            self.setColor(objs,'holes')
         self._popLog('holes done')
         return objs
 
@@ -1874,6 +1890,308 @@ class KicadFcad:
         fitView();
         return objs
 
+# maui 
+    def makeNetTies(self,shape_type='face',thickness=0.05,holes=False,
+            fit_arcs=True,prefix=''):
+
+        self._pushLog('making net ties...',prefix=prefix)
+
+        def _wire(obj,name,label=None,fill=False):
+            return self._makeWires(obj,name,fill=fill,label=label, offset=self.pad_inflate)
+
+        def _face(obj,name,label=None):
+            objs = _wire(obj,name,label,True)
+
+            if not cut_wires and not cut_non_closed:
+                return objs
+
+            if not isinstance(objs, list):
+                objs = [objs]
+
+            inner_label = label + '_inner' if label else 'inner'
+            if cut_wires:
+                objs.append(self._makeWires(cut_wires,name,label=inner_label))
+
+            for width,elist in cut_non_closed.items():
+                l = '{}_{}'.format(inner_label, width)
+                wire = self._makeWires(elist,name,label=l)
+                # thicken non closed wire for hole cutting
+                objs.append(self._makeArea(wire, name, label=l, offset = width*0.5))
+
+            return self._makeArea(objs, name, op=1,fill=True)
+
+        _solid = _face
+
+        try:
+            func = locals()['_{}'.format(shape_type)]
+        except KeyError:
+            raise ValueError('invalid shape type: {}'.format(shape_type))
+
+        objs = []
+        ws=[]
+        add_rot=0
+
+        count = 0
+        skip_count = 0
+        for i,m in enumerate(self.pcb.module):
+            ref = ''
+            for t in m.fp_text:
+                if t[0] == 'reference':
+                    ref = t[1]
+                    break;
+            m_at,m_angle = getAt(m)
+            nt = []
+            count += len(m.fp_poly)
+
+            cut_wires = []
+            cut_non_closed = defaultdict(list)
+
+            for j,pl in enumerate(m.fp_poly):
+                if unquote(pl.layer) == self.layer:
+                    shape='fp_poly'
+                    nt = make_fp_poly(pl)
+                if not nt:
+                    continue
+                else:
+                    ws.append(nt)
+            add_rot=0
+            if hasattr(m, 'model'):
+                #print(m.model[0].rotate.xyz[2])
+                try:
+                    add_rot=m.model[0].rotate.xyz[2]
+                except:
+                    pass
+
+            if len (ws)>0:
+                ws = _face(ws,'net-ties')
+                if shape_type=='solid':
+                    objs = self._makeSolid(ws,'net-ties', thickness,
+                                        fit_arcs = fit_arcs)
+                else:
+                    objs = self._makeCompound(ws,'net-ties',
+                                        fuse=True,fit_arcs=fit_arcs)
+                self.setColor(objs,'NetTie')
+            
+        self._popLog('Net Tie poly done')
+        fitView();
+        return objs # obj  //additional rotation in deg
+        
+
+    def makeSketches(self, fit_arcs=True,prefix=''):
+
+        self._pushLog('making sketches...',prefix=prefix)
+
+        #def _wire(obj,name,label=None,fill=False):
+        #    return self._makeWires(obj,name,fill=fill,label=label, offset=self.pad_inflate)
+
+        width = 0
+        def _line(edges,label,offset=0,fill=False):
+            wires = findWires(edges)
+            return self._makeWires(wires,label, offset=offset,
+                    fill=fill, label=label, fit_arcs=fit_arcs)
+
+        def _wire(edges,label,fill=False):
+            return _line(edges,label,width*0.5,fill) #*0.5,fill)
+
+        def _face(edges,label):
+            return _wire(edges,label,True)
+
+        _solid = _face        
+        
+        obj = []
+        tbd = []
+
+        count = 0
+        skip_count = 0
+        for i,m in enumerate(self.pcb.module):
+            ref = ''
+            for t in m.fp_text:
+                if t[0] == 'reference':
+                    ref = t[1]
+                    break;
+            m_at,m_angle = getAt(m)
+            pads = []
+            count += len(m.pad)
+
+            cut_wires = []
+            cut_non_closed = defaultdict(list)
+
+            # self._pushLog('checking edge cuts')
+            # self._makeEdgeCuts(m, 'fp', cut_wires, cut_non_closed)
+            # self._popLog()
+            ws=[]
+            wst=[]
+            objs=[]
+            tl=None
+            _solid = _face
+            
+            # test creating pads from gr_poly
+            # print (' test creating pads from gr_poly')
+            for j,p in enumerate(m.pad):            
+                #print(unquote(p.layers))
+                poly = []
+                #print(self.layer,unquote(p.layers))
+                if self.layer in str(unquote(p.layers)):
+                    shape = p[2]
+                    w = 0
+                    if shape == 'custom':
+                        w = self._makeCustomPad(p)
+                    if not w:
+                        continue            
+                    # Part.show(w)
+                    at,angle = getAt(p)
+                    angle -= m_angle;
+                    if not isZero(angle):
+                        w.rotate(Vector(),Vector(0,0,1),angle)
+                    w.translate(at)
+    
+                    poly.append(w)
+                    self._makeShape(m, 'fp', poly)
+        
+                    if not poly:
+                        continue
+                    shape_type='solid'
+                    try:
+                        func = locals()['_{}'.format(shape_type)]
+                    except KeyError:
+                        raise ValueError('invalid shape type: {}'.format(shape_type))
+                        
+                    print(poly)
+                    for wr in poly:
+                        objp = func(wr.Edges,'pads') #,'{}#{}'.format(i,ref))
+                        self._place(objp,m_at,m_angle)
+                        objs.append(objp)
+            if len(objs)>0:
+                for o in objs:
+                    self.setPadColor(o,unquote(self.layer_name))
+            #print (objs)
+            # end test creating pads from gr_poly
+                    
+            for j,l in enumerate(m.fp_line):
+                if unquote(l.layer) == self.layer:
+                    #print(j,l)
+                    try: #avoiding null lenght lines
+                        ws.append((Part.Wire(make_gr_line(l))))
+                        #wst.append(Part.Face(makeThickLine(makeVect(l.start),makeVect(l.end),l.width)))
+                        wst.append(makeThickLine(makeVect(l.start),makeVect(l.end),l.width/2.0))
+                        #self._makeShape(m, 'fp', ws)
+                    except:
+                        pass
+            for j,a in enumerate(m.fp_arc):
+                if unquote(a.layer) == self.layer:
+                    #print(j,l.start)
+                    ac = Part.Wire(make_gr_arc(a))
+                    ws.append((Part.Wire(make_gr_arc(a))))
+                    width = a.width
+                    aco=_wire(ac.Edges,self.layer)
+                    wst.append(aco.Shape)
+                    tbd.append(aco)
+                    #doc=FreeCAD.ActiveDocument
+                    #doc.recompute()
+                    #try:
+                    #    doc.removeObject(doc.getObject(aco.Name).Outlist[0].Name)
+                    #except:
+                    #    pass
+                    #doc.removeObject(aco.Name)
+                    #if hasattr(a, 'angle'):
+                    #    wst.append(makeArc(makeVect(a.start),makeVect(a.end),a.angle))
+                    #else:
+                    #    wst.append(Part.ArcOfCircle(makeVect(a.start),makeVect(a.mid),makeVect(a.end)).toShape())
+            for j,c in enumerate(m.fp_circle):
+                if unquote(c.layer) == self.layer:
+                    #print(j,l.start)
+                    ws.append((Part.Wire(make_gr_circle(c))))
+                    ##ws.append((Part.Wire(make_gr_circle(c).Edges)))
+                    cc=make_gr_circle_outl(c,c.width)
+                    if isinstance(cc,list):
+                        wst.append(Part.Wire(cc[0]))
+                        wst.append(Part.Wire(cc[1]))
+                    else:
+                        wst.append(Part.Wire(cc))
+                    #wst.append((Part.Wire(make_gr_circle(c,c.width)
+                    
+                    # Part.show(Part.Wire(make_gr_circle(c,c.width).Edges))
+                    # wst.append((Part.Wire(make_gr_circle(c,c.width).Edges)))
+                    if 0:
+                        ce=make_gr_circle_outl(c,-c.width)
+                        if ce is not None:
+                            wst.append(Part.Wire(ce))
+                        ci=Part.Wire(make_gr_circle_outl(c,+c.width))
+                        wst.append(ci)
+                    # try:
+                    #     wst.append((Part.Wire(make_gr_circle(c,c.width))))
+                    # except:
+                    #     wst.append((make_gr_circle(c,c.width)))
+                    #manca_thick_circle
+            for j,pl in enumerate(m.fp_poly):
+                if unquote(pl.layer) == self.layer:
+                    pln=Part.Wire(make_gr_poly(pl))
+                    ws.append((pln))
+                    width = pl.width
+                    for e in pln.Edges:
+                        #aco=_wire(e,self.layer)
+                        wst.append(makeThickLine(makeVect([e.Vertexes[0].X,-e.Vertexes[0].Y]),makeVect([e.Vertexes[1].X,-e.Vertexes[1].Y]),width/2.0))
+                    #plno=_wire(pln.Edges,self.layer)
+                    ##wst.append(pln)
+                    #wst.append(plno.Shape)
+            
+            add_rot=0
+            if hasattr(m, 'model'):
+                #print(m.model[0].rotate.xyz[2])
+                try:
+                    add_rot=m.model[0].rotate.xyz[2]
+                except:
+                    pass
+
+            if len (wst)>0:
+                Part.show(Part.makeCompound(wst))
+                tl = FreeCAD.ActiveDocument.ActiveObject
+                tl.Label = self.layer+'_outline_'
+                self._place(tl,m_at,m_angle+add_rot)
+                # del(wst)
+            
+            #Draft.make_sketch(ws, autoconstraints=False)
+            #sp=FreeCAD.ActiveDocument.ActiveObject
+            #sk = Draft.make_sketch(ws, autoconstraints=False)
+            #sp.ViewObject.Visibility=False
+
+            if not ws:
+                continue
+
+            obj = self._makeSketch(ws, self.layer_name)
+            self._place(obj,m_at,m_angle+add_rot)
+            obj.Label= self.layer+'_'
+            #objs.append(obj)
+
+        if obj:
+            self.setSketchColor(obj,unquote(self.layer_name))
+
+        self._popLog('sketch done')
+        fitView();
+        return obj,tl,tbd #,add_rot # obj, thicklines, to be deleted, additional rotation in deg
+
+    def setSketchColor(self,obj,otype):
+        if not self.add_feature:
+            return
+        try:
+            color = self.colors[otype][self.layer_type]
+        except KeyError:
+            color = self.colors[otype][0]
+        #print (color)
+        #if 
+        obj.ViewObject.LineColor = color
+
+    def setPadColor(self,obj,otype):
+        if not self.add_feature:
+            return
+        try:
+            color = self.colors[otype][self.layer_type]
+        except KeyError:
+            color = self.colors[otype][0]
+        #print (color)
+        #if 
+        obj.ViewObject.ShapeColor = color
+# maui 
 
     def setColor(self,obj,otype):
         if not self.add_feature:
@@ -1979,7 +2297,7 @@ class KicadFcad:
             shape_type='face', thickness=0.05, prefix=''):
 
         if not fields:
-            return
+            return []
 
         count = len(fields)
         self._pushLog(f'making {count} polygons...',prefix=prefix)

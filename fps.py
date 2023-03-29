@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global fps_version
-fps_version = '1.0.3'
+fps_version = '1.0.4'
 
 dvp=False #True
 if dvp:
@@ -492,16 +492,18 @@ def addfootprint(fname = None):
             removesubtree([topPf])
             if hasattr (topPe,'Name'):
                 topPe.Label = 'topPads'
-                tbassembled.append(topPe)
+                #btmP.ViewObject.Transparency = 50
+                topPe.Placement.Base.z-=deltaz
+                topPe.ViewObject.Transparency=pads_transparency
+                topPe.ViewObject.ShapeColor = pads_color
+                if ar!=0:
+                    topPe.Placement.Rotation.Angle = radians(ar)
+                if topPe.Shape.Area != 0:
+                    tbassembled.append(topPe)
+                else:
+                    removesubtree([topPe])
             #stop
         
-        if hasattr (topPe,'Name'):
-            #btmP.ViewObject.Transparency = 50
-            topPe.Placement.Base.z-=deltaz
-            topPe.ViewObject.Transparency=pads_transparency
-            topPe.ViewObject.ShapeColor = pads_color
-            if ar!=0:
-                topPe.Placement.Rotation.Angle = radians(ar)
         
         #stop
         consolePrint('making Bot Pads\n')
@@ -532,16 +534,18 @@ def addfootprint(fname = None):
                 btmPe.Label = 'btmPads'    
                 removesubtree([btmP])
                 removesubtree([btmPf])
-                tbassembled.append(btmPe)
+                # tbassembled.append(btmPe)
                 #stop
-        if hasattr (btmPe,'Name'):
-            #btmP.ViewObject.Transparency = 50
-            btmPe.Placement.Base.z-=pcbThickness # -deltaz
-            btmPe.ViewObject.Transparency=pads_transparency
-            btmPe.ViewObject.ShapeColor = pads_color
-            if ar!=0:
-                btmPe.Placement.Rotation.Angle = radians(ar)
-        
+                #btmP.ViewObject.Transparency = 50
+                btmPe.Placement.Base.z-=pcbThickness # -deltaz
+                btmPe.ViewObject.Transparency=pads_transparency
+                btmPe.ViewObject.ShapeColor = pads_color
+                if ar!=0:
+                    btmPe.Placement.Rotation.Angle = radians(ar)
+            if btmPe.Shape.Area != 0:
+                tbassembled.append(btmPe)
+            else:
+                removesubtree([btmPe])
         doc.Tip = doc.addObject('App::DocumentObjectGroup','Group')
         fp_group=doc.ActiveObject
         fp_group.Label = fp_name+'-fp'
