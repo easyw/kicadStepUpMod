@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global fps_version
-fps_version = '1.0.4'
+fps_version = '1.0.5'
 
 dvp=False #True
 if dvp:
@@ -441,8 +441,25 @@ def addfootprint(fname = None):
                 doc.recompute()
                 tbd.append(o2d)
                 dw=[o2d.Shape.Wires,ia.Shape.Wires]
-                s = Part.makeCompound([o2d.Shape,ia.Shape]).extrude(FreeCAD.Vector(0.0, 0.0, -pcbThickness))
+                # s = Part.makeCompound([o2d.Shape,ia.Shape]).extrude(FreeCAD.Vector(0.0, 0.0, -pcbThickness))
+                s = Part.makeCompound([o2d.Shape,ia.Shape])
                 Part.show(s)
+                s = doc.ActiveObject
+                doc.addObject('Part::Extrusion', 'drl_ann')
+                extrude = doc.ActiveObject
+                #f = FreeCAD.ActiveDocument.getObject('Extrude')
+                extrude.Base = s
+                extrude.DirMode = "Custom"
+                extrude.Dir = (0.000, 0.000, 1.000)
+                extrude.DirLink = None
+                extrude.LengthFwd = pcbThickness
+                extrude.LengthRev = 0.0
+                extrude.Solid = True
+                extrude.Reversed = True
+                extrude.Symmetric = False
+                doc.recompute()
+                tbd.append(extrude)
+                doc.addObject('Part::Feature','anr_').Shape=extrude.Shape
                 nanr=doc.ActiveObject
                 nanr.Label='drill_'+'{0:0{1}}'.format(i, 3)
                 anr.append(nanr)
