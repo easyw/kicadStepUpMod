@@ -34,7 +34,7 @@ from fcad_parser import unquote #maui
 
 
 # from kicadStepUptools import KicadPCB,SexpList
-__kicad_parser_version__ = '2.1.9'
+__kicad_parser_version__ = '2.2.0'
 # https://github.com/realthunder/fcad_pcb/issues/20#issuecomment-586042341
 # FreeCAD.Console.PrintLog('kicad_parser_version '+__kicad_parser_version__+'\n') # maui 
 # print('kicad_parser_version '+__kicad_parser_version__)
@@ -1800,6 +1800,14 @@ class KicadFcad:
 
                 if shape == 'custom':
                     w = self._makeCustomPad(p)
+                    # maui start
+                    # print(p.size)
+                    # print(p.options.anchor) #maui
+                    make_shape = globals()['make_{}'.format(p.options.anchor)]
+                    # print(make_shape)
+                    wp = make_shape(Vector(*p.size),p)
+                    w = Part.makeCompound([w,wp])
+                    # maui end
                 else:
                     try:
                         make_shape = globals()['make_{}'.format(shape)]

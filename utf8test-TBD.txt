@@ -1,6 +1,7 @@
 import kicadStepUptools; import importlib; importlib.reload(kicadStepUptools);FreeCADGui.activateWorkbench("KiCadStepUpWB")
 
 import kicadStepUptools; reload(kicadStepUptools)
+import kicad_parser;import fps;import importlib;importlib.reload(kicad_parser);importlib.reload(fps)
 
 import tracks; import importlib; importlib.reload(tracks)
 import makefacedxf; import importlib; importlib.reload(makefacedxf)
