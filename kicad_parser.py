@@ -34,7 +34,7 @@ from fcad_parser import unquote #maui
 
 
 # from kicadStepUptools import KicadPCB,SexpList
-__kicad_parser_version__ = '2.2.0'
+__kicad_parser_version__ = '2.2.1'
 # https://github.com/realthunder/fcad_pcb/issues/20#issuecomment-586042341
 # FreeCAD.Console.PrintLog('kicad_parser_version '+__kicad_parser_version__+'\n') # maui 
 # print('kicad_parser_version '+__kicad_parser_version__)
@@ -561,7 +561,7 @@ class KicadFcad:
         self.merge_vias = not debug
         self.merge_tracks = not debug
         self.zone_merge_holes = not debug
-        self.merge_pads = not debug
+        self.merge_pads = not debug # False # maui to evaluate for better pad results
         self.arc_fit_accuracy = 0.0005
         self.layer_thickness = 0.01
         self.copper_thickness = 0.05
@@ -1261,18 +1261,35 @@ class KicadFcad:
             self._log('making {} {}s',len(primitives), tp)
             try: # maui
                 make_shape = globals()['make_gr_{}'.format(tp)]
-                for l in primitives:
-                    if not layer:
-                        if self.filterNets(l) or self.filterLayer(l):
+                if tp == 'poly': # maui
+                    for l in primitives:
+                        if not layer:
+                            if self.filterNets(l) or self.filterLayer(l):
+                                continue
+                        elif l.layer != layer:
                             continue
-                    elif l.layer != layer:
-                        continue
-                    shape = make_shape(l)
-                    if angle:
-                        shape.rotate(Vector(),Vector(0,0,1),angle)
-                    if at:
-                        shape.translate(at)
-                    edges += [[getattr(l,'width',1e-7), e] for e in shape.Edges]
+                        shape = make_fp_poly(l)
+                        if angle:
+                            shape.rotate(Vector(),Vector(0,0,1),angle)
+                        if at:
+                            shape.translate(at)
+                        #Part.show(shape)
+                        wires.append(shape.Wires[0])
+                        #s = Part.Face(shape.Wires[0])
+                        #Part.show(s)
+                else:
+                    for l in primitives:
+                        if not layer:
+                            if self.filterNets(l) or self.filterLayer(l):
+                                continue
+                        elif l.layer != layer:
+                            continue
+                        shape = make_shape(l)
+                        if angle:
+                            shape.rotate(Vector(),Vector(0,0,1),angle)
+                        if at:
+                            shape.translate(at)
+                        edges += [[getattr(l,'width',1e-7), e] for e in shape.Edges]
             except Exception as e:# maui logging error
                 # raise
                 # traceback.print_exc() # maui 
