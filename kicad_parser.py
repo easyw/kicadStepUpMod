@@ -34,7 +34,7 @@ from fcad_parser import unquote #maui
 
 
 # from kicadStepUptools import KicadPCB,SexpList
-__kicad_parser_version__ = '2.2.1'
+__kicad_parser_version__ = '2.2.2'
 # https://github.com/realthunder/fcad_pcb/issues/20#issuecomment-586042341
 # FreeCAD.Console.PrintLog('kicad_parser_version '+__kicad_parser_version__+'\n') # maui 
 # print('kicad_parser_version '+__kicad_parser_version__)
@@ -778,7 +778,7 @@ class KicadFcad:
                     self._log('{}',error_message,level='error') # maui 
                     pass  # maui keeping kv5 compatibility
             else:
-                self._log('{}','kicad v5 stack missing',level='error') # maui end
+                self._log('{}','kicad v5 stack missing',level='warning') # maui end
         board_thickness = 0.0
         accumulate = None
         for item in self.stackup:
