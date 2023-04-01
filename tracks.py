@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global tracks_version
-tracks_version = '2.5.7'
+tracks_version = '2.5.8'
 
 import kicad_parser
 #import kicad_parser; import importlib; importlib.reload(kicad_parser)
@@ -340,7 +340,8 @@ def addtracks(fname = None):
         import kicad_parser 
         # reload_lib(kicad_parser)
         #pcb = kicad_parser.KicadFcad(filename,via_skip_hole=False,via_bound=0)
-        pcb = kicad_parser.KicadFcad(filename)
+        pcb = kicad_parser.KicadFcad(filename,merge_pads=False)
+        # pcb = kicad_parser.KicadFcad(filename,merge_pads=True)
         #kicad.KicadFcad(filename,via_skip_hole=False,via_bound=1)
         ## pcb = kicad_parser.KicadFcad(filename, arc_fit_accuracy=1e-4) #to increase accuracy 
         # pcbThickness = pcb.board_thickness ## this doesn't always give the full board thickness

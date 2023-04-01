@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global fps_version
-fps_version = '1.0.5'
+fps_version = '1.0.6'
 
 dvp=False #True
 if dvp:
@@ -663,6 +663,12 @@ def addfootprint(fname = None):
         sk,tls,tbd=pcb.makeSketches(fit_arcs=True)
         tbds.append(tbd)
         tbp.append((sk,tls))
+
+        # User layers
+        pcb.setLayer(40) #'Dwgs.User')
+        sk,tls,tbd=pcb.makeSketches(fit_arcs=True)
+        tbds.append(tbd)
+        tbp.append((sk,tls))
         
         for l in tbds:
             for o in l:
@@ -700,7 +706,7 @@ def addfootprint(fname = None):
         sk,tls,tbd=pcb.makeSketches(fit_arcs=True)
         tbds.append(tbd)
         tbp.append((sk,tls))
-        
+
         for l in tbds:
             for o in l:
                 doc.removeObject(o.OutList[0].Name)

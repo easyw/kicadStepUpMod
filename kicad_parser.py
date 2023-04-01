@@ -34,7 +34,7 @@ from fcad_parser import unquote #maui
 
 
 # from kicadStepUptools import KicadPCB,SexpList
-__kicad_parser_version__ = '2.2.2'
+__kicad_parser_version__ = '2.2.4'
 # https://github.com/realthunder/fcad_pcb/issues/20#issuecomment-586042341
 # FreeCAD.Console.PrintLog('kicad_parser_version '+__kicad_parser_version__+'\n') # maui 
 # print('kicad_parser_version '+__kicad_parser_version__)
@@ -607,7 +607,8 @@ class KicadFcad:
                 'Edge.Cuts':{0:makeColor(255,0,0)},
                 'Margin':{0:makeColor(255,170,170)},
                 'holes':{0:makeColor(170,255,127)},
-                'NetTie':{0:makeColor(255,114,12)}, # maui end color
+                'NetTie':{0:makeColor(255,114,12)}, 
+                'Dwgs.User':{0:makeColor(188,188,188)}, # maui end color
         }
         self.layer_type = 0
         self.layer_match = None
@@ -1274,7 +1275,9 @@ class KicadFcad:
                         if at:
                             shape.translate(at)
                         #Part.show(shape)
-                        wires.append(shape.Wires[0])
+                        ws = shape.Wires
+                        for w_ in ws:
+                            wires.append(w_)
                         #s = Part.Face(shape.Wires[0])
                         #Part.show(s)
                 else:
@@ -1858,7 +1861,23 @@ class KicadFcad:
                 continue
 
             if not self.merge_pads:
-                obj = self._makeCompound(pads,'pads','{}#{}'.format(i,ref))
+                # maui start
+                #print(pads)
+                opads=[]
+                for p in pads:
+                    #print(p.TypeId) # wire -> 'Part::TopoShape'
+                    if '<Wire object ' in str(p):
+                        # shape = Part.makeFace(p,'Part::FaceMakerBullseye')
+                        shape = Part.makeFace(p,'Part::FaceMakerSimple')
+                        Part.show(shape)
+                        s=FreeCAD.ActiveDocument.ActiveObject
+                        opads.append(s)
+                        #stop
+                    else:
+                        opads.append(p)
+                obj = self._makeCompound(opads,'pads','{}#{}'.format(i,ref))
+                #obj = self._makeCompound(pads,'pads','{}#{}'.format(i,ref))
+                # maui end
             else:
                 obj = func(pads,'pads','{}#{}'.format(i,ref))
             self._place(obj,m_at,m_angle)
