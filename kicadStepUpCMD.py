@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.3.3'
+ksuCMD_version__='2.3.4'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -1892,6 +1892,7 @@ class ksuToolsResetPartPlacement:
     #
     def Activated(self):        
         doc = FreeCAD.ActiveDocument
+        found_kSU_PCB = False
         if doc is None:
             FreeCAD.Console.Print("No Active Document found")
             return
@@ -1899,68 +1900,86 @@ class ksuToolsResetPartPlacement:
             currState = {} #initialize a dictionary to store current object placements
             sel = FreeCADGui.Selection.getSelection()
             if sel[0].Placement != FreeCAD.Placement(FreeCAD.Vector(0,0,0),FreeCAD.Rotation(0,0,0)):
-                FreeCAD.ActiveDocument.openTransaction("Absolufy") #open a transaction for undo management
-                for obj in sel: ## App.ActiveDocument.Objects: #going through active document objects
-                    if "Placement" in obj.PropertiesList and obj.TypeId != 'Sketcher::SketchObject' \
-                    and 'body object' not in str(obj.InList): #if object has a Placement property
-                        #FreeCAD.Console.PrintWarning(obj.TypeId)
-                        if hasattr(obj,'getGlobalPlacement'):
-                            currState[obj] = obj.getGlobalPlacement() #store the object pointer with its global placement
-                        #elif obj.TypeId == 'App::Link':
-                        #    obj.getLinkGlobalPlacement()
-                    for o in obj.OutListRecursive:
-                        if "Placement" in o.PropertiesList and o.TypeId != 'Sketcher::SketchObject' \
-                        and 'body object' not in str(o.InList): #if object has a Placement property
-                            #FreeCAD.Console.PrintWarning(o.TypeId)
-                            if hasattr(o,'getGlobalPlacement'):
-                                currState[o] = o.getGlobalPlacement() #store the object pointer with its global placement
-                            elif o.TypeId == 'App::Link':
-                                plc = Part.getShape(o.Parents[0][0],o.Parents[0][1]).Placement #getLinkGlobalPlacement(o)
-                                # print(o.Label+' App::Link')
-                                # print(plc)
-                                #pp.inverse().multiply(plp)
-                                if len(o.OutList) == 1:
-                                    if 'Part object' in str(o.OutList[0]): #Link Part container
-                                        #print(o.Parents[0][0].Label+' Part-base calc plac',o.Parents[0][0].Placement)
-                                        # print(o.OutList[0].Label+' Part-base calc plac',o.OutList[0].Placement)
-                                        # print(o.Label+' Part-App::Link plac',o.Placement)
-                                        #comp_plc = o.Placement.multiply(o.Parents[0][0].Placement.inverse()) # plc.inverse().multiply(o.Placement) #o.Parents[0][0].Placement.inverse().multiply(o.Placement)
-                                        comp_plc = o.Placement.multiply(o.OutList[0].Placement.inverse())
-                                        # print(o.Label+' Part-App::Link calc plac',comp_plc)
-                                        currState[o] = comp_plc
-                                    else:
-                                        currState[o] = plc
-                            
-                # FreeCAD.ActiveDocument.openTransaction("Absolufy") #open a transaction for undo management
-                for obj, plac in currState.items(): #going through all moveable objects
-                    if obj.isDerivedFrom("App::Part"): #if object is a part container
-                        obj.Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,0),FreeCAD.Rotation(0,0,0)) #reset its placement to global document origin
-                    # or obj.isDerivedFrom("App::Link")
-                    #elif len(obj.OutList) == 1:
-                    #    if 'Part object' in str(obj.OutList[0]): #Link Part container
-                    #        print(obj.Label+' Part-App::Link new plac',plac)
-                    #        obj.Placement = plac
-                    #        # obj.Placement = mainP_origP.inverse().multiply(plac)
-                    #    else: #for all other objects Link obj
-                    #        obj.Placement = plac
-                    elif obj.TypeId[:5] == "App::" and obj.TypeId != 'App::Link': #if object is another App type (typically an origin axis or plane)
-                        None #do nothing
-                    else: #for all other objects Link obj
-                        obj.Placement = plac
-                    #  elif not(obj.isDerivedFrom("App::Link")):
-                    #      obj.Placement = plac
-                    #  else:
-                    #      obj.Placement = sel[0].Placement.multiply(plac) #replace them at their global (absolute) placement
-                        # if hasattr(obj, 'LinkedObject'):
-                        #     print(obj.LinkedObject)
-                        #     if 'Part::PartFeature' not in str(obj.LinkedObject):
-                        #     # if obj.LinkedObject == 'Part::PartFeature':
-                        #         print(obj.LinkedObject,'here')
-                        #         obj.Placement = plac #replace them at their global (absolute) placement
-                        #     else:
-                        #         None
-                FreeCAD.ActiveDocument.commitTransaction() #commit transaction
-                FreeCAD.ActiveDocument.recompute()
+                doc.openTransaction("Absolufy-kSU") #open a transaction for undo management
+                if sel[0].TypeId == 'App::Part':
+                    # https://forum.freecad.org/viewtopic.php?p=461588#p461588
+                    center = sel[0].Shape.BoundBox.Center
+                    cent_Placement=sel[0].Placement
+                    cent_Placement.move(-center)
+                    for obj in sel[0].OutList: ## App.ActiveDocument.Objects: #going through active document objects
+                        if obj.TypeId == 'App::Part' and ('Board_Geoms_' in obj.Label or 'Step_Models_' in obj.Label):
+                            # print (obj.Label)
+                            comp_plc = obj.Placement.multiply(cent_Placement) #.inverse()) #sel[0].Placement.inverse()
+                            # comp_plc = obj.Placement.multiply(sel[0].Placement) #.inverse()) #sel[0].Placement.inverse()
+                            obj.Placement=comp_plc
+                            #sel[0].Placement.move(center)
+                            obj.Placement.move(center)
+                            found_kSU_PCB = True
+                    if found_kSU_PCB:
+                        print('applyied reset Part Placement on kSU pcb sub Parts')
+                        sel[0].Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,0),FreeCAD.Rotation(0,0,0)) #reset its placement to global document origin
+                if not found_kSU_PCB:
+                    for obj in sel: ## App.ActiveDocument.Objects: #going through active document objects
+                        if "Placement" in obj.PropertiesList and obj.TypeId != 'Sketcher::SketchObject' \
+                        and 'body object' not in str(obj.InList): #if object has a Placement property
+                            #FreeCAD.Console.PrintWarning(obj.TypeId)
+                            if hasattr(obj,'getGlobalPlacement'):
+                                currState[obj] = obj.getGlobalPlacement() #store the object pointer with its global placement
+                            #elif obj.TypeId == 'App::Link':
+                            #    obj.getLinkGlobalPlacement()
+                        for o in obj.OutListRecursive:
+                            if "Placement" in o.PropertiesList and o.TypeId != 'Sketcher::SketchObject' \
+                            and 'body object' not in str(o.InList): #if object has a Placement property
+                                #FreeCAD.Console.PrintWarning(o.TypeId)
+                                if hasattr(o,'getGlobalPlacement'):
+                                    currState[o] = o.getGlobalPlacement() #store the object pointer with its global placement
+                                elif o.TypeId == 'App::Link':
+                                    plc = Part.getShape(o.Parents[0][0],o.Parents[0][1]).Placement #getLinkGlobalPlacement(o)
+                                    # print(o.Label+' App::Link')
+                                    # print(plc)
+                                    #pp.inverse().multiply(plp)
+                                    if len(o.OutList) == 1:
+                                        if 'Part object' in str(o.OutList[0]): #Link Part container
+                                            #print(o.Parents[0][0].Label+' Part-base calc plac',o.Parents[0][0].Placement)
+                                            # print(o.OutList[0].Label+' Part-base calc plac',o.OutList[0].Placement)
+                                            # print(o.Label+' Part-App::Link plac',o.Placement)
+                                            #comp_plc = o.Placement.multiply(o.Parents[0][0].Placement.inverse()) # plc.inverse().multiply(o.Placement) #o.Parents[0][0].Placement.inverse().multiply(o.Placement)
+                                            comp_plc = o.Placement.multiply(o.OutList[0].Placement.inverse())
+                                            # print(o.Label+' Part-App::Link calc plac',comp_plc)
+                                            currState[o] = comp_plc
+                                        else:
+                                            currState[o] = plc
+                    # FreeCAD.ActiveDocument.openTransaction("Absolufy") #open a transaction for undo management
+                    for obj, plac in currState.items(): #going through all moveable objects
+                        if obj.isDerivedFrom("App::Part"): #if object is a part container
+                            obj.Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,0),FreeCAD.Rotation(0,0,0)) #reset its placement to global document origin
+                        # or obj.isDerivedFrom("App::Link")
+                        #elif len(obj.OutList) == 1:
+                        #    if 'Part object' in str(obj.OutList[0]): #Link Part container
+                        #        print(obj.Label+' Part-App::Link new plac',plac)
+                        #        obj.Placement = plac
+                        #        # obj.Placement = mainP_origP.inverse().multiply(plac)
+                        #    else: #for all other objects Link obj
+                        #        obj.Placement = plac
+                        elif obj.TypeId[:5] == "App::" and obj.TypeId != 'App::Link': #if object is another App type (typically an origin axis or plane)
+                            None #do nothing
+                        else: #for all other objects Link obj
+                            obj.Placement = plac
+                        #  elif not(obj.isDerivedFrom("App::Link")):
+                        #      obj.Placement = plac
+                        #  else:
+                        #      obj.Placement = sel[0].Placement.multiply(plac) #replace them at their global (absolute) placement
+                            # if hasattr(obj, 'LinkedObject'):
+                            #     print(obj.LinkedObject)
+                            #     if 'Part::PartFeature' not in str(obj.LinkedObject):
+                            #     # if obj.LinkedObject == 'Part::PartFeature':
+                            #         print(obj.LinkedObject,'here')
+                            #         obj.Placement = plac #replace them at their global (absolute) placement
+                            #     else:
+                            #         None
+                    print('applyied reset Part Placement base')
+                doc.commitTransaction() #commit transaction
+                doc.recompute()
             else:
                 FreeCAD.Console.PrintMessage("Placement already Zero\n")
         return
