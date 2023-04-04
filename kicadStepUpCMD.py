@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.3.4'
+ksuCMD_version__='2.3.5'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -154,6 +154,243 @@ ksuWB_icons_path =  os.path.join( ksuWBpath, 'Resources', 'icons')
 
 #__dir__ = os.path.dirname(__file__)
 #iconPath = os.path.join( __dir__, 'Resources', 'icons' )
+
+def getTopLevel (obj):
+    lvl=10000
+    top=None
+    if hasattr(obj,'InListRecursive'):
+        for ap in obj.InListRecursive:
+            if hasattr(ap,'Placement'):
+                if len(ap.InListRecursive) < lvl:
+                    top = ap
+                    lvl = len(ap.InListRecursive)
+            #else:
+            #    sayerr(obj.Label)
+        #top = obj
+    return top
+##
+def getSortedList (obj):
+    lvl=10000
+    completed=0
+    listUs=obj.InListRecursive
+    #sayerr('unsorted')
+    #for p in listUs:
+    #    print p.Label
+    listUsName=[]
+    for o in obj.InListRecursive:
+        listUsName.append(o.Name)
+    listS=[]
+    i=0
+    #for i, ap in enumerate(listUs):
+    #    top=ap
+    #    if len(ap.InListRecursive) < lvl:
+    #        lvl = len(ap.InListRecursive)
+    #    for ap2 in listUs[(i + 1):]:
+    #        if len(ap2.InListRecursive) < lvl:
+    #            top = ap2
+    #            lvl = len(ap2.InListRecursive)
+    #    listS.append(top)
+    #sayw(listUsName)
+    i=0
+    while len (listUsName) > 0:
+        for apName in listUsName:
+            #apName=listUsName[i]
+            ap=FreeCAD.ActiveDocument.getObject(apName)
+            if len(ap.InListRecursive) < lvl:
+                lvl = len(ap.InListRecursive)
+                top = ap
+                topName = ap.Name
+        listS.append(top)
+        #print topName
+        idx=listUsName.index(topName)
+        #sayw(idx)
+        listUsName.pop(idx)
+        lvl=10000
+        #sayerr(listUsName)
+
+    return listS
+##
+def getNormalPlacementHierarchy (sel0):
+    """get normal at face and placement relative to hierarchy
+       of first selection object/face
+       return normal, placement, topObj, bbox center absolute"""
+
+    import Draft
+    from FreeCAD import Base
+    use_hierarchy = True
+    
+    Obj=sel0.Object
+    subObj=sel0.SubObjects[0]
+    edge_op=0
+
+    top_level_obj = getTopLevel(Obj)
+    if top_level_obj is not None: #hierarchy object
+        # say('Hierarchy obj')
+        pad=0
+        open_circle=False
+        if 'Face' in str(subObj):
+            # say('Hierarchy obj Face')
+            pad=0 #face
+        elif 'Edge' in str(subObj):
+            wire = Part.Wire(subObj)
+            if subObj.isClosed():
+                subObj = Part.Face(wire)
+            else:
+                # sayerr(str(subObj.Curve))
+                if 'Circle' in str(subObj.Curve):
+                    # sayerr('Circle radius '+str(subObj.Curve.Radius))
+                    #f1=subObj.Shape.Faces[0]
+
+                    wf = Part.Face(Part.Wire(subObj))
+                    Part.show(wf)
+                    wf_name=FreeCAD.ActiveDocument.ActiveObject.Name
+
+                    dirz=wf.normalAt(0,0)
+                    # ccircle = Part.makeCircle(r, Base.Vector(cnt), Base.Vector(dirz))
+                    # > Circle (Radius : 10, Position : (10, 0, 0), Direction : (1, 0, 0))
+                    ccircle = Part.makeCircle(subObj.Curve.Radius, Base.Vector(subObj.Curve.Center), Base.Vector(dirz))
+                    #ccircle_face = Part.Face(ccircle)
+                    #Part.show(ccircle_face)
+                    #ccircle_face_name=FreeCAD.ActiveDocument.ActiveObject.Name
+                    #FreeCAD.ActiveDocument.getObject(ccircle_face_name).Label='ccircle_face'
+                    Part.show(ccircle)
+                    ccircle_name=FreeCAD.ActiveDocument.ActiveObject.Name
+                    FreeCAD.ActiveDocument.getObject(ccircle_name).Label='ccircle'
+                    f2=Part.Face(Part.Wire((FreeCAD.ActiveDocument.getObject(ccircle_name).Shape.Edges[0])))
+                    Part.show(f2)
+                    f2_name=FreeCAD.ActiveDocument.ActiveObject.Name
+                    FreeCAD.ActiveDocument.removeObject(ccircle_name)
+                    FreeCAD.ActiveDocument.removeObject(wf_name)
+                    # ccircle.Curve
+                    # > Circle (Radius : 10, Position : (10, 0, 0), Direction : (1, 0, 0))
+                    bbxCenter = subObj.Curve.Center
+
+                    norm = f2.normalAt(0,0)
+                    subObj = f2
+                    FreeCAD.ActiveDocument.removeObject(f2_name)
+                    #PC1=Draft.makePoint(subObj.Curve.Center)
+                    #w.close
+                    open_circle=True
+                else:
+                    subObj = wire
+                #subObj = wire
+                edge_op=1
+            pad=1 #edge
+        if use_hierarchy:
+            nwshp = subObj.copy()
+            pOriginal=subObj.Placement
+            if 'Datum' not in str(Obj.Name):
+                p0 =  FreeCAD.Placement (FreeCAD.Vector(0,0,0), FreeCAD.Rotation(0,0,0), FreeCAD.Vector(0,0,0))
+                nwshp.Placement=p0
+            r=[]
+            t=nwshp.copy()
+            #resetting Placement
+            for i in t.childShapes():
+                c=i.copy()
+                c.Placement=t.Placement.multiply(c.Placement)
+                r.append((i,c))
+            acpy=t.replaceShape(r)
+            acpy.Placement=FreeCAD.Placement()
+            if hasattr(Obj,'InListRecursive'):
+                lrl=len(Obj.InListRecursive)
+                # for o_ in Obj.InListRecursive:
+                #     say(o_.Name)
+                if len(Obj.InList):
+                    top_level_obj = getTopLevel(Obj)
+                    #sayerr(top_level_obj[j].Label)
+                    listSorted=getSortedList (Obj)
+                    #for p in listSorted:
+                    #    print p.Name
+                    #print listSorted, ' Sorted; Top ', top_level_obj[j]
+                    #stop
+                    for i in range (0,lrl):
+                        if hasattr(listSorted[i],'Placement'):
+                            #if 'Plane' not in ob.InListRecursive[i].TypeId:
+                            if listSorted[i].hasExtension("App::GeoFeatureGroupExtension"):
+                                acpy.Placement=acpy.Placement.multiply(listSorted[i].Placement)
+            # say(acpy.Placement)
+            #acpy.Placement=acpy.Placement.multiply(pOriginal)
+            #acpy.Placement=acpy.Placement.multiply(pOriginal)
+            if pad == 0: #note making wire from edge already resets the original placement
+                acpy.Placement=acpy.Placement.multiply(pOriginal)
+            nwshp.Placement = acpy.Placement
+            if open_circle==True:
+                nwnorm = nwshp.normalAt(0,0)
+            elif edge_op==1:
+                nwnorm = (nwshp.Vertex2.Point - nwshp.Vertex1.Point).normalize()
+            else:
+                nwnorm = nwshp.normalAt(0,0)
+            bbxCenter = nwshp.BoundBox.Center
+        else:
+            nwshp = subObj.copy()
+            if open_circle==True:
+                nwnorm = nwshp.normalAt(0,0)
+            elif edge_op==1:
+                nwnorm = (subObj.Vertex2.Point - subObj.Vertex1.Point).normalize()
+            else:
+                nwnorm = nwshp.normalAt(0,0)
+            bbxCenter = nwshp.BoundBox.Center
+
+        return nwnorm, nwshp.Placement, top_level_obj, bbxCenter
+
+    elif 'Face' in str(subObj) or 'Edge' in str(subObj): # not in hierarchy
+        # say('Part obj')
+        pad=0 #face
+        open_circle=False
+        if 'Edge' in str(subObj):
+            wire = Part.Wire(subObj)
+            if subObj.isClosed():
+                subObj = Part.Face(wire)
+                norm = subObj.normalAt(0,0)
+                bbxCenter = subObj.BoundBox.Center
+            else:
+                # sayerr(str(subObj.Curve))
+                if 'Circle' in str(subObj.Curve):
+                    # sayerr('Circle radius '+str(subObj.Curve.Radius))
+                    #f1=subObj.Shape.Faces[0]
+
+                    wf = Part.Face(Part.Wire(subObj))
+                    Part.show(wf)
+                    wf_name=FreeCAD.ActiveDocument.ActiveObject.Name
+
+                    dirz=wf.normalAt(0,0)
+                    # ccircle = Part.makeCircle(r, Base.Vector(cnt), Base.Vector(dirz))
+                    # > Circle (Radius : 10, Position : (10, 0, 0), Direction : (1, 0, 0))
+                    ccircle = Part.makeCircle(subObj.Curve.Radius, Base.Vector(subObj.Curve.Center), Base.Vector(dirz))
+                    #ccircle_face = Part.Face(ccircle)
+                    #Part.show(ccircle_face)
+                    #ccircle_face_name=FreeCAD.ActiveDocument.ActiveObject.Name
+                    #FreeCAD.ActiveDocument.getObject(ccircle_face_name).Label='ccircle_face'
+                    Part.show(ccircle)
+                    ccircle_name=FreeCAD.ActiveDocument.ActiveObject.Name
+                    FreeCAD.ActiveDocument.getObject(ccircle_name).Label='ccircle'
+                    f2=Part.Face(Part.Wire((FreeCAD.ActiveDocument.getObject(ccircle_name).Shape.Edges[0])))
+                    Part.show(f2)
+                    f2_name=FreeCAD.ActiveDocument.ActiveObject.Name
+                    FreeCAD.ActiveDocument.removeObject(ccircle_name)
+                    FreeCAD.ActiveDocument.removeObject(wf_name)
+                    # ccircle.Curve
+                    # > Circle (Radius : 10, Position : (10, 0, 0), Direction : (1, 0, 0))
+                    bbxCenter = subObj.Curve.Center
+
+                    norm = f2.normalAt(0,0)
+                    #subObj = f2
+                    FreeCAD.ActiveDocument.removeObject(f2_name)
+                    #PC1=Draft.makePoint(subObj.Curve.Center)
+                    #w.close
+                else:
+                    norm = (subObj.Vertex2.Point - subObj.Vertex1.Point).normalize()
+                    bbxCenter = subObj.BoundBox.Center
+            pad=1 #edge
+        else:
+            norm = subObj.normalAt(0,0)
+            bbxCenter = subObj.BoundBox.Center
+        top_level_obj=None
+        #sayerr(str(norm)+str(Obj.Placement)+str(bbxCenter)+str(top_level_obj))
+
+        return norm, Obj.Placement, top_level_obj, bbxCenter
+
+##
 
 
 def ksu_edges2sketch():
@@ -1907,7 +2144,7 @@ class ksuToolsResetPartPlacement:
                     cent_Placement=sel[0].Placement
                     cent_Placement.move(-center)
                     for obj in sel[0].OutList: ## App.ActiveDocument.Objects: #going through active document objects
-                        if obj.TypeId == 'App::Part' and ('Board_Geoms_' in obj.Label or 'Step_Models_' in obj.Label):
+                        if obj.TypeId == 'App::Part' and ('Board_Geoms_' in obj.Label or 'Step_Models_' in obj.Label or 'Step_Virtual_Models_' in obj.Label):
                             # print (obj.Label)
                             comp_plc = obj.Placement.multiply(cent_Placement) #.inverse()) #sel[0].Placement.inverse()
                             # comp_plc = obj.Placement.multiply(sel[0].Placement) #.inverse()) #sel[0].Placement.inverse()
@@ -4567,5 +4804,86 @@ class ksuToolsImportFootprint:
         
 FreeCADGui.addCommand('ksuToolsImportFootprint',ksuToolsImportFootprint())
 ##
+class ksuToolsAlignView:
+    "ksu tools AlignView to Face"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'AlignView2Face.svg') , # the name of a svg file available in the resources
+                     'MenuText': "AlignView to Face" ,
+                     'ToolTip' : "ksu AlignView to Face"}
+ 
+    def IsActive(self):
+        doc = FreeCAD.ActiveDocument
+        if doc is not None:
+            if FreeCADGui.Selection.getSelectionEx():
+                sl=FreeCADGui.Selection.getSelectionEx()
+                if len (sl[0].SubObjects)==1:
+                    if 'Vertex' not in str(sl[0].SubObjects[0]) and 'Edge' not in str(sl[0].SubObjects[0]):
+                        return True
+        return
+ 
+    def Activated(self):
+        # do something here...
+        AlignView2Face()
+                
+FreeCADGui.addCommand('ksuToolsAlignView',ksuToolsAlignView())
+##
+def AlignView2Face():
+    """ macro Macro_Align_View_to_Face
+        App:Part and Body compliant"""
+    
+    inv_view=False
+    
+    def pointAt(normal, up):
+        z = normal
+        y = up
+        x = y.cross(z)
+        y = z.cross(x)
+        rot = FreeCAD.Matrix()
+        rot.A11 = x.x
+        rot.A21 = x.y
+        rot.A31 = x.z
+        rot.A12 = y.x
+        rot.A22 = y.y
+        rot.A32 = y.z
+        rot.A13 = z.x
+        rot.A23 = z.y
+        rot.A33 = z.z
+        return FreeCAD.Placement(rot).Rotation
+
+    #try:
+    sl=FreeCADGui.Selection.getSelectionEx()
+    if len (sl)>0:
+        if len (sl[0].SubObjects)>0:
+            if 'Vertex' not in str(sl[0].SubObjects[0]) and 'Edge' not in str(sl[0].SubObjects[0]):
+                # QtCore.QTimer.singleShot(doubleClickDly,onDoubleClick)
+                ob=sl[0]
+                #faceSel = ob.SubObjects[0]
+                norm, plcm, top, bbC = getNormalPlacementHierarchy (sl[0])
+                cam = FreeCADGui.ActiveDocument.ActiveView.getCameraNode()
+
+                if inv_view==True: #:
+                    # sayerr('double click: inversion View')
+                    #dirz = faceSel.normalAt(0,0)*-1
+                    dirz = norm*-1
+                else:
+                    # sayw('single click: standard View')
+                    #dirz = faceSel.normalAt(0,0)
+                    dirz = norm
+                if dirz.z == 1 :
+                    rot = pointAt(dirz, FreeCAD.Vector(0.0,1.0,0.0))
+                elif dirz.z == -1 :
+                    rot = pointAt(dirz, FreeCAD.Vector(0.0,1.0,0.0))
+                else :
+                    rot = pointAt(dirz, FreeCAD.Vector(0.0,0.0,-1.0))
+
+                cam.orientation.setValue(rot.Q)
+                #FreeCADGui.SendMsgToActiveView("ViewSelection")
+                FreeCADGui.SendMsgToActiveView("ViewFit")
+                inv_view = True
+                for s in FreeCADGui.Selection.getSelection():
+                    FreeCADGui.Selection.removeSelection(s)
+##
+
 
 #####

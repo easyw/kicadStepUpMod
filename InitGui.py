@@ -10,11 +10,11 @@
 #*  Kicad STEPUP (TM) is a TradeMark and cannot be freely usable            *
 #*                                                                          *
 
-ksu_wb_version='v 10.18.3'
+ksu_wb_version='v 10.18.4'
 global myurlKWB, ksuWBpath
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=593 #  v10.18.3
+mycommitsKWB=594 #  v10.18.4
 global verKSU
 verKSU="10.8.2"
 
@@ -175,7 +175,7 @@ class KiCadStepUpWB ( Workbench ):
         self.appendToolbar("ksu PushPull", ksuTB)
         combined_path = '\t'.join(sys.path)
         if 'Manipulator' in combined_path:
-            ksuDTB=["ksuToolsAligner","ksuToolsMover","ksuToolsCaliper","Separator","ksuToolsDefeaturingTools"]
+            ksuDTB=["ksuToolsAligner","ksuToolsMover","ksuToolsCaliper", "ksuToolsAlignView","Separator","ksuToolsDefeaturingTools"]
             self.appendToolbar("ksu Design Tools", ksuDTB)
         Hlp_TB = ["ksuToolsToggleTreeView", "Restore_Transparency", "ksuToolsTransparencyToggle", "ksuToolsHighlightToggle",\
                             "ksuToolsVisibilityToggle", "ksuToolsStepImportModeSTD", "ksuToolsStepImportModeComp",\
