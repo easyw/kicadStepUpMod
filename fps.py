@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global fps_version
-fps_version = '1.0.6'
+fps_version = '1.0.7'
 
 dvp=False #True
 if dvp:
@@ -384,7 +384,7 @@ def addfootprint(fname = None):
         pcb = kicad_parser.KicadFcad(filename,via_skip_hole=False,via_bound=0)
         if del_file:
             os.remove(filename)
-            consolePrint('file removed')
+            consolePrint('file removed\n')
         doc=FreeCAD.ActiveDocument
         if doc is None:
             doc=FreeCAD.newDocument()

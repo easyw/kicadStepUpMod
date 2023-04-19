@@ -10,13 +10,13 @@
 #*  Kicad STEPUP (TM) is a TradeMark and cannot be freely usable            *
 #*                                                                          *
 
-ksu_wb_version='v 10.18.6'
+ksu_wb_version='v 10.18.8'
 global myurlKWB, ksuWBpath
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=596 #  v10.18.6
+mycommitsKWB=597 #  v10.18.8
 global verKSU
-verKSU="10.8.2"
+verKSU="10.8.3"
 
 import FreeCAD, FreeCADGui, Part, os, sys
 import re, time
@@ -86,9 +86,13 @@ class kSU_MainPrefPage:
         header_txt="""<font color=GoldenRod><b>kicad StepUp version """+verKSU+"""</font></b><br>"""
         help_t = header_txt+hlp.help_txt
         self.form = QtGui.QWidget()
+        scaling = self.form.logicalDpiX() / 96.0  # self is of QWidget
+        print ('scaling aux page',scaling)        
         self.form.setWindowTitle("kSU \'Help Tips\'")
         self.form.verticalLayoutWidget = QtGui.QWidget(self.form)
-        self.form.verticalLayoutWidget.setGeometry(QtCore.QRect(0, 0, 530, 650)) #top corner, width, height
+        # w = 560*scaling; h = 630*scaling
+        # self.form.verticalLayoutWidget.setGeometry(QtCore.QRect(0, 0, w, h)) #top corner, width, height
+        self.form.verticalLayoutWidget.setGeometry(QtCore.QRect(0, 0, 560, 630)) #top corner, width, height
         self.form.verticalLayoutWidget.setObjectName("verticalLayoutWidget")
         self.form.verticalLayout = QtGui.QVBoxLayout(self.form.verticalLayoutWidget)
         self.form.verticalLayout.setContentsMargins(0, 0, 0, 0)
@@ -98,7 +102,8 @@ class kSU_MainPrefPage:
         #self.form.label.setText("Hello world!")
         #self.form.verticalLayout.addWidget(self.form.label)
         self.form.textEdit = QtGui.QTextBrowser(self.form.verticalLayoutWidget)
-        self.form.textEdit.setGeometry(QtCore.QRect(00, 10, 530, 640)) #top corner, width, height
+        # self.form.textEdit.setGeometry(QtCore.QRect(00, 10, w-20, h-20)) #top corner, width, height
+        self.form.textEdit.setGeometry(QtCore.QRect(00, 10, 540, 610)) #top corner, width, height
         self.form.textEdit.setOpenExternalLinks(True)
         self.form.textEdit.setObjectName("textEdit")
         self.form.textEdit.setText(help_t)        
@@ -198,6 +203,9 @@ class KiCadStepUpWB ( Workbench ):
         
         #FreeCADGui.addPreferencePage( a2plib.pathOfModule() + '/GuiA2p/ui/a2p_prefs.ui','A2plus' )
         if pref_page:
+            mw1 = FreeCADGui.getMainWindow()
+            scaling = mw1.logicalDpiX() / 96.0  # self is of QWidget
+            print('scaling main',scaling)
             FreeCADGui.addPreferencePage(
                 ksuWB_ui_path + '/ksu_prefs.ui',
                 'kicadStepUpGui'

@@ -29,7 +29,7 @@ __url__ =    "http://www.freecadweb.org"
 
 import os,zipfile,FreeCAD,tempfile,sys
 
-___ZipVersion___ = "1.0.4"
+___ZipVersion___ = "1.0.5"
 
 try:
     import __builtin__ as builtin #py2
@@ -145,4 +145,21 @@ def read(filename):
             except OSError:
                 FreeCAD.Console.PrintError("error on removing "+tempfilepath+" file")
             pass
-            
+        elif '.kicad_mod' in f.lower() or '.kicad_pcb' in f.lower(): #\
+                    #or '.igs' in f.lower() or '.iges' in f.lower():
+            file_content = z.read(f)
+            print ('extracted ', f)
+            fname=f
+            print('fname ',f)
+            tempdir = tempfile.gettempdir() # get the current temporary directory
+            tempfilepath = os.path.join(tempdir,fname) # + ext)
+            z.extract(fname, tempdir)
+            doc=FreeCAD.ActiveDocument
+            import kicadStepUptools 
+            kicadStepUptools.open(tempfilepath,doc.Name)
+            FreeCADGui.SendMsgToActiveView("ViewFit")
+            try:
+                os.remove(tempfilepath)
+            except OSError:
+                FreeCAD.Console.PrintError("error on removing "+tempfilepath+" file")
+            pass            

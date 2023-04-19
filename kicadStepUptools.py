@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.8.2"
+___ver___ = "10.8.3"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -13492,7 +13492,8 @@ if len(args) >= 3:
             #say("opening "+ fullFileName)
             #cfgParsWrite(configFilePath)
             #cfg_update_all()
-            onLoadFootprint(fullFileNamefp)
+            import fps
+            fps.addfootprint(fullFileNamefp)
         else:
             fullfilePath=filePath+os.sep+fname+".kicad_mod"
             #say(fullfilePath)
@@ -13509,7 +13510,9 @@ if len(args) >= 3:
                 #cfg_update_all()
                 #print(fp_loaded)
                 if not (fp_loaded):
-                    onLoadFootprint(fullfilePath)
+                    import fps
+                    fps.addfootprint(fullfilePath)
+                    #  onLoadFootprint(fullfilePath)
             else:
                 sayw("missing "+ fullfilePath)
                 sayw("missing "+ fullFileName)
@@ -14348,7 +14351,9 @@ class Ui_DockWidget(object):
         sayw("kicad StepUp version "+str(___ver___))
         #say("tolerance on vertex = "+str(edge_tolerance))
         say("tolerance on vertex applied")
-        onLoadFootprint()
+        import fps
+        fps.addfootprint()
+        # onLoadFootprint()
 ##
     def on_cb_materials_clicked(self):
         global enable_materials

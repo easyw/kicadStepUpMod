@@ -340,7 +340,7 @@ def addtracks(fname = None):
         import kicad_parser 
         # reload_lib(kicad_parser)
         #pcb = kicad_parser.KicadFcad(filename,via_skip_hole=False,via_bound=0)
-        pcb = kicad_parser.KicadFcad(filename,merge_pads=False)
+        pcb = kicad_parser.KicadFcad(filename,merge_pads=False)  # creating multiple shape, one each pad item
         # pcb = kicad_parser.KicadFcad(filename,merge_pads=True)
         #kicad.KicadFcad(filename,via_skip_hole=False,via_bound=1)
         ## pcb = kicad_parser.KicadFcad(filename, arc_fit_accuracy=1e-4) #to increase accuracy 
@@ -613,6 +613,6 @@ def addtracks(fname = None):
         
         if FreeCAD.ActiveDocument is not None:
             FreeCADGui.SendMsgToActiveView("ViewFit")
-            FreeCADGui.ActiveDocument.activeView().viewAxonometric()
+            # FreeCADGui.ActiveDocument.activeView().viewAxonometric()
             return add_toberemoved
 ###

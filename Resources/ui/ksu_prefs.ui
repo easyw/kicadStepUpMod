@@ -13,18 +13,18 @@
   <property name="windowTitle">
    <string>General</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout1">
+  <layout class="QGridLayout" name="gridLayout1" rowstretch="0" rowminimumheight="0">
    <property name="leftMargin">
-    <number>9</number>
+    <number>10</number>
    </property>
    <property name="topMargin">
-    <number>9</number>
+    <number>12</number>
    </property>
    <property name="rightMargin">
-    <number>9</number>
+    <number>10</number>
    </property>
    <property name="bottomMargin">
-    <number>9</number>
+    <number>10</number>
    </property>
    <property name="spacing">
     <number>6</number>
@@ -53,8 +53,8 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>-38</y>
-        <width>519</width>
+        <y>0</y>
+        <width>517</width>
         <height>900</height>
        </rect>
       </property>
