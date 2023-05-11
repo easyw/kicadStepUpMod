@@ -254,6 +254,11 @@ or 'KICAD6_3DMODEL_DIR'</string>
             </property>
             <item>
              <property name="text">
+              <string>LightGreen</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
               <string>Green</string>
              </property>
             </item>

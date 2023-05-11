@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global tracks_version
-tracks_version = '2.5.8'
+tracks_version = '2.5.9'
 
 import kicad_parser
 #import kicad_parser; import importlib; importlib.reload(kicad_parser)
@@ -17,6 +17,9 @@ global start_time, last_pcb_path, min_drill_size
 global FC_export_min_version
 FC_export_min_version="11670"  #11670 latest JM
 
+# from kicadStepUptools import PLine
+from kicad_parser import makeVect, make_gr_rect, make_gr_poly, makeThickLine
+from fcad_parser import unquote #maui
 
 global use_AppPart, use_Links, use_LinkGroups
 use_AppPart=False # False
@@ -316,8 +319,8 @@ def addtracks(fname = None):
         pg.SetString("last_pcb_path", make_string(last_pcb_path)) # py3 .decode("utf-8")
         prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
         pcb_color_pos = prefs.GetInt('pcb_color')
-        #pcb_color_values = [light_green,blue,red,purple,darkgreen,darkblue,lightblue,yellow,black,white]
-        assign_col=['#41c382','#2474cf','#ff4000','#9a1a85','#3c7f5d','#426091','#005fff','#fff956','#4d4d4d','#f0f0f0']
+        #pcb_color_values = [light_green,green,blue,red,purple,darkgreen,darkblue,lightblue,yellow,black,white]
+        assign_col=['#41c382','#5d917a','#2474cf','#ff4000','#9a1a85','#3c7f5d','#426091','#005fff','#fff956','#4d4d4d','#f0f0f0']
         #print(pcb_color_pos)
         trk_col = (assign_col[pcb_color_pos])
         if pcb_color_pos == 9:
@@ -328,7 +331,7 @@ def addtracks(fname = None):
         # pcbThickness = float(mypcb.general.thickness)
         #print (mypcb.general.thickness)
         #print(mypcb.layers)
-        
+        pcb_sk = None
         #if version>=4:
         Top_lvl=0;Bot_lvl=31
         #for lynbr in mypcb.layers: #getting layers name
@@ -440,6 +443,124 @@ def addtracks(fname = None):
                 add_toberemoved.append([tracks,tracks_])
                 topTracks = new_obj
                 #stop
+        
+        if 0:
+            ply_area=[]
+            for lp in mypcb.gr_poly: #pcb area polylines    
+                if 'F.Cu' not in lp.layer:
+                    continue
+                # print(lp, lp.fill)
+                if lp.fill != 'solid':
+                    continue
+                # print('solid')
+                ply_lines = []
+                edges=[]
+                ind = 0
+                l = len(lp.pts.xy)
+                # print(l)
+                for p in lp.pts.xy:
+                    if ind == 0:
+                        # line1=Part.Edge(PLine(FreeCAD.Base.Vector(lp.pts.xy[l-1][0],-lp.pts.xy[l-1][1],0), FreeCAD.Base.Vector(lp.pts.xy[0][0],-lp.pts.xy[0][1],0)))
+                        # edges.append(line1);
+                        line2=Part.Edge(PLine(FreeCAD.Base.Vector(lp.pts.xy[l-1][0],-lp.pts.xy[l-1][1],0), FreeCAD.Base.Vector(lp.pts.xy[0][0],-lp.pts.xy[0][1],0)))
+                        ply_lines.append(line2)
+                    else:
+                        # line1=Part.Edge(PLine(FreeCAD.Base.Vector(lp.pts.xy[ind-1][0],-lp.pts.xy[ind-1][1],0), FreeCAD.Base.Vector(lp.pts.xy[ind][0],-lp.pts.xy[ind][1],0)))
+                        # edges.append(line1);
+                        line2=Part.Edge(PLine(FreeCAD.Base.Vector(lp.pts.xy[ind-1][0],-lp.pts.xy[ind-1][1],0), FreeCAD.Base.Vector(lp.pts.xy[ind][0],-lp.pts.xy[ind][1],0)))
+                        ply_lines.append(line2)
+                    ind+=1
+                
+                if len(ply_lines)>0:
+                    #w=Part.Wire(edges)
+                    #Part.show(Part.Wire(edges))
+                    wl=Part.Wire(ply_lines)
+                    # Part.show(Part.Wire(ply_lines))
+                    # fc=Part.makeFace(w,'Part::FaceMakerSimple')
+                    fc=Part.makeFace(wl,'Part::FaceMakerSimple')
+                    ply_area.append(fc)
+                
+            if len(ply_area) > 0:
+                Part.show(Part.makeCompound(ply_area))
+
+        ws=[]
+        wst=[]
+        for j,pl in enumerate(mypcb.gr_poly): #pcb area polylines          
+            if unquote(pl.layer) == 'F.Cu':
+                pln=Part.Wire(make_gr_poly(pl))
+                if pl.fill == 'solid':
+                    ws.append((pln))
+                if hasattr(pl,'stroke'):
+                    width = pl.stroke.width
+                else:
+                    width = pl.width
+                for e in pln.Edges:
+                    #aco=_wire(e,self.layer)
+                    wst.append(makeThickLine(makeVect([e.Vertexes[0].X,-e.Vertexes[0].Y]),makeVect([e.Vertexes[1].X,-e.Vertexes[1].Y]),width/2.0))
+                # cp = Part.makeCompound(wst+ws)
+                # fc=Part.makeFace(cp,'Part::FaceMakerSimple')
+                # Part.show(fc)
+        #if len (ws)>0:
+        #    fc=Part.makeFace(ws,'Part::FaceMakerSimple')
+        #    Part.show(fc)
+        if len (wst)>0 or len(ws)>0:
+            if 0:
+                f=Part.makeFace(wst[0],'Part::FaceMakerSimple')
+                f1=Part.makeFace(wst[1],'Part::FaceMakerSimple')
+                f2=f.fuse(f1)
+                Part.show(f2)
+                Part.show(f)
+                Part.show(f1)
+                for w in wst[1:]:
+                    f.fuse(Part.makeFace(w,'Part::FaceMakerSimple'))
+                Part.show(f)
+            fc=Part.makeFace(Part.makeCompound(wst+ws),'Part::FaceMakerSimple')
+            Part.show(fc)
+        print('TBD: gr_rect,gr_poly use stroke width (w makethickline)')
+        #stop
+        gr_rects=[]
+        for r in mypcb.gr_rect: #pcb area from rect
+            if 'F.Cu' not in r.layer:
+                continue
+            if r.fill != 'solid':
+                continue
+            # rct = Part.show(make_gr_rect(r))
+            if 0:
+                l1=Part.Edge(PLine(FreeCAD.Base.Vector(r.start[0],-r.start[1],0), FreeCAD.Base.Vector(r.end[0],-r.start[1],0)))
+                l2=Part.Edge(PLine(FreeCAD.Base.Vector(r.end[0],-r.start[1],0), FreeCAD.Base.Vector(r.end[0],-r.end[1],0)))
+                l3=Part.Edge(PLine(FreeCAD.Base.Vector(r.end[0],-r.end[1],0), FreeCAD.Base.Vector(r.start[0],-r.end[1],0)))
+                l4=Part.Edge(PLine(FreeCAD.Base.Vector(r.start[0],-r.end[1],0), FreeCAD.Base.Vector(r.start[0],-r.start[1],0)))
+                w=Part.Wire([l1,l2,l3,l4])
+                #Part.show(w)
+                fc=Part.makeFace(w,'Part::FaceMakerSimple')
+                #Part.show(fc)
+                gr_rects.append(fc)
+            fc = Part.makeFace(make_gr_rect(r),'Part::FaceMakerSimple')
+            gr_rects.append(fc)
+
+        if len(gr_rects) > 0:
+            Part.show(Part.makeCompound(gr_rects))
+        
+        gr_circles=[]
+        for c in mypcb.gr_circle: #pcb area from circles
+            if 'F.Cu' not in c.layer:
+                continue
+            if c.fill != 'solid':
+                continue        
+            width = c.stroke.width
+            center = makeVect(c.center)
+            end = makeVect(c.end)
+            r = center.distanceToPoint(end)
+            c = FreeCAD.Base.Vector(0,0,0)
+            d = FreeCAD.Base.Vector(0,0,1)
+            cr1=(Part.makeFace(Part.makeCircle(r+width*0.5, center),'Part::FaceMakerSimple'))
+            gr_circles.append(cr1)
+        if len(gr_circles) > 0:
+            Part.show(Part.makeCompound(gr_circles))
+            
+        print('TBD: gr_rect,gr_poly use stroke width (w makethickline), FC build date') 
+        #stop
+        
         if FreeCAD.ActiveDocument is not None:
             objsNum = len(FreeCAD.ActiveDocument.Objects)
         #pcb.makeZones(shape_type='face',thickness=0.05, fit_arcs=True,holes=True) #,prefix='')
@@ -460,18 +581,47 @@ def addtracks(fname = None):
                 topZones = new_obj
             if len (FreeCAD.ActiveDocument.getObjectsByLabel('Pcb'+ftname_sfx)) >0:
                 #PCB_Sketch_5737
-                pcb_sk = FreeCAD.ActiveDocument.getObject('PCB_Sketch'+ftname_sfx)
+                # pcb_sk = FreeCAD.ActiveDocument.getObject('PCB_Sketch'+ftname_sfx)
+                pcb_ = FreeCAD.ActiveDocument.getObject('Pcb'+ftname_sfx)
+                area_max=0
+                f_max=''
+                for f in pcb_.Shape.Faces:
+                    # print (f.Area)
+                    if f.Area > area_max:
+                        area_max=f.Area
+                        f_max=f
+                        #print (area_max)
+                    #print('area_max=',area_max)
                 ### check if BBOx pcb > BBOx tracks
+                # Part.show(f_max.OuterWire)
+                #Part.show(Part.makeFace(f_max.OuterWire,'Part::FaceMakerSimple').extrude(FreeCAD.Vector(0.0, 0.0, -pcbThickness)))
+                if 0: #max lenth esternal perimeter 
+                    l_max=0
+                    w_max=''
+                    for w in f_max.Wires:
+                        if w.Length > l_max:
+                            l_max=w.Length
+                            w_max=w
+                    pcb_sk = Draft.makeSketch(w_max,autoconstraints=True)
+                pcb_sk = Draft.makeSketch(f_max,autoconstraints=True)
+                # pcb_sk = Draft.makeSketch(f_max.OuterWire,autoconstraints=True)  # esternal perimeter 
+                
+                add_toberemoved.append([pcb_sk])
+                
+                #stop
                 if topPads is not None:
                     topPads.Placement = FreeCAD.ActiveDocument.getObject('Pcb'+ftname_sfx).Placement
                     #if (topPads.Shape.BoundBox.XLength > pcb_sk.Shape.BoundBox.XLength) or \
                     #        (topPads.Shape.BoundBox.YLength > pcb_sk.Shape.BoundBox.YLength):
+                    
                     if (topPads.Shape.BoundBox.XMax > pcb_sk.Shape.BoundBox.XMax) or \
                             (topPads.Shape.BoundBox.XMin < pcb_sk.Shape.BoundBox.XMin) or \
                             (topPads.Shape.BoundBox.YMax > pcb_sk.Shape.BoundBox.YMax) or \
                             (topPads.Shape.BoundBox.YMin < pcb_sk.Shape.BoundBox.YMin):
                         topPads_cut_Name, temp_tobedeleted = cut_out_tracks(pcb_sk,topPads,ftname_sfx)
                         topPads = FreeCAD.ActiveDocument.getObject(topPads_cut_Name)
+                        print('TBD pcb sketch open due to edgecuts in fp')
+                        # Part.show(App.ActiveDocument.Cut.Shape.Faces[64].OuterWire)
                         add_toberemoved.append(temp_tobedeleted)
                     topPads.Placement.Base.z+=2*deltaz
                 if topTracks is not None:
@@ -572,7 +722,24 @@ def addtracks(fname = None):
                 botZones = new_obj
             if len (FreeCAD.ActiveDocument.getObjectsByLabel('Pcb'+ftname_sfx)) >0:
                 #PCB_Sketch_5737
-                pcb_sk = FreeCAD.ActiveDocument.getObject('PCB_Sketch'+ftname_sfx)
+                # pcb_sk = FreeCAD.ActiveDocument.getObject('PCB_Sketch'+ftname_sfx)
+                if pcb_sk is None:
+                    pcb_ = FreeCAD.ActiveDocument.getObject('Pcb'+ftname_sfx)
+                    area_max=0
+                    f_max=''
+                    for f in pcb_.Shape.Faces:
+                        # print (f.Area)
+                        if f.Area > area_max:
+                            area_max=f.Area
+                            f_max=f
+                            # print (area_max)
+                        # print('area_max=',area_max)
+                    ### check if BBOx pcb > BBOx tracks
+                    # Part.show(f_max.OuterWire)
+                    #Part.show(Part.makeFace(f_max.OuterWire,'Part::FaceMakerSimple').extrude(FreeCAD.Vector(0.0, 0.0, -pcbThickness)))
+                    # pcb_sk = Draft.makeSketch(f_max.OuterWire,autoconstraints=True) # external perimeter
+                    pcb_sk = Draft.makeSketch(f_max,autoconstraints=True)
+                    add_toberemoved.append([pcb_sk])
                 ### check if BBOx pcb > BBOx tracks
                 if botPads is not None:
                     botPads.Placement = FreeCAD.ActiveDocument.getObject('Pcb'+ftname_sfx).Placement

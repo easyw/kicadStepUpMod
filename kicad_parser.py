@@ -34,7 +34,7 @@ from fcad_parser import unquote #maui
 
 
 # from kicadStepUptools import KicadPCB,SexpList
-__kicad_parser_version__ = '2.2.4'
+__kicad_parser_version__ = '2.2.8'
 # https://github.com/realthunder/fcad_pcb/issues/20#issuecomment-586042341
 # FreeCAD.Console.PrintLog('kicad_parser_version '+__kicad_parser_version__+'\n') # maui 
 # print('kicad_parser_version '+__kicad_parser_version__)
@@ -609,6 +609,7 @@ class KicadFcad:
                 'holes':{0:makeColor(170,255,127)},
                 'NetTie':{0:makeColor(255,114,12)}, 
                 'Dwgs.User':{0:makeColor(188,188,188)}, # maui end color
+                'Cmts.User':{0:makeColor(0,170,255)}, # maui end color
         }
         self.layer_type = 0
         self.layer_match = None
@@ -883,7 +884,7 @@ class KicadFcad:
     def filterLayer(self,p):
         layers = []
         l = getattr(p, 'layers', [])
-        if l == 'F&B.Cu':
+        if unquote(l) == 'F&B.Cu':  # maui
             layers.append('F.Cu')
             layers.append('B.Cu')
         else:
@@ -1558,7 +1559,11 @@ class KicadFcad:
                     #    print('list')
                     #print(str(p.drill[1]))
                     #size = Vector(p.drill[1],p.drill[2])
-                    size = Vector(p.drill[0],p.drill[1])
+                    if len (p.drill) == 2:
+                        size = Vector(p.drill[0],p.drill[0])
+                        FreeCAD.Console.PrintWarning('fake oval pad\n')
+                    else:
+                        size = Vector(p.drill[0],p.drill[1])
                     w = make_oval(size+Vector(ofs,ofs))
                     ovals[min(size.x,size.y)].append(w)
                     oval_count += 1
@@ -1818,15 +1823,21 @@ class KicadFcad:
 
                 shape = p[2]
 
+                wp = ''
                 if shape == 'custom':
                     w = self._makeCustomPad(p)
+                    #Part.show(w)
                     # maui start
                     # print(p.size)
                     # print(p.options.anchor) #maui
                     make_shape = globals()['make_{}'.format(p.options.anchor)]
                     # print(make_shape)
                     wp = make_shape(Vector(*p.size),p)
-                    w = Part.makeCompound([w,wp])
+                    if shape_type == 'wire':
+                        # keeping visualization of internal reference pad ONLY for footprint loading
+                        w = Part.makeCompound([w,wp])
+                        wp = ''
+                    # Part.show(wp)
                     # maui end
                 else:
                     try:
@@ -1842,16 +1853,24 @@ class KicadFcad:
                 # kicad put pad shape offset inside drill element? Why?
                 if 'drill' in p and 'offset' in p.drill:
                     w.translate(makeVect(p.drill.offset))
-
+                    if wp != '': # maui
+                        wp.translate(makeVect(p.drill.offset))
+                    
                 at,angle = getAt(p)
                 angle -= m_angle;
                 if not isZero(angle):
                     w.rotate(Vector(),Vector(0,0,1),angle)
+                    if wp != '': # maui
+                        wp.rotate(Vector(),Vector(0,0,1),angle)
                 w.translate(at)
-
+                if wp != '': # maui
+                    wp.translate(at)
                 if not self.merge_pads:
                     pads.append(func(w,'pad',
                         '{}#{}#{}#{}#{}'.format(i,j,p[0],ref,self.netName(p))))
+                    if wp != '': # maui
+                        pads.append(func(wp,'pad',
+                            '{}#{}#{}#{}#{}'.format(i,j,p[0],ref,self.netName(p))))
                 else:
                     pads.append(w)
 
@@ -2100,7 +2119,7 @@ class KicadFcad:
                     except KeyError:
                         raise ValueError('invalid shape type: {}'.format(shape_type))
                         
-                    print(poly)
+                    #print(poly)
                     for wr in poly:
                         objp = func(wr.Edges,'pads') #,'{}#{}'.format(i,ref))
                         self._place(objp,m_at,m_angle)
@@ -2117,7 +2136,13 @@ class KicadFcad:
                     try: #avoiding null lenght lines
                         ws.append((Part.Wire(make_gr_line(l))))
                         #wst.append(Part.Face(makeThickLine(makeVect(l.start),makeVect(l.end),l.width)))
-                        wst.append(makeThickLine(makeVect(l.start),makeVect(l.end),l.width/2.0))
+                        #print ('l.width',hasattr(l,'width'))
+                        #print ('l.stroke',hasattr(l,'stroke'))
+                        if hasattr(l,'stroke'):
+                            #print(l.stroke.width)
+                            wst.append(makeThickLine(makeVect(l.start),makeVect(l.end),l.stroke.width/2.0))
+                        else:
+                            wst.append(makeThickLine(makeVect(l.start),makeVect(l.end),l.width/2.0))
                         #self._makeShape(m, 'fp', ws)
                     except:
                         pass
@@ -2126,7 +2151,10 @@ class KicadFcad:
                     #print(j,l.start)
                     ac = Part.Wire(make_gr_arc(a))
                     ws.append((Part.Wire(make_gr_arc(a))))
-                    width = a.width
+                    if hasattr(a,'stroke'):
+                        width = a.stroke.width
+                    else:
+                        width = a.width
                     aco=_wire(ac.Edges,self.layer)
                     wst.append(aco.Shape)
                     tbd.append(aco)
@@ -2146,7 +2174,10 @@ class KicadFcad:
                     #print(j,l.start)
                     ws.append((Part.Wire(make_gr_circle(c))))
                     ##ws.append((Part.Wire(make_gr_circle(c).Edges)))
-                    cc=make_gr_circle_outl(c,c.width)
+                    if hasattr(c,'stroke'):
+                        cc=make_gr_circle_outl(c,c.stroke.width)
+                    else:
+                        cc=make_gr_circle_outl(c,c.width)
                     if isinstance(cc,list):
                         wst.append(Part.Wire(cc[0]))
                         wst.append(Part.Wire(cc[1]))
@@ -2171,7 +2202,10 @@ class KicadFcad:
                 if unquote(pl.layer) == self.layer:
                     pln=Part.Wire(make_gr_poly(pl))
                     ws.append((pln))
-                    width = pl.width
+                    if hasattr(pl,'stroke'):
+                        width = pl.stroke.width
+                    else:
+                        width = pl.width
                     for e in pln.Edges:
                         #aco=_wire(e,self.layer)
                         wst.append(makeThickLine(makeVect([e.Vertexes[0].X,-e.Vertexes[0].Y]),makeVect([e.Vertexes[1].X,-e.Vertexes[1].Y]),width/2.0))

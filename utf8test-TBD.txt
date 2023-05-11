@@ -1,7 +1,14 @@
-import kicadStepUptools; import importlib; importlib.reload(kicadStepUptools);FreeCADGui.activateWorkbench("KiCadStepUpWB")
+import kicadStepUptools; import importlib; importlib.reload(kicadStepUptools);FreeCADGui.runCommand('ksuToolsFootprintGen',0)
+
+kicadStepUptools.routineT_XYZ('x',1.0)
+
+import kicadStepUptools; import importlib; importlib.reload(kicadStepUptools);
+FreeCADGui.activateWorkbench("KiCadStepUpWB")
 
 import kicadStepUptools; reload(kicadStepUptools)
 import kicad_parser;import tracks;import fps;import importlib;importlib.reload(kicad_parser);importlib.reload(fps);importlib.reload( tracks)
+
+import kicadStepUpCMD; import importlib; importlib.reload(kicadStepUpCMD)
 
 import tracks; import importlib; importlib.reload(tracks)
 import makefacedxf; import importlib; importlib.reload(makefacedxf)
@@ -43,3 +50,8 @@ kicadStepUptools.KicadPCB.load('C:\\Temp\\demo-v5.kicad_pcb')
     7) readme support FC >= 018 (done)
 8) kicad7 new default 3D paths
 9) remove old fp parser code
+    10) fp with keepout zones
+11) drawings on Cu to tracks
+12) trying to load 3D model in fp loader
+13) adjust Poly pad discretization higher
+14) remove function getBoardOutline

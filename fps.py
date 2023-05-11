@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global fps_version
-fps_version = '1.0.7'
+fps_version = '1.0.8'
 
 dvp=False #True
 if dvp:
@@ -22,7 +22,7 @@ import Draft, Part
 
 import fcad_parser
 import kicad_parser
-from kicad_parser import KicadPCB
+from kicad_parser import KicadPCB, make_fp_poly
 
 import math
 from math import radians
@@ -407,7 +407,48 @@ def addfootprint(fname = None):
                     #print(t[0],' ',t[1])
                     if t[0] == 'value':
                         fp_name = t[1]
-        #stop
+            if hasattr(m, 'zone'):
+                # print(m.zone)
+                zones=[]
+                #print(m.zone, len(m.zone))
+                #print(SexpList(m.zone))
+                #zl=SexpList(m.zone)
+                #z0=zl[0]
+                #Part.show(make_fp_poly(z0.polygon))
+                ## print(zl.layer)
+                #zl = m.zone
+                #z0=zl[0]
+                #print(z0.polygon)
+                #Part.show(make_fp_poly(z0.polygon))
+                #zl=SexpList(m.zone)
+                #print(zl)
+                # print(m.zone)
+                #if hasattr(m.zone, 'polygon'):
+                for z in (m.zone):
+                    # print(z) #,SexpList(z))
+                    # print(z.layer)
+                    # print(z.keepout)
+                    # print(z.polygon.pts)
+                    if hasattr(z,'keepout'):
+                        pg=make_fp_poly(z.polygon)
+                        zones.append(pg)
+                if len(zones) > 0:
+                    consolePrint('making keepout zones\n')
+                    Part.show(Part.makeCompound(zones))
+                    zn = doc.ActiveObject
+                    zn.Label = 'keepout-Zones'
+                    zn.ViewObject.DrawStyle = u"Dashed"
+                    zn.ViewObject.LineColor = (255,0,127)
+                    import Draft
+                    if ar!=0:
+                        zn.Placement.Rotation.Angle = radians(ar)
+                    zone_keepout = Draft.makeSketch(zn,autoconstraints=True)
+                    zone_keepout.Label = 'keepout-Zones_'
+                    zone_keepout.ViewObject.DrawStyle = u"Dashed"
+                    zone_keepout.ViewObject.LineColor = (255,0,127)
+                    doc.removeObject(zn.Name)
+                    tbassembled.append(zone_keepout)
+                #stop
         #from kicad_parser import KicadFcad
         #from kicad_parser import makePads
         # import kicad_pads_parser
@@ -670,6 +711,12 @@ def addfootprint(fname = None):
         tbds.append(tbd)
         tbp.append((sk,tls))
         
+        # User layers
+        pcb.setLayer(41) #'Cmts.User')
+        sk,tls,tbd=pcb.makeSketches(fit_arcs=True)
+        tbds.append(tbd)
+        tbp.append((sk,tls))
+        
         for l in tbds:
             for o in l:
                 doc.removeObject(o.OutList[0].Name)
@@ -743,16 +790,20 @@ def addfootprint(fname = None):
             pcb=FreeCAD.ActiveDocument.addObject('Part::Feature','PCB')
             for o in fp_group.OutList:
                 o.ViewObject.Visibility = True
-            if hasattr (holesT,'Name'):
-                pcb.Shape=Part.makeBox(pcb_XL, pcb_YL, pcb_ZL, FreeCAD.Vector(centerX-pcb_XL/2,centerY-pcb_YL/2,-(pcb_ZL+deltaz)), FreeCAD.Vector(0,0,1)).cut(holesT.Shape)
-                removesubtree([holesT])
-            else:
-                pcb.Shape=Part.makeBox(pcb_XL, pcb_YL, pcb_ZL, FreeCAD.Vector(centerX-pcb_XL/2,centerY-pcb_YL/2,-(pcb_ZL+deltaz)), FreeCAD.Vector(0,0,1))
-            pcb.ViewObject.Transparency = pcb_transparency
-            pcb.ViewObject.ShapeColor = mkColor(pcb_col)
-            # pcb.adjustRelativeLinks(doc.getObject(fp_group.Name))
-            doc.getObject(fp_group.Name).addObject(pcb)
-            doc.recompute()
+            try:
+                if hasattr (holesT,'Name'):
+                    pcb.Shape=Part.makeBox(pcb_XL, pcb_YL, pcb_ZL, FreeCAD.Vector(centerX-pcb_XL/2,centerY-pcb_YL/2,-(pcb_ZL+deltaz)), FreeCAD.Vector(0,0,1)).cut(holesT.Shape)
+                    removesubtree([holesT])
+                else:
+                    pcb.Shape=Part.makeBox(pcb_XL, pcb_YL, pcb_ZL, FreeCAD.Vector(centerX-pcb_XL/2,centerY-pcb_YL/2,-(pcb_ZL+deltaz)), FreeCAD.Vector(0,0,1))
+                pcb.ViewObject.Transparency = pcb_transparency
+                pcb.ViewObject.ShapeColor = mkColor(pcb_col)
+                # pcb.adjustRelativeLinks(doc.getObject(fp_group.Name))
+                doc.getObject(fp_group.Name).addObject(pcb)
+                doc.recompute()
+            except:
+                doc.removeObject(pcb.Name)
+                consolePrint('no shapes generated\n')
         doc.commitTransaction()
         
         if FreeCAD.ActiveDocument is not None:

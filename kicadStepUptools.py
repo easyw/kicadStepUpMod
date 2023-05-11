@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.8.3"
+___ver___ = "10.8.4"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -1888,8 +1888,12 @@ def recurse_node(obj,plcm,scl):  # recursive function to make a simple copy of A
             #sayerr(o.Name);sayw(o.TypeId)
             if "App::Part" in o.TypeId or 'Body' in o.TypeId or 'App::LinkGroup' in o.TypeId:
                 #sayerr(o.Label)#+" * "+obj.Name)
-                new_plcm=get_node_plc(o,obj)
-                recurse_node(o,new_plcm,scl)
+                if "App::Part" in o.TypeId and o.Visibility==False: # avoiding objects in invisible Part containers
+                    print('avoiding objects in invisible Part containers')
+                    pass
+                else:
+                    new_plcm=get_node_plc(o,obj)
+                    recurse_node(o,new_plcm,scl)
             else:
                 if "Sketcher" not in o.TypeId and "DocumentObjectGroup" not in o.TypeId:
                     if FreeCADGui.ActiveDocument.getObject(o.Name).Visibility:
@@ -2346,10 +2350,15 @@ def check_AP():
     sel = FreeCADGui.Selection.getSelection()
     if 'App::Part' in sel[0].TypeId:
         sc_list=[]
-        FreeCADGui.ActiveDocument.getObject(sel[0].Name).Visibility=False
+        sel0 = FreeCADGui.ActiveDocument.getObject(sel[0].Name)
         #sel[0].Visibility=False
         for obj in FreeCADGui.Selection.getSelection():
             recurse_node(obj,obj.Placement, sc_list)
+            #if ('App::Part' in obj.TypeId) and (obj.Visibility==False):
+            #    for o in obj.OutList:
+            #        o.Visibility=False
+            # if ('App::Part' in obj.TypeId): # and (obj.Visibility==True):
+            #    recurse_node(obj,obj.Placement, sc_list)
         no_shape=True
         for ob in sc_list:
             #print(ob.Label,hasattr(ob,'Shape'))
@@ -2360,6 +2369,7 @@ def check_AP():
             sayerr(msg)
             say_warning(msg)
             stop
+        sel0.Visibility=False
         FreeCAD.activeDocument().addObject("Part::Compound",FreeCADGui.Selection.getSelection()[0].Label+"_cp")
         FreeCAD.activeDocument().ActiveObject.Links = sc_list #[FreeCAD.activeDocument().Part__Feature,FreeCAD.activeDocument().Shape,]
         mycompound=FreeCAD.activeDocument().ActiveObject
@@ -3058,6 +3068,7 @@ def cfg_read_all():
     models3D_prefix3 = prefs.GetString('prefix3d_3')
     models3D_prefix4 = prefs.GetString('prefix3d_4')
     light_green = [0.20,0.60,0.40] # std Green
+    green = [0.3098,0.4823,0.4078] # Green (79,123,104)
     blue = [0.13,0.40,0.73] # Deep Sea Blue
     red = [1.0,0.16,0.0] # Ferrari Red
     purple = [0.498,0.090,0.424] # oshpark purple #6D0A8E
@@ -3067,7 +3078,7 @@ def cfg_read_all():
     yellow = [0.98,0.98,0.34] #sunshine yellow
     black = [0.18,0.18,0.18] #slick black
     white = [0.973,0.973,0.941] #[0.98,0.92,0.84] #antique white
-    pcb_color_values = [light_green,blue,red,purple,darkgreen,darkblue,lightblue,yellow,black,white]
+    pcb_color_values = [light_green,green,blue,red,purple,darkgreen,darkblue,lightblue,yellow,black,white]
     pcb_color_pos = prefs.GetInt('pcb_color')
     pcb_color = pcb_color_values [pcb_color_pos]
     col = []
@@ -7090,8 +7101,9 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
             FCV_date = ''
             STEP_UseAppPart_available = False
             if len (FreeCAD.Version()) >= 5:
-                FCV_date = str(FreeCAD.Version()[4])
+                FCV_date = str(FreeCAD.Version()[-3])
                 FCV_date = FCV_date[0:FCV_date.find(' ')]
+                say('FreeCAD version: '+FreeCAD.Version()[0]+'.'+FreeCAD.Version()[1])
                 say('FreeCAD build date: '+FCV_date)
                 if FCV_date >= '2020/06/27':
                     STEP_UseAppPart_available = True #new STEP import export mode available
@@ -7164,9 +7176,10 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
 def routineR_XYZ(axe,alpha):
     global resetP
     say('routine Rotate XYZ')
-    if "Assembly2Workbench" not in FreeCADGui.activeWorkbench().name():
-        if "PartWorkbench" not in FreeCADGui.activeWorkbench().name():
-            FreeCADGui.activateWorkbench("PartWorkbench")
+    if 0:
+        if "Assembly2Workbench" not in FreeCADGui.activeWorkbench().name():
+            if "PartWorkbench" not in FreeCADGui.activeWorkbench().name():
+                FreeCADGui.activateWorkbench("PartWorkbench")
     #FreeCADGui.SendMsgToActiveView("ViewFit")
     ##FreeCADGui.activeDocument().activeView().viewTop()
     doc = FreeCAD.ActiveDocument
@@ -7223,9 +7236,10 @@ def routineR_XYZ(axe,alpha):
 def routineT_XYZ(axe,v):
     global resetP
     say('routine Translate XYZ')
-    if "Assembly2Workbench" not in FreeCADGui.activeWorkbench().name():
-        if "PartWorkbench" not in FreeCADGui.activeWorkbench().name():
-            FreeCADGui.activateWorkbench("PartWorkbench")
+    if 0:
+        if "Assembly2Workbench" not in FreeCADGui.activeWorkbench().name():
+            if "PartWorkbench" not in FreeCADGui.activeWorkbench().name():
+                FreeCADGui.activateWorkbench("PartWorkbench")
     #FreeCADGui.SendMsgToActiveView("ViewFit")
     ##FreeCADGui.activeDocument().activeView().viewTop()
     doc = FreeCAD.ActiveDocument
@@ -7235,6 +7249,12 @@ def routineT_XYZ(axe,v):
         doc.openTransaction('trs')
         check_AP()
         selEx = FreeCADGui.Selection.getSelectionEx()
+        if 0:
+            vis_objs=[]
+            for selobj in selEx:
+                if selobj.Object.ViewObject.isVisible==True:
+                    vis_obj.append(selobj.Object)
+            objs = [o for o in vis_objs]
         objs = [selobj.Object for selobj in selEx]
         s = objs[0].Shape
         shape=s.copy()
@@ -7424,9 +7444,10 @@ def routineScaleVRML():
 def routineScaleVRML_1():
     global rot_wrl, zfit
     say('routine Scale to VRML 1/2.54')
-    if "Assembly2Workbench" not in FreeCADGui.activeWorkbench().name():
-        if "PartWorkbench" not in FreeCADGui.activeWorkbench().name():
-            FreeCADGui.activateWorkbench("PartWorkbench")
+    if 0:
+        if "Assembly2Workbench" not in FreeCADGui.activeWorkbench().name():
+            if "PartWorkbench" not in FreeCADGui.activeWorkbench().name():
+                FreeCADGui.activateWorkbench("PartWorkbench")
     #FreeCADGui.SendMsgToActiveView("ViewFit")
     ##FreeCADGui.activeDocument().activeView().viewTop()
     doc = FreeCAD.ActiveDocument
@@ -7493,9 +7514,10 @@ def routineC_XYZ(axe):
     say('routine center position')
     #if self.checkBox_1.isChecked():
     #    routineResetPlacement()
-    if "Assembly2Workbench" not in FreeCADGui.activeWorkbench().name():
-        if "PartWorkbench" not in FreeCADGui.activeWorkbench().name():
-            FreeCADGui.activateWorkbench("PartWorkbench")
+    if 0:
+        if "Assembly2Workbench" not in FreeCADGui.activeWorkbench().name():
+            if "PartWorkbench" not in FreeCADGui.activeWorkbench().name():
+                FreeCADGui.activateWorkbench("PartWorkbench")
     #FreeCADGui.SendMsgToActiveView("ViewFit")
     ##FreeCADGui.activeDocument().activeView().viewTop()
     doc = FreeCAD.ActiveDocument
@@ -7566,9 +7588,10 @@ def routineP_XYZ(axe):
     global resetP
     say('routine put on axe')
     #routineResetPlacement()
-    if "Assembly2Workbench" not in FreeCADGui.activeWorkbench().name():
-        if "PartWorkbench" not in FreeCADGui.activeWorkbench().name():
-            FreeCADGui.activateWorkbench("PartWorkbench")
+    if 0:
+        if "Assembly2Workbench" not in FreeCADGui.activeWorkbench().name():
+            if "PartWorkbench" not in FreeCADGui.activeWorkbench().name():
+                FreeCADGui.activateWorkbench("PartWorkbench")
     #FreeCADGui.SendMsgToActiveView("ViewFit")
     ##FreeCADGui.activeDocument().activeView().viewTop()
     doc = FreeCAD.ActiveDocument
@@ -7690,9 +7713,10 @@ def say_info(msg):
 def get_position():
     global min_val, exportS
     say('routine get base position')
-    if "Assembly2Workbench" not in FreeCADGui.activeWorkbench().name():
-        if "PartWorkbench" not in FreeCADGui.activeWorkbench().name():
-            FreeCADGui.activateWorkbench("PartWorkbench")
+    if 0:
+        if "Assembly2Workbench" not in FreeCADGui.activeWorkbench().name():
+            if "PartWorkbench" not in FreeCADGui.activeWorkbench().name():
+                FreeCADGui.activateWorkbench("PartWorkbench")
     #FreeCADGui.SendMsgToActiveView("ViewFit")
     ##FreeCADGui.activeDocument().activeView().viewTop()
     doc = FreeCAD.ActiveDocument
@@ -7754,9 +7778,10 @@ def routineM_XYZ(axe,v):
     global resetP
     mydoc=FreeCAD.ActiveDocument
     say('routine Move to point XYZ')
-    if "Assembly2Workbench" not in FreeCADGui.activeWorkbench().name():
-        if "PartWorkbench" not in FreeCADGui.activeWorkbench().name():
-            FreeCADGui.activateWorkbench("PartWorkbench")
+    if 0:
+        if "Assembly2Workbench" not in FreeCADGui.activeWorkbench().name():
+            if "PartWorkbench" not in FreeCADGui.activeWorkbench().name():
+                FreeCADGui.activateWorkbench("PartWorkbench")
     #FreeCADGui.SendMsgToActiveView("ViewFit")
     ##FreeCADGui.activeDocument().activeView().viewTop()
     doc = FreeCAD.ActiveDocument
@@ -16184,6 +16209,7 @@ def PushFootprint():
                             sk_to_convert.append(FreeCAD.ActiveDocument.getObject(skd_name))
                             sk_to_reselect.append(o)
                         if 'F_Silks' in o.Label or 'F_Fab' in o.Label or 'F_CrtYd' in o.Label \
+                            or 'Dwg' in o.Label or 'Cmts' in o.Label \
                             or 'Pads_TH' in o.Label or 'Pads_NPTH' in o.Label or 'Edge_Cuts' in o.Label\
                             or 'Pads_Round_Rect' in o.Label or 'FZ_' in o.Label\
                             or 'Pads_Geom' in o.Label:
@@ -16291,6 +16317,7 @@ def PushFootprint():
                         if hasattr(e.Curve,'Radius'):
                             if not e.Closed:  # Arc and not Circle
                                 wn.append(Part.makePolygon(e.discretize(QuasiDeflection=q_deflection)))
+                                sayw('added discretized arc')
                             else:
                                 #wn.append(Part.Wire(e))
                                 wnc.append(Part.Wire(e))
@@ -16302,12 +16329,16 @@ def PushFootprint():
                     for s in wn:
                         for e in s.Edges:
                             edgs.append(e)
-                    wns = Part.Wire(Part.__sortEdges__(edgs))
+                    # wns = Part.Wire(Part.__sortEdges__(edgs))
                     #Part.show(wnc[0])
                     #print (wns);print(wnc[0])
-                    sk_d=Draft.makeSketch([wns,wnc[0]], autoconstraints=True)
+                    if len(wnc)>0:
+                        wns = Part.Wire(Part.__sortEdges__(edgs))
+                        sk_d=Draft.makeSketch([wns,wnc[0]], autoconstraints=True)
+                    else:
+                        sk_d=Draft.makeSketch(edgs, autoconstraints=True)
                     Connect = sk_d
-                    
+                    #stop
                     # for e in ws.Edges:
                     #     if hasattr(e.Curve,'Radius'):
                     #         if not e.Closed:  # Arc and not Circle
@@ -16431,7 +16462,7 @@ def PushFootprint():
                     last_fp_path=last_pcb_path
                     #sayw(last_pcb_path)
                 #getSaveFileName(self,"saveFlle","Result.txt",filter ="txt (*.txt *.)")
-                testing=False #False
+                testing=False #True
                 for s in sk_to_convert:
                     FreeCADGui.Selection.addSelection(s)
                     #print(s.Label,'added')
@@ -16783,7 +16814,7 @@ def export_footprint(fname=None,flabel=None):
     global board_base_point_x, board_base_point_y, real_board_pos_x, real_board_pos_y
     global pcb_path, use_AppPart, force_oldGroups, use_Links, use_LinkGroups
     global original_filename
-    global off_x, off_y, maxRadius, pad_nbr
+    global off_x, off_y, maxRadius, pad_nbr, dqd
     
     sayw('exporting new footprint')
     doc=FreeCAD.ActiveDocument
@@ -16818,7 +16849,11 @@ def export_footprint(fname=None,flabel=None):
         pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
         pg.SetString("last_fp_path", make_string(last_fp_path))
         #sayerr(name+':'+ext)
+        # old_dqd = dqd
+        # dqd=0.001
         new_edge_list, not_supported, to_discretize, construction_geom = getBoardOutline()
+        #dqd=old_dqd
+        
         #print (new_edge_list, to_discretize)
         #stop
         
@@ -16998,6 +17033,7 @@ def export_footprint(fname=None,flabel=None):
         ## import kicadStepUptools; reload(kicadStepUptools)
         for border in sanitized_edge_list:
             #print (border)
+            edge_thick=0.05
             lyr=border[(len(border)-1):][0]
             lyr_splt = lyr.split('_')
             #print(lyr)
@@ -17014,6 +17050,18 @@ def export_footprint(fname=None,flabel=None):
                 if len(lyr_splt)>=3:
                     edge_thick=float(lyr.split('_')[len(lyr_splt)-1])
                     lyr=u'F.Fab'
+                else:
+                    lyr='skip'                
+            elif 'Dwgs' in lyr:
+                if len(lyr_splt)>=2:
+                    edge_thick=float(lyr.split('_')[len(lyr_splt)-1])
+                    lyr=u'Dwgs.User'
+                else:
+                    lyr='skip'                
+            elif 'Cmts' in lyr:
+                if len(lyr_splt)>=2:
+                    edge_thick=float(lyr.split('_')[len(lyr_splt)-1])
+                    lyr=u'Cmts.User'
                 else:
                     lyr='skip'                
             elif 'Cuts' in lyr:
@@ -17055,7 +17103,7 @@ def export_footprint(fname=None,flabel=None):
             elif 'FZ_F_Mask' in lyr:
                 edge_thick=0.
                 lyr=u'FZ_Mask_Poly'
-                fzply.append(border)
+            #     fzply.append(border)
             elif 'Pads_Round_Rect' in lyr:
                 edge_thick=0.
                 if 0: #'B_Cu' in lyr:
@@ -17110,7 +17158,7 @@ def export_footprint(fname=None,flabel=None):
             #if (lyr != 'Pads_SMD' and lyr != 'Pads_TH' and lyr != 'Drills' and lyr != 'NPTH'\
             if ('Pads_SMD' not in lyr and 'Pads_TH' not in lyr and 'Drills' not in lyr and 'NPTH' not in lyr \
                                  and 'Pad_Poly' not in lyr and 'NetTie_Poly' not in lyr and 'Pads_Round_Rect' not in lyr and 'PadsAll' not in lyr)\
-                                 and 'FZ_' not in lyr and 'Pads_Geom' not in lyr and 'skip' not in lyr:
+                                 and 'Pads_Geom' not in lyr and 'skip' not in lyr and 'FZ_Mask_Poly' not in lyr:
                 #print border, ' BORDER'                                                  #
                 #if len (border)>0:
                 new_border=new_border+os.linesep+createFp(border,offset, lyr, edge_thick)
@@ -17630,41 +17678,121 @@ def export_footprint(fname=None,flabel=None):
         #polypad_pos=[]  ### TBC polypad inside poly sketch
         #sayerr(pply)
         #sayerr(polypad_pos)
+        #sel = FreeCADGui.Selection.getSelection()
         npad=u''
-        mpad=[]
-        nline=1
-        pad_nbr=1
-        poly_closed=False
-        polypad_pos=None
-        for pad in fzply:
-            #sayerr(pad)
-            #if pad[0]=='circle':
-            #    npad=npad+os.linesep+createFpPad(pad,offset,u'NPTH', drill_pos)
-            if pad[0]=='line':
-                mpad.append(pad)
-                if len(mpad)>1:
-                    if abs(mpad[0][1]-pad[3])<edge_tolerance and abs(mpad[0][2]-pad[4])<edge_tolerance:
-                        sayerr('poly closed')
-                        poly_closed=True
+        for s in sel:
+            poly_closed=False
+            polypad_pos=None
+            print(o.Label,'parsing sketch')
+            pts=""
+            if 'FZ_F_Mask' in s.Label:
+                #print('s.Label',s.Label)
+                ns=Discretize(s.Name,'dont_delete',0.001)  #NB use don't delete and pass discretization value
+                face = OSCD2Dg_edgestofaces(FreeCAD.ActiveDocument.getObject(ns).Shape.Edges,3 , edge_tolerance)
+                FreeCAD.ActiveDocument.removeObject(ns)
+                #FreeCAD.ActiveDocument.recompute()
+                face.check() # reports errors
+                face.fix(0,0,0)
+                ws=face.Wires
+                #print(face.Wires,len(face.Wires),'face')
+                if 0:
+                    Part.show(face)
+                    f=FreeCAD.ActiveDocument.ActiveObject
+                    ws=f.Shape.Wires
+                    print(ws,len(ws),'face2')
+                padLayer="F.Mask"
+                j=0
+                for w in ws:
+                    j=j+1
+                    # cls=Part.getSortedClusters(w.Edges)
+                    # print(cls)
+                    clusters = Part.sortEdges(w.Edges) #[0] 
+                    #print(len(clusters))
+                    for cluster in clusters:
+                    # cluster=clusters[0]
+                    # if 1:
+                        #print(len(cluster))
+                        pts+="  (fp_poly"+os.linesep+"    (pts"+os.linesep
+                        for i,e in enumerate(cluster): #w.Edges):
+                            #print('i',i)
+                            if i < len(cluster)-1: 
+                                pts=pts+"         (xy "+"{0:.3f}".format(e.Vertexes[0].X)+" "+"{0:.3f}".format(-1*(e.Vertexes[0].Y))+") (xy "+"{0:.3f}".format(e.Vertexes[1].X)+" "+"{0:.3f}".format(-1*(e.Vertexes[1].Y))+")"+os.linesep
+                            else:
+                                pts=pts+"         (xy "+"{0:.3f}".format(e.Vertexes[0].X)+" "+"{0:.3f}".format(-1*(e.Vertexes[0].Y))+")) (layer \""+padLayer+"\") (width 0))"+os.linesep
+                # print(pts,'\npts',j)
+                #print('j',j)
+                if len (pts)>0:
+                    newcontent=newcontent+os.linesep+pts+os.linesep
+                    say('created FZ Poly pads')
+                # npad=npad+os.linesep+pts            
+            #    stop
+            #stop
+            if 0: # len(fzply)>0:
+                #print(fzply,len(fzply))
+                #stop
+                npad=npad+os.linesep+createFpPad(fzply,offset,u'FZ_Mask_Poly', polypad_pos)
+            
+            if 0:
+                for pad in fzply:
+                    # print(fzply)
+                    #stop
+                    #sayerr(pad)
+                    #if pad[0]=='circle':
+                    #    npad=npad+os.linesep+createFpPad(pad,offset,u'NPTH', drill_pos)
+                ##     wr.append(Part.makeLine((pad[1], pad[2],0.0),(pad[3], pad[4],0.0)))
+                ## for w in wr:
+                ##     sortedEdges = Part.__sortEdges__(w.Edges)
+                ##     wire = Part.Wire(sortedEdges)
+                ##     
+                    if pad[0]=='line':
+                        mpad.append(pad)
+                        #print(pad)
+                        if len(mpad)>2:
+                            #print(mpad)
+                            if abs(mpad[0][1]-pad[3])<edge_tolerance and abs(mpad[0][2]-pad[4])<edge_tolerance:
+                            #if abs(mpad[0][3]-pad[1])<edge_tolerance and abs(mpad[0][4]-pad[2])<edge_tolerance:
+                                sayerr('poly closed')
+                                poly_closed=True
+                                nline=1
+                                #pad_nbr=pad_nbr+1
+                        else:
+                            nline=nline+1
+                    if poly_closed:
+                        #print (mpad)
+                        #print 'mpad';print mpad
+                        poly_closed=False
+                        npad=npad+os.linesep+createFpPad(mpad,offset,u'FZ_Mask_Poly', polypad_pos)
                         nline=1
-                        #pad_nbr=pad_nbr+1
-                else:
-                    nline=nline+1
-            if poly_closed:
-                #print npad
-                #print 'mpad';print mpad
-                poly_closed=False
-                npad=npad+os.linesep+createFpPad(mpad,offset,u'FZ_Mask_Poly', polypad_pos)
-                nline=1
-                mpad=[]
-            #nline=nline+1
-        #print npad        
-        
-        #print 'len pad '+str(len(npad))
-        #print newcontent
-        if len (npad)>0:
-            newcontent=newcontent+npad+os.linesep
-            say('created FZ Poly pads')
+                        mpad=[]
+                    #nline=nline+1
+                #print npad        
+                stop
+                
+                ### for pad in fzply:
+                ###     # print(fzply)
+                ###     #stop
+                ###     #sayerr(pad)
+                ###     #if pad[0]=='circle':
+                ###     #    npad=npad+os.linesep+createFpPad(pad,offset,u'NPTH', drill_pos)
+                ###     s=Part.makeLine((pad[1], pad[2],0.0),(pad[3], pad[4],0.0))
+                ###     shps.append(s)
+                ###     #Part.show(s)
+                ###     #wr.append(w)
+                ### Part.show(Part.makeCompound(shps))
+                ### s=FreeCAD.ActiveDocument.ActiveObject
+                ### print(s.Shape.Wires)
+                
+                # for w in wr:
+                #     sortedEdges = Part.__sortEdges__(w.Edges)
+                #     wire = Part.Wire(sortedEdges)
+                #     Part.show(wire)
+            
+    
+            #print 'len pad '+str(len(npad))
+            #print newcontent
+            if 0: #len (npad)>0:
+                newcontent=newcontent+npad+os.linesep
+                say('created FZ Poly pads')
         ### ----------Geom reference Pad-------------------------------
         #print psmd
         pgeompad=[]
@@ -17738,6 +17866,8 @@ def export_footprint(fname=None,flabel=None):
         newcontent+=u"  )"+os.linesep
         ### ---------- wrtiting file --------------------
         newcontent=newcontent+')'+os.linesep+u' '       
+        #dqd=old_dqd
+        
         with codecs.open(fpath,'w', encoding='utf-8') as ofile:
             ofile.write(newcontent)
             ofile.close()        
@@ -18666,104 +18796,121 @@ def createFpPad(pad,offset,tp, _drills=None):
     #        return pdl
     ##--------------------------------------------##
     elif tp=='FZ_Mask_Poly':
+        # print('use FZ fp_poly')
         found_drill=False
+        padLayer="F.Mask"
+        pts=""
+        edgs=[]
+        for lines in pad:
+            edgs.append(Part.makeLine((lines[1],lines[2],0),(lines[3],lines[4],0)))
+            #wd_=float(line[0][4].split('_')[2])
+            # Part.show(Part.makeLine((lines[1],lines[2],0),(lines[3],lines[4],0)))
+        face = OSCD2Dg_edgestofaces(edgs,3 , edge_tolerance)
+        if 0:
+            face.check() # reports errors
+            face.fix(0,0,0)
+        ws=face.Wires
+        # print('face ws')
+        print(face.Wires,len(face.Wires))
+        if 1:
+            Part.show(face)
+            f=FreeCAD.ActiveDocument.ActiveObject
+            FreeCAD.ActiveDocument.recompute()
+            ws=f.Shape.Wires
+            print(ws,len(ws))
+            stop
+        j=0
+        for w in ws:
+            j=j+1
+            # cls=Part.getSortedClusters(w.Edges)
+            # print(cls)
+            clusters = Part.sortEdges(w.Edges) #[0] 
+            print(len(clusters))
+            for cluster in clusters:
+                #print(len(cluster))
+                pts+="  (fp_poly"+os.linesep+"    (pts"+os.linesep
+                for i,e in enumerate(cluster): #w.Edges):
+                    if i < len(cluster)-1: 
+                        pts=pts+"         (xy "+"{0:.3f}".format(e.Vertexes[0].X)+" "+"{0:.3f}".format(-1*(e.Vertexes[0].Y))+") (xy "+"{0:.3f}".format(e.Vertexes[1].X)+" "+"{0:.3f}".format(-1*(e.Vertexes[1].Y))+")"+os.linesep
+                    else:
+                        pts=pts+"         (xy "+"{0:.3f}".format(e.Vertexes[0].X)+" "+"{0:.3f}".format(-1*(e.Vertexes[0].Y))+")) (layer "+padLayer+") (width 0))"+os.linesep
+        print(pts,j)    
+        return pts
+        if 0:    
+            clusters=Part.getSortedClusters(w.Edges)            
+            for cluster in clusters:
+                # print(cluster)
+                # if len(cluster)>1:
+                    # print(cluster)
+                    # for c in cluster:
+                    #     #Part.show(Part.makePolygon(cluster))
+                    #     Part.show(c)
+                for i,e in enumerate(cluster): #w.Edges):
+                    if i < len(cluster)-1: 
+                        pts=pts+"         (xy "+"{0:.3f}".format(e.Vertexes[0].X)+" "+"{0:.3f}".format(-1*(e.Vertexes[0].Y))+") (xy "+"{0:.3f}".format(e.Vertexes[1].X)+" "+"{0:.3f}".format(-1*(e.Vertexes[1].Y))+")"+os.linesep
+                    else:
+                        pts=pts+"         (xy "+"{0:.3f}".format(e.Vertexes[0].X)+" "+"{0:.3f}".format(-1*(e.Vertexes[0].Y))+")) (layer "+padLayer+") (width 0))"+os.linesep
+        #print(pts,j)
+
+        stop
+        c = Part.makeCompound(edgs)
+        s=Part.show(c)
+        FreeCAD.ActiveDocument.recompute()
+        #f = Part.makeFace(s.Shape,'Part::FaceMakerSimple')
+        #Part.getSortedClusters(s.Edges)
+        ws=s.Shape.Wires
+        print(ws)
+        print(s.Shape.Edges)
+        cls=Part.getSortedClusters(s.Shape.Edges)
+        print('clsa')
+        print(cls[0])
+        sc=s.Shape.copy()
+        print(sc.Edges)
+        cls=Part.getSortedClusters(sc.Edges)
+        print('cls')
+        print(cls[0])
+        stop
+        Part.show(Part.makePolygon(cls[0]))
+        stop
+        for e in edgs:
+            Part.show(e)
+        stop
+        #f= 
+        # f= Part.makeFace(sps,'Part::FaceMakerSimple')    
+        # Part.show(f)
+        stop
         wr=[]
-        pad_ref="  (pad # smd custom (at 0 0 ) (size 0.1 0.1) (layers F.Mask)"+os.linesep
-        pad_ref=pad_ref+"    (zone_connect 0)"+os.linesep
-        pad_ref=pad_ref+"    (options (clearance outline) (anchor circle))"+os.linesep
-        pad_ref=pad_ref+"    (primitives"+os.linesep
-        #pad_ref=pad_ref+"      (gr_poly"
+        if 0:
+            pad_ref="  (pad # smd custom (at 0 0 ) (size 0.1 0.1) (layers F.Mask)"+os.linesep
+            pad_ref=pad_ref+"    (zone_connect 0)"+os.linesep
+            pad_ref=pad_ref+"    (options (clearance outline) (anchor circle))"+os.linesep
+            pad_ref=pad_ref+"    (primitives"+os.linesep
+            #pad_ref=pad_ref+"      (gr_poly"
        
-        if pad[0][0]=='line':
+        if 0: #pad[0][0]=='line':
             #sayw(pad)
-            pts="      (gr_poly (pts"+os.linesep
+            if 0:
+                pts="      (gr_poly (pts"+os.linesep
+            else:
+                pad_ref="  (fp_poly"+os.linesep+"    (pts"+os.linesep
+                pts=""
             segments_nbr=len(pad)
-            i=1
-            #for lines in pad:
-            #    #if i<segments_nbr:
-            #    #    pts=pts+"         (xy "+str(lines[1])+" "+str(-1*lines[2])+") (xy "+str(lines[3])+" "+str(-1*lines[4])+")"+os.linesep
-            #    #else:
-            #    #    pts=pts+"         (xy "+str(lines[1])+" "+str(-1*lines[2])+")) (width 0))"+os.linesep
-            #    #wr.append(Part.makeLine((lines[1], lines[2],0.0),(lines[3], lines[4],0.0)))
-            #    i=i+1
-            #ant=Part.Wire(wr)
-            ##sayw( ant.isClosed() )
-            ##Part.show(ant)
-            #face = Part.Face(ant)
-            #Part.show(face)
-            #shpName=FreeCAD.ActiveDocument.ActiveObject.Name
-            ##say( FreeCAD.ActiveDocument.ActiveObject.Label)
-            #shape= FreeCAD.ActiveDocument.ActiveObject.Shape
             i=1
             for lines in pad:
                 if i<segments_nbr:
                     pts=pts+"         (xy "+"{0:.3f}".format(lines[1])+" "+"{0:.3f}".format(-1*lines[2])+") (xy "+"{0:.3f}".format(lines[3])+" "+"{0:.3f}".format(-1*lines[4])+")"+os.linesep
                 else:
-                    pts=pts+"         (xy "+"{0:.3f}".format(lines[1])+" "+"{0:.3f}".format(-1*lines[2])+")) (width 0))"+os.linesep
+                    if 0:
+                        pts=pts+"         (xy "+"{0:.3f}".format(lines[1])+" "+"{0:.3f}".format(-1*lines[2])+")) (width 0))"+os.linesep
+                    else:
+                        pts=pts+"         (xy "+"{0:.3f}".format(lines[1])+" "+"{0:.3f}".format(-1*lines[2])+")) (width 0) (layer \"F.Mask\"))"+os.linesep
                 i=i+1
-            #pad_ref="  (pad "+str(pad_nbr)+" smd custom (at "+str(d[0])+" "+str(d[1])+" ) (size "+str(d[2])+" "+str(d[2])+") (layers F.Cu F.Paste F.Mask)"+os.linesep
-            # pad_ref="  (pad # smd custom (at "+str(0.0)+" "+str(0.0)+" ) (size "+str(0)+" "+str(0)+") (layers F.Cu F.Paste F.Mask)"+os.linesep
-            # pad_ref=pad_ref+"    (zone_connect 0)"+os.linesep
-            # pad_ref=pad_ref+"    (options (clearance outline) (anchor circle))"+os.linesep
-            # pad_ref=pad_ref+"    (primitives"+os.linesep
-            #pad_ref=pad_ref+"    (gr_poly (pts"+os.linesep
             pad_ref=pad_ref+pts
-            pad_ref=pad_ref+"    ))"+os.linesep
-            #sayerr(pad_ref)
-            pad_nbr=pad_nbr+1
+            if 0:
+                pad_ref=pad_ref+"    ))"+os.linesep
+                #sayerr(pad_ref)
+                pad_nbr=pad_nbr+1
             found_drill=False
-            #Part.show(face)
-              #(pad 1 smd custom (at 1 2) (size 0.2 0.2) (layers F.Cu F.Paste F.Mask)
-              #(zone_connect 0)
-              #(options (clearance outline) (anchor circle))
-              #(primitives
-              #(gr_poly (pts
-              #    (xy -3.0 1.0) (xy -4.0 1.0) (xy -3.0 -2.0) (xy -0.5 -2.0) (xy 1.0 -4.0)
-              #    (xy 4.0 -2.0) (xy 5.0 2.0) (xy 1.0 3.0)) (width 0))
-              #))
-            #sayerr(pts)
-            
-            #say(_drills)
-            # sayerr('poly rect pad nbr.'+str(pad_nbr))
-            # p1=(pad[0][1],pad[0][2]);p2=(pad[0][3]+pad[0][4])
-            # sayerr('segment='+p1+','+p2
-            # found_drill=False
-            # if len(_drills)>0:
-            #     for d in _drills:
-            #         if d[0] > cx-sx/2 and d[0] < cx+sx/2 and d[1] > cy-sy/2 and d[1] < cy+sy/2:
-            #             sayw('drill in pad found! '+str(d[0])+','+str(d[1])+'/'+str(cx)+','+str(cy)+':'+str(sx)+','+str(sy))
-            #             found_drill=True
-            #             ptp='thru_hole'
-            #             p_layers='(layers *.Cu *.Mask)'
-            #             break
-            #     #drl_size=[d[2],d[3]]
-            #     ### OFFSET
-            #     if found_drill:
-            #         if d[2]!=d[3]:
-            #             drill_str="(drill oval "+str(d[2])+" "+str(d[3]) #+")"
-            #         else:
-            #             drill_str="(drill "+str(d[2]) #+")"
-            #         if abs(d[0]-cx)>edge_tolerance or abs(d[1]-cy)>edge_tolerance:
-            #             drill_str=drill_str+" (offset "+str(cx-d[0])+" "+str(cy-d[1])+"))" #+")"
-            #             cx=d[0];cy=d[1]
-            #         else:
-            #             drill_str=drill_str+")"
-            #     else:
-            #         #drill_str="(drill 0)"
-            #         ptp='smd'
-            #         drill_str=""
-            #         p_layers='(layers F.Cu F.Paste F.Mask)'
-            # else:
-            #     drill_str=""
-            #     ptp='smd'
-            #     p_layers='(layers F.Cu F.Paste F.Mask)'
-            # #rratio=0.25  ### TBD
-            # pdl ="  (pad "+str(pad_nbr)+" "+ptp+" roundrect (at "+str(cx)+" "+str(cy)+") (size "+\
-            #      str(sx)+" "+str(sy)+") "+drill_str+" "+p_layers+"(roundrect_rratio "+str(rratio)+"))"
-            # #pdl ="  (pad "+str(pad_nbr)+" thru_hole rect (at "+str(px)+" "+str(py)+") (size "+str(sx)+" "+str(sy)+") (layers F.Cu F.Paste F.Mask))"
-            # pad_nbr=pad_nbr+1
-            # say(pad);sayw(pdl)
-            # return pdl
             return pad_ref
 ###
     elif 'NetTie_Poly' in tp: #accepting with or without reference pad
@@ -19725,7 +19872,7 @@ def createFp(edg,ofs,layer, edge_thick):
     return k_edg
 ##
 
-def Discretize(skt_name):
+def Discretize(skt_name,delete=None,dqt=None):
     ##http://forum.freecadweb.org/viewtopic.php?f=12&t=16336#p129468
     ##Discretizes the edge and returns a list of points.
     ##The function accepts keywords as argument:
@@ -19781,7 +19928,10 @@ def Discretize(skt_name):
             #newShapeList.append(w_name)
             wn=FreeCAD.ActiveDocument.getObject(w_name)
             #newShapes.append(wn)
-            l=wn.Shape.copy().discretize(QuasiDeflection=dqd)
+            if dqt is None:
+                l=wn.Shape.copy().discretize(QuasiDeflection=dqd)
+            else:
+                l=wn.Shape.copy().discretize(QuasiDeflection=dqt)
             #l=b.Shape.copy().discretize(QuasiDeflection=dqd)
             f=Part.makePolygon(l)
             Part.show(f)
@@ -19819,7 +19969,8 @@ def Discretize(skt_name):
     #    FreeCAD.ActiveDocument.removeObject(wire.Name)
     for wnm in newShapeList:
         FreeCAD.ActiveDocument.removeObject(wnm)
-    FreeCAD.ActiveDocument.removeObject(skt_name)
+    if delete is None:
+        FreeCAD.ActiveDocument.removeObject(skt_name)
     FreeCAD.ActiveDocument.recompute() 
     s_name=tsk.Name
         
