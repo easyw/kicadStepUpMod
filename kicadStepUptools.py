@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.8.5"
+___ver___ = "10.8.6"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -7300,7 +7300,7 @@ def routineResetPlacement(keepWB=None):
         say('routine reset Placement properties')
         CpyName =  ''; RefName = ''
         if objs[0] != 'App::Part': # using std method
-            if 1: #len(objs[0].Shape.Compounds) != 1 or objs[0].TypeId == 'Part::MultiFuse': # workaround for issue in resetting pacement for STEP 'merge' importing
+            if objs[0].TypeId == 'Part::MultiFuse': # workaround for issue in resetting pacement for STEP 'merge' importing
                 say('routine reset Placement std')
                 s=objs[0].Shape
                 r=[]
@@ -7327,10 +7327,10 @@ def routineResetPlacement(keepWB=None):
                 # FreeCAD.ActiveDocument.ActiveObject.Label=FreeCAD.ActiveDocument.getObject('Part__Feature001').Label
         if hasattr(FreeCADGui.ActiveDocument.getObject(objs[0].Name),'ShapeColor'):
             say('has shapecolor')
-            FreeCADGui.ActiveDocument.ActiveObject.ShapeColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).ShapeColor
-            FreeCADGui.ActiveDocument.ActiveObject.LineColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).LineColor
-            FreeCADGui.ActiveDocument.ActiveObject.PointColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).PointColor
-            FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).DiffuseColor
+            FreeCADGui.ActiveDocument.getObject(CpyName).ShapeColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).ShapeColor
+            FreeCADGui.ActiveDocument.getObject(CpyName).LineColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).LineColor
+            FreeCADGui.ActiveDocument.getObject(CpyName).PointColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).PointColor
+            FreeCADGui.ActiveDocument.getObject(CpyName).DiffuseColor=FreeCADGui.ActiveDocument.getObject(objs[0].Name).DiffuseColor
         FreeCADGui.ActiveDocument.ActiveObject.Transparency=FreeCADGui.ActiveDocument.getObject(objs[0].Name).Transparency
 
         new_label=objs[0].Label
