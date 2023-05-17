@@ -55,3 +55,4 @@ kicadStepUptools.KicadPCB.load('C:\\Temp\\demo-v5.kicad_pcb')
 12) trying to load 3D model in fp loader
 13) adjust Poly pad discretization higher
 14) remove function getBoardOutline
+    15) fix reset Part placement for non kSU files

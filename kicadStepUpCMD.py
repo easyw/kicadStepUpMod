@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.3.5'
+ksuCMD_version__='2.3.6'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -2140,13 +2140,20 @@ class ksuToolsResetPartPlacement:
                 doc.openTransaction("Absolufy-kSU") #open a transaction for undo management
                 if sel[0].TypeId == 'App::Part':
                     # https://forum.freecad.org/viewtopic.php?p=461588#p461588
+                    # print('before',sel[0].Placement)
                     center = sel[0].Shape.BoundBox.Center
-                    cent_Placement=sel[0].Placement
-                    cent_Placement.move(-center)
+                    # using a temporary shape for moving placement
+                    point = FreeCAD.ActiveDocument.addObject("Part::Vertex", "refPoint")
+                    point.Placement = sel[0].Placement
+                    point.Placement.move(-center)
+                    # cent_Placement=sel[0].Placement
+                    # cent_Placement.move(-center)
+                    # print('after',sel[0].Placement)
                     for obj in sel[0].OutList: ## App.ActiveDocument.Objects: #going through active document objects
                         if obj.TypeId == 'App::Part' and ('Board_Geoms_' in obj.Label or 'Step_Models_' in obj.Label or 'Step_Virtual_Models_' in obj.Label):
                             # print (obj.Label)
-                            comp_plc = obj.Placement.multiply(cent_Placement) #.inverse()) #sel[0].Placement.inverse()
+                            comp_plc = obj.Placement.multiply(point.Placement) #.inverse()) #sel[0].Placement.inverse()
+                            ## comp_plc = obj.Placement.multiply(cent_Placement) #.inverse()) #sel[0].Placement.inverse()
                             # comp_plc = obj.Placement.multiply(sel[0].Placement) #.inverse()) #sel[0].Placement.inverse()
                             obj.Placement=comp_plc
                             #sel[0].Placement.move(center)
@@ -2155,6 +2162,7 @@ class ksuToolsResetPartPlacement:
                     if found_kSU_PCB:
                         print('applyied reset Part Placement on kSU pcb sub Parts')
                         sel[0].Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,0),FreeCAD.Rotation(0,0,0)) #reset its placement to global document origin
+                    FreeCAD.ActiveDocument.removeObject(point.Name)
                 if not found_kSU_PCB:
                     for obj in sel: ## App.ActiveDocument.Objects: #going through active document objects
                         if "Placement" in obj.PropertiesList and obj.TypeId != 'Sketcher::SketchObject' \

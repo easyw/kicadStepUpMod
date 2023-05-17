@@ -495,7 +495,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.8.4"
+___ver___ = "10.8.5"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -7300,7 +7300,7 @@ def routineResetPlacement(keepWB=None):
         say('routine reset Placement properties')
         CpyName =  ''; RefName = ''
         if objs[0] != 'App::Part': # using std method
-            if len(objs[0].Shape.Compounds) != 1 or objs[0].TypeId == 'Part::MultiFuse': # workaround for issue in resetting pacement for STEP 'merge' importing
+            if 1: #len(objs[0].Shape.Compounds) != 1 or objs[0].TypeId == 'Part::MultiFuse': # workaround for issue in resetting pacement for STEP 'merge' importing
                 say('routine reset Placement std')
                 s=objs[0].Shape
                 r=[]
@@ -7314,6 +7314,7 @@ def routineResetPlacement(keepWB=None):
                 Part.show(w)
                 CpyName = FreeCAD.ActiveDocument.ActiveObject.Name
                 #say(w)
+            ## removed the need to workaround, with FC fix
             else:  # workaround for issue in resetting pacement for STEP 'merge' importing
                 say('routine reset Placement refining')
                 FreeCAD.ActiveDocument.addObject('Part::Refine','Refined').Source=FreeCAD.ActiveDocument.getObject(objs[0].Name)
