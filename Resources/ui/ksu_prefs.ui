@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>558</width>
-    <height>882</height>
+    <height>904</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -76,7 +76,7 @@
          <x>0</x>
          <y>0</y>
          <width>538</width>
-         <height>816</height>
+         <height>901</height>
         </rect>
        </property>
        <property name="title">
@@ -194,7 +194,7 @@ or 'KICAD6_3DMODEL_DIR'</string>
         <property name="geometry">
          <rect>
           <x>-1</x>
-          <y>195</y>
+          <y>205</y>
           <width>524</width>
           <height>296</height>
          </rect>
@@ -746,7 +746,7 @@ default '0.01mm'</string>
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>491</y>
+          <y>500</y>
           <width>525</width>
           <height>331</height>
          </rect>
@@ -1349,12 +1349,37 @@ Allowing or not Loading Multi Parts objects</string>
          </item>
         </layout>
        </widget>
+       <widget class="Gui::PrefCheckBox" name="cb_dontuseNativeDlg">
+        <property name="geometry">
+         <rect>
+          <x>8</x>
+          <y>180</y>
+          <width>463</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select to NOT use the native dialog box in Open/Save files&lt;br/&gt;(suggested for Snap or FlatPack)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="text">
+         <string>don't use native dialog in Open/Save files (for Snap or FlatPack)</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+        <property name="prefEntry" stdset="0">
+         <cstring>not_native_dlg</cstring>
+        </property>
+        <property name="prefPath" stdset="0">
+         <cstring>Mod/kicadStepUpGui</cstring>
+        </property>
+       </widget>
       </widget>
       <widget class="QGroupBox" name="mcad_compare">
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>820</y>
+         <y>835</y>
          <width>525</width>
          <height>51</height>
         </rect>

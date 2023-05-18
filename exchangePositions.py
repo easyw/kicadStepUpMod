@@ -6,7 +6,7 @@
 # App.Rotation(10,20,30) = Euler Angle 
 ## https://forum.freecadweb.org/viewtopic.php?t=11799
 
-__version_exchPos__ = "1.2.2"
+__version_exchPos__ = "1.2.3"
 
 
 import FreeCAD, FreeCADGui,sys, os 
@@ -15,6 +15,7 @@ import Part
 
 import PySide 
 from PySide import QtGui, QtCore
+QtWidgets = QtGui
 #from PySide.QtGui import QTreeWidgetItemIterator
 import ksu_locator
 
@@ -332,11 +333,17 @@ def expPos(doc=None):  ## export positions
         home = lastPath
     if not testing:
         Filter=""
-        name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Write 3D models & footprint positions to a Report file ...",
-            home, "*.rpt")
-        #path, fname = os.path.split(name)
-        #fname=os.path.splitext(fname)[0]
-        #fpth = os.path.dirname(os.path.abspath(__file__))
+        prefs_ = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+        #print('native_dlg',prefs_.GetBool('native_dlg'))
+        if not(prefs_.GetBool('not_native_dlg')):
+            name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Write 3D models & footprint positions to a Report file ...",
+                home, "*.rpt")
+        else:
+            name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Write 3D models & footprint positions to a Report file ...",
+                home, "*.rpt",options=QtWidgets.QFileDialog.DontUseNativeDialog)
+            #path, fname = os.path.split(name)
+            #fname=os.path.splitext(fname)[0]
+            #fpth = os.path.dirname(os.path.abspath(__file__))
         if name:
             lastPath = os.path.dirname(os.path.abspath(name))
             pg.SetString('lastPath', lastPath)
@@ -454,8 +461,14 @@ def cmpPos(doc=None):  ## compare exported positions with the selected doc
     #home = r'C:\Cad\Progetti_K\board-revision\SolidWorks-2018-09-03_fede'
     if not testing:
         Filter=""
-        name, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Open 3D models & footprint positions Report file\nto compare positions with the Active Document...",
-            home, "*.rpt")
+        prefs_ = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+        #print('native_dlg',prefs_.GetBool('native_dlg'))
+        if not(prefs_.GetBool('not_native_dlg')):
+            name, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Open 3D models & footprint positions Report file\nto compare positions with the Active Document...",
+                home, "*.rpt")
+        else:
+            name, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Open 3D models & footprint positions Report file\nto compare positions with the Active Document...",
+                home, "*.rpt",options=QtWidgets.QFileDialog.DontUseNativeDialog)
         #path, fname = os.path.split(name)
         #fname=os.path.splitext(fname)[0]
         #fpth = os.path.dirname(os.path.abspath(__file__))

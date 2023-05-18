@@ -10,6 +10,7 @@
 import FreeCAD, FreeCADGui, os, Part
 import PySide
 from PySide import QtGui, QtCore
+QtWidgets = QtGui
 from sys import platform as _platform
 import sys,os
 import time
@@ -20,7 +21,7 @@ use_AppPart=False # False
 use_Links=False
 global FC_export_min_version
 FC_export_min_version="11670"  #11670 latest JM
-silks_version = '1.2'
+silks_version = '1.3'
 
 use_LinkGroups = False
 if 'LinkView' in dir(FreeCADGui):
@@ -146,8 +147,14 @@ def makeFaceDXF():
     last_pcb_path=""
     pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
     last_pcb_path = pg.GetString("last_pcb_path")
-    fn, Filter = PySide.QtGui.QFileDialog.getOpenFileNames(None, "Open File...",
+    prefs_ = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+    #print('native_dlg',prefs_.GetBool('native_dlg'))
+    if not(prefs_.GetBool('not_native_dlg')):
+        fn, Filter = PySide.QtGui.QFileDialog.getOpenFileNames(None, "Open File...",
                 make_unicode(last_pcb_path), "*.dxf")
+    else:
+        fn, Filter = PySide.QtGui.QFileDialog.getOpenFileNames(None, "Open File...",
+                make_unicode(last_pcb_path), "*.dxf",options=QtWidgets.QFileDialog.DontUseNativeDialog)
     for fname in fn:
         path, name = os.path.split(fname)
         filename=os.path.splitext(name)[0]

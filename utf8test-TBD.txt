@@ -1,4 +1,6 @@
-import kicadStepUptools; import importlib; importlib.reload(kicadStepUptools);FreeCADGui.runCommand('ksuToolsFootprintGen',0)
+import kicadStepUptools; import importlib; importlib.reload(kicadStepUptools);
+
+FreeCADGui.runCommand('ksuToolsFootprintGen',0)
 
 kicadStepUptools.routineT_XYZ('x',1.0)
 
@@ -15,7 +17,7 @@ import makefacedxf; import importlib; importlib.reload(makefacedxf)
 
 
 import kicadStepUpCMD; import importlib; importlib.reload(kicadStepUpCMD)
-
+import exchangePositions; import importlib; importlib.reload(exchangePositions)
 
 import utf8test; import importlib; importlib.reload(utf8test)
 import utf8test; reload(utf8test)
@@ -56,3 +58,7 @@ kicadStepUptools.KicadPCB.load('C:\\Temp\\demo-v5.kicad_pcb')
 13) adjust Poly pad discretization higher
 14) remove function getBoardOutline
     15) fix reset Part placement for non kSU files
+    16) detect Snap or FlatPack not to use Native Dialogs
+    ,options=QtWidgets.QFileDialog.DontUseNativeDialog
+    import os; os.getenv('SNAP_REVISION')    
+    

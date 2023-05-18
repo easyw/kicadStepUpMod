@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global fps_version
-fps_version = '1.0.8'
+fps_version = '1.0.9'
 
 dvp=False #True
 if dvp:
@@ -13,6 +13,7 @@ if dvp:
 import time
 import PySide
 from PySide import QtGui, QtCore
+QtWidgets = QtGui
 import sys,os
 import FreeCAD, FreeCADGui
 import Draft, Part
@@ -325,8 +326,14 @@ def addfootprint(fname = None):
         last_pcb_path = pg.GetString("last_pcb_path")
         if len (last_pcb_path) == 0:
                 last_pcb_path = ""
-        fname, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Open File...",
+        prefs_ = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+        #print('native_dlg',prefs_.GetBool('native_dlg'))
+        if not(prefs_.GetBool('not_native_dlg')):
+            fname, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Open File...",
                 make_unicode(last_pcb_path), "*.kicad_mod")
+        else:
+            fname, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Open File...",
+                make_unicode(last_pcb_path), "*.kicad_mod",options=QtWidgets.QFileDialog.DontUseNativeDialog)
         path, name = os.path.split(fname)
     #filename=os.path.splitext(name)[0]
     filename = fname

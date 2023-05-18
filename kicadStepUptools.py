@@ -429,6 +429,7 @@ from collections import namedtuple
 
 import PySide
 from PySide import QtGui, QtCore
+QtWidgets = QtGui
 
 from time import sleep
 from math import sqrt, tan, atan, atan2, degrees, radians, hypot, sin, cos, pi, fmod
@@ -495,7 +496,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.8.6"
+___ver___ = "10.8.7"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -725,6 +726,7 @@ if 'LinkView' in dir(FreeCADGui):
 else:
     use_LinkGroups = False
     sayw('using \'Part\' container')
+
 #
 global FC_export_min_version
 FC_export_min_version="11670"  #11670 latest JM
@@ -5960,8 +5962,14 @@ def onLoadFootprint(file_name=None):
         #    name, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Open File", last_file_path, "*.kicad_mod")#PySide
         #except Exception:
         #    FreeCAD.Console.PrintError("Error : " + str(name) + "\n")
-        name, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Open File...",
-             make_unicode(last_fp_path), "*.kicad_mod")
+        prefs_ = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+        #print('native_dlg',prefs_.GetBool('native_dlg'))
+        if not(prefs_.GetBool('not_native_dlg')):
+            name, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Open File...",
+                make_unicode(last_fp_path), "*.kicad_mod")
+        else:
+            name, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Open File...",
+                make_unicode(last_fp_path), "*.kicad_mod",options=QtWidgets.QFileDialog.DontUseNativeDialog)
     else:
         name="C:/Cad/Progetti_K/ksu-test/test.kicad_mod"
     if len(name) > 0:
@@ -6552,8 +6560,13 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
             #        replyText = reply[0] # which will be "" if they clicked Cancel
             #restore main window
             #self.setWindowState(QtCore.Qt.WindowActive)
-            name, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Open kicad PCB File...",
-                make_unicode(last_pcb_path), "*.kicad_pcb")
+            prefs_ = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+            if not(prefs_.GetBool('not_native_dlg')):
+                name, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Open kicad PCB File...",
+                    make_unicode(last_pcb_path), "*.kicad_pcb")
+            else:
+                name, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Open kicad PCB File...",
+                    make_unicode(last_pcb_path), "*.kicad_pcb",options=QtWidgets.QFileDialog.DontUseNativeDialog)
         else:
             name="C:/Cad/Progetti_K/ksu-test/multidrill.kicad_pcb"
         if len(name) > 0:
@@ -7297,10 +7310,12 @@ def routineResetPlacement(keepWB=None):
     #print 'here'
     if len(objs) == 1:
         # doc.openTransaction('rst')
-        say('routine reset Placement properties')
+        #say('routine reset Placement properties')
+        # print(objs[0].Label)
         CpyName =  ''; RefName = ''
         if objs[0] != 'App::Part': # using std method
-            if objs[0].TypeId == 'Part::MultiFuse': # workaround for issue in resetting pacement for STEP 'merge' importing
+            if objs[0].TypeId == 'Part::MultiFuse' or objs[0].TypeId == 'Part::Compound' or \
+                    objs[0].TypeId == 'Part::Cut'  or objs[0].TypeId == 'Part::MultiCommon': # workaround for issue in resetting pacement for STEP 'merge' importing
                 say('routine reset Placement std')
                 s=objs[0].Shape
                 r=[]
@@ -14885,8 +14900,13 @@ def Export3DStepF():
                 sayw(last_pcb_path)
             #getSaveFileName(self,"saveFlle","Result.txt",filter ="txt (*.txt *.)")
             Filter=""
-            name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Export 3D STEP ...",
-                make_unicode(last_3d_path), "*.step *.stp")
+            prefs_ = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+            if not(prefs_.GetBool('not_native_dlg')):
+                name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Export 3D STEP ...",
+                    make_unicode(last_3d_path), "*.step *.stp")
+            else:
+                name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Export 3D STEP ...",
+                    make_unicode(last_3d_path), "*.step *.stp",options=QtWidgets.QFileDialog.DontUseNativeDialog)
             #say(name)
             if name:
                 last_3d_path=os.path.dirname(name)
@@ -15025,8 +15045,14 @@ def Import3DModelF():
         last_3d_path=last_pcb_path
         sayw(last_pcb_path)
     Filter=""
-    name, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Import 3D File...",
-         make_unicode(last_3d_path), "*.step *.stp *.stpZ *.iges *.igs *.FCStd")
+    prefs_ = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+    if not(prefs_.GetBool('not_native_dlg')):
+        name, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Import 3D File...",
+            make_unicode(last_3d_path), "*.step *.stp *.stpZ *.iges *.igs *.FCStd")
+    else:
+        name, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Import 3D File...",
+            make_unicode(last_3d_path), "*.step *.stp *.stpZ *.iges *.igs *.FCStd",options=QtWidgets.QFileDialog.DontUseNativeDialog)
+
     #say(name)
     if name:
         ext = os.path.splitext(os.path.basename(name))[1]
@@ -15335,8 +15361,13 @@ def PushPCB():
                     testing=False
                     if not testing:
                         Filter=""
-                        name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Push Sketch PCB Edge to KiCad board ...",
-                            make_unicode(last_pcb_path), "*.kicad_pcb")
+                        prefs_ = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+                        if not(prefs_.GetBool('not_native_dlg')):
+                            name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Push Sketch PCB Edge to KiCad board ...",
+                                make_unicode(last_pcb_path), "*.kicad_pcb")
+                        else:
+                            name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Push Sketch PCB Edge to KiCad board ...",
+                                make_unicode(last_pcb_path), "*.kicad_pcb",options=QtWidgets.QFileDialog.DontUseNativeDialog)
                     else:
                         name='d:/Temp/e2.kicad_pcb'
                     #say(name)
@@ -15412,8 +15443,13 @@ def Sync3DModel():
                 testing=False
                 if not testing:
                     Filter=""
-                    fname, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Load KiCad PCB board data...",
-                        make_unicode(last_pcb_path), "*.kicad_pcb")
+                    prefs_ = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+                    if not(prefs_.GetBool('not_native_dlg')):
+                        fname, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Load KiCad PCB board data...",
+                            make_unicode(last_pcb_path), "*.kicad_pcb")
+                    else:
+                        fname, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Load KiCad PCB board data...",
+                            make_unicode(last_pcb_path), "*.kicad_pcb",options=QtWidgets.QFileDialog.DontUseNativeDialog)
                 else:
                     fname='c:/Temp/demo/demo-test-mp.kicad_pcb'
                 if fname is not None:
@@ -15600,8 +15636,13 @@ def PushMoved():
             testing=False #True
             if not testing:
                 Filter=""
-                fname, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Push 3D PCB position(s) to KiCad board ...",
-                    make_unicode(last_pcb_path), "*.kicad_pcb")
+                prefs_ = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+                if not(prefs_.GetBool('not_native_dlg')):
+                    fname, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Push 3D PCB position(s) to KiCad board ...",
+                        make_unicode(last_pcb_path), "*.kicad_pcb")
+                else:
+                    fname, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Push 3D PCB position(s) to KiCad board ...",
+                        make_unicode(last_pcb_path), "*.kicad_pcb",options=QtWidgets.QFileDialog.DontUseNativeDialog)
             else:
                 fname='c:/Temp/demo/test-rot.kicad_pcb'
             if fname:
@@ -15973,8 +16014,13 @@ def PullMoved():
             testing=False #True
             if not testing:
                 Filter=""
-                fname, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Pull 3D model position(s) from pcbnew File...",
-                    make_unicode(last_pcb_path), "*.kicad_pcb")
+                prefs_ = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+                if not(prefs_.GetBool('not_native_dlg')):
+                    fname, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Pull 3D model position(s) from pcbnew File...",
+                        make_unicode(last_pcb_path), "*.kicad_pcb")
+                else:
+                    fname, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Pull 3D model position(s) from pcbnew File...",
+                        make_unicode(last_pcb_path), "*.kicad_pcb",options=QtWidgets.QFileDialog.DontUseNativeDialog)
             else:
                 fname='c:/Temp/demo/test-rot.kicad_pcb'
             if fname:
@@ -16472,8 +16518,13 @@ def PushFootprint():
                 #stop
                 if not testing:
                     Filter=""
-                    name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Push Footprint to KiCad module ...",
-                        make_unicode(last_fp_path), "*.kicad_mod")
+                    prefs_ = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+                    if not(prefs_.GetBool('not_native_dlg')):
+                        name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Push Footprint to KiCad module ...",
+                            make_unicode(last_fp_path), "*.kicad_mod")
+                    else:
+                        name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Push Footprint to KiCad module ...",
+                            make_unicode(last_fp_path), "*.kicad_mod",options=QtWidgets.QFileDialog.DontUseNativeDialog)
                 else:
                     if os.path.isdir("d:/Temp/"):
                         name='d:/Temp/ex2.kicad_mod'
