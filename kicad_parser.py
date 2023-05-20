@@ -34,7 +34,7 @@ from fcad_parser import unquote #maui
 
 
 # from kicadStepUptools import KicadPCB,SexpList
-__kicad_parser_version__ = '2.2.8'
+__kicad_parser_version__ = '2.2.9'
 # https://github.com/realthunder/fcad_pcb/issues/20#issuecomment-586042341
 # FreeCAD.Console.PrintLog('kicad_parser_version '+__kicad_parser_version__+'\n') # maui 
 # print('kicad_parser_version '+__kicad_parser_version__)
@@ -2144,6 +2144,21 @@ class KicadFcad:
                         else:
                             wst.append(makeThickLine(makeVect(l.start),makeVect(l.end),l.width/2.0))
                         #self._makeShape(m, 'fp', ws)
+                    except:
+                        pass
+            for j,l in enumerate(m.fp_rect):
+                if unquote(l.layer) == self.layer:
+                    #print(j,l)
+                    try: #avoiding null lenght lines
+                        rc=Part.Wire(make_gr_rect(l))
+                        ws.append(rc)
+                        if hasattr(l,'stroke'):
+                            #print(l.stroke.width)
+                            width = l.stroke.width
+                        else:
+                            width = l.width
+                        for e in rc.Edges:
+                            wst.append(makeThickLine(makeVect([e.Vertexes[0].X,-e.Vertexes[0].Y]),makeVect([e.Vertexes[1].X,-e.Vertexes[1].Y]),width/2.0))
                     except:
                         pass
             for j,a in enumerate(m.fp_arc):
