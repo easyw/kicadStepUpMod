@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global fps_version
-fps_version = '1.0.9'
+fps_version = '1.1.0'
 
 dvp=False #True
 if dvp:
@@ -445,14 +445,14 @@ def addfootprint(fname = None):
                     zn = doc.ActiveObject
                     zn.Label = 'keepout-Zones'
                     zn.ViewObject.DrawStyle = u"Dashed"
-                    zn.ViewObject.LineColor = (255,0,127)
+                    zn.ViewObject.LineColor = (255.0,0.0,127.0)
                     import Draft
                     if ar!=0:
                         zn.Placement.Rotation.Angle = radians(ar)
                     zone_keepout = Draft.makeSketch(zn,autoconstraints=True)
                     zone_keepout.Label = 'keepout-Zones_'
                     zone_keepout.ViewObject.DrawStyle = u"Dashed"
-                    zone_keepout.ViewObject.LineColor = (255,0,127)
+                    zone_keepout.ViewObject.LineColor = (255.0,0.0,127.0)
                     doc.removeObject(zn.Name)
                     tbassembled.append(zone_keepout)
                 #stop
