@@ -12299,6 +12299,11 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                 except:
                     sayerr ('hide attribute on 3d model missing')
                     pass
+                    
+                if md_hide:
+                    # skip hidden models
+                    continue
+                    
                 if (virtual==1 and addVirtual==0):
                     model_name='no3Dmodel'
                     side='noLayer'
