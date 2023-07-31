@@ -508,10 +508,10 @@ __Icon__ = "stepup.png"
 
 global userCancelled, userOK, show_mouse_pos, min_val, last_file_path, resetP
 global start_time, show_messages
+global models3D_prefix, models3D_paths, models3D_named_paths
 global show_messages, applymaterials
 global real_board_pos_x, real_board_pos_y, board_base_point_x, board_base_point_y
 global ksu_config_fname, ini_content, configFilePath
-global models3D_prefix, models3D_prefix2, models3D_prefix3, models3D_prefix4
 global blacklisted_model_elements, col, colr, colg, colb
 global bbox, volume_minimum, height_minimum, idf_to_origin, aux_orig
 global base_orig, base_point, bbox_all, bbox_list, whitelisted_model_elements
@@ -3004,7 +3004,7 @@ font_size = 8
 def cfg_read_all():
     global ksu_config_fname, default_ksu_config_ini, applymaterials
     ##ksu pre-set
-    global models3D_prefix, models3D_prefix2, models3D_prefix3, models3D_prefix4
+    global models3D_prefix, models3D_paths, models3D_named_paths
     global blacklisted_model_elements, col, colr, colg, colb, whitelisted_3Dmodels
     global bbox, volume_minimum, height_minimum, idf_to_origin, aux_orig
     global base_orig, base_point, bbox_all, bbox_list, whitelisted_model_elements
@@ -3056,19 +3056,34 @@ def cfg_read_all():
     #    for i,p in enumerate (prefs.GetContents()):
     #        print (p)
             
-    models3D_prefix = prefs.GetString('prefix3d_1')
+    models3D_paths_str = prefs.GetString('3d_model_paths')
     
     # sayw(prefs.GetString('prefix3d_1'))
-    # sayw(prefs.GetString('prefix3d_2'))
-    # sayw(prefs.GetString('prefix3d_3'))
-    # sayw(prefs.GetString('prefix3d_4'))
-    
-    if len (models3D_prefix) == 0:
+    sayw('3d model path list: ')
+    sayw(models3D_paths_str)
+
+    if len (models3D_paths_str) == 0:
+        prefs.SetString('3d_model_paths',make_string(default_prefix3d))
+        models3D_paths_str = prefs.GetString('3d_model_paths')
+        
         prefs.SetString('prefix3d_1',make_string(default_prefix3d))
         models3D_prefix = prefs.GetString('prefix3d_1')
-    models3D_prefix2 = prefs.GetString('prefix3d_2')
-    models3D_prefix3 = prefs.GetString('prefix3d_3')
-    models3D_prefix4 = prefs.GetString('prefix3d_4')
+        
+    models3D_paths = [path.strip() for path in models3D_paths_str.split('\n') if path.find('@') == -1]
+    models3D_prefix = models3D_paths[0]
+    models3D_named_paths = {}
+    for path in models3D_paths_str.split('\n'):
+        if path.find('@') > -1:
+            kvPair = path.strip().split('@')
+            models3D_named_paths[kvPair[0]] = kvPair[1]
+    
+    sayw('parsed 3d model path list: ')
+    sayw(models3D_paths)
+    sayw('parsed 3d model prefix: ')
+    sayw(models3D_prefix)
+    sayw('named 3d model path list: ')
+    sayw(models3D_named_paths)
+
     light_green = [0.20,0.60,0.40] # std Green
     green = [0.3098,0.4823,0.4078] # Green (79,123,104)
     blue = [0.13,0.40,0.73] # Deep Sea Blue
@@ -4321,11 +4336,9 @@ def check_wrl_transparency(step_module):
 ##
 def findModelPath(model_type, path_list):
     """ Find module in all paths and types specified """
-    global models3D_prefix, models3D_prefix2, models3D_prefix3, models3D_prefix4
 
     module_path='not-found'
     # model_type = [step_module,step_module_lw,step_module_up,step_module2,step_module2_up,step_module3,step_module3_up,step_module4,step_module4_up,step_module5,step_module5_up]
-    # path_list  = [models3D_prefix,models3D_prefix2,models3D_prefix3,models3D_prefix4]
     path_list = list(filter(None, path_list)) #removing empty paths
     # sayw('searching models:'+str(model_type))
     # sayw('on '+str(len(path_list))+' paths: '+str(path_list))
@@ -4352,7 +4365,7 @@ def findModelPath(model_type, path_list):
 def Load_models(pcbThickness,modules):
     global off_x, off_y, volume_minimum, height_minimum, bbox_all, bbox_list
     global whitelisted_model_elements
-    global models3D_prefix, models3D_prefix2, models3D_prefix3, models3D_prefix4
+    global models3D_prefix, models3D_paths, models3D_named_paths
     global last_pcb_path, full_placement, whitelisted_3Dmodels
     global allow_compound, compound_found, bklist, force_transparency, warning_nbr, use_AppPart
     global conv_offs, use_Links, links_imp_mode, use_pypro, use_LinkGroups, fname_sfx
@@ -4444,7 +4457,17 @@ def Load_models(pcbThickness,modules):
             say('adjusting Local Path')
             say('step-module-replaced '+step_module)
         elif (step_module.find('${')!=-1) and encoded==0:  #extra local ${ENV} 3D path
-            step_module= re.sub('\${.*?}/', '', step_module)
+            # replace the named path if available
+            replaced = False
+            matchObj = re.search( r'\${(.*?)}', step_module, re.M|re.I)
+            sayw('group1 of matchObj is %s' % matchObj.group(1))
+            if matchObj and matchObj.group(1) in models3D_named_paths:
+                sayw('replacing %s with %s' % ('${%s}' % matchObj.group(1), models3D_named_paths[matchObj.group(1)]))
+                step_module=step_module.replace('${%s}' % matchObj.group(1), models3D_named_paths[matchObj.group(1)])
+                replaced = True                    
+
+            if not replaced:
+                step_module= re.sub('\${.*?}/', '', step_module)
             #step_module=step_module.decode("utf-8").replace(u'${}/', u'')
             step_module=step_module.replace(u'${}/', u'')
             step_module=step_module.replace(u'"', u'')  # name with spaces
@@ -4590,9 +4613,8 @@ def Load_models(pcbThickness,modules):
                 if model_name=="box_mcad" or model_name=="cylV_mcad" or model_name=="cylH_mcad":
                     createScaledObjs=True
                 if not createScaledObjs:
-                    path_list = [models3D_prefix,models3D_prefix2,models3D_prefix3,models3D_prefix4]
                     model_type = [step_module,step_module_lw,step_module_up,step_module2,step_module2_up,step_module3,step_module3_up,step_module4,step_module4_up,step_module5,step_module5_up]
-                    module_path = findModelPath(model_type, path_list)     # Find module in all paths and types specified
+                    module_path = findModelPath(model_type, models3D_paths)     # Find module in all paths and types specified
                 else:
                     scale_vrml=modules[i][8]
                     #sayw(scale_vrml)
@@ -5266,7 +5288,7 @@ def Load_models(pcbThickness,modules):
         last_pcb_path_local_U = make_unicode(last_pcb_path_local)
         say("missing models");say (missing_models)
         say("searching path")
-        for mpath in path_list:
+        for mpath in models3D_paths:
             say(mpath)
         #say(models3D_prefix_U);say (models3D_prefix2_U)
         say(last_pcb_path_local_U)
@@ -5276,7 +5298,7 @@ def Load_models(pcbThickness,modules):
         #if len (missings) > n_rpt_max: #warning_nbr =-1 for skipping the test
         wmsg="""... missing module(s)<br>"""
         wmsg+="""... searching path:<br>"""
-        for mpath in path_list:
+        for mpath in models3D_paths:
             wmsg+=mpath+"""<br>"""
         #wmsg+=models3D_prefix_U+"""<br>"""
         #wmsg+=models3D_prefix2_U+"""<br>"""
@@ -6489,7 +6511,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
     global test_flag, last_pcb_path, configParser, configFilePath, start_time
     global aux_orig, base_orig, base_point, idf_to_origin, off_x, off_y, export_board_2step
     global real_board_pos_x, real_board_pos_y, board_base_point_x, board_base_point_y
-    global models3D_prefix, models3D_prefix2, models3D_prefix3, models3D_prefix4
+    global models3D_prefix, models3D_paths, models3D_named_paths
     global blacklisted_model_elements, col, colr, colg, colb, whitelisted_3Dmodels
     global bbox, volume_minimum, height_minimum, idf_to_origin, aux_orig
     global base_orig, base_point, bbox_all, bbox_list, whitelisted_model_elements
@@ -11595,6 +11617,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
     global addVirtual, load_sketch, off_x, off_y, aux_orig, grid_orig
     global running_time, conv_offs, use_Links, apply_edge_tolerance, simplifyComSolid
     global zfit, use_LinkGroups, fname_sfx, missingHeight
+    global models3D_named_paths
     
     def simu_distance(p0, p1):
         return max (abs(p0[0] - p1[0]), abs(p0[1] - p1[1]))
@@ -12318,6 +12341,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                                 ofs=[md.offset.xyz[0]/conv_offs,md.offset.xyz[1]/conv_offs,md.offset.xyz[2]/conv_offs]
                         else:
                             ofs=md.at.xyz
+                            
                         line = []
                         line.append(model_name)
                         line.append(m_x)
