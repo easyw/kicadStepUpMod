@@ -2087,9 +2087,9 @@ def exportVRMLmaterials(objects, filepath):
                 ## bgc = QtGui.QColor(shape_col[0]*255,shape_col[1]*255, shape_col[2]*255)
                 ## pal.setColor(QtGui.QPalette.Base, bgc)
                 ## ui.plainTextEdit.viewport().setPalette(pal)
-                ui.plainTextEdit.setStyleSheet("#plainTextEdit {background-color:rgb("+str(shape_col[0]*255)+","+str(shape_col[1]*255)+","+str(shape_col[2]*255)+");}") 
-                ui.plainTextEdit_2.setStyleSheet("#plainTextEdit_2 {background-color:rgb("+str(shape_col[0]*255)+","+str(shape_col[1]*255)+","+str(shape_col[2]*255)+");}") 
-                ui.comboBox.setCurrentIndex(material_index)
+                # ui.plainTextEdit.setStyleSheet("#plainTextEdit {background-color:rgb("+str(shape_col[0]*255)+","+str(shape_col[1]*255)+","+str(shape_col[2]*255)+");}") 
+                # ui.plainTextEdit_2.setStyleSheet("#plainTextEdit_2 {background-color:rgb("+str(shape_col[0]*255)+","+str(shape_col[1]*255)+","+str(shape_col[2]*255)+");}") 
+                # ui.comboBox.setCurrentIndex(material_index)
                 #ui.comboBox.clear()
                 color_list.append(shape_col)
                 #print(shape_col, 'shape_col')
@@ -7432,24 +7432,24 @@ def routineScaleVRML():
             stp_ext='.stpZ'
         #print('stpZ',fullFilePathNameStep)
         if exportV or exportS:
-            msg="""<b>export STEP & scaled VRML file for kicad!</b>
-            <font color='white'>****************************************************************************</font><br>
-            <i>exporting folder: </i><br><b>- <a href='"""+path+"""' target='_blank'>"""+path+"""</a></b>"""
-            msg+="""<br><i>exporting filename: </i><br>"""
-            if exportV:
-                msg+="""- <b>"""+fname+vrml_ext+"""<br>"""
-            if exportS:
-                msg+="""</b>- <b>"""+fname+stp_ext+"""</b>"""
-            else:
-                if len(objs) >= 1:
-                    msg+="""<br></b>- <b>step file not exported; multi-part selected</b>"""
-            #msg="export scaled VRML file for kicad!\r\n"
-            #msg=msg+"****************************************************************************"
-            msg=msg+"<br><br><i>3D settings in kicad Module Editor:</i><br>"
-            msg=msg+"<b>- scale 1 1 1\r\n- offset 0 0 0<br>- rotation 0 0 "+str(rot_wrl)+"</b>"
-            ##self.setWindowState(QtCore.Qt.WindowMinimized)
-            QtGui.QApplication.restoreOverrideCursor()
-            QtGui.QMessageBox.information(None,"Info ...",msg)
+            # msg="""<b>export STEP & scaled VRML file for kicad!</b>
+            # <font color='white'>****************************************************************************</font><br>
+            # <i>exporting folder: </i><br><b>- <a href='"""+path+"""' target='_blank'>"""+path+"""</a></b>"""
+            # msg+="""<br><i>exporting filename: </i><br>"""
+            # if exportV:
+            #     msg+="""- <b>"""+fname+vrml_ext+"""<br>"""
+            # if exportS:
+            #     msg+="""</b>- <b>"""+fname+stp_ext+"""</b>"""
+            # else:
+            #     if len(objs) >= 1:
+            #         msg+="""<br></b>- <b>step file not exported; multi-part selected</b>"""
+            # #msg="export scaled VRML file for kicad!\r\n"
+            # #msg=msg+"****************************************************************************"
+            # msg=msg+"<br><br><i>3D settings in kicad Module Editor:</i><br>"
+            # msg=msg+"<b>- scale 1 1 1\r\n- offset 0 0 0<br>- rotation 0 0 "+str(rot_wrl)+"</b>"
+            # ##self.setWindowState(QtCore.Qt.WindowMinimized)
+            # QtGui.QApplication.restoreOverrideCursor()
+            # QtGui.QMessageBox.information(None,"Info ...",msg)
             ##self.setWindowState(QtCore.Qt.WindowActive)
             say('done')
             FreeCAD.ActiveDocument.commitTransaction()
