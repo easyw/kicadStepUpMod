@@ -2253,41 +2253,45 @@ def export(componentObjs, fullfilePathName, scale=None, label=None):
     exportV=True
     mesh_deviation_default=0.03 # 0.03 or 0.1
     mesh_dev=mesh_deviation_default #the smaller the best quality, 1 coarse
-    if os.path.exists(filename):
-        say('file exists')
-        QtGui.QApplication.restoreOverrideCursor()
-        reply = QtGui.QMessageBox.question(None, "Info", filename+"\nwrl file exists, overwrite?",
-        QtGui.QMessageBox.Yes | QtGui.QMessageBox.No, QtGui.QMessageBox.No)
-        if reply == QtGui.QMessageBox.Yes:
-            # this is where the code relevant to a 'Yes' answer goes
-            exportV=True
+    # if os.path.exists(filename):
+        # say('file exists')
+        # QtGui.QApplication.restoreOverrideCursor()
+        # reply = QtGui.QMessageBox.question(None, "Info", filename+"\nwrl file exists, overwrite?",
+        # QtGui.QMessageBox.Yes | QtGui.QMessageBox.No, QtGui.QMessageBox.No)
+        # if reply == QtGui.QMessageBox.Yes:
+        #     # this is where the code relevant to a 'Yes' answer goes
+        #     exportV=True
+        #     #pass
+        # if reply == QtGui.QMessageBox.No:
+        #     # this is where the code relevant to a 'No' answer goes
+        #     exportV=False
             #pass
-        if reply == QtGui.QMessageBox.No:
-            # this is where the code relevant to a 'No' answer goes
-            exportV=False
-            #pass
+
+    exportV=True
     if exportV:
-        reply = QtGui.QInputDialog.getText(None, "Mesh Deviation","Mesh Deviation (the smaller the better quality)",QtGui.QLineEdit.Normal,str(mesh_deviation_default))
-        if reply[1]:
-                # user clicked OK
-                replyText = reply[0]
-                mesh_dev = float (replyText)
-        else:
-                # user clicked Cancel
-                replyText = reply[0] # which will be "" if they clicked Cancel
-                mesh_dev=mesh_deviation_default #the smaller the best quality, 1 coarse
+        # reply = QtGui.QInputDialog.getText(None, "Mesh Deviation","Mesh Deviation (the smaller the better quality)",QtGui.QLineEdit.Normal,str(mesh_deviation_default))
+        # if reply[1]:
+        #         # user clicked OK
+        #         replyText = reply[0]
+        #         mesh_dev = float (replyText)
+        # else:
+        #         # user clicked Cancel
+        #         replyText = reply[0] # which will be "" if they clicked Cancel
+        #         mesh_dev=mesh_deviation_default #the smaller the best quality, 1 coarse
+        mesh_dev = mesh_deviation_default
                 #default
         creaseAngle_default=0.5
-        reply = QtGui.QInputDialog.getText(None, "creaseAngle","creaseAngle (range:0-1.5)\ncheck your wrl result\n(0->None)",QtGui.QLineEdit.Normal,str(creaseAngle_default))
-        if reply[1]:
-                # user clicked OK
-                replyText = reply[0]
-                creaseAngle = float (replyText)
-        else:
-                # user clicked Cancel
-                replyText = reply[0] # which will be "" if they clicked Cancel
-                creaseAngle=creaseAngle_default #the bigger the best quality, 1 coarse
+        # reply = QtGui.QInputDialog.getText(None, "creaseAngle","creaseAngle (range:0-1.5)\ncheck your wrl result\n(0->None)",QtGui.QLineEdit.Normal,str(creaseAngle_default))
+        # if reply[1]:
+        #         # user clicked OK
+        #         replyText = reply[0]
+        #         creaseAngle = float (replyText)
+        # else:
+        #         # user clicked Cancel
+        #         replyText = reply[0] # which will be "" if they clicked Cancel
+        #         creaseAngle=creaseAngle_default #the bigger the best quality, 1 coarse
                 #default
+        creaseAngle=creaseAngle_default
         #say(mesh_deviation)
         #say(mesh_dev)
         color=[]
