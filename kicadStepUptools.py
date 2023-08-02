@@ -2046,9 +2046,9 @@ def exportVRMLmaterials(objects, filepath):
         color_list_mat=[]
         index_color=-1
         Dialog = QtGui.QDialog()
-        ui = Ui_Dialog()
-        ui.setupUi(Dialog)
-        ui.comboBox.addItems(material_properties_names)
+        # ui = Ui_Dialog()
+        # ui.setupUi(Dialog)
+        # ui.comboBox.addItems(material_properties_names)
         material="as is"
         for obj in objects:
             if creaseAngle==0:
@@ -2096,16 +2096,16 @@ def exportVRMLmaterials(objects, filepath):
                 index_color=index_color+1
                 #say(color_list)
                 #ui.comboBox.addItems(color_list)
-                if Materials:
-                    ## material_index=material_properties_names.index(color_list_mat[col_index])
-                    ## ui.comboBox.setCurrentIndex(index_color)
-                    reply=Dialog.exec_()
-                    #Dialog.exec_()
-                    #say(reply)
-                    if reply==1:
-                        material=str(ui.comboBox.currentText())
-                    else:
-                        material="as is"
+                # if Materials:
+                #     ## material_index=material_properties_names.index(color_list_mat[col_index])
+                #     ## ui.comboBox.setCurrentIndex(index_color)
+                #     reply=Dialog.exec_()
+                #     #Dialog.exec_()
+                #     #say(reply)
+                #     if reply==1:
+                #         material=str(ui.comboBox.currentText())
+                #     else:
+                material="as is"
                 color_list_mat.append(material)
                 sayw(material)
             #else:
@@ -2780,20 +2780,20 @@ def exportStep(objs, ffPathName):
     else:
         #not 'stpz'
         fullFilePathNameStep=path+os.sep+exp_name+'.step'
-    exportS=True
-    if os.path.exists(fullFilePathNameStep):
-        say('file exists')
-        QtGui.QApplication.restoreOverrideCursor()
-        reply = QtGui.QMessageBox.question(None, "Info", fullFilePathNameStep+"\nstep file exists, overwrite?",
-        QtGui.QMessageBox.Yes | QtGui.QMessageBox.No, QtGui.QMessageBox.No)
-        if reply == QtGui.QMessageBox.Yes:
-            # this is where the code relevant to a 'Yes' answer goes
-            exportS=True
-            pass
-        if reply == QtGui.QMessageBox.No:
+    # exportS=True
+    # if os.path.exists(fullFilePathNameStep):
+    #     say('file exists')
+    #     QtGui.QApplication.restoreOverrideCursor()
+    #     reply = QtGui.QMessageBox.question(None, "Info", fullFilePathNameStep+"\nstep file exists, overwrite?",
+    #     QtGui.QMessageBox.Yes | QtGui.QMessageBox.No, QtGui.QMessageBox.No)
+    #     if reply == QtGui.QMessageBox.Yes:
+    #         # this is where the code relevant to a 'Yes' answer goes
+    #         exportS=True
+    #         pass
+    #     if reply == QtGui.QMessageBox.No:
             # this is where the code relevant to a 'No' answer goes
-            exportS=False
-            pass
+    exportS=False
+            # pass
     if exportS:
         ## resetting placement TBD for Part & Shape
         if 'App::Part' not in objs[0].TypeId:
