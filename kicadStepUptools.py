@@ -3063,13 +3063,24 @@ def cfg_read_all():
     sayw(models3D_paths_str)
 
     if len (models3D_paths_str) == 0:
-        prefs.SetString('3d_model_paths',make_string(default_prefix3d))
-        models3D_paths_str = prefs.GetString('3d_model_paths')
-        
-        prefs.SetString('prefix3d_1',make_string(default_prefix3d))
         models3D_prefix = prefs.GetString('prefix3d_1')
-        
-    models3D_paths = [path.strip() for path in models3D_paths_str.split('\n') if path.find('@') == -1]
+        if len (models3D_prefix) == 0:
+            prefs.SetString('3d_model_paths',make_string(default_prefix3d))
+            models3D_paths_str = prefs.GetString('3d_model_paths')
+            
+            prefs.SetString('prefix3d_1',make_string(default_prefix3d))
+            models3D_prefix = prefs.GetString('prefix3d_1')
+        else:
+            models3D_paths_str = models3D_prefix + '\n'
+            altPrefixes = [prefs.GetString('prefix3d_2'), prefs.GetString('prefix3d_3'), prefs.GetString('prefix3d_4')]
+            for prefix in altPrefixes:
+                if len(prefix) > 0:
+                    models3D_paths_str = models3D_paths_str + prefix + '\n'
+            
+            prefs.SetString('3d_model_paths',models3D_paths_str)
+            models3D_paths_str = prefs.GetString('3d_model_paths')
+
+    models3D_paths = [path.strip() for path in models3D_paths_str.split('\n') if path.find('@') == -1 and len(path) > 0]
     models3D_prefix = models3D_paths[0]
     models3D_named_paths = {}
     for path in models3D_paths_str.split('\n'):
