@@ -95,7 +95,7 @@
       </rect>
      </property>
     </widget>
-    <widget class="Gui::PrefTextEdit" name="guipreftexteditcustomrepositories">
+    <widget class="Gui::PrefTextEdit" name="guipreftexteditmodelpaths">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
        <horstretch>0</horstretch>
