@@ -524,6 +524,8 @@ global warning_nbr, original_filename, edge_width, load_sketch, grid_orig, dvm, 
 global addConstraints, precision, conv_offs, maxRadius, pad_nbr, use_pypro, accept_spline, maxDegree, maxSegments
 global zfit
 
+PATH_MAX_EXPAND_LEVEL = 20
+
 zfit = False
 
 maxRadius = 500.0 # 500mm maxRadius of arc from bspline
@@ -1719,6 +1721,21 @@ def find_name(n):
 
 #import ConfigParser
 #import configobj
+
+def expandPath(path, level):
+    global models3D_named_paths;
+    if level > PATH_MAX_EXPAND_LEVEL:
+        return path
+    
+    if (path.find('${')!=-1):
+        # replace the named path if available
+        matchObj = re.search( r'\${(.*?)}', path)
+        if matchObj and matchObj.group(1) in models3D_named_paths:
+            sayw("[%02d] expanding '%s' in path '%s'" % (level, matchObj.group(1), path))
+            path=path.replace('${%s}' % matchObj.group(1), models3D_named_paths[matchObj.group(1)])
+            return expandPath(path, level+1)
+    
+    return path
 
 def insert(filename, other):
     if os.path.exists(filename):
@@ -3081,13 +3098,23 @@ def cfg_read_all():
             models3D_paths_str = prefs.GetString('3d_model_paths')
 
     models3D_paths = [path.strip() for path in models3D_paths_str.split('\n') if path.find('@') == -1 and len(path) > 0]
-    models3D_prefix = models3D_paths[0]
     models3D_named_paths = {}
     for path in models3D_paths_str.split('\n'):
         if path.find('@') > -1:
             kvPair = path.strip().split('@')
             models3D_named_paths[kvPair[0]] = kvPair[1]
     
+    # we could resolve expand the named paths in Load_models method, but I prefer to expand it here, 
+    # in that case we should expand the paths for every model we have...
+    
+    for i, path in enumerate(models3D_paths):
+        models3D_paths[i] = expandPath(path, 1)
+    
+    for key, path in models3D_named_paths.items():
+        models3D_named_paths[key] = expandPath(path, 1)
+    
+    models3D_prefix = models3D_paths[0]
+
     sayw('parsed 3d model path list: ')
     sayw(models3D_paths)
     sayw('parsed 3d model prefix: ')
@@ -4471,7 +4498,6 @@ def Load_models(pcbThickness,modules):
             # replace the named path if available
             replaced = False
             matchObj = re.search( r'\${(.*?)}', step_module, re.M|re.I)
-            sayw('group1 of matchObj is %s' % matchObj.group(1))
             if matchObj and matchObj.group(1) in models3D_named_paths:
                 sayw('replacing %s with %s' % ('${%s}' % matchObj.group(1), models3D_named_paths[matchObj.group(1)]))
                 step_module=step_module.replace('${%s}' % matchObj.group(1), models3D_named_paths[matchObj.group(1)])
