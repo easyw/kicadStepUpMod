@@ -82,114 +82,44 @@
        <property name="title">
         <string>3D Prefix working folder</string>
        </property>
-       <widget class="QWidget" name="horizontalLayoutWidget_2">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>25</y>
-          <width>501</width>
-          <height>34</height>
-         </rect>
-        </property>
-        <layout class="QHBoxLayout" name="horizontalLayout_2">
-         <item>
-          <widget class="QLabel" name="label_prefix3d_1">
-           <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;your &lt;span style=&quot; font-weight:600;&quot;&gt;KISYS3DMOD&lt;/span&gt; path&lt;/p&gt;&lt;p&gt;or 3D model &lt;span style=&quot; font-weight:600;&quot;&gt;main prefix path&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-           <property name="text">
-            <string>main 3D folder location 'KISYS3DMOD'
-or 'KICAD6_3DMODEL_DIR'</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="Gui::PrefFileChooser" name="main_prefix" native="true">
-           <property name="enabled">
-            <bool>true</bool>
-           </property>
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="baseSize">
-            <size>
-             <width>0</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;main 3D folder location&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;'KISYS3DMOD'&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-           <property name="prefEntry" stdset="0">
-            <cstring>prefix3d_1</cstring>
-           </property>
-           <property name="prefPath" stdset="0">
-            <cstring>Mod/kicadStepUpGui</cstring>
-           </property>
-              <property name="mode">
-              <enum>Gui::FileChooser::Directory</enum>
-              </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-       <widget class="QWidget" name="horizontalLayoutWidget_3">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>65</y>
-          <width>501</width>
-          <height>34</height>
-         </rect>
-        </property>
-        <layout class="QHBoxLayout" name="horizontalLayout_3">
-         <item>
-          <widget class="QLabel" name="label_prefix3d_2">
-           <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;your &lt;span style=&quot; font-weight:600;&quot;&gt;ALIAS&lt;/span&gt; 3D&lt;/p&gt;&lt;p&gt;model prefix path&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-           <property name="text">
-            <string>secondary 3D folder loc
-'ALT2 3DMOD'</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="Gui::PrefFileChooser" name="alias_prefix" native="true">
-           <property name="enabled">
-            <bool>true</bool>
-           </property>
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="baseSize">
-            <size>
-             <width>0</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;secondary 3D folder location&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;'ALT3DMOD'&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-           <property name="prefEntry" stdset="0">
-            <cstring>prefix3d_2</cstring>
-           </property>
-           <property name="prefPath" stdset="0">
-            <cstring>Mod/kicadStepUpGui</cstring>
-           </property>
-              <property name="mode">
-              <enum>Gui::FileChooser::Directory</enum>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>3D Model Paths (one per line):</string>
+     </property>
+	 <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>25</y>
+       <width>501</width>
+       <height>34</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="Gui::PrefTextEdit" name="guipreftexteditmodelpaths">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+	 <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>50</y>
+       <width>501</width>
+       <height>100</height>
+      </rect>
+     </property>
+     <property name="toolTip">
+      <string>You can add new paths to this list one per line.\n Also you can add named path like this: PATH_NAME@PATH, this will be parsed as ${PATH_NAME} in the KiCad prefrences.\n Please add 'KISYS3DMOD' or 'KICAD6_3DMODEL_DIR' to the first line.</string>
+     </property>
+     <property name="prefEntry" stdset="0">
+      <cstring>3d_model_paths</cstring>
+     </property>
+     <property name="prefPath" stdset="0">
+      <cstring>Mod/kicadStepUpGui</cstring>
+     </property>
+    </widget>
        <widget class="QGroupBox" name="pcb_settings">
         <property name="geometry">
          <rect>
@@ -1240,114 +1170,6 @@ Allowing or not Loading Multi Parts objects</string>
           <cstring>Mod/kicadStepUpGui</cstring>
          </property>
         </widget>
-       </widget>
-       <widget class="QWidget" name="horizontalLayoutWidget_4">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>105</y>
-          <width>501</width>
-          <height>34</height>
-         </rect>
-        </property>
-        <layout class="QHBoxLayout" name="horizontalLayout_8">
-         <item>
-          <widget class="QLabel" name="label_prefix3d_3">
-           <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;your &lt;span style=&quot; font-weight:600;&quot;&gt;ALIAS&lt;/span&gt; 3D&lt;/p&gt;&lt;p&gt;model prefix path&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-           <property name="text">
-            <string>third 3D folder loc
-'ALT3 3DMOD'</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="Gui::PrefFileChooser" name="alias_prefix_2" native="true">
-           <property name="enabled">
-            <bool>true</bool>
-           </property>
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="baseSize">
-            <size>
-             <width>0</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;secondary 3D folder location&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;'ALT3DMOD'&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-           <property name="prefEntry" stdset="0">
-            <cstring>prefix3d_3</cstring>
-           </property>
-           <property name="prefPath" stdset="0">
-            <cstring>Mod/kicadStepUpGui</cstring>
-           </property>
-              <property name="mode">
-              <enum>Gui::FileChooser::Directory</enum>
-           </property>
-           </widget>
-         </item>
-        </layout>
-       </widget>
-       <widget class="QWidget" name="horizontalLayoutWidget_5">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>145</y>
-          <width>501</width>
-          <height>34</height>
-         </rect>
-        </property>
-        <layout class="QHBoxLayout" name="horizontalLayout_9">
-         <item>
-          <widget class="QLabel" name="label_prefix3d_4">
-           <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;your &lt;span style=&quot; font-weight:600;&quot;&gt;ALIAS&lt;/span&gt; 3D&lt;/p&gt;&lt;p&gt;model prefix path&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-           <property name="text">
-            <string>fourth 3D folder loc
-'ALT4 3DMOD'</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="Gui::PrefFileChooser" name="alias_prefix_3" native="true">
-           <property name="enabled">
-            <bool>true</bool>
-           </property>
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="baseSize">
-            <size>
-             <width>0</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;secondary 3D folder location&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;'ALT3DMOD'&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-           <property name="prefEntry" stdset="0">
-            <cstring>prefix3d_4</cstring>
-           </property>
-           <property name="prefPath" stdset="0">
-            <cstring>Mod/kicadStepUpGui</cstring>
-           </property>
-              <property name="mode">
-              <enum>Gui::FileChooser::Directory</enum>
-           </property>
-          </widget>
-         </item>
-        </layout>
        </widget>
        <widget class="Gui::PrefCheckBox" name="cb_dontuseNativeDlg">
         <property name="geometry">
