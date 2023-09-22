@@ -28,7 +28,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.3.6'
+ksuCMD_version__='2.3.7'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -65,7 +65,7 @@ def reload_lib(lib):
 use_outerwire = False #False #True
 remove_shapes = True #False #True 
 hide_objects = True #False # True
-use_draft = True #False  # use Draft.makesketch
+use_draft = True #False  # True use Draft.makesketch
 attach_sketch = False #True
 create_plane = False# True #False
 
@@ -538,6 +538,7 @@ def ksu_edges2sketch():
             ## _makeSketch(plane,wires,addTo=sketch)
             #Draft.makeSketch(wires,addTo=sketch)
             _objs_ = []
+            obj_tobd = []
             use_workaround_1 = False
             use_workaround_2 = False
             active_view = FreeCADGui.ActiveDocument.activeView()
@@ -551,14 +552,25 @@ def ksu_edges2sketch():
                 _objs_ = Draft.downgrade(FreeCAD.ActiveDocument.getObject('union'), delete=False)
                 FreeCAD.ActiveDocument.recompute()
                 _objs_ = []
+                obj_tobd.append(FreeCADGui.Selection.getSelection())
                 _objs_ = Draft.upgrade(FreeCADGui.Selection.getSelection(), delete=True)
                 _objs_ = []
                 FreeCAD.ActiveDocument.recompute()
+                obj_tobd.append(FreeCADGui.Selection.getSelection())
                 _objs_ = Draft.downgrade(FreeCADGui.Selection.getSelection(), delete=True)
+                # print(_objs_)
+                # FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.ActiveObject)
                 sel_objs = FreeCADGui.Selection.getSelection()
+                FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.ActiveObject)
+                # print(len(sel_objs))
+                # for o in sel_objs:
+                #     print (o.Label)
+                #FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.getObject('union'))
+                # FreeCADGui.runCommand('ksuTools2D2Sketch',0)
             if use_draft:
                 #Draft.makeSketch(union,addTo=sketch)
                 if use_workaround_1:
+                    #FreeCADGui.runCommand('ksuTools2D2Sketch',0)
                     Draft.makeSketch(FreeCADGui.Selection.getSelection(),autoconstraints=True) #,addTo=sketch)
                 else:
                     Draft.makeSketch(union,autoconstraints=True) #,addTo=sketch)
@@ -589,6 +601,13 @@ def ksu_edges2sketch():
             if remove_shapes:
                 rmvsubtree([union])
                 if use_workaround_1:
+                    for o in obj_tobd:
+                        #print(o)
+                        for s in o:
+                            try:
+                                FreeCAD.ActiveDocument.removeObject(s.Name)
+                            except:
+                                pass
                     for o in sel_objs:
                         FreeCAD.ActiveDocument.removeObject(o.Name)
                 if create_plane:
@@ -2065,6 +2084,8 @@ class ksuToolsDiscretize:
                     # if not hasattr(e.Curve,'Radius'):
                     if not e.Closed:  # Arc and not Circle
                         shapes.append(Part.makePolygon(e.discretize(QuasiDeflection=q_deflection)))
+                    elif e.Curve.TypeId == 'Part::GeomEllipse':
+                        shapes.append(Part.makePolygon(e.discretize(QuasiDeflection=q_deflection)))
                     else:
                         shapes.append(Part.Wire(e))
                     #sd=e.copy().discretize(QuasiDeflection=dqd)    
@@ -2821,6 +2842,7 @@ class ksuToolsColoredBinder:
                 cp_label=mk_str(obj_tocopy.Label)+u'_bnd'
                 
                 if hasattr(FreeCAD.ActiveDocument.getObject(obj_tocopy.Name), "Shape"):
+                    import PartDesignGui
                     FreeCADGui.runCommand('PartDesign_SubShapeBinder')
                     # newObj = FreeCAD.ActiveDocument.addObject('PartDesign::SubShapeBinder',obj_tocopy.Name)
                     # newObj.Support = [obj_tocopy]

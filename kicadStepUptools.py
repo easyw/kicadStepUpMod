@@ -496,7 +496,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.8.7"
+___ver___ = "10.8.8"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -6513,11 +6513,14 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
         load_models = True
     if load_models == False:
         # layer_list = ['Edge.Cuts','Dwgs.User','Cmts.User','Eco1.User','Eco2.User','Margin']
-        layer_list = ['Edge.Cuts','Dwgs.User','Cmts.User','Eco1.User','Eco2.User','Margin', 'F.FillZone', 'F.KeepOutZone', 'F.MaskZone','B.FillZone', 'B.KeepOutZone', 'B.MaskZone',]
+        # layer_list = ['Edge.Cuts','Dwgs.User','Cmts.User','Eco1.User','Eco2.User','Margin', 'F.FillZone', 'F.KeepOutZone', 'F.MaskZone','B.FillZone', 'B.KeepOutZone', 'B.MaskZone',]
+        layer_list = ['Edge.Cuts','Dwgs.User','Cmts.User','Eco1.User','Eco2.User','User.1','User.2','User.3','User.4','User.5','User.6','User.7','User.8','User.9','Margin', 'F.FillZone', 'F.KeepOutZone', 'F.MaskZone','B.FillZone', 'B.KeepOutZone', 'B.MaskZone',]
         LayerSelectionDlg = QtGui.QDialog()
         ui = Ui_LayerSelection()
         ui.setupUi(LayerSelectionDlg)
         ui.comboBoxLayerSel.addItems(layer_list)
+        if 0:
+            ui.comboBoxLayerSel.setEditable(True)
         ui.label.setText("Select the layer to pull into the Sketch\nDefault: \'Edge.Cuts\'")
         reply=LayerSelectionDlg.exec_()
         if reply==1: # ok
@@ -7314,8 +7317,9 @@ def routineResetPlacement(keepWB=None):
         # print(objs[0].Label)
         CpyName =  ''; RefName = ''
         if objs[0] != 'App::Part': # using std method
-            if objs[0].TypeId == 'Part::MultiFuse' or objs[0].TypeId == 'Part::Compound' or \
-                    objs[0].TypeId == 'Part::Cut'  or objs[0].TypeId == 'Part::MultiCommon': # workaround for issue in resetting pacement for STEP 'merge' importing
+            # if objs[0].TypeId == 'Part::MultiFuse' or objs[0].TypeId == 'Part::Compound' or \
+            #         objs[0].TypeId == 'Part::Cut'  or objs[0].TypeId == 'Part::MultiCommon': # workaround for issue in resetting pacement for STEP 'merge' importing
+            if 1:
                 say('routine reset Placement std')
                 s=objs[0].Shape
                 r=[]
@@ -12335,7 +12339,12 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                         else:
                             sayw('missing \'TimeStamp\'')
                             line.append('null')
-                        line.append(m.fp_text[0][1]) #fp reference
+                        try:
+                            #print(m.fp_text[0])
+                            line.append(m.fp_text[0][1]) #fp reference
+                        except:
+                            #print(m.property[0])
+                            line.append(m.property[0][1]) #fp reference kv8
                         line.append(n_md) #number of models in module
                         line.append(md_hide)
                         PCB_Models.append(line)
@@ -15342,11 +15351,14 @@ def PushPCB():
                 #    last_3d_path=last_pcb_path
                 #    sayw(last_pcb_path)
                 #getSaveFileName(self,"saveFlle","Result.txt",filter ="txt (*.txt *.)")
-                layer_list = ['Edge.Cuts','Dwgs.User','Cmts.User','Eco1.User','Eco2.User','Margin', 'F.FillZone', 'F.KeepOutZone', 'F.MaskZone','B.FillZone', 'B.KeepOutZone', 'B.MaskZone',]
+                # layer_list = ['Edge.Cuts','Dwgs.User','Cmts.User','Eco1.User','Eco2.User','Margin', 'F.FillZone', 'F.KeepOutZone', 'F.MaskZone','B.FillZone', 'B.KeepOutZone', 'B.MaskZone',]
+                layer_list = ['Edge.Cuts','Dwgs.User','Cmts.User','Eco1.User','Eco2.User','User.1','User.2','User.3','User.4','User.5','User.6','User.7','User.8','User.9','Margin', 'F.FillZone', 'F.KeepOutZone', 'F.MaskZone','B.FillZone', 'B.KeepOutZone', 'B.MaskZone',]
                 LayerSelectionDlg = QtGui.QDialog()
                 ui = Ui_LayerSelectionOut()
                 ui.setupUi(LayerSelectionDlg)
                 ui.comboBoxLayerSel.addItems(layer_list)
+                if 0:
+                    ui.comboBoxLayerSel.setEditable(True)
                 reply=LayerSelectionDlg.exec_()
                 if reply==1: # ok
                     SketchLayer=str(ui.comboBoxLayerSel.currentText())
@@ -15499,7 +15511,10 @@ def Sync3DModel():
                                     matching_Reference=input_ref[0] #'LD1'
                                     matching_TimeStamp='Null'
                                     for m in mypcb.module:
-                                        Ref = m.fp_text[0][1]
+                                        try:
+                                            Ref = m.fp_text[0][1]
+                                        except:
+                                            Ref = m.property[0][1] #kv8 fp reference
                                         #print(Ref);print(len(Ref))
                                         if Ref.lstrip('"').rstrip('"') == matching_Reference:
                                             say ('found Reference:  '+Ref)
@@ -15954,7 +15969,10 @@ def getModelsData(mypcb):
                     else:
                         sayw('missing \'TimeStamp\'')
                         line.append('null')
-                    line.append(m.fp_text[0][1]) #fp reference
+                    try:
+                        line.append(m.fp_text[0][1]) #fp reference
+                    except:
+                        line.append(m.property[0][1]) #fp reference kv8
                     line.append(n_md) #number of models in module
                     PCB_Models.append(line)
                     n_md+=1
@@ -19971,7 +19989,10 @@ def Discretize(skt_name,delete=None,dqt=None):
             newShapeList.append(w_name)
             wn=FreeCAD.ActiveDocument.getObject(w_name)
             newShapes.append(wn)
-        else: #ellipses
+        # elif isinstance(e.Curve,Part.Ellipse):
+        #     say('found Ellipse')
+        else: #ellipses or other curves
+            say('found Ellipse')
             #l=b.Shape.copy().discretize(dv)
             #l=b.Shape.copy().discretize(QuasiDeflection=0.02)
             w = Part.Wire(e)
@@ -20493,7 +20514,7 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                        ("Eco1_Sketch" in obj.Name) or ("Eco1.User" in obj.Label) or \
                        ("Eco2_Sketch" in obj.Name) or ("Eco2.User" in obj.Label) or \
                        ("Cmts_Sketch" in obj.Name) or ("Cmts.User" in obj.Label) or \
-                       ("Margin_Sketch" in obj.Name) or ("Margin" in obj.Label):
+                       ("Margin_Sketch" in obj.Name) or ("Margin" in obj.Label) or ("User." in obj.Label):
                         ksu_found=True
                         skt_name=obj.Name
                     if ("Pcb" in obj.Name):
@@ -21093,7 +21114,7 @@ def push3D2pcb(s,cnt,tsp):
                         looping=False
                     else:
                         nMdCnt+=1
-                if '(pad' in ln:
+                if '(pad ' in ln:
                     #print (ln)
                     #print (ln.split('(at ')[1].split(')')[0].split(' '))
                     pad_values=ln.split('(at ')[1].split(')')[0].split(' ')
@@ -21137,7 +21158,7 @@ def push3D2pcb(s,cnt,tsp):
                         new_val_angle=''
                     #print (pad_values);print(ln.split('(at '))
                     idx_val=idxF+ik
-                    cnt[idxF+ik] = ln.split('(at ')[0]+'(at ' + val_values[0] +' '+ val_values[1]+new_val_angle+ln[ln.index(')'):]
+                    cnt[idxF+ik] = ln.split('(at ')[0]+'(at ' + val_values[0] +' '+ val_values[1]+new_val_angle+ln[ln.index(') '):]
                 if '(fp_text user' in ln:
                     #print (ln)
                     #print (ln.split('(at ')[1].split(')')[0].split(' '))
@@ -21155,7 +21176,7 @@ def push3D2pcb(s,cnt,tsp):
                         new_usr_angle=''
                     #print (pad_values);print(ln.split('(at '))
                     idx_usr=idxF+ik
-                    cnt[idxF+ik] = ln.split('(at ')[0]+'(at ' + usr_values[0] +' '+ usr_values[1]+new_usr_angle+ln[ln.index(')'):]
+                    cnt[idxF+ik] = ln.split('(at ')[0]+'(at ' + usr_values[0] +' '+ usr_values[1]+new_usr_angle+ln[ln.index(') '):]
             #adjusting footprint
             if FLayer==1.:
                 new_angle=bbpa+z_rot
@@ -21177,21 +21198,21 @@ def push3D2pcb(s,cnt,tsp):
                 if float(new_ref_angle) == 0:
                     new_ref_angle=''
                 ln=cnt[idx_ref]
-                cnt[idx_ref] = ln.split('(at ')[0]+'(at ' + ref_values[0] +' '+ ref_values[1]+new_ref_angle+ln[ln.index(')'):]
+                cnt[idx_ref] = ln.split('(at ')[0]+'(at ' + ref_values[0] +' '+ ref_values[1]+new_ref_angle+ln[ln.index(') '):]
             if old_val_angle is not None:
                 base_val_angle = old_ref_angle - mod_old_angle # 
                 new_val_angle = ' '+("{0:.3f}".format(base_val_angle + bbpa + z_rot))
                 if float(new_val_angle) == 0:
                     new_val_angle=''
                 ln=cnt[idx_val]
-                cnt[idx_val] = ln.split('(at ')[0]+'(at ' + val_values[0] +' '+ val_values[1]+new_val_angle+ln[ln.index(')'):]
+                cnt[idx_val] = ln.split('(at ')[0]+'(at ' + val_values[0] +' '+ val_values[1]+new_val_angle+ln[ln.index(') '):]
             if old_usr_angle is not None:
                 base_usr_angle = old_usr_angle - mod_old_angle # 
                 new_usr_angle = ' '+("{0:.3f}".format(base_usr_angle + bbpa + z_rot))
                 if float(new_usr_angle) == 0:
                     new_usr_angle=''
                 ln=cnt[idx_usr]
-                cnt[idx_usr] = ln.split('(at ')[0]+'(at ' + usr_values[0] +' '+ usr_values[1]+new_usr_angle+ln[ln.index(')'):]
+                cnt[idx_usr] = ln.split('(at ')[0]+'(at ' + usr_values[0] +' '+ usr_values[1]+new_usr_angle+ln[ln.index(') '):]
                 #print(new_ref_angle);print(old_ref_angle);print(z_rot);print(bbpa);print(base_ref_angle+bbpa);stop
             for p2r in pads_2rot:
                 new_pad_angle = ' '+("{0:.3f}".format(p2r[0] + bbpa + z_rot))
@@ -21200,7 +21221,7 @@ def push3D2pcb(s,cnt,tsp):
                 #print (pad_values);print(ln.split('(at '))
                 ln  = cnt[p2r[1]]
                 pad_val = p2r[2]
-                cnt[p2r[1]] = ln.split('(at ')[0]+'(at ' + pad_val[0] +' '+ pad_val[1]+new_pad_angle+ln[ln.index(')'):]                    
+                cnt[p2r[1]] = ln.split('(at ')[0]+'(at ' + pad_val[0] +' '+ pad_val[1]+new_pad_angle+ln[ln.index(') '):]                    
             #stop # 'we need to search for pads in module and add rotation angle each'
         #stop
         #newdata=u''.join(content)

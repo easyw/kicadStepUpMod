@@ -34,7 +34,7 @@ from fcad_parser import unquote #maui
 
 
 # from kicadStepUptools import KicadPCB,SexpList
-__kicad_parser_version__ = '2.2.9'
+__kicad_parser_version__ = '2.3.0'
 # https://github.com/realthunder/fcad_pcb/issues/20#issuecomment-586042341
 # FreeCAD.Console.PrintLog('kicad_parser_version '+__kicad_parser_version__+'\n') # maui 
 # print('kicad_parser_version '+__kicad_parser_version__)
@@ -2229,12 +2229,12 @@ class KicadFcad:
                     #wst.append(plno.Shape)
             
             add_rot=0
-            if hasattr(m, 'model'):
-                #print(m.model[0].rotate.xyz[2])
-                try:
-                    add_rot=m.model[0].rotate.xyz[2]
-                except:
-                    pass
+            ## if hasattr(m, 'model'):
+            ##     #print(m.model[0].rotate.xyz[2])
+            ##     try:
+            ##         add_rot=m.model[0].rotate.xyz[2]
+            ##     except:
+            ##         pass
 
             if len (wst)>0:
                 Part.show(Part.makeCompound(wst))

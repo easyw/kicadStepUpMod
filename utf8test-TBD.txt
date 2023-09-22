@@ -61,4 +61,4 @@ kicadStepUptools.KicadPCB.load('C:\\Temp\\demo-v5.kicad_pcb')
     16) detect Snap or FlatPack not to use Native Dialogs
     ,options=QtWidgets.QFileDialog.DontUseNativeDialog
     import os; os.getenv('SNAP_REVISION')    
-    
+17) fix Edges to Sketch from rear view

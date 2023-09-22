@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global fps_version
-fps_version = '1.1.0'
+fps_version = '1.1.2'
 
 dvp=False #True
 if dvp:
@@ -34,6 +34,7 @@ consolePrint('fp loader v'+fps_version+'\n')
 global start_time, last_pcb_path, min_drill_size, deltaz
 #pcbThickness=1.6
 deltaz = 0.01 #10 micron
+annotation_fontsize = 12.0
 
 def getFCversion():
 
@@ -86,6 +87,16 @@ def recompute_active_object():
     except:
         FreeCAD.ActiveDocument.ActiveObject.recompute()
 ##    
+
+def makeAnno (name,bp,txt,afs):
+    
+    doc=FreeCAD.ActiveDocument
+    anno = doc.addObject("App::AnnotationLabel",name)
+    anno.BasePosition = bp
+    anno.LabelText = txt
+    anno.ViewObject.FontSize=afs
+    return anno
+#
 
 def crc_gen_t(data):
     import binascii
@@ -320,6 +331,7 @@ def addfootprint(fname = None):
     # print (min_drill_size)
     
     FreeCAD.Console.PrintMessage('footprints version: '+fps_version+'\n')
+    
     Filter=""
     pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
     if fname is None:
@@ -368,7 +380,7 @@ def addfootprint(fname = None):
         
         consolePrint(filename+'\n')
         fn=os.path.splitext(os.path.basename(filename))[0]
-        
+    
         if filename.endswith('kicad_mod'):
             with open(filename , 'r') as f:
                 lines = f.readlines() # readlines creates a list of the lines
@@ -397,15 +409,28 @@ def addfootprint(fname = None):
             doc=FreeCAD.newDocument()
             doc.Label = fn
             ini_objs=doc.Objects
+        FreeCADGui.ActiveDocument.ActiveView.viewTop()
+
         doc.openTransaction('addFp')
 
         pcbThickness = float(_pcb.general.thickness)
         fp_name = fn
         ar=0
+        rx=0; ry=0; rz=0
+        rotations = []
         for i,m in enumerate(_pcb.module):
             if hasattr(m, 'model'):
                 try:
-                    ar=m.model[0].rotate.xyz[2]
+                    for j,md in enumerate(m.model):
+                        rx=md.rotate.xyz[0]
+                        ry=md.rotate.xyz[1]
+                        rz=md.rotate.xyz[2]
+                        ar=md.rotate.xyz[2]
+                        if rx!=0 or ry!=0 or rz != 0:
+                            # rotations.append('model3D('+str(j)+')'+str('('+str(rx)+', '+str(ry)+', '+str(rz)+')\n'))
+                            # rotations.append((md[0]+" model3D("+str(j)+") "+str((rx,ry,rz))))
+                            rotations.append((str((rx,ry,rz))+" "+md[0]))
+                            #print(rotations)
                 except:
                     pass
             # print(m.fp_text[1][0],m.fp_text[1][1])
@@ -413,6 +438,11 @@ def addfootprint(fname = None):
                 for t in m.fp_text:
                     #print(t[0],' ',t[1])
                     if t[0] == 'value':
+                        fp_name = t[1]
+            if hasattr(m, 'property'):  #kv8 fp
+                for t in m.property:
+                    #print(t[0],' ',t[1])
+                    if t[0].lower == 'value':
                         fp_name = t[1]
             if hasattr(m, 'zone'):
                 # print(m.zone)
@@ -447,8 +477,8 @@ def addfootprint(fname = None):
                     zn.ViewObject.DrawStyle = u"Dashed"
                     zn.ViewObject.LineColor = (255.0,0.0,127.0)
                     import Draft
-                    if ar!=0:
-                        zn.Placement.Rotation.Angle = radians(ar)
+                    # if ar!=0:
+                    #     zn.Placement.Rotation.Angle = radians(ar)
                     zone_keepout = Draft.makeSketch(zn,autoconstraints=True)
                     zone_keepout.Label = 'keepout-Zones_'
                     zone_keepout.ViewObject.DrawStyle = u"Dashed"
@@ -465,6 +495,10 @@ def addfootprint(fname = None):
         #         # kicad_pads_parser.makePads(p,shape_type='solid',thickness=0.01,holes=True,fit_arcs=True)
         #         # KicadFcad.makePads(shape_type='solid',thickness=0.01,holes=True,fit_arcs=True)
         
+        # if len(rotations) >0:
+        #     print('rotations',rotations)
+        # makeAnno (name,bp,txt,afs):
+        # anno = makeAnno('3Dmodel rotation(s)',FreeCAD.Vector(0,0,0),'3Dmodel rotations\n'+str(rotations),annotation_fontsize)
         #print(ar)
         # pcb = kicad.KicadFcad(filename,via_skip_hole=False,via_bound=0)
         
@@ -474,6 +508,8 @@ def addfootprint(fname = None):
         if hasattr (holesT,'Name'):
             holesT.ViewObject.Transparency = 70
             holesT.Placement.Base.z-=pcbThickness-deltaz
+            # if ar!=0:
+            #     holesT.Placement.Rotation.Angle = radians(ar)
             hole_ws = holesT.OutList[0].OutList[0].Shape
             wires=hole_ws.Wires
             anr=[]
@@ -520,6 +556,8 @@ def addfootprint(fname = None):
             doc.recompute()
             Holes_Compound.ViewObject.ShapeColor = (0.33,1.00,0.00)
             Holes_Compound.Label='TH-Drills'
+            # if ar!=0:
+            #     Holes_Compound.Placement.Rotation.Angle = radians(ar)
             # tbassembled.append(Holes_Compound)
             holesT.ViewObject.Visibility = False
             #stop
@@ -546,6 +584,8 @@ def addfootprint(fname = None):
             #Part.show(s.extrude(FreeCAD.Vector(0.0, 0.0, deltaz)))
             Part.show(s)
             topPf = doc.ActiveObject
+            # if ar!=0:
+            #     topPf.Placement.Rotation.Angle = radians(ar)
             topPf.Label = 'topPadFace'
             removesubtree([topP])
             s = topPf.Shape
@@ -561,14 +601,10 @@ def addfootprint(fname = None):
                 topPe.Placement.Base.z-=deltaz
                 topPe.ViewObject.Transparency=pads_transparency
                 topPe.ViewObject.ShapeColor = pads_color
-                if ar!=0:
-                    topPe.Placement.Rotation.Angle = radians(ar)
                 if topPe.Shape.Area != 0:
                     tbassembled.append(topPe)
                 else:
                     removesubtree([topPe])
-            #stop
-        
         
         #stop
         consolePrint('making Bot Pads\n')
@@ -589,6 +625,8 @@ def addfootprint(fname = None):
             #Part.show(s.extrude(FreeCAD.Vector(0.0, 0.0, -deltaz)))
             Part.show(s)
             btmPf = doc.ActiveObject
+            # if ar!=0:
+            #     btmPf.Placement.Rotation.Angle = radians(ar)
             s = btmPf.Shape
             if hasattr (holesT,'Name'): # cutting holes
                 s = s.cut(holesT.Shape)
@@ -605,15 +643,13 @@ def addfootprint(fname = None):
                 btmPe.Placement.Base.z-=pcbThickness # -deltaz
                 btmPe.ViewObject.Transparency=pads_transparency
                 btmPe.ViewObject.ShapeColor = pads_color
-                if ar!=0:
-                    btmPe.Placement.Rotation.Angle = radians(ar)
             if btmPe.Shape.Area != 0:
                 tbassembled.append(btmPe)
             else:
                 removesubtree([btmPe])
         doc.Tip = doc.addObject('App::DocumentObjectGroup','Group')
         fp_group=doc.ActiveObject
-        fp_group.Label = fp_name+'-fp'
+        fp_group.Label = str(fp_name)+'-fp'
         
         for o in tbassembled:
             # doc.getObject(o.Name).adjustRelativeLinks(doc.getObject(fp_group.Name))
@@ -733,14 +769,14 @@ def addfootprint(fname = None):
             tl=t[1]
             if hasattr (sk,'Name'):
                 sk.Placement.Base.z+=deltaz
-                if ar!=0:
-                    sk.Placement.Rotation.Angle = radians(ar)
+                # if ar!=0:
+                #     sk.Placement.Rotation.Angle = radians(ar)
                 # sk.adjustRelativeLinks(doc.getObject(fp_group.Name))
                 doc.getObject(fp_group.Name).addObject(sk)
             if hasattr (tl,'Name'):
                 tl.Placement.Base.z+=deltaz
-                if ar!=0:
-                    tl.Placement.Rotation.Angle = radians(ar)
+                # if ar!=0:
+                #     tl.Placement.Rotation.Angle = radians(ar)
                 # tl.adjustRelativeLinks(doc.getObject(fp_group.Name))
                 doc.getObject(fp_group.Name).addObject(tl)
         
@@ -761,6 +797,8 @@ def addfootprint(fname = None):
         tbds.append(tbd)
         tbp.append((sk,tls))
 
+        #stop
+        
         for l in tbds:
             for o in l:
                 doc.removeObject(o.OutList[0].Name)
@@ -770,14 +808,14 @@ def addfootprint(fname = None):
             tl=t[1]
             if hasattr (sk,'Name'):
                 sk.Placement.Base.z-=pcbThickness-deltaz
-                if ar!=0:
-                    sk.Placement.Rotation.Angle = radians(ar)
+                # if ar!=0:
+                #     sk.Placement.Rotation.Angle = radians(ar)
                 # sk.adjustRelativeLinks(doc.getObject(fp_group.Name))
                 doc.getObject(fp_group.Name).addObject(sk)
             if hasattr (tl,'Name'):
                 tl.Placement.Base.z-=pcbThickness-deltaz
-                if ar!=0:
-                    tl.Placement.Rotation.Angle = radians(ar)
+                # if ar!=0:
+                #     tl.Placement.Rotation.Angle = radians(ar)
                 # tl.adjustRelativeLinks(doc.getObject(fp_group.Name))
                 doc.getObject(fp_group.Name).addObject(tl)
 
@@ -811,6 +849,22 @@ def addfootprint(fname = None):
             except:
                 doc.removeObject(pcb.Name)
                 consolePrint('no shapes generated\n')
+            if len(rotations) >0:
+                # print('rotations',rotations)
+                # makeAnno (name,bp,txt,afs):
+                anno = makeAnno('model3D rotations',FreeCAD.Vector(centerX+pcb_XL/2,centerY+pcb_YL/2,0),"model3D rotations:",annotation_fontsize)
+                #anno.LabelText.append("\'model3D rotations\'")
+                msg="""<b>model3D rotations ...</b><br><br>"""
+                for r in rotations:
+                    # anno.LabelText.append(str(r))
+                    anno.LabelText=anno.LabelText+[str(r)]
+                    msg+=str(r)+"<br>"
+                    # print('anno.LabelText',anno.LabelText)
+                    # 'model3D rotations\n'+str(rotations).strip('[').strip(']')
+                doc.getObject(fp_group.Name).addObject(anno)
+                QtGui.QApplication.restoreOverrideCursor()
+                reply = QtGui.QMessageBox.information(None,"Info ...",msg)
+
         doc.commitTransaction()
         
         if FreeCAD.ActiveDocument is not None:

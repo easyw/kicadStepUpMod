@@ -55,7 +55,11 @@ Default 'Edge.Cuts'</string>
      </layout>
     </item>
     <item>
-     <widget class="QComboBox" name="comboBoxLayerSel"/>
+     <widget class="QComboBox" name="comboBoxLayerSel">
+      <property name="editable">
+       <bool>true</bool>
+      </property>
+     </widget>
     </item>
     <item>
      <widget class="QCheckBox" name="checkBox_replace">

@@ -16,7 +16,7 @@ except ImportError:
 __author__ = "Zheng, Lei"
 __copyright__ = "Copyright 2016, Zheng, Lei"
 __license__ = "MIT"
-__version__ = "1.1.3" #maui
+__version__ = "1.1.4" #maui
 __email__ = "realthunder.dev@gmail.com"
 __status__ = "Prototype"
 
@@ -51,7 +51,8 @@ class KicadPCB_module(SexpParser):
 class KicadPCB(SexpParser):
 
     # To make sure the following key exists, and is of type SexpList
-    _module = ['fp_text',
+    _module = ['property', # maui
+               'fp_text',
                'fp_circle',
                'fp_arc',
                'fp_line', # maui
