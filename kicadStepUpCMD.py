@@ -14,6 +14,7 @@ import FreeCAD, FreeCADGui, Part
 from FreeCAD import Base
 import imp, os, sys, tempfile, re
 import Draft, DraftGeomUtils  #, OpenSCAD2Dgeom
+import PySide
 from PySide import QtGui, QtCore
 QtWidgets = QtGui
 
@@ -28,7 +29,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.3.7'
+ksuCMD_version__='2.3.8'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -3878,6 +3879,127 @@ class ksuToolsEditPrefs:
 FreeCADGui.addCommand('ksuToolsEditPrefs',ksuToolsEditPrefs())
 
 #####
+###
+class ksuOpDXF:
+    "ksu tools open Legacy DXF"
+    
+    def GetResources(self):
+        mybtn_tooltip ="open Legacy DXF"
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'openDXF.svg') , # the name of a svg file available in the resources
+                     'MenuText': mybtn_tooltip ,
+                     'ToolTip' : mybtn_tooltip+' v1.4.0'}
+ 
+    def IsActive(self):
+        return True
+        #else:
+        #    self.setToolTip("Grayed Tooltip!")
+        #    print(self.ObjectName)
+        #    grayed_tooltip="Grayed Tooltip!"
+        #    mybtn_tooltip=grayed_tooltip
+ 
+    def Activated(self):
+        # do something here...
+        #import kicadStepUptools
+        # import hlp
+        # reload_lib(hlp)
+        #FreeCADGui.runCommand("Std_DlgPreferences") 
+        
+        import _DXF_Import
+        import os
+        from kicadStepUptools import make_unicode, make_string
+        # _DXF_Import.open('D:/Temp/t4k3-DWG.DXF')
+        prefs_ = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+        last_pcb_path = prefs_.GetString("last_pcb_path")
+        if not(prefs_.GetBool('not_native_dlg')):
+            name, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Open a DXF file...",
+                last_pcb_path, filter="*.dxf *.DXF")
+        else:
+            name, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Open a DXF file...",
+                last_pcb_path, filter="*.dxf *.DXF",options=QtWidgets.QFileDialog.DontUseNativeDialog)
+        # fname, fnamefilter = QtGui.QFileDialog.getOpenFileName(parent=FreeCADGui.getMainWindow(), caption='Read a DXF file', filter='*.dxf *.DXF')
+        if name:
+            last_pcb_path=os.path.dirname(name)
+            prefs_.SetString("last_pcb_path", make_string(last_pcb_path))
+            _DXF_Import.read(name)
+            FreeCADGui.SendMsgToActiveView("ViewFit")
+        
+FreeCADGui.addCommand('ksuOpDXF',ksuOpDXF())
+###
+class ksuImpDXF:
+    "ksu tools import Legacy DXF"
+    
+    def GetResources(self):
+        mybtn_tooltip ="import Legacy DXF"
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'importDXF.svg') , # the name of a svg file available in the resources
+                     'MenuText': mybtn_tooltip ,
+                     'ToolTip' : mybtn_tooltip+' v1.4.0'}
+ 
+    def IsActive(self):
+        return True
+        #else:
+        #    self.setToolTip("Grayed Tooltip!")
+        #    print(self.ObjectName)
+        #    grayed_tooltip="Grayed Tooltip!"
+        #    mybtn_tooltip=grayed_tooltip
+ 
+    def Activated(self):
+        # do something here...
+        #import kicadStepUptools
+        # import hlp
+        # reload_lib(hlp)
+        #FreeCADGui.runCommand("Std_DlgPreferences") 
+        
+        import _DXF_Import
+        from dxf_parser import _importDXF
+        import os
+        from kicadStepUptools import make_unicode, make_string
+        prefs_ = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+        last_pcb_path = prefs_.GetString("last_pcb_path")
+        if not(prefs_.GetBool('not_native_dlg')):
+            name, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Import a DXF file...",
+                last_pcb_path, filter="*.dxf *.DXF")
+        else:
+            name, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Import a DXF file...",
+                last_pcb_path, filter="*.dxf *.DXF",options=QtWidgets.QFileDialog.DontUseNativeDialog)
+        # fname, fnamefilter = QtGui.QFileDialog.getOpenFileName(parent=FreeCADGui.getMainWindow(), caption='Read a DXF file', filter='*.dxf *.DXF')
+        if name:
+            if FreeCAD.ActiveDocument is not None:
+                _importDXF.insert(name,FreeCAD.ActiveDocument.Name)
+            else:
+                _DXF_Import.read(name)
+            last_pcb_path=os.path.dirname(name)
+            prefs_.SetString("last_pcb_path", make_string(last_pcb_path))
+            FreeCADGui.SendMsgToActiveView("ViewFit")
+        
+FreeCADGui.addCommand('ksuImpDXF',ksuImpDXF())
+###
+if 0:
+    class ksuExpDXF:
+        "ksu tools export Legacy DXF"
+        
+        def GetResources(self):
+            mybtn_tooltip ="export Legacy DXF"
+            return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'exportDXF.svg') , # the name of a svg file available in the resources
+                        'MenuText': mybtn_tooltip ,
+                        'ToolTip' : mybtn_tooltip}
+    
+        def IsActive(self):
+            return True
+            #else:
+            #    self.setToolTip("Grayed Tooltip!")
+            #    print(self.ObjectName)
+            #    grayed_tooltip="Grayed Tooltip!"
+            #    mybtn_tooltip=grayed_tooltip
+    
+        def Activated(self):
+            # do something here...
+            #import kicadStepUptools
+            # import hlp
+            # reload_lib(hlp)
+            FreeCADGui.runCommand("Std_DlgPreferences")
+            
+    FreeCADGui.addCommand('ksuExpDXF',ksuExpDXF())
+#####
 class ksuRemoveTimeStamp:
     "ksu  Remove TimeStamp"
     
@@ -4227,7 +4349,7 @@ class ksuToolsAddSilks:
             doc = FreeCAD.ActiveDocument
         else:
             doc = FreeCAD.newDocument()
-        if makefacedxf.checkDXFsettings():
+        if 1: # using internal dxf old legacy library loader makefacedxf.checkDXFsettings():
             doc.openTransaction('add_silks')
             makefacedxf.makeFaceDXF()
             doc.commitTransaction()

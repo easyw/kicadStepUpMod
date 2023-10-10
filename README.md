@@ -3,7 +3,9 @@ kicadStepUp-WB
 
 ![icon](Resources/icons/kicad-StepUp-tools-WB.svg)
 
-[![forthebadge made-with-python](http://ForTheBadge.com/images/badges/made-with-python.svg)](https://www.python.org/)
+[![made-with-python](images/made-with-python.svg)](https://www.python.org/)
+
+[![FreeCAD Addokn manager status](images/FreeCAD-addon-manager-available.svg)](https://www.freecad.org)
 
 KiCad **StepUp tools** are a FreeCAD Macro and a FreeCAD WorkBench to help in **Mechanical Collaboration** between **KiCad EDA** and **FreeCAD** or a **Mechanical CAD**.
 
@@ -38,7 +40,7 @@ StepUp Cheat sheet
 
 ### Requirements
 
-- **FreeCAD** **0.18, 0.19, 0.20, 0.21**
+- **FreeCAD** **0.18, 0.19, 0.20, 0.21, 0.22**
 
 - **KiCAD** **5.1**, **6.x**, **7.x**
 

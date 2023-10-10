@@ -496,7 +496,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.8.8"
+___ver___ = "10.9.0"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -652,6 +652,7 @@ num_min_lines=22 #min numbers of ini lines for a ksu-config file
 #FreeCAD.Console.PrintError(len(ini_vars))
 #FreeCAD.Console.PrintWarning('\n')
 
+global extrude_holes
 test_flag=False
 #test_flag=True
 test_flag_exit=False #True 4 testing
@@ -663,11 +664,12 @@ show_border=False #False
 show_data=False #False
 show_debug=False #False
 
-show_shapes=False #False
+show_shapes=False
 disable_cutting=False
 # enable_materials=True not used
 test_extrude=False #False
-holes_solid=False #False
+holes_solid=False #False #cutting sketch face with faces or solid drills (sd very intensive i.e. with drills=-1 (vias) + memory leak) 
+extrude_holes = True # fixing coplanar shapes cut for holes
 emn_version=3.0
 show_messages=True #False 4 testing
 #show_messages=False # mauitest
@@ -1286,7 +1288,8 @@ def clear_console():
     r.clear()
 
 #if not Mod_ENABLED:
-clear_console()
+if 0:
+    clear_console()
     
 # points: [Vector, Vector, ...]
 # faces: [(pi, pi, pi), ], pi: point index
@@ -1355,6 +1358,12 @@ def tabify():
     KSUWidget.raise_()
     t=FreeCADGui.getMainWindow()
     cv = t.findChild(QtGui.QDockWidget, "Combo View")
+    if cv is None:
+        cv = t.findChild(QtGui.QDockWidget, "ComboView")
+        if cv is None:
+            cv = t.findChild(QtGui.QDockWidget, "Model")
+            if cv is None:
+                cv = t.findChild(QtGui.QDockWidget, "Tree view")
     if KSUWidget and cv:
         dw=t.findChildren(QtGui.QDockWidget)
         try:
@@ -2251,7 +2260,7 @@ def export(componentObjs, fullfilePathName, scale=None, label=None):
             filename=path+os.sep+exp_name+'_1_1.wrl'
     say(filename)
     exportV=True
-    mesh_deviation_default=0.03 # 0.03 or 0.1
+    mesh_deviation_default=0.9 #0.03 # 0.03 or 0.1
     mesh_dev=mesh_deviation_default #the smaller the best quality, 1 coarse
     if os.path.exists(filename):
         say('file exists')
@@ -2277,7 +2286,7 @@ def export(componentObjs, fullfilePathName, scale=None, label=None):
                 replyText = reply[0] # which will be "" if they clicked Cancel
                 mesh_dev=mesh_deviation_default #the smaller the best quality, 1 coarse
                 #default
-        creaseAngle_default=0.5
+        creaseAngle_default=0.0
         reply = QtGui.QInputDialog.getText(None, "creaseAngle","creaseAngle (range:0-1.5)\ncheck your wrl result\n(0->None)",QtGui.QLineEdit.Normal,str(creaseAngle_default))
         if reply[1]:
                 # user clicked OK
@@ -2289,7 +2298,8 @@ def export(componentObjs, fullfilePathName, scale=None, label=None):
                 creaseAngle=creaseAngle_default #the bigger the best quality, 1 coarse
                 #default
         #say(mesh_deviation)
-        #say(mesh_dev)
+        say("mesh deviation: "+str(mesh_dev)) # 1 for small wrl files
+        say("creaseAngle: "+str(creaseAngle)) # 0 for small wrl files
         color=[]
         Diffuse_color=[]
         transparency=[]
@@ -9811,6 +9821,7 @@ def createHole3(x,y,dx,dy,type,height):
 ###
 ###
 def createHole4(x,y,dx,dy,type):
+    global show_shapes
     if type=="oval":
         perc=100
         tp=0
@@ -9825,15 +9836,18 @@ def createHole4(x,y,dx,dy,type):
     #holeModel.append(mydrill)
     ##holeModel = Part.makeCompound(holeModel)
     #holeModel = Part.Face(holeModel)
-    face = OSCD2Dg_edgestofaces(mydrill.Edges,3 , edge_tolerance)
+    face = OSCD2Dg_edgestofaces(mydrill.Edges,3 , edge_tolerance) #algo 0
+    #face = OSCD2Dg_edgestofaces(mydrill.Edges,3 , edge_tolerance)
     face.fix(0,0,0)
-    #Part.show(face)
+    if show_shapes:
+        Part.show(face)
     holeModel = face
     #sayerr('x'+str(x)+' y'+str(y)+' dx'+str(dx)+' dy'+str(dy)+' perc'+str(perc)+' tp'+str(tp)+'0')
     #stop
     #say("hereHole")
     #FreeCAD.ActiveDocument.recompute()
-    return holeModel
+    #return holeModel
+    return Part.makeCompound(holeModel)
 
 ###
 def createTHPlate(x,y,dx,dy,type):
@@ -11599,6 +11613,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
     global addVirtual, load_sketch, off_x, off_y, aux_orig, grid_orig
     global running_time, conv_offs, use_Links, apply_edge_tolerance, simplifyComSolid
     global zfit, use_LinkGroups, fname_sfx, missingHeight
+    global extrude_holes
     
     def simu_distance(p0, p1):
         return max (abs(p0[0] - p1[0]), abs(p0[1] - p1[1]))
@@ -12432,7 +12447,10 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                                     rotateObj(obj, [x1, y1, p_angle])
                                 HoleList.append(obj)
                         except:
-                            sayw('missing drill value on pad for module '+str(m.fp_text[0][1])) 
+                            try:
+                                sayw('missing drill value on pad for module '+str(m.fp_text[0][1])) 
+                            except:
+                                sayw('missing drill value on pad for module '+str(m.property[0][1])) 
                     #elif p.drill[0]!=0: #circle drill hole
                     else:
                         try: # [0] >= min_drill_size: #isinstance(p.drill,list):
@@ -12456,7 +12474,10 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                                 #rotateObj(obj, [m.at[0], m.at[1], m_angle])
                                 HoleList.append(obj)   
                         except:
-                            sayw('missing drill value on pad for module '+str(m.fp_text[0][1])) 
+                            try:
+                                sayw('missing drill value on pad for module '+str(m.fp_text[0][1])) 
+                            except:
+                                sayw('missing drill value on pad for module '+str(m.property[0][1])) 
                     ##pads.append({'x': x, 'y': y, 'rot': rot, 'padType': pType, 'padShape': pShape, 'rx': drill_x, 'ry': drill_y, 'dx': dx, 'dy': dy, 'holeType': hType, 'xOF': xOF, 'yOF': yOF, 'layers': layers})        
                     #stop
             if hasattr(m, 'fp_poly'):
@@ -13247,8 +13268,16 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                 #fc_016=True
                 if len(HoleList)>1:  #more than one drill
                     shape = shape_base.fuse(shapes)
+                    #shape = Part.makeCompound(shapes) #this could create issues on cutting
                 else:   #one drill ONLY
                     shape = shape_base
+                if extrude_holes:
+                    shape.Placement.Base.z+=0.05 # fixing coplanar shapes cut
+                    shape=shape.extrude(FreeCAD.Base.Vector(0, 0, -totalHeight-0.1)) # fixing coplanar shapes cut
+                if show_shapes:
+                    Part.show(shape) 
+                    Part.show(cut_base) #test_face
+                    #stop
                 test_face_gen = False
                 if test_face_gen:
                     Part.show(cut_base) #test_face
@@ -17106,37 +17135,65 @@ def export_footprint(fname=None,flabel=None):
             edge_thick=0.05
             lyr=border[(len(border)-1):][0]
             lyr_splt = lyr.split('_')
+            tk_d=0.1
             #print(lyr)
-            if 'CrtYd' in lyr and len(lyr_splt)>=3:
-                edge_thick=float(lyr.split('_')[len(lyr_splt)-1])
-                lyr=u'F.CrtYd'
+            if 'CrtYd' in lyr:
+                if len(lyr_splt)>=3:
+                    tk=lyr.split('_')[len(lyr_splt)-1]
+                    if tk!='':
+                        edge_thick=float(tk)
+                    else:
+                        edge_thick=tk_d
+                    lyr=u'F.CrtYd'
+                else:
+                    lyr='skip'
             elif 'Silks' in lyr:
                 if len(lyr_splt)>=3:
-                    edge_thick=float(lyr.split('_')[len(lyr_splt)-1])
+                    tk=lyr.split('_')[len(lyr_splt)-1]
+                    if tk!='':
+                        edge_thick=float(tk)
+                    else:
+                        edge_thick=tk_d
                     lyr=u'F.SilkS'
                 else:
                     lyr='skip'
             elif 'Fab' in lyr:
                 if len(lyr_splt)>=3:
-                    edge_thick=float(lyr.split('_')[len(lyr_splt)-1])
+                    tk=lyr.split('_')[len(lyr_splt)-1]
+                    if tk!='':
+                        edge_thick=float(tk)
+                    else:
+                        edge_thick=tk_d
                     lyr=u'F.Fab'
                 else:
-                    lyr='skip'                
+                    lyr='skip'
             elif 'Dwgs' in lyr:
                 if len(lyr_splt)>=2:
-                    edge_thick=float(lyr.split('_')[len(lyr_splt)-1])
+                    tk=lyr.split('_')[len(lyr_splt)-1]
+                    if tk!='':
+                        edge_thick=float(tk)
+                    else:
+                        edge_thick=tk_d
                     lyr=u'Dwgs.User'
                 else:
                     lyr='skip'                
             elif 'Cmts' in lyr:
                 if len(lyr_splt)>=2:
-                    edge_thick=float(lyr.split('_')[len(lyr_splt)-1])
+                    tk=lyr.split('_')[len(lyr_splt)-1]
+                    if tk!='':
+                        edge_thick=float(tk)
+                    else:
+                        edge_thick=tk_d
                     lyr=u'Cmts.User'
                 else:
                     lyr='skip'                
             elif 'Cuts' in lyr:
                 if len(lyr_splt)>=3:
-                    edge_thick=float(lyr.split('_')[len(lyr_splt)-1])
+                    tk=lyr.split('_')[len(lyr_splt)-1]
+                    if tk!='':
+                        edge_thick=float(tk)
+                    else:
+                        edge_thick=tk_d
                     lyr=u'Edge.Cuts'
                 else:
                     lyr='skip'
@@ -17190,7 +17247,12 @@ def export_footprint(fname=None,flabel=None):
                 pads_TH_SMD.append(border)
             elif 'Pads_Geom' in lyr:
                 #edge_thick=float(lyr.split('_')[2])
-                edge_thick=float(lyr.split('_')[len(lyr_splt)-1])
+                if len(lyr_splt)>=3:
+                    tk=lyr.split('_')[len(lyr_splt)-1]
+                    if tk!='':
+                        edge_thick=float(tk)
+                    else:
+                        edge_thick=tk_d
                 #print (lyr)
                 sk = FreeCAD.ActiveDocument.getObjectsByLabel(lyr)[0]
                 if hasattr(sk,'GeometryFacadeList'):
@@ -20719,7 +20781,7 @@ def export_pcb(fname=None,sklayer=None,skname=None):
             if ssklayer != 'FillZone' and ssklayer != 'MaskZone' and ssklayer != 'KeepOutZone':
                 msg="""<b>new Edge pushed to kicad board!</b><br><br><br>"""
             elif ssklayer == 'FillZone':
-                msg="""<b>new FillZone pushed to kicad board!</b><br>Edit the properties of the new FillZone in pcbnew<br>"""
+                msg="""<b>new FillZone pushed to kicad board!<br><font color='red'>Edit the properties of the new FillZone in pcbnew</font><br></b>"""
             elif ssklayer == 'MaskZone':
                 msg="""<b>new MaskZone pushed to kicad board!</b><br>Edit the properties of the new FillZone in pcbnew<br>"""
             elif ssklayer == 'KeepOutZone':
@@ -21300,6 +21362,10 @@ if singleInstance():
     t=FreeCADGui.getMainWindow()
     ## wf = t.findChild(QtGui.QDockWidget, "KSUWidget")
     cv = t.findChild(QtGui.QDockWidget, "Combo View")
+    if cv is None:
+        cv = t.findChild(QtGui.QDockWidget, "Model")
+        if cv is None:
+            cv = t.findChild(QtGui.QDockWidget, "Tree view")
     #say( "Combo View" + str(cv))
     ## print( "KSUWidget" + str(wf))        
     cv.setFeatures( QtGui.QDockWidget.DockWidgetMovable | QtGui.QDockWidget.DockWidgetFloatable|QtGui.QDockWidget.DockWidgetClosable )
@@ -21355,7 +21421,7 @@ def getComboView(self,window):
     """
     dw=window.findChildren(QtGui.QDockWidget)
     for i in dw:
-        if str(i.objectName()) == "Combo View":
+        if str(i.objectName()) == "Combo View" or str(i.objectName() == "Model") or str(i.objectName()) == "Tree view":
             return i.findChild(QtGui.QTabWidget)
     raise Exception("No tab widget found")
 

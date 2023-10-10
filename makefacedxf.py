@@ -14,11 +14,13 @@ QtWidgets = QtGui
 from sys import platform as _platform
 import sys,os
 import time
-global copper_diffuse, silks_diffuse, silks_version
+global copper_diffuse, silks_diffuse, silks_version, use_dxf_internal
+use_dxf_internal = True
 
 global use_AppPart, use_Links, use_LinkGroups
 use_AppPart=False # False
 use_Links=False
+
 global FC_export_min_version
 FC_export_min_version="11670"  #11670 latest JM
 silks_version = '1.3'
@@ -129,12 +131,17 @@ def simple_cpy (obj,lbl):
     return copy
 
 
-import importDXF
+if not use_dxf_internal:
+    import importDXF
+else:
+    from dxf_parser import _importDXF
 from kicadStepUptools import make_unicode, make_string
 
 def makeFaceDXF():
-    global copper_diffuse, silks_diffuse
+    global copper_diffuse, silks_diffuse, use_dxf_internal
     global use_LinkGroups, use_AppPart, silks_version
+    import _DXF_Import
+    from dxf_parser import _importDXF
     
     FreeCAD.Console.PrintMessage('SilkS version: '+silks_version+'\n')
 
@@ -181,27 +188,76 @@ def makeFaceDXF():
             if doc is not None:
                 for o in doc.Objects:
                     objects.append(o.Name)
-                importDXF.insert(fname, doc.Name)
+                if not use_dxf_internal:
+                    importDXF.insert(fname, doc.Name)
+                else:
+                    say("Legacy internal DXF importer 1")
+                    _importDXF.insert(fname, doc.Name, forcePrefs=True)
+                    # _DXF_Import.insert(fname, doc.Name)
+                    
             else:
-                importDXF.open(fname)
+                if not use_dxf_internal:
+                    importDXF.open(fname)
+                else:
+                    say("Legacy internal DXF importer 2")
+                    _importDXF.open(fname,forcePrefs=True)
+                    # _DXF_Import.open(fname)
+            imp_objects = []
+            if doc is not None:
+                for o in doc.Objects:
+                    if o.Name not in str(objects):
+                        imp_objects.append(o)
             FreeCADGui.SendMsgToActiveView("ViewFit")
             timeP = time.time() - t
             say("loading time = "+str(timeP) + "s")
-            
-            
-            edges=[]
-            sorted_edges=[]
-            w=[]
-            
-            for o in doc.Objects:
-                if o.Name not in str(objects):
-                    if hasattr(o,'Shape'):
-                        w1 = Part.Wire(Part.__sortEdges__(o.Shape.Edges))
-                        w.append(w1)
-            #print (w)
-            f=Part.makeFace(w,'Part::FaceMakerBullseye')
-            for o in doc.Objects:
-                if o.Name not in str(objects):
+            #print(imp_objects)
+
+            if use_dxf_internal: # not(checkDXFsettings(True)):
+                try:
+                    say("standard DXF importer [using OSCD2Dg_edgestofaces]")
+                    edges=sum((obj.Shape.Edges for obj in \
+                    imp_objects if hasattr(obj,'Shape')),[])
+                    #for edge in edges:
+                    #    print "geomType ",DraftGeomUtils.geomType(edge)
+                    import kicadStepUptools
+                    if 0: #reload_Gui:
+                        reload_lib( kicadStepUptools )
+                    face = kicadStepUptools.OSCD2Dg_edgestofaces(edges,3 , kicadStepUptools.edge_tolerance)
+                    ##face = OpenSCAD2Dgeom.edgestofaces(edges)
+                    #face = OpenSCAD2DgeomMau.edgestofaces(edges)
+                    if 0:
+                        face.check() # reports errors
+                        face.fix(0,0,0)
+                    if 0:
+                        faceobj = FreeCAD.ActiveDocument.addObject('Part::Feature',"Face")
+                        faceobj.Label = "Face"
+                        faceobj.Shape = face
+                    # for obj in doc.Objects: # FreeCADGui.Selection.getSelection():
+                    #     FreeCADGui.ActiveDocument.getObject(obj.Name).Visibility=False
+                    FreeCAD.ActiveDocument.recompute()
+                    f = face
+                    pass
+                except Part.OCCError: # Exception: #
+                    # FreeCAD.Console.PrintError('Error in source %s (%s)' % (faceobj.Name,faceobj.Label)+"\n")
+                    FreeCAD.Console.PrintError('Error in source %s (%s)' % (face.Name,face.Label)+"\n")
+
+            #stop
+
+            if 0: #(checkDXFsettings(True)):  # DXF Legacy importer
+                say("Legacy DXF importer [using part.makeFace]")
+                edges=[]
+                sorted_edges=[]
+                w=[]
+                
+                for o in imp_objects: #doc.Objects:
+                    #if o.Name not in str(objects):
+                        if hasattr(o,'Shape'):
+                            w1 = Part.Wire(Part.__sortEdges__(o.Shape.Edges))
+                            w.append(w1)
+                #print (w)
+                f=Part.makeFace(w,'Part::FaceMakerBullseye')
+            for o in imp_objects: #doc.Objects:
+                # if o.Name not in str(objects):
                     doc.removeObject(o.Name)
             if 'Silk' in filename:
                 layerName = 'Silks'
@@ -252,9 +308,10 @@ def makeFaceDXF():
             say("displaying time = "+str(timeD) + "s")
     FreeCADGui.SendMsgToActiveView("ViewFit")
     # doc.recompute(None,True,True)
-    docG.activeView().viewAxonometric()
+    #docG.activeView().viewAxonometric()
+    docG.activeView().viewTop()
 ##
-def checkDXFsettings():
+def checkDXFsettings(leg=None):
     
     pgD = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Draft")
     dxfLI = pgD.GetBool("dxfUseLegacyImporter")
@@ -262,9 +319,17 @@ def checkDXFsettings():
     dxfCP = pgD.GetBool("dxfCreatePart")
     checkResult = True
     #FreeCAD.Console.PrintMessage (dxfLI);FreeCAD.Console.PrintMessage (dxfJG); FreeCAD.Console.PrintMessage (dxfCP)
-    if not dxfLI:
-        FreeCAD.Console.PrintError('DXF Legacy Importer NOT selected\n')
-        checkResult = False
+    if not dxfLI: 
+        FreeCAD.Console.PrintError('DXF Legacy Importer NOT selected A\n')
+        # checkResult = False #enabling new DXFImporter also
+    if dxfLI and (leg == True): # not dxfLI: enabling new DXFImporter also
+        FreeCAD.Console.PrintMessage('DXF Legacy Importer selected\n')
+        # checkResult = False
+        return True
+    if not(dxfLI) and (leg == True): # not dxfLI: enabling new DXFImporter also
+        FreeCAD.Console.PrintMessage('DXF Legacy Importer NOT selected B\n')
+        # checkResult = False
+        return True
     if not dxfJG:
         FreeCAD.Console.PrintError('DXF Join Geometries NOT selected\n')
         checkResult = False
