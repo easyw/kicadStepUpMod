@@ -496,7 +496,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.9.0"
+___ver___ = "10.9.1"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -12133,23 +12133,27 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
         ys=-ys;y1=-y1
         #say(xs); say(ys)
         r = sqrt((xs - x1) ** 2 + (ys - y1) ** 2)
-        circle1=Part.Edge(Part.Circle(Base.Vector(xs, ys,0), Base.Vector(0, 0, 1), r))
-        if load_sketch:
-            if aux_orig ==1 or grid_orig ==1:
-                #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(Part.Circle(Base.Vector(xs-off_x, ys-off_y,0), Base.Vector(0, 0, 1), r))
-                PCB_Geo.append(Part.Circle(Base.Vector(xs-off_x, ys-off_y,0), Base.Vector(0, 0, 1), r))
-            else:
-                #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(Part.Circle(Base.Vector(xs, ys,0), Base.Vector(0, 0, 1), r))
-                PCB_Geo.append(Part.Circle(Base.Vector(xs, ys,0), Base.Vector(0, 0, 1), r))
-        if show_border:
-            Part.show(circle1)
-        circle1=Part.Wire(circle1)
-        circle1=Part.Face(circle1)
-        if show_shapes:
-            Part.show(circle1)
-        say('2d circle closed path')
-        PCBs.append(circle1)
-        PCB.append(['Circle', xs, ys, r])
+        #sayerr(r)
+        if r != 0.0:
+            circle1=Part.Edge(Part.Circle(Base.Vector(xs, ys,0), Base.Vector(0, 0, 1), r))
+            if load_sketch:
+                if aux_orig ==1 or grid_orig ==1:
+                    #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(Part.Circle(Base.Vector(xs-off_x, ys-off_y,0), Base.Vector(0, 0, 1), r))
+                    PCB_Geo.append(Part.Circle(Base.Vector(xs-off_x, ys-off_y,0), Base.Vector(0, 0, 1), r))
+                else:
+                    #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(Part.Circle(Base.Vector(xs, ys,0), Base.Vector(0, 0, 1), r))
+                    PCB_Geo.append(Part.Circle(Base.Vector(xs, ys,0), Base.Vector(0, 0, 1), r))
+            if show_border:
+                Part.show(circle1)
+            circle1=Part.Wire(circle1)
+            circle1=Part.Face(circle1)
+            if show_shapes:
+                Part.show(circle1)
+            say('2d circle closed path')
+            PCBs.append(circle1)
+            PCB.append(['Circle', xs, ys, r])
+        else:
+            sayw('circle with 0 radius at '+str(c.center))
 
     #say(PCBs)
     get_time()
