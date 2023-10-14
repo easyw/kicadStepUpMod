@@ -23,7 +23,7 @@ use_Links=False
 
 global FC_export_min_version
 FC_export_min_version="11670"  #11670 latest JM
-silks_version = '1.3'
+silks_version = '1.4'
 
 use_LinkGroups = False
 if 'LinkView' in dir(FreeCADGui):
@@ -214,48 +214,23 @@ def makeFaceDXF():
 
             if use_dxf_internal: # not(checkDXFsettings(True)):
                 try:
-                    say("standard DXF importer [using OSCD2Dg_edgestofaces]")
-                    edges=sum((obj.Shape.Edges for obj in \
-                    imp_objects if hasattr(obj,'Shape')),[])
-                    #for edge in edges:
-                    #    print "geomType ",DraftGeomUtils.geomType(edge)
-                    import kicadStepUptools
-                    if 0: #reload_Gui:
-                        reload_lib( kicadStepUptools )
-                    face = kicadStepUptools.OSCD2Dg_edgestofaces(edges,3 , kicadStepUptools.edge_tolerance)
-                    ##face = OpenSCAD2Dgeom.edgestofaces(edges)
-                    #face = OpenSCAD2DgeomMau.edgestofaces(edges)
-                    if 0:
-                        face.check() # reports errors
-                        face.fix(0,0,0)
-                    if 0:
-                        faceobj = FreeCAD.ActiveDocument.addObject('Part::Feature',"Face")
-                        faceobj.Label = "Face"
-                        faceobj.Shape = face
-                    # for obj in doc.Objects: # FreeCADGui.Selection.getSelection():
-                    #     FreeCADGui.ActiveDocument.getObject(obj.Name).Visibility=False
-                    FreeCAD.ActiveDocument.recompute()
-                    f = face
-                    pass
-                except Part.OCCError: # Exception: #
-                    # FreeCAD.Console.PrintError('Error in source %s (%s)' % (faceobj.Name,faceobj.Label)+"\n")
-                    FreeCAD.Console.PrintError('Error in source %s (%s)' % (face.Name,face.Label)+"\n")
-
-            #stop
-
-            if 0: #(checkDXFsettings(True)):  # DXF Legacy importer
-                say("Legacy DXF importer [using part.makeFace]")
-                edges=[]
-                sorted_edges=[]
-                w=[]
-                
-                for o in imp_objects: #doc.Objects:
-                    #if o.Name not in str(objects):
+                    say("standard DXF importer [Part::FaceMakerBullseye]")
+                    edges=[]
+                    sorted_edges=[]
+                    w=[]
+                    # edges=sum((obj.Shape.Edges for obj in \
+                    # imp_objects if hasattr(obj,'Shape')),[])
+                    for o in imp_objects:
                         if hasattr(o,'Shape'):
                             w1 = Part.Wire(Part.__sortEdges__(o.Shape.Edges))
                             w.append(w1)
-                #print (w)
-                f=Part.makeFace(w,'Part::FaceMakerBullseye')
+                    #print (w)
+                    f=Part.makeFace(w,'Part::FaceMakerBullseye')
+                except Part.OCCError: # Exception: #
+                    # FreeCAD.Console.PrintError('Error in source %s (%s)' % (faceobj.Name,faceobj.Label)+"\n")
+                    FreeCAD.Console.PrintError('Error in source %s (%s)' % (f.Name,f.Label)+"\n")
+
+            #stop
             for o in imp_objects: #doc.Objects:
                 # if o.Name not in str(objects):
                     doc.removeObject(o.Name)
@@ -280,6 +255,8 @@ def makeFaceDXF():
                 docG.getObject(newShape.Name).ShapeColor = silks_diffuse
             else:
                 docG.getObject(newShape.Name).ShapeColor = brass_diffuse #copper_diffuse  #(0.78,0.56,0.11)
+            del f # memory leak?
+            del imp_objects #memory leak?
             pcb_name = find_pcb_name()
             # new_obj = simple_cpy(newShape,layerName+ftname_sfx)
             # doc.removeObject(newShape.Name)
