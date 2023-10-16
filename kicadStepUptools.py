@@ -496,7 +496,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.9.2"
+___ver___ = "10.9.3"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -2018,8 +2018,7 @@ def comboBox_Changed(text_combo):
 def shapeToMesh(shape, color, transp, mesh_deviation, scale=None):
     #mesh_deviation=0.1 #the smaller the best quality, 1 coarse
     #say(mesh_deviation)
-    mesh_data = shape.tessellate(mesh_deviation)
-    # New mesh method
+    mesh_data = shape.tessellate(mesh_deviation, True) # forcing new mesh each time
     import MeshPart
     mesh = MeshPart.meshFromShape(Shape = shape,
                                   LinearDeflection = mesh_deviation, # Don't know if this is the same
@@ -2356,8 +2355,6 @@ def export(componentObjs, fullfilePathName, scale=None, label=None):
                     color_vector.append(color)
             #say("color_vector")
             #say(color_vector)
-            shape1.tessellate(mesh_dev, True)  # meshing all shape before the individual faces
-            # https://forum.freecad.org/viewtopic.php?t=32889 
             for index in range(len(shape1.Faces)):
                 #say("color x")
                 #say(color_vector[indexColor])
@@ -6556,6 +6553,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
         if 0:
             ui.comboBoxLayerSel.setEditable(True)
         ui.label.setText("Select the layer to pull into the Sketch\nDefault: \'Edge.Cuts\'")
+        import_drawings = False
         reply=LayerSelectionDlg.exec_()
         if reply==1: # ok
             SketchLayer=str(ui.comboBoxLayerSel.currentText())
@@ -6567,6 +6565,9 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                 elif ui.radioBtn_keep_sketch.isChecked(): #enabling keep sketch only if override is True 
                     override_pcb = True
                     keep_pcb_sketch = True
+            else:
+                if ui.radioBtn_replace_pcb.isChecked():
+                    import_drawings = True
             pull_sketch = True
         else:
             print('Cancel')
@@ -6675,7 +6676,10 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                             override_pcb = False
                             say('Pcb not present')
                 else:
-                    doc=FreeCAD.newDocument(fname)
+                    if import_drawings and FreeCAD.ActiveDocument is not None:
+                        doc=FreeCAD.ActiveDocument
+                    else:
+                        doc=FreeCAD.newDocument(fname)
                 # doc.commitTransaction()
                 doc.openTransaction('opening_kicad')
                 say('opening Transaction \'opening_kicad\'')
@@ -15297,9 +15301,12 @@ class Ui_LayerSelection(object):
     def on_combobox_changed(self, value):
         #print('combo change',value)
         if value != 'Edge.Cuts':
-            self.radioBtn_newdoc.setChecked(True)
-            self.radioBtn_replace_pcb.setEnabled(False)
+            #self.radioBtn_newdoc.setChecked(True)
+            self.radioBtn_replace_pcb.setChecked(True)
+            #self.radioBtn_replace_pcb.setEnabled(False)
             self.radioBtn_keep_sketch.setEnabled(False)
+            self.radioBtn_replace_pcb.setEnabled(True)
+            self.radioBtn_replace_pcb.setText("import Layer in active document")
         else:
             self.radioBtn_replace_pcb.setEnabled(True)
             self.radioBtn_keep_sketch.setEnabled(True)
