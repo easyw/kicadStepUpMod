@@ -496,7 +496,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.9.1"
+___ver___ = "10.9.2"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -2014,10 +2014,21 @@ def comboBox_Changed(text_combo):
 
 ###
 
+# https://forum.freecad.org/viewtopic.php?t=71391 https://github.com/easyw/kicadStepUpMod/issues/187
 def shapeToMesh(shape, color, transp, mesh_deviation, scale=None):
     #mesh_deviation=0.1 #the smaller the best quality, 1 coarse
     #say(mesh_deviation)
     mesh_data = shape.tessellate(mesh_deviation)
+    # New mesh method
+    import MeshPart
+    mesh = MeshPart.meshFromShape(Shape = shape,
+                                  LinearDeflection = mesh_deviation, # Don't know if this is the same
+                                  AngularDeflection = radians(10)) # ?
+    # Update mesh_data
+    mesh_data_list = list(mesh_data)
+    mesh_data_list[0] = [point.Vector for point in mesh.Points]
+    mesh_data_list[1] = [facet.PointIndices for facet in mesh.Facets]
+    mesh_data = tuple(mesh_data_list)
     points = mesh_data[0]
     if scale is not None:
         points = map(lambda p: p*scale, points)
@@ -2260,7 +2271,7 @@ def export(componentObjs, fullfilePathName, scale=None, label=None):
             filename=path+os.sep+exp_name+'_1_1.wrl'
     say(filename)
     exportV=True
-    mesh_deviation_default=0.9 #0.03 # 0.03 or 0.1
+    mesh_deviation_default=0.9 # 0.03 or 0.1 0.9 smaller files
     mesh_dev=mesh_deviation_default #the smaller the best quality, 1 coarse
     if os.path.exists(filename):
         say('file exists')
@@ -2276,22 +2287,33 @@ def export(componentObjs, fullfilePathName, scale=None, label=None):
             exportV=False
             #pass
     if exportV:
-        reply = QtGui.QInputDialog.getText(None, "Mesh Deviation","Mesh Deviation (the smaller the better quality)",QtGui.QLineEdit.Normal,str(mesh_deviation_default))
+        reply = QtGui.QInputDialog.getText(None, "Mesh Deviation","Mesh Deviation ([range:0.01-1] the smaller the better quality)",QtGui.QLineEdit.Normal,str(mesh_deviation_default))
         if reply[1]:
                 # user clicked OK
                 replyText = reply[0]
-                mesh_dev = float (replyText)
+                if float (replyText) < 0.01:
+                    mesh_dev = 0.01
+                elif float (replyText) > 1.0:
+                    mesh_dev = 1.0
+                else:
+                    mesh_dev = float (replyText)
         else:
                 # user clicked Cancel
                 replyText = reply[0] # which will be "" if they clicked Cancel
                 mesh_dev=mesh_deviation_default #the smaller the best quality, 1 coarse
                 #default
-        creaseAngle_default=0.0
-        reply = QtGui.QInputDialog.getText(None, "creaseAngle","creaseAngle (range:0-1.5)\ncheck your wrl result\n(0->None)",QtGui.QLineEdit.Normal,str(creaseAngle_default))
+        creaseAngle_default=1.0
+        creaseAngle_max = 3.14
+        reply = QtGui.QInputDialog.getText(None, "creaseAngle","creaseAngle [range:0-"+str(creaseAngle_max)+"] the bigger the best quality (0->None)\ncheck your wrl result",QtGui.QLineEdit.Normal,str(creaseAngle_default))
         if reply[1]:
                 # user clicked OK
                 replyText = reply[0]
-                creaseAngle = float (replyText)
+                if float (replyText) < 0.0:
+                    creaseAngle = 0.0
+                elif float (replyText) > creaseAngle_max:
+                    creaseAngle = creaseAngle_max
+                else:
+                    creaseAngle = float (replyText)
         else:
                 # user clicked Cancel
                 replyText = reply[0] # which will be "" if they clicked Cancel
@@ -2334,6 +2356,8 @@ def export(componentObjs, fullfilePathName, scale=None, label=None):
                     color_vector.append(color)
             #say("color_vector")
             #say(color_vector)
+            shape1.tessellate(mesh_dev, True)  # meshing all shape before the individual faces
+            # https://forum.freecad.org/viewtopic.php?t=32889 
             for index in range(len(shape1.Faces)):
                 #say("color x")
                 #say(color_vector[indexColor])
@@ -7721,6 +7745,20 @@ def say_warning(msg):
         QtGui.QApplication.restoreOverrideCursor()
         #RotateXYZGuiClass().setGeometry(25, 250, 500, 500)
         diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Warning,
+                                msg1,
+                                msg)
+        diag.setWindowModality(QtCore.Qt.ApplicationModal)
+        diag.exec_()
+
+def say_error(msg):
+        QtGui.QApplication.restoreOverrideCursor()
+        # msg="""Select <b>a Compound</b> or <br><b>a Part Design group</b><br>or <b>more than one Part</b> object !<br>"""
+        spc="""<font color='white'>*******************************************************************************</font><br>
+        """
+        msg1="ERROR! ..."
+        QtGui.QApplication.restoreOverrideCursor()
+        #RotateXYZGuiClass().setGeometry(25, 250, 500, 500)
+        diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
                                 msg1,
                                 msg)
         diag.setWindowModality(QtCore.Qt.ApplicationModal)
@@ -15424,7 +15462,9 @@ def PushPCB():
                             start_time=current_milli_time()
                             export_pcb(name,SketchLayer,skname)
                         else:
-                            msg="""Saving to <b>an empty KiCad pcb file</b>"""+'\n'+name
+                            if not (name.endswith("kicad_pcb")):
+                                name = name + ".kicad_pcb"
+                            msg="Saving to an empty KiCad pcb file"+'\n'+name
                             sayw(msg)
                             last_pcb_path=os.path.dirname(name)
                             pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
@@ -20630,7 +20670,7 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                     newcontent = repl[:k]
                 else:
                     sayerr('to push a new release of Edge to a kicad board with an existing Edge\nyou need to load the board with StepUp first')
-                    say_warning("""<b>to push a new release of Edge to a kicad board<br>with an existing Edge<br>you need to load the board with StepUp first<br><br>""")
+                    say_error("""<b>to push a new release of Edge to a kicad board<br><font color=red>with an existing Edge</font><br>you need to load the board with StepUp first<br><br>""")
                     stop
             else:
                 #[148.5, -98.5] center of A4 page
