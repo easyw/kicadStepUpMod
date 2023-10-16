@@ -496,7 +496,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.9.3"
+___ver___ = "10.9.4"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -2019,15 +2019,6 @@ def shapeToMesh(shape, color, transp, mesh_deviation, scale=None):
     #mesh_deviation=0.1 #the smaller the best quality, 1 coarse
     #say(mesh_deviation)
     mesh_data = shape.tessellate(mesh_deviation, True) # forcing new mesh each time
-    import MeshPart
-    mesh = MeshPart.meshFromShape(Shape = shape,
-                                  LinearDeflection = mesh_deviation, # Don't know if this is the same
-                                  AngularDeflection = radians(10)) # ?
-    # Update mesh_data
-    mesh_data_list = list(mesh_data)
-    mesh_data_list[0] = [point.Vector for point in mesh.Points]
-    mesh_data_list[1] = [facet.PointIndices for facet in mesh.Facets]
-    mesh_data = tuple(mesh_data_list)
     points = mesh_data[0]
     if scale is not None:
         points = map(lambda p: p*scale, points)
