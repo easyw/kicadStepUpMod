@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global tracks_version
-tracks_version = '2.6.1'
+tracks_version = '2.6.2'
 
 import kicad_parser
 #import kicad_parser; import importlib; importlib.reload(kicad_parser)
@@ -428,7 +428,7 @@ def addtracks(fname = None):
                 if (objsNum) < len(FreeCAD.ActiveDocument.Objects):
                     drl = Draft.makeShape2DView(holes, FreeCAD.Vector(0.0, 0.0, 1.0))
                     recompute_active_object()
-                    holesSk = Draft.make_sketch(FreeCAD.ActiveDocument.ActiveObject, autoconstraints=True)
+                    holesSk = Draft.makeSketch(FreeCAD.ActiveDocument.ActiveObject, autoconstraints=True)
                     recompute_active_object()
                     extrude_holes(holesSk,pcbThickness*3)
                     holes_ = FreeCAD.ActiveDocument.ActiveObject
@@ -610,21 +610,24 @@ def addtracks(fname = None):
                             l_max=w.Length
                             w_max=w
                     pcb_sk = Draft.makeSketch(w_max,autoconstraints=True)
-                pcb_sk = Draft.makeSketch(f_max,autoconstraints=True)
-                #pcb_sk = Draft.makeSketch(f_max,autoconstraints=False)
-                FreeCAD.ActiveDocument.recompute()   
-                if len (pcb_sk.RedundantConstraints)>0:
-                    # print('fixing over constrained sketch')
-                    new_constrains=[]
-                    list1 = pcb_sk.Constraints 
-                    index_list=pcb_sk.RedundantConstraints
-                    for i in range(len(index_list)):
-                        index_list[i] -= 1
-                    index_set = set(index_list) # optional but faster    
-                    new_constrains=[x for i, x in enumerate(list1) if i not in index_set]
-                    pcb_sk.Constraints=new_constrains
+                if 1:
+                    pcb_sk = Draft.makeSketch(f_max,autoconstraints=False)
                     FreeCAD.ActiveDocument.recompute()
-                # pcb_sk = Draft.makeSketch(f_max.OuterWire,autoconstraints=True)  # esternal perimeter 
+                else:
+                    pcb_sk = Draft.makeSketch(f_max,autoconstraints=True)
+                    FreeCAD.ActiveDocument.recompute()   
+                    if len (pcb_sk.Redundancies)>0: #.RedundantConstraints)>0:
+                        # print('fixing over constrained sketch')
+                        new_constrains=[]
+                        list1 = pcb_sk.Constraints 
+                        index_list=pcb_sk.Redundancies #.RedundantConstraints
+                        for i in range(len(index_list)):
+                            index_list[i] -= 1
+                        index_set = set(index_list) # optional but faster    
+                        new_constrains=[x for i, x in enumerate(list1) if i not in index_set]
+                        pcb_sk.Constraints=new_constrains
+                        FreeCAD.ActiveDocument.recompute()
+                    # pcb_sk = Draft.makeSketch(f_max.OuterWire,autoconstraints=True)  # esternal perimeter 
                 
                 add_toberemoved.append([pcb_sk])
                 
@@ -703,7 +706,7 @@ def addtracks(fname = None):
                 if (objsNum) < len(FreeCAD.ActiveDocument.Objects):
                     drlB = Draft.makeShape2DView(holesB, FreeCAD.Vector(0.0, 0.0, 1.0))
                     recompute_active_object()
-                    holesSkB = Draft.make_sketch(FreeCAD.ActiveDocument.ActiveObject, autoconstraints=True)
+                    holesSkB = Draft.makeSketch(FreeCAD.ActiveDocument.ActiveObject, autoconstraints=True)
                     recompute_active_object()
                     extrude_holes(holesSkB,pcbThickness*3)
                     holesB_ = FreeCAD.ActiveDocument.ActiveObject
