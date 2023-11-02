@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global tracks_version
-tracks_version = '2.6.0'
+tracks_version = '2.6.1'
 
 import kicad_parser
 #import kicad_parser; import importlib; importlib.reload(kicad_parser)
@@ -611,6 +611,19 @@ def addtracks(fname = None):
                             w_max=w
                     pcb_sk = Draft.makeSketch(w_max,autoconstraints=True)
                 pcb_sk = Draft.makeSketch(f_max,autoconstraints=True)
+                #pcb_sk = Draft.makeSketch(f_max,autoconstraints=False)
+                FreeCAD.ActiveDocument.recompute()   
+                if len (pcb_sk.RedundantConstraints)>0:
+                    # print('fixing over constrained sketch')
+                    new_constrains=[]
+                    list1 = pcb_sk.Constraints 
+                    index_list=pcb_sk.RedundantConstraints
+                    for i in range(len(index_list)):
+                        index_list[i] -= 1
+                    index_set = set(index_list) # optional but faster    
+                    new_constrains=[x for i, x in enumerate(list1) if i not in index_set]
+                    pcb_sk.Constraints=new_constrains
+                    FreeCAD.ActiveDocument.recompute()
                 # pcb_sk = Draft.makeSketch(f_max.OuterWire,autoconstraints=True)  # esternal perimeter 
                 
                 add_toberemoved.append([pcb_sk])
@@ -654,6 +667,7 @@ def addtracks(fname = None):
                             FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(topZones,topZones,'',[])
         #try:    #doing bot tracks layer
         #pcb.setLayer(LvlBotName)
+        #stop
         pcb.setLayer(Bot_lvl)
         # pcb.makeCopper(holes=True, minSize=minSizeDrill)
         #pcb.makeCopper(holes=True)
@@ -746,6 +760,19 @@ def addtracks(fname = None):
                     #Part.show(Part.makeFace(f_max.OuterWire,'Part::FaceMakerSimple').extrude(FreeCAD.Vector(0.0, 0.0, -pcbThickness)))
                     # pcb_sk = Draft.makeSketch(f_max.OuterWire,autoconstraints=True) # external perimeter
                     pcb_sk = Draft.makeSketch(f_max,autoconstraints=True)
+                    #pcb_sk = Draft.makeSketch(f_max,autoconstraints=False)
+                    FreeCAD.ActiveDocument.recompute()   
+                    if len (pcb_sk.RedundantConstraints)>0:
+                        #stop
+                        new_constrains=[]
+                        list1 = pcb_sk.Constraints 
+                        index_list=pcb_sk.RedundantConstraints
+                        for i in range(len(index_list)):
+                            index_list[i] -= 1
+                        index_set = set(index_list) # optional but faster    
+                        new_constrains=[x for i, x in enumerate(list1) if i not in index_set]
+                        pcb_sk.Constraints=new_constrains
+                        FreeCAD.ActiveDocument.recompute()
                     add_toberemoved.append([pcb_sk])
                 ### check if BBOx pcb > BBOx tracks
                 if botPads is not None:

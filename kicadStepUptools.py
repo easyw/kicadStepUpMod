@@ -496,7 +496,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.9.5"
+___ver___ = "10.9.6"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -18395,6 +18395,7 @@ def collect_pads(pad_list):
 
 def createFpPad(pad,offset,tp, _drills=None):
     global pad_nbr, edge_tolerance
+    import Draft
     
     #if tp=='SMD':
     #    if pad[0]=='circle':
@@ -19258,11 +19259,15 @@ def createFpPad(pad,offset,tp, _drills=None):
             segments_nbr=len(pad)
             i=1
             layers = []
+            pnts=[]
             for lines in pad:
                 #if i<segments_nbr:
                 #    pts=pts+"         (xy "+str(lines[1])+" "+str(-1*lines[2])+") (xy "+str(lines[3])+" "+str(-1*lines[4])+")"+os.linesep
                 #else:
                 #    pts=pts+"         (xy "+str(lines[1])+" "+str(-1*lines[2])+")) (width 0))"+os.linesep
+                #print(lines)
+                pnts.append(FreeCAD.Vector(lines[1], lines[2],0.0))
+                pnts.append(FreeCAD.Vector(lines[3], lines[4],0.0))
                 wr.append(Part.makeLine((lines[1], lines[2],0.0),(lines[3], lines[4],0.0)))
                 pattern = '_In+([0-9]*?).Cu'
                 result = re.search(pattern, lines[5])
@@ -19279,28 +19284,56 @@ def createFpPad(pad,offset,tp, _drills=None):
                 else:
                     padNbr='"#"'
                 i=i+1
-            ant=Part.Wire(wr)
+            # ant=Part.Wire(wr)
+            if 1:
+                print('using Draft make_wire to close the wire')
+                if hasattr(Draft,"make_wire"):
+                    ant = Draft.make_wire(pnts, closed=True)
+                else:
+                    ant = Draft.makeWire(pnts, closed=True)
+                FreeCAD.ActiveDocument.recompute()
+            if 0:
+                vecs = [FreeCAD.Vector(t) for t in pnts] # convert tuples to vectors
+                vecs.append(vecs[0]) # to close the wire
+                ant = Part.makePolygon(vecs) #make a wire
+                Part.show(ant)
+            # face = Part.Face(wire)
+            # Part.show(face )
+            # stop
+            # print(pad)
+            # print((pad[-1][1], pad[-1][2],0.0),(pad[0][1], pad[0][2],0.0))
+            #if ant.isClosed() == False:
+            #    ant = Draft.make_wire(pnts, closed=True)
+            #    # wr.append(Part.makeLine((pad[0][1], pad[0][2],0.0),(0,0,0))) #(pad[-1][1], pad[-1][2],0.0),))
+            #    # ant2=Part.Wire(wr)
+            #    #Part.show(ant)
+            #    #stop
             #sayw( ant.isClosed() )
             #Part.show(ant)
-            face = Part.Face(ant)
-            Part.show(face)
+            #FreeCAD.ActiveDocument.recompute()
+            # face = Part.Face(ant)
+            # face = Part.makeFace(ant_shp.Shape,'Part::FaceMakerBullseye')
+            # Part.show(face)
             shpName=FreeCAD.ActiveDocument.ActiveObject.Name
             #say( FreeCAD.ActiveDocument.ActiveObject.Label)
             shape= FreeCAD.ActiveDocument.ActiveObject.Shape
+            ant = FreeCAD.ActiveDocument.ActiveObject
+            #print("len(_drills)",len(_drills))
             if len(_drills)>0:
                 for d in _drills:
                     #print (d)
                     point=FreeCAD.Vector(d[0],-1*d[1],0)
+                    #print(point)
                     if shape.isInside(point,0,True):
                         sayw('pad in poly found! '+str(d[0])+','+str(-1*d[1]))
                         found_drill=True
                         break
-            FreeCAD.ActiveDocument.removeObject(shpName)
+            # FreeCAD.ActiveDocument.removeObject(shpName)
             #stop
             #if 1:
             if found_drill:
                 i=1
-                for w in ant.Wires:
+                for w in ant.Shape.Wires:
                     pattern = '_In+([0-9]*?)_Cu'
                     result = re.search(pattern, layers[i])
                     clusters = Part.sortEdges(w.Edges) #[0] 
@@ -19357,6 +19390,7 @@ def createFpPad(pad,offset,tp, _drills=None):
             else:
                 sayw("missing reference pad for polyline pad")
                 stop
+            FreeCAD.ActiveDocument.removeObject(shpName)
             return pad_ref
 
             

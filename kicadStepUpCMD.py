@@ -29,7 +29,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.3.8'
+ksuCMD_version__='2.3.9'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -3924,6 +3924,55 @@ class ksuOpDXF:
             FreeCADGui.SendMsgToActiveView("ViewFit")
         
 FreeCADGui.addCommand('ksuOpDXF',ksuOpDXF())
+
+###
+class ksuOpEzDXF:
+    "ksu tools open ezDXF"
+    
+    def GetResources(self):
+        mybtn_tooltip ="open ezDXF"
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'openEzDXF.svg') , # the name of a svg file available in the resources
+                     'MenuText': mybtn_tooltip ,
+                     'ToolTip' : mybtn_tooltip }
+ 
+    def IsActive(self):
+        return True
+        #else:
+        #    self.setToolTip("Grayed Tooltip!")
+        #    print(self.ObjectName)
+        #    grayed_tooltip="Grayed Tooltip!"
+        #    mybtn_tooltip=grayed_tooltip
+ 
+    def Activated(self):
+        # do something here...
+        #import kicadStepUptools
+        # import hlp
+        # reload_lib(hlp)
+        #FreeCADGui.runCommand("Std_DlgPreferences") 
+        from ezDXF_import import open_ezdxf
+        try:
+            import ezdxf
+            import os
+            from kicadStepUptools import make_unicode, make_string
+            # _DXF_Import.open('D:/Temp/t4k3-DWG.DXF')
+            prefs_ = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+            last_pcb_path = prefs_.GetString("last_pcb_path")
+            if not(prefs_.GetBool('not_native_dlg')):
+                name, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Open a DXF file (w ezDXF lib)...",
+                    last_pcb_path, filter="*.dxf *.DXF")
+            else:
+                name, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Open a DXF file (w ezDXF lib)...",
+                    last_pcb_path, filter="*.dxf *.DXF",options=QtWidgets.QFileDialog.DontUseNativeDialog)
+            # fname, fnamefilter = QtGui.QFileDialog.getOpenFileName(parent=FreeCADGui.getMainWindow(), caption='Read a DXF file', filter='*.dxf *.DXF')
+            if name:
+                last_pcb_path=os.path.dirname(name)
+                prefs_.SetString("last_pcb_path", make_string(last_pcb_path))
+                open_ezdxf(name,True,True)
+                FreeCADGui.SendMsgToActiveView("ViewFit")
+        except:
+            FreeCAD.Console.PrintError("ezDXF missing; use: \'pip install ezdxf python lib\'\n")
+        
+FreeCADGui.addCommand('ksuOpEzDXF',ksuOpEzDXF())
 ###
 class ksuImpDXF:
     "ksu tools import Legacy DXF"

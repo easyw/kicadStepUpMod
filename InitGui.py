@@ -10,13 +10,13 @@
 #*  Kicad STEPUP (TM) is a TradeMark and cannot be freely usable            *
 #*                                                                          *
 
-ksu_wb_version='v 10.20.7'
+ksu_wb_version='v 10.20.8'
 global myurlKWB, ksuWBpath
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=612 #  v10.20.7
+mycommitsKWB=616 #  v10.20.8
 global verKSU
-verKSU="10.9.5"
+verKSU="10.9.6"
 
 import FreeCAD, FreeCADGui, Part, os, sys
 import re, time
@@ -194,7 +194,7 @@ class KiCadStepUpWB ( Workbench ):
         self.appendToolbar("ksu Show", ["ksuToolsTurnTable", "ksuToolsExplode"])
         self.appendToolbar("ksu Helpers", Hlp_TB)
         #self.appendMenu("ksu Tools", ["ksuTools","ksuToolsEdit"])
-        self.appendMenu("ksu Tools", ["ksuTools","ksuToolsEditPrefs","ksuImpDXF","ksuOpDXF"])
+        self.appendMenu("ksu Tools", ["ksuTools","ksuToolsEditPrefs","ksuImpDXF","ksuOpDXF","ksuOpEzDXF"])
         self.appendMenu("ksu PushPull", ["ksuToolsOpenBoard","ksuToolsPushPCB","ksuToolsPushMoved","ksuToolsSync3DModels","ksuToolsPullPCB","ksuToolsPullMoved",\
                         "Separator","ksuToolsGeneratePositions","ksuToolsComparePositions",\
                         "Separator","ksuRemoveTimeStamp","ksuRemoveSuffix",\

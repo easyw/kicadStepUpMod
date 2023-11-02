@@ -7,6 +7,8 @@ kicadStepUptools.routineT_XYZ('x',1.0)
 import kicadStepUptools; import importlib; importlib.reload(kicadStepUptools);
 FreeCADGui.activateWorkbench("KiCadStepUpWB")
 
+import ezDXF_import;import importlib; importlib.reload(ezDXF_import)
+
 import kicadStepUptools; reload(kicadStepUptools)
 import kicad_parser;import tracks;import fps;import importlib;importlib.reload(kicad_parser);importlib.reload(fps);importlib.reload( tracks)
 

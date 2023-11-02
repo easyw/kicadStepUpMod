@@ -23,7 +23,7 @@ use_Links=False
 
 global FC_export_min_version
 FC_export_min_version="11670"  #11670 latest JM
-silks_version = '1.4'
+silks_version = '1.5'
 
 use_LinkGroups = False
 if 'LinkView' in dir(FreeCADGui):
@@ -206,13 +206,31 @@ def makeFaceDXF():
             if doc is not None:
                 for o in doc.Objects:
                     if o.Name not in str(objects):
-                        imp_objects.append(o)
+                        if hasattr(o, 'Shape'):
+                            imp_objects.append(o)
+                        else:
+                            FreeCAD.ActiveDocument.removeObject(o.Name)
             FreeCADGui.SendMsgToActiveView("ViewFit")
             timeP = time.time() - t
             say("loading time = "+str(timeP) + "s")
             #print(imp_objects)
-
-            if use_dxf_internal: # not(checkDXFsettings(True)):
+            using_connect=False #both connect and Part::FaceMakerBullseye take the same time in bulding a face
+            if using_connect:
+                import BOPTools.JoinFeatures
+                j = BOPTools.JoinFeatures.makeConnect(name='Connect')
+                j.Objects = imp_objects
+                j.Proxy.execute(j)
+                j.purgeTouched()
+                for obj in j.ViewObject.Proxy.claimChildren():
+                    obj.ViewObject.hide()
+                doc.addObject("Part::Face", "fc").Sources = (FreeCAD.ActiveDocument.getObject(j.Name), )
+                doc.recompute()
+                c=doc.ActiveObject
+                imp_objects.append(j)
+                imp_objects.append(c)
+                f=c.Shape
+                #stop
+            else: #if use_dxf_internal: # not(checkDXFsettings(True)):
                 try:
                     say("standard DXF importer [Part::FaceMakerBullseye]")
                     edges=[]
@@ -249,6 +267,7 @@ def makeFaceDXF():
 
             doc.addObject('Part::Feature',layerName+ftname_sfx).Shape=f # +'tmp').Shape=f
             newShape=doc.ActiveObject
+            # newShape.Label = layerName+ftname_sfx
             # doc.recompute(None,True,True)
             botOffset = 1.6
             if 'Silk' in layerName:
