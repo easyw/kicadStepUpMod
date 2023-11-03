@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global tracks_version
-tracks_version = '2.6.2'
+tracks_version = '2.6.3'
 
 import kicad_parser
 #import kicad_parser; import importlib; importlib.reload(kicad_parser)
@@ -610,17 +610,17 @@ def addtracks(fname = None):
                             l_max=w.Length
                             w_max=w
                     pcb_sk = Draft.makeSketch(w_max,autoconstraints=True)
-                if 1:
-                    pcb_sk = Draft.makeSketch(f_max,autoconstraints=False)
-                    FreeCAD.ActiveDocument.recompute()
-                else:
+                FC_majorV,FC_minorV,FC_git_Nbr=getFCversion()
+                if FC_majorV>=0 and FC_minorV>=21:
                     pcb_sk = Draft.makeSketch(f_max,autoconstraints=True)
+                    #pcb_sk.autoRemoveRedundants(True)
+                    #pcb_sk.solve()
                     FreeCAD.ActiveDocument.recompute()   
-                    if len (pcb_sk.Redundancies)>0: #.RedundantConstraints)>0:
-                        # print('fixing over constrained sketch')
+                    if len (pcb_sk.RedundantConstraints)>0:
+                        print('fixing over constrained sketch')
                         new_constrains=[]
                         list1 = pcb_sk.Constraints 
-                        index_list=pcb_sk.Redundancies #.RedundantConstraints
+                        index_list=pcb_sk.RedundantConstraints
                         for i in range(len(index_list)):
                             index_list[i] -= 1
                         index_set = set(index_list) # optional but faster    
@@ -628,6 +628,9 @@ def addtracks(fname = None):
                         pcb_sk.Constraints=new_constrains
                         FreeCAD.ActiveDocument.recompute()
                     # pcb_sk = Draft.makeSketch(f_max.OuterWire,autoconstraints=True)  # esternal perimeter 
+                else:
+                    pcb_sk = Draft.makeSketch(f_max,autoconstraints=False)
+                    FreeCAD.ActiveDocument.recompute()
                 
                 add_toberemoved.append([pcb_sk])
                 
