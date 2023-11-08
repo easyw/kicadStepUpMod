@@ -496,7 +496,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.9.6"
+___ver___ = "10.9.7"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -11646,7 +11646,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
     global addVirtual, load_sketch, off_x, off_y, aux_orig, grid_orig
     global running_time, conv_offs, use_Links, apply_edge_tolerance, simplifyComSolid
     global zfit, use_LinkGroups, fname_sfx, missingHeight
-    global extrude_holes
+    global extrude_holes, ply_lines
     
     def simu_distance(p0, p1):
         return max (abs(p0[0] - p1[0]), abs(p0[1] - p1[1]))
@@ -11745,9 +11745,13 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
         #print(lp.pts)
         if lyr in lp.layer:
             #sayerr(lp.layer)
-            for p in lp.pts.xy:
-                edg_segms+=1
-                #sayerr(p)
+            try:
+                for p in lp.pts.xy:
+                    edg_segms+=1
+                    #sayerr(p)
+            except:
+                for a in lp.pts.arc:
+                    edg_segms+=1
             #stop
             #edg_segms+=1
     for bs in mypcb.gr_curve:
@@ -11836,17 +11840,22 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
     #else:
     #    say('aux origin not used')
     ## NB use always float() to guarantee number not string!!!
-       
-    for l in mypcb.gr_line: #pcb lines
-        #if l.layer != 'Edge.Cuts':
-        if lyr not in l.layer:
-            continue
-        #edges.append(Part.makeLine(makeVect(l.start),makeVect(l.end)))
-        #say(l.start);say(l.end)
-        #edge_tolerance_warning
+    
+    class _ln:
+        def __init__(myline, xs,ys,xe,ye):
+            myline.start = [xs,ys]
+            myline.end = [xe,ye]
+    
+    ln=_ln(0,0,0,0)
+    ply_lines=[]
+    def make_gr_line_obj(l, add_ply=None):
+        global ply_lines
+        
         if simu_distance((l.start[0],-l.start[1],0), ((l.end[0],-l.end[1],0))) > edge_tolerance: #non coincident points
         #if (Base.Vector(l.start[0],-l.start[1],0)) != (Base.Vector(l.end[0],-l.end[1],0)): #non coincident points
             line1=Part.Edge(PLine(Base.Vector(l.start[0],-l.start[1],0), Base.Vector(l.end[0],-l.end[1],0)))
+            if add_ply==True:
+                ply_lines.append(line1)
             if load_sketch:
                 if aux_orig ==1 or grid_orig ==1:
                     #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0]-off_x,-l.start[1]-off_y,0), Base.Vector(l.end[0]-off_x,-l.end[1]-off_y,0)))
@@ -11858,6 +11867,15 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
             PCB.append(['Line', l.start[0], -l.start[1], l.end[0], -l.end[1]])
             if show_border:
                 Part.show(line1)
+    
+    for l in mypcb.gr_line: #pcb lines
+        #if l.layer != 'Edge.Cuts':
+        if lyr not in l.layer:
+            continue
+        #edges.append(Part.makeLine(makeVect(l.start),makeVect(l.end)))
+        #say(l.start);say(l.end)
+        #edge_tolerance_warning
+        make_gr_line_obj(l)
 
     for r in mypcb.gr_rect: #pcb lines from rect
         #if l.layer != 'Edge.Cuts':
@@ -11975,6 +11993,108 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
         ndsk.ViewObject.PointColor = (1.00,1.00,1.00)
         k_index += 1
         #closing edge
+    def make_gr_arc_obj (a,pa):
+        global load_sketch, aux_orig, grid_orig, ply_lines
+    
+        [xs, ys] = a.start
+        [x1, y1] = a.end
+        try:
+            if hasattr (a, 'mid'):
+                [xm, ym] = a.mid 
+                arc1 = Part.Edge(Part.Arc(Base.Vector(xs,-ys,0),Base.Vector(xm,-ym,0),Base.Vector(x1,-y1,0)))
+                curve = arc1.Curve.AngleXU/pi*180
+                #curve = arc1.AngleXU/pi*180
+                #print(curve)
+                if curve > 0:
+                    curve = -1*curve
+                    #print('inverting')
+                    #arc1.reverse();
+                #Part.show(arc1);print(curve) #;stop
+                [x2, y2] = rotPoint2([x1, y1], [xs, ys], curve)
+            else:
+                curve = a.angle
+                [x2, y2] = rotPoint2([x1, y1], [xs, ys], curve)
+                arc1 = Part.Edge(Part.Arc(Base.Vector(x2,-y2,0),mid_point(Base.Vector(x2,-y2,0),Base.Vector(x1,-y1,0),curve),Base.Vector(x1,-y1,0)))
+            # if curve>0:
+            #     arc = Part.makeCircle(r,center,Vector(0,0,1),a-angle,a)
+            #     arc.reverse();
+            # else:
+            #     arc = Part.makeCircle(r,center,Vector(0,0,1),a,a-angle)
+            Cntr = arc1.Curve.Center
+            #Cntr = arc1.Center
+            cx=Cntr.x;cy=Cntr.y
+            #print cx,cy
+            r = arc1.Curve.Radius
+            #r = arc1.Radius
+            #r=arcRadius(xs, ys, x1, y1, curve)
+            #sa = arc1.Curve.FirstAngle
+            #ea = arc1.Curve.LastAngle
+            #sa,ea = arcAngles2(xs, ys, x1, y1, cx, cy, curve)
+            sa,ea = arcAngles2(arc1,curve)
+            #print sa,';',ea
+            #print mid_point(Base.Vector(x2,-y2,0),Base.Vector(x1,-y1,0),curve)
+            #[mx,my]=arcMidPoint([xs,ys], [x1,y1], curve)
+            #c=arc1.Curve.Center
+            #print c
+            #App.ActiveDocument.PCB_SketchN.addGeometry(Part.Arc(Base.Vector(x2,-y2,0),mid_point(Base.Vector(x2,-y2,0),Base.Vector(x1,-y1,0),curve),Base.Vector(x1,-y1,0)))
+            if load_sketch:
+                line1=""
+                if aux_orig ==1 or grid_orig ==1:
+                    #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx-off_x,cy-off_y,0),FreeCAD.Vector(0,0,1),r),sa,ea),False)
+                    #PCB_Geo.append(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx-off_x,cy-off_y,0),FreeCAD.Vector(0,0,1),r),sa,ea))
+                    if hasattr (a, 'mid'):
+                        PCB_Geo.append(Part.ArcOfCircle(kicad_parser.makeVect([a.start[0]-off_x,a.start[1]+off_y]),
+                                                        kicad_parser.makeVect([a.mid[0]-off_x,a.mid[1]+off_y]),
+                                                        kicad_parser.makeVect([a.end[0]-off_x,a.end[1]+off_y])))
+                        # print('a.start=',a.start,'a.mid=',a.mid,'a.end=',a.end, 'off_x=',off_x, 'off_y=',off_y)
+                        # Part.show(Part.ArcOfCircle(kicad_parser.makeVect([a.start[0]-off_x,a.start[1]+off_y]),
+                        #                                 kicad_parser.makeVect([a.mid[0]-off_x,a.mid[1]+off_y]),
+                        #                                 kicad_parser.makeVect([a.end[0]-off_x,a.end[1]+off_y])).toShape())
+                        # print(pa)
+                        if pa!="":
+                            if not(pa.end == a.start):
+                                #PCB_Geo.append(PLine(Base.Vector(r.end[0]-off_x,-r.end[1]-off_y,0), Base.Vector(r.start[0]-off_x,-r.end[1]-off_y,0)))
+                                # PCB_Geo.append(PLine(kicad_parser.makeVect([pa.end[0]-off_x,pa.end[1]+off_y]),(kicad_parser.makeVect([a.start[0]-off_x,a.start[1]+off_y]))))
+                                ln=_ln(0,0,0,0) #class _ln
+                                #ln.start = [pa.end[0]-off_x,pa.end[1]+off_y]
+                                ln.start = [pa.end[0],pa.end[1]]
+                                #ln.end   = [a.start[0]-off_x,a.start[1]+off_y]
+                                ln.end   = [a.start[0],a.start[1]]
+                                make_gr_line_obj(ln,add_ply=True)
+                                # line1=Part.Edge(PLine(kicad_parser.makeVect([pa.end[0]-off_x,pa.end[1]+off_y]),PLine(kicad_parser.makeVect([a.start[0]-off_x,a.start[1]+off_y]))))
+                    else:
+                        PCB_Geo.append(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx-off_x,cy-off_y,0),FreeCAD.Vector(0,0,1),r),sa,ea))
+                else:
+                    if hasattr (a, 'mid'):
+                        PCB_Geo.append(Part.ArcOfCircle(kicad_parser.makeVect(a.start),
+                                                        kicad_parser.makeVect(a.mid),
+                                                        kicad_parser.makeVect(a.end)))
+                        if pa!="":
+                            if not(pa.end == a.start):
+                                # PCB_Geo.append(PLine(kicad_parser.makeVect(pa.end),PLine(kicad_parser.makeVect(a.start)),0))
+                                # line1=Part.Edge(PLine(kicad_parser.makeVect(pa.end),PLine(kicad_parser.makeVect(a.start))))
+                                ln=_ln(0,0,0,0) #class _ln
+                                ln.start = [pa.end[0],pa.end[1]]
+                                ln.end   = [a.start[0],a.start[1]]
+                                make_gr_line_obj(ln,add_ply=True)
+                    else:
+                        #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx,cy,0),FreeCAD.Vector(0,0,1),r),sa,ea),False)
+                        PCB_Geo.append(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx,cy,0),FreeCAD.Vector(0,0,1),r),sa,ea))
+            #mp=mid_point(Base.Vector(x2,-y2,0),Base.Vector(x1,-y1,0),curve)
+            #msg1= "App.ActiveDocument.PCB_SketchN.addGeometry(Part.Arc(Base.Vector({0},-{1},0),{4},Base.Vector({2},-{3},0)))".format(x2,y2,x1,y1,mp)
+            #print msg1
+            #App.ActiveDocument.Sketch.addGeometry(Part.Arc(App.Vector(33.0,66.5,0.3),App.Vector(32.85857864376269,66.44142135623731,0.3),App.Vector(32.8,66.3,0.3)))
+            edges.append(arc1)
+            if line1!="":
+                edges.append(line1)
+            PCB.append(['Arc',x1, -y1, x2, -y2, curve])
+            if show_border:
+                Part.show(arc1)
+                if line1!="":
+                    Part.show(line1)
+        except:
+            sayw('skipping wrong geometry')
+            pass
 
     # k_index = 0
     for lp in mypcb.gr_poly: #pcb polylines
@@ -11983,43 +12103,59 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
             continue
         ply_lines = []
         ind = 0
-        l = len(lp.pts.xy)
-        for p in lp.pts.xy:
-            if ind == 0:
-                line1=Part.Edge(PLine(Base.Vector(lp.pts.xy[l-1][0],-lp.pts.xy[l-1][1],0), Base.Vector(lp.pts.xy[0][0],-lp.pts.xy[0][1],0)))
-                edges.append(line1);
-                if load_sketch:
-                    if aux_orig ==1 or grid_orig ==1:
-                        #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0]-off_x,-l.start[1]-off_y,0), Base.Vector(l.end[0]-off_x,-l.end[1]-off_y,0)))
-                        PCB_Geo.append(PLine(Base.Vector(lp.pts.xy[l-1][0]-off_x,-lp.pts.xy[l-1][1]-off_y,0), Base.Vector(lp.pts.xy[0][0]-off_x,-lp.pts.xy[0][1]-off_y,0)))
-                        if lp.layer != 'Edge.Cuts':
-                            line2=Part.Edge(PLine(Base.Vector(lp.pts.xy[l-1][0]-off_x,-lp.pts.xy[l-1][1]-off_y,0), Base.Vector(lp.pts.xy[0][0]-off_x,-lp.pts.xy[0][1]-off_y,0)))
-                    else:
-                        #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0],-l.start[1],0), Base.Vector(l.end[0],-l.end[1],0)))
-                        PCB_Geo.append(PLine(Base.Vector(lp.pts.xy[l-1][0],-lp.pts.xy[l-1][1],0), Base.Vector(lp.pts.xy[0][0],-lp.pts.xy[0][1],0)))
-                        if lp.layer != 'Edge.Cuts':
-                            line2=Part.Edge(PLine(Base.Vector(lp.pts.xy[l-1][0],-lp.pts.xy[l-1][1],0), Base.Vector(lp.pts.xy[0][0],-lp.pts.xy[0][1],0)))
-                if lp.layer != 'Edge.Cuts':
-                    ply_lines.append(line2)
-            else:
-                line1=Part.Edge(PLine(Base.Vector(lp.pts.xy[ind-1][0],-lp.pts.xy[ind-1][1],0), Base.Vector(lp.pts.xy[ind][0],-lp.pts.xy[ind][1],0)))
-                edges.append(line1);
-                if load_sketch:
-                    if aux_orig ==1 or grid_orig ==1:
-                        #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0]-off_x,-l.start[1]-off_y,0), Base.Vector(l.end[0]-off_x,-l.end[1]-off_y,0)))
-                        PCB_Geo.append(PLine(Base.Vector(lp.pts.xy[ind-1][0]-off_x,-lp.pts.xy[ind-1][1]-off_y,0), Base.Vector(lp.pts.xy[ind][0]-off_x,-lp.pts.xy[ind][1]-off_y,0)))
-                        if lp.layer != 'Edge.Cuts':
-                            line2=Part.Edge(PLine(Base.Vector(lp.pts.xy[ind-1][0]-off_x,-lp.pts.xy[ind-1][1]-off_y,0), Base.Vector(lp.pts.xy[ind][0]-off_x,-lp.pts.xy[ind][1]-off_y,0)))
-                    else:
-                        #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0],-l.start[1],0), Base.Vector(l.end[0],-l.end[1],0)))
-                        PCB_Geo.append(PLine(Base.Vector(lp.pts.xy[ind-1][0],-lp.pts.xy[ind-1][1],0), Base.Vector(lp.pts.xy[ind][0],-lp.pts.xy[ind][1],0)))
-                        if lp.layer != 'Edge.Cuts':
-                            line2=Part.Edge(PLine(Base.Vector(lp.pts.xy[ind-1][0],-lp.pts.xy[ind-1][1],0), Base.Vector(lp.pts.xy[ind][0],-lp.pts.xy[ind][1],0)))
-                if lp.layer != 'Edge.Cuts':
-                    ply_lines.append(line2)
-            ind+=1
-        if lp.layer != 'Edge.Cuts':
-            Draft.makeSketch(ply_lines)
+        try:
+            l = len(lp.pts.xy)
+            for p in lp.pts.xy:
+                if ind == 0:
+                    line1=Part.Edge(PLine(Base.Vector(lp.pts.xy[l-1][0],-lp.pts.xy[l-1][1],0), Base.Vector(lp.pts.xy[0][0],-lp.pts.xy[0][1],0)))
+                    edges.append(line1);
+                    if load_sketch:
+                        if aux_orig ==1 or grid_orig ==1:
+                            #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0]-off_x,-l.start[1]-off_y,0), Base.Vector(l.end[0]-off_x,-l.end[1]-off_y,0)))
+                            PCB_Geo.append(PLine(Base.Vector(lp.pts.xy[l-1][0]-off_x,-lp.pts.xy[l-1][1]-off_y,0), Base.Vector(lp.pts.xy[0][0]-off_x,-lp.pts.xy[0][1]-off_y,0)))
+                            if lp.layer != 'Edge.Cuts':
+                                line2=Part.Edge(PLine(Base.Vector(lp.pts.xy[l-1][0]-off_x,-lp.pts.xy[l-1][1]-off_y,0), Base.Vector(lp.pts.xy[0][0]-off_x,-lp.pts.xy[0][1]-off_y,0)))
+                        else:
+                            #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0],-l.start[1],0), Base.Vector(l.end[0],-l.end[1],0)))
+                            PCB_Geo.append(PLine(Base.Vector(lp.pts.xy[l-1][0],-lp.pts.xy[l-1][1],0), Base.Vector(lp.pts.xy[0][0],-lp.pts.xy[0][1],0)))
+                            if lp.layer != 'Edge.Cuts':
+                                line2=Part.Edge(PLine(Base.Vector(lp.pts.xy[l-1][0],-lp.pts.xy[l-1][1],0), Base.Vector(lp.pts.xy[0][0],-lp.pts.xy[0][1],0)))
+                    if lp.layer != 'Edge.Cuts':
+                        ply_lines.append(line2)
+                else:
+                    line1=Part.Edge(PLine(Base.Vector(lp.pts.xy[ind-1][0],-lp.pts.xy[ind-1][1],0), Base.Vector(lp.pts.xy[ind][0],-lp.pts.xy[ind][1],0)))
+                    edges.append(line1);
+                    if load_sketch:
+                        if aux_orig ==1 or grid_orig ==1:
+                            #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0]-off_x,-l.start[1]-off_y,0), Base.Vector(l.end[0]-off_x,-l.end[1]-off_y,0)))
+                            PCB_Geo.append(PLine(Base.Vector(lp.pts.xy[ind-1][0]-off_x,-lp.pts.xy[ind-1][1]-off_y,0), Base.Vector(lp.pts.xy[ind][0]-off_x,-lp.pts.xy[ind][1]-off_y,0)))
+                            if lp.layer != 'Edge.Cuts':
+                                line2=Part.Edge(PLine(Base.Vector(lp.pts.xy[ind-1][0]-off_x,-lp.pts.xy[ind-1][1]-off_y,0), Base.Vector(lp.pts.xy[ind][0]-off_x,-lp.pts.xy[ind][1]-off_y,0)))
+                        else:
+                            #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0],-l.start[1],0), Base.Vector(l.end[0],-l.end[1],0)))
+                            PCB_Geo.append(PLine(Base.Vector(lp.pts.xy[ind-1][0],-lp.pts.xy[ind-1][1],0), Base.Vector(lp.pts.xy[ind][0],-lp.pts.xy[ind][1],0)))
+                            if lp.layer != 'Edge.Cuts':
+                                line2=Part.Edge(PLine(Base.Vector(lp.pts.xy[ind-1][0],-lp.pts.xy[ind-1][1],0), Base.Vector(lp.pts.xy[ind][0],-lp.pts.xy[ind][1],0)))
+                    if lp.layer != 'Edge.Cuts':
+                        ply_lines.append(line2)
+                ind+=1
+        except:
+            pa=""
+            a0=""
+            for a in lp.pts.arc:
+                if a0=="":
+                    a0=a
+                make_gr_arc_obj(a,pa)
+                pa = a
+            if a0.start!=a.end: # and len(lp.pts.arc)>2:
+                print('edge to add')
+                ln.start=a.end
+                ln.end=a0.start
+                make_gr_line_obj(ln,add_ply=True)
+            
+        #print(lp.layer)
+        if 0: #'Edge.Cuts' not in lp.layer:
+            Draft.makeSketch(ply_lines)  #TBD allow gr_arcs also on different layers
             ndsk = FreeCAD.ActiveDocument.ActiveObject
             ndsk.Label = sk_label + '_Poly_' + str(k_index)
             ndsk.ViewObject.LineColor = (1.00,1.00,1.00)
@@ -12074,88 +12210,18 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                 #         PCB_Geo.append(Part.makeCircle (0.5, Base.Vector(p[0]-off_x, -p[1]-off_y, 0.0), Base.Vector(1,0,0)))
                 #     pi+=1                
     #stop
+
     ## NB use always float() to guarantee number not string!!!
+    pa=""
     for a in mypcb.gr_arc: #pcb arcs
         # if a.layer != 'Edge.Cuts':
         if lyr not in a.layer:
             continue
         # for gr_arc, 'start' is actual the center, and 'end' is the start
         #edges.append(makeArc(makeVect(l.start),makeVect(l.end),l.angle))
-        [xs, ys] = a.start
-        [x1, y1] = a.end
-        try:
-            if hasattr (a, 'mid'):
-                [xm, ym] = a.mid 
-                arc1 = Part.Edge(Part.Arc(Base.Vector(xs,-ys,0),Base.Vector(xm,-ym,0),Base.Vector(x1,-y1,0)))
-                curve = arc1.Curve.AngleXU/pi*180
-                #curve = arc1.AngleXU/pi*180
-                #print(curve)
-                if curve > 0:
-                    curve = -1*curve
-                    #print('inverting')
-                    #arc1.reverse();
-                #Part.show(arc1);print(curve) #;stop
-                [x2, y2] = rotPoint2([x1, y1], [xs, ys], curve)
-            else:
-                curve = a.angle
-                [x2, y2] = rotPoint2([x1, y1], [xs, ys], curve)
-                arc1 = Part.Edge(Part.Arc(Base.Vector(x2,-y2,0),mid_point(Base.Vector(x2,-y2,0),Base.Vector(x1,-y1,0),curve),Base.Vector(x1,-y1,0)))
-            # if curve>0:
-            #     arc = Part.makeCircle(r,center,Vector(0,0,1),a-angle,a)
-            #     arc.reverse();
-            # else:
-            #     arc = Part.makeCircle(r,center,Vector(0,0,1),a,a-angle)
-            Cntr = arc1.Curve.Center
-            #Cntr = arc1.Center
-            cx=Cntr.x;cy=Cntr.y
-            #print cx,cy
-            r = arc1.Curve.Radius
-            #r = arc1.Radius
-            #r=arcRadius(xs, ys, x1, y1, curve)
-            #sa = arc1.Curve.FirstAngle
-            #ea = arc1.Curve.LastAngle
-            #sa,ea = arcAngles2(xs, ys, x1, y1, cx, cy, curve)
-            sa,ea = arcAngles2(arc1,curve)
-            #print sa,';',ea
-            #print mid_point(Base.Vector(x2,-y2,0),Base.Vector(x1,-y1,0),curve)
-            #[mx,my]=arcMidPoint([xs,ys], [x1,y1], curve)
-            #c=arc1.Curve.Center
-            #print c
-            #App.ActiveDocument.PCB_SketchN.addGeometry(Part.Arc(Base.Vector(x2,-y2,0),mid_point(Base.Vector(x2,-y2,0),Base.Vector(x1,-y1,0),curve),Base.Vector(x1,-y1,0)))
-            if load_sketch:
-                if aux_orig ==1 or grid_orig ==1:
-                    #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx-off_x,cy-off_y,0),FreeCAD.Vector(0,0,1),r),sa,ea),False)
-                    #PCB_Geo.append(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx-off_x,cy-off_y,0),FreeCAD.Vector(0,0,1),r),sa,ea))
-                    if hasattr (a, 'mid'):
-                        PCB_Geo.append(Part.ArcOfCircle(kicad_parser.makeVect([a.start[0]-off_x,a.start[1]+off_y]),
-                                                        kicad_parser.makeVect([a.mid[0]-off_x,a.mid[1]+off_y]),
-                                                        kicad_parser.makeVect([a.end[0]-off_x,a.end[1]+off_y])))
-                        # print('a.start=',a.start,'a.mid=',a.mid,'a.end=',a.end, 'off_x=',off_x, 'off_y=',off_y)
-                        # Part.show(Part.ArcOfCircle(kicad_parser.makeVect([a.start[0]-off_x,a.start[1]+off_y]),
-                        #                                 kicad_parser.makeVect([a.mid[0]-off_x,a.mid[1]+off_y]),
-                        #                                 kicad_parser.makeVect([a.end[0]-off_x,a.end[1]+off_y])).toShape())
-                    else:
-                        PCB_Geo.append(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx-off_x,cy-off_y,0),FreeCAD.Vector(0,0,1),r),sa,ea))
-                else:
-                    if hasattr (a, 'mid'):
-                        PCB_Geo.append(Part.ArcOfCircle(kicad_parser.makeVect(a.start),
-                                                        kicad_parser.makeVect(a.mid),
-                                                        kicad_parser.makeVect(a.end)))
-                    else:
-                        #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx,cy,0),FreeCAD.Vector(0,0,1),r),sa,ea),False)
-                        PCB_Geo.append(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx,cy,0),FreeCAD.Vector(0,0,1),r),sa,ea))
-            #mp=mid_point(Base.Vector(x2,-y2,0),Base.Vector(x1,-y1,0),curve)
-            #msg1= "App.ActiveDocument.PCB_SketchN.addGeometry(Part.Arc(Base.Vector({0},-{1},0),{4},Base.Vector({2},-{3},0)))".format(x2,y2,x1,y1,mp)
-            #print msg1
-            #App.ActiveDocument.Sketch.addGeometry(Part.Arc(App.Vector(33.0,66.5,0.3),App.Vector(32.85857864376269,66.44142135623731,0.3),App.Vector(32.8,66.3,0.3)))
-            edges.append(arc1)
-            PCB.append(['Arc',x1, -y1, x2, -y2, curve])
-            if show_border:
-                Part.show(arc1)
-        except:
-            sayw('skipping wrong geometry')
-            pass
-
+        make_gr_arc_obj(a,pa)
+        # pa=a
+        
     ## NB use always float() to guarantee number not string!!!
     for c in mypcb.gr_circle: #pcb circles
         # if c.layer != 'Edge.Cuts':
@@ -20584,10 +20650,15 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                     #print(lp.pts)
                     if ssklayer in lp.layer:
                         #sayerr(lp.layer)
-                        for p in lp.pts.xy:
-                            edg_segms+=1
-                            break
-                            #sayerr(p)
+                        try:
+                            for p in lp.pts.xy:
+                                edg_segms+=1
+                                break
+                                #sayerr(p)
+                        except:
+                            for a in lp.pts.arc:
+                                edg_segms+=1
+                                break
                     #stop
                     #edg_segms+=1
             if edg_segms == 0:
@@ -20686,17 +20757,18 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                     #stop
                     if ssklayer == 'Edge':
                         say('pcb edge exists')
-                        sayw('removing old Edge '+ssklayer)
+                        sayw('removing old pcb '+ssklayer)
                     else:
                         sayw('removing existing drawings '+ssklayer)
                     ## removing old Edge
-                    repl = re.sub('\s\(gr_line(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_line(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_line(.+?)'+ssklayer+'(.+?)\)\)\n','',data, flags=re.MULTILINE)
-                    repl = re.sub('\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE)
-                    repl = re.sub('\s\(gr_arc(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_arc(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_arc(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE)
-                    repl = re.sub('\s\(gr_circle(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_circle(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_circle(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE)
-                    repl = re.sub('\s\(gr_rect(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_rect(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_rect(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE)
-                    repl = re.sub('\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE)
-                    
+                    repl = re.sub('\s\(gr_line(.+?)'+ssklayer+'(.+?)\)\)','',data, flags=re.MULTILINE|re.DOTALL)
+                    repl = re.sub('\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)','',repl, flags=re.MULTILINE|re.DOTALL)
+                    repl = re.sub('\s\(gr_arc(.+?)'+ssklayer+'(.+?)\)\)','',repl, flags=re.MULTILINE|re.DOTALL)
+                    repl = re.sub('\s\(gr_circle(.+?)'+ssklayer+'(.+?)\)\)','',repl, flags=re.MULTILINE|re.DOTALL)
+                    repl = re.sub('\s\(gr_rect(.+?)'+ssklayer+'(.+?)\)\)','',repl, flags=re.MULTILINE|re.DOTALL)
+                    repl = re.sub('\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)','',repl, flags=re.MULTILINE|re.DOTALL)
+                    #print("re.findall",re.findall('\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)', repl, re.MULTILINE|re.DOTALL))
+                    #repl = re.sub('\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE)
                     #sayerr(replace)
                     k = repl.rfind(")")  #removing latest ')'
                     newcontent = repl[:k]

@@ -34,7 +34,7 @@ from fcad_parser import unquote #maui
 
 
 # from kicadStepUptools import KicadPCB,SexpList
-__kicad_parser_version__ = '2.3.0'
+__kicad_parser_version__ = '2.3.1'
 # https://github.com/realthunder/fcad_pcb/issues/20#issuecomment-586042341
 # FreeCAD.Console.PrintLog('kicad_parser_version '+__kicad_parser_version__+'\n') # maui 
 # print('kicad_parser_version '+__kicad_parser_version__)
@@ -301,13 +301,18 @@ def make_roundrect(size,params):
 
     return Part.Wire(edges)
 
+#maui
 def make_gr_poly(params):
-    points = SexpList(params.pts.xy)
-    # close the polygon
-    points._append(params.pts.xy._get(0))
-    # KiCAD polygon runs in clockwise, but FreeCAD wants CCW, so must reverse.
-    return Part.makePolygon([makeVect(p) for p in reversed(points)])
-
+    try:
+        points = SexpList(params.pts.xy)
+        # close the polygon
+        points._append(params.pts.xy._get(0))
+        # KiCAD polygon runs in clockwise, but FreeCAD wants CCW, so must reverse.
+        return Part.makePolygon([makeVect(p) for p in reversed(points)])
+    except:
+        arcs = SexpList(params.pts.arc)
+        return Part.makeCompound([make_gr_arc(arc) for arc in (arcs)])
+        
 # maui
 def make_fp_poly(params):
     points = SexpList(params.pts.xy)
