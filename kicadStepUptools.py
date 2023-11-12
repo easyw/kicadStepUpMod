@@ -496,7 +496,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.9.7"
+___ver___ = "10.9.8"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -3035,7 +3035,7 @@ def cfg_read_all():
     global enable_materials, docking_mode, mat_section, dock_section, compound_section, turntable_section
     global font_section, ini_vars, num_min_lines, animate_result, allow_compound, font_size, grid_orig
     global constraints_section, addConstraints, exporting_mode_section, stp_exp_mode
-    global links_importing_mode_section, links_imp_mode, generate_sketch, edge_tolerance
+    global links_importing_mode_section, links_imp_mode, generate_sketch, edge_tolerance, bklist_dnp
     
     import os, sys, re
     from sys import platform as _platform
@@ -3193,6 +3193,8 @@ def cfg_read_all():
     height_minimum=0. #0.8  ##1 #mm, 0 skipped   #global var default
     bklist = prefs.GetString('blacklist')
     bkl_none=False
+    bklist_dnp=False
+    blacklisted_model_elements=''
     if bklist.lower().find('none') !=-1 or len(bklist) == 0:
         blacklisted_model_elements=''
         bkl_none=True
@@ -3252,6 +3254,10 @@ def cfg_read_all():
         #vvalue=vval.split("=")
         #height_minimum=float(vvalue[1])
         #reply = QtGui.QMessageBox.information(None,"info ...","height "+str(height_minimum))
+    if (bklist.lower().find('dnp') !=-1 or bklist.lower().find('dnf') !=-1) and not bkl_none:
+        #print('DNP or DNF found!')
+        bklist_dnp=True
+        #blacklisted_model_elements+='DNP;'
     if bklist.find(';') !=-1 and not bkl_none:
         blacklisted_model_elements=bklist.strip('\r\n')
         #say(bklist);
@@ -11646,7 +11652,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
     global addVirtual, load_sketch, off_x, off_y, aux_orig, grid_orig
     global running_time, conv_offs, use_Links, apply_edge_tolerance, simplifyComSolid
     global zfit, use_LinkGroups, fname_sfx, missingHeight
-    global extrude_holes, ply_lines
+    global extrude_holes, ply_lines, bklist_dnp,blacklisted_model_elements
     
     def simu_distance(p0, p1):
         return max (abs(p0[0] - p1[0]), abs(p0[1] - p1[1]))
@@ -11655,6 +11661,8 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
     import FreeCAD, Part
     from PySide import QtGui, QtCore
     from math import pi
+    
+    blacklisted_model_elements=''
     
     say("PCB Loader ")
     ## NB use always float() to guarantee number not string!!!
@@ -11840,7 +11848,35 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
     #else:
     #    say('aux origin not used')
     ## NB use always float() to guarantee number not string!!!
-    
+
+    def get_mod_Ref(mod):
+        #if hasattr(m,'property'):
+        try:
+            Ref = m.property[0][1] #kv8 fp reference
+        #elif hasattr(m,'fp_text'):
+        except:
+            Ref = m.fp_text[0][1]
+        return Ref
+        
+    def get_mod_dnp(m,rf):
+        # print('reference fp_text',rf)
+        if hasattr(m,'property'):
+            for p in m.property: #kv8 fp field
+                if 'dnp' in p[0].lower() or 'dnf' in p[0].lower():
+                    if 'dnp' in p[1].lower() or 'dnf' in p[1].lower():
+                        return True
+        if hasattr(m,'fp_text'):
+            for t in m.fp_text: #kv7 fp reference
+                # print("t[0]",t[0])
+                if t[0].lower()=='dnp' or t[0].lower()=='dnf':
+                    if 'dnp' in t[1].lower() or 'dnf' in t[1].lower():
+                        return True
+                if t[0].lower()=='user': #kv5 user added text
+                    #print("t[0], t[1]",t[0], t[1]) 
+                    if 'dnp' in t[1].lower() or 'dnf' in t[1].lower():
+                        return True
+        return False
+
     class _ln:
         def __init__(myline, xs,ys,xe,ye):
             myline.start = [xs,ys]
@@ -12103,7 +12139,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
             continue
         ply_lines = []
         ind = 0
-        try:
+        if hasattr(lp.pts,"xy"):
             l = len(lp.pts.xy)
             for p in lp.pts.xy:
                 if ind == 0:
@@ -12139,7 +12175,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                     if lp.layer != 'Edge.Cuts':
                         ply_lines.append(line2)
                 ind+=1
-        except:
+        else: # hasattr(params.pts,"arc")
             pa=""
             a0=""
             for a in lp.pts.arc:
@@ -12328,16 +12364,33 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
             #HoleList = getPads(board_elab,pcbThickness)
             # pad
             virtual=0
+            dnp = False
             # say(str(pcbv))
             if pcbv <= 5:
+                Ref = get_mod_Ref(m)
+                #print("Ref",Ref)
                 if hasattr(m, 'attr'):
                     if 'virtual' in m.attr:
                         #say('virtual module')
                         virtual=1
                 else:
                     virtual=0
+                if  get_mod_dnp(m,Ref):
+                    #print(Ref, 'has DNP or DNF option as field!')
+                    dnp=True
             elif pcbv > 5:
+                Ref = get_mod_Ref(m)
+                #print("Ref",Ref)
                 if hasattr(m, 'attr'):
+                    if 'virtual' in m.attr:
+                        #say('virtual module')
+                        virtual=1
+                    if 'dnp' in str(m.attr).lower():
+                        #print(Ref, 'has DNP or DNF option as attribute!')
+                        dnp=True
+                    if  get_mod_dnp(m,Ref):
+                        #print(Ref, 'has DNP or DNF option as field!')
+                        dnp=True
                     if 'smd' not in str(m.attr) and 'through_hole' not in str(m.attr):
                         # 'exclude_from_pos_files' or 'exclude_from_bom'
                         # say('virtual module k>5')
@@ -12403,6 +12456,12 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                     side='noLayer'
                     if model:
                         sayw("virtual model "+model+" skipped") #virtual found warning
+                if (dnp and bklist_dnp):
+                    model_name='no3Dmodel'
+                    side='noLayer'
+                    if model:
+                        sayw("Reference "+Ref+" skipped for DNP") #DNP found warning
+                        blacklisted_model_elements+=Ref+';'
                 else:
                     if model:
                         model_name=model

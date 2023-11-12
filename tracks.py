@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global tracks_version
-tracks_version = '2.6.3'
+tracks_version = '2.6.4'
 
 import kicad_parser
 #import kicad_parser; import importlib; importlib.reload(kicad_parser)
@@ -207,8 +207,17 @@ def cut_out_tracks (pcbsk,tracks,tname_sfx):
     FreeCAD.ActiveDocument.addObject('Part::Extrusion', Extrude_Name)
     extrude = FreeCAD.ActiveDocument.ActiveObject
     #f = FreeCAD.ActiveDocument.getObject('Extrude')
-    print (pcbsk.Name)
-    extrude.Base = pcbsk
+    # print (pcbsk.Name)
+    #shp = pcbsk.Shape.copy()
+    # shp_nw = pcbsk.copy()
+    #Part.show(shp)
+    doc = FreeCAD.ActiveDocument
+    FreeCADGui.Selection.clearSelection()
+    FreeCADGui.Selection.addSelection(doc.Name,pcbsk.Name)
+    FreeCADGui.runCommand('Std_Copy',0)
+    FreeCADGui.runCommand('Std_Paste',0)
+    shp_nw=FreeCAD.ActiveDocument.ActiveObject
+    extrude.Base = shp_nw #pcbsk
     extrude.DirMode = "Custom"
     extrude.Dir = (0.000, 0.000, 1.000)
     extrude.DirLink = None
@@ -253,12 +262,14 @@ def cut_out_tracks (pcbsk,tracks,tname_sfx):
         FreeCAD.ActiveDocument.removeObject(Common_Top.Name)
         FreeCAD.ActiveDocument.removeObject(tracks.Name)
         FreeCAD.ActiveDocument.removeObject(extrude.Name)
+        FreeCAD.ActiveDocument.removeObject(shp_nw.Name)
     else:
         doc = FreeCAD.ActiveDocument
         #temp_tobedeleted.append([doc.getObject(Common_Top.Name),doc.getObject(tracks.Name),doc.getObject(extrude.Name)])
         temp_tobedeleted.append(doc.getObject(Common_Top.Name))
         temp_tobedeleted.append(doc.getObject(tracks.Name))
         temp_tobedeleted.append(doc.getObject(extrude.Name))
+        temp_tobedeleted.append(doc.getObject(shp_nw.Name))
     FreeCAD.ActiveDocument.getObject(tracks_ct_Name).Label = new_label
     FreeCAD.ActiveDocument.recompute()
     
