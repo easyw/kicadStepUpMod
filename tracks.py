@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global tracks_version
-tracks_version = '2.6.4'
+tracks_version = '2.6.5'
 
 import kicad_parser
 #import kicad_parser; import importlib; importlib.reload(kicad_parser)
@@ -242,9 +242,11 @@ def cut_out_tracks (pcbsk,tracks,tname_sfx):
     FreeCAD.ActiveDocument.recompute()
     
     # placing inside the container
-    if len (FreeCAD.ActiveDocument.getObjectsByLabel('Board_Geoms'+tname_sfx)) > 0:
+    try:
         extrude.adjustRelativeLinks(FreeCAD.ActiveDocument.getObject('Board_Geoms'+tname_sfx))
         FreeCAD.ActiveDocument.getObject('Board_Geoms'+tname_sfx).addObject(extrude)
+    except:
+        FreeCAD.Console.PrintWarning('error on moving Board Geoms inside Part container\n')
     # simple copy
     FreeCAD.ActiveDocument.addObject('Part::Feature',tracks.Label+'_').Shape=FreeCAD.ActiveDocument.getObject(Common_Top.Name).Shape
     tracks_ct = FreeCAD.ActiveDocument.ActiveObject
