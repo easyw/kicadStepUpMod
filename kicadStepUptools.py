@@ -448,6 +448,10 @@ import tempfile, errno
 import re
 import time
 
+
+# max_recursion_limit=5000  # kSU issue#198
+# sys.setrecursionlimit(max_recursion_limit)
+
 import ksu_locator
 
 if (sys.version_info > (3, 0)):  #py3
@@ -496,7 +500,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.9.8"
+___ver___ = "10.9.9"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -6690,6 +6694,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                 mypcb = KicadPCB.load(name) #test parser
                 off_x=0; off_y=0  #offset of the board & modules
                 grid_orig_warn=False
+                aux_orig_warn=False
                 if (grid_orig==1):
                     #xp=getAuxAxisOrigin()[0]; yp=-getAuxAxisOrigin()[1]  #offset of the board & modules
                     if hasattr(mypcb, 'setup'):
@@ -6713,13 +6718,15 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                     if hasattr(mypcb, 'setup'):
                         if hasattr(mypcb.setup, 'aux_axis_origin'):
                             #say('aux_axis_origin' + str(mypcb.setup.aux_axis_origin))
-                            sayw('aux origin used: '+str(mypcb.setup.aux_axis_origin)) 
+                            sayw('aux origin found @: '+str(mypcb.setup.aux_axis_origin)) 
                             xp=-mypcb.setup.aux_axis_origin[0]; yp=mypcb.setup.aux_axis_origin[1]
                         else:
-                            say('aux origin not used') 
+                            aux_orig_warn=True
+                            say('aux origin not set') 
                             xp=-148.5;yp=98.5
                     else:
-                        say('aux origin not used') 
+                        aux_orig_warn=True
+                        say('aux origin not set') 
                         xp=-148.5;yp=98.5
                     ##off_x=-xp+xmin+(xMax-xmin)/2; off_y=-yp-(ymin+(yMax-ymin)/2)  #offset of the board & modules
                     #off_x=-xp+center_x;off_y=-yp+center_y
@@ -7141,6 +7148,14 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                 QtGui.QApplication.restoreOverrideCursor()
                 msg="""<b><font color='red'>GridOrigin is set in FreeCAD Preferences<br>but not set in KiCAD pcbnew file</font></b>"""
                 msg+="""<br><br>Please assign Grid Origin to your KiCAD pcbnew board file"""
+                msg+="""<br>for a better Mechanical integration"""
+                reply = QtGui.QMessageBox.information(None,"Warning ...",msg)
+            elif aux_orig_warn: #adding a warning message because AuxOrigin is set in FC Preferences but not set in KiCAD pcbnew file
+                msg = 'AuxOrigin is set in FC Preferences but not set in KiCAD pcbnew file'
+                sayw(msg)
+                QtGui.QApplication.restoreOverrideCursor()
+                msg="""<b><font color='red'>AuxOrigin is set in FreeCAD Preferences<br>but not set in KiCAD pcbnew file</font></b>"""
+                msg+="""<br><br>Please assign Aux Origin to your KiCAD pcbnew board file"""
                 msg+="""<br>for a better Mechanical integration"""
                 reply = QtGui.QMessageBox.information(None,"Warning ...",msg)
             prefsKSU = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
@@ -12731,12 +12746,14 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                 # if mc.layer != 'Edge.Cuts':
                 if lyr not in mc.layer:
                     continue
-                #print mc.center,mc.end
                 xs=mc.center[0]+m.at[0];ys=-mc.center[1]-m.at[1]
                 x1=mc.end[0]+m.at[0];y1=-mc.end[1]-m.at[1]
                 radius = sqrt((xs - x1) ** 2 + (ys - y1) ** 2)
-                [x1, y1] = rotPoint2([xs, ys], [m.at[0], -m.at[1]], m_angle)
-                circle1=Part.Edge(Part.Circle(Base.Vector(x1, y1,0), Base.Vector(0, 0, 1), radius))
+                [xc, yc] = rotPoint2([xs, ys], [m.at[0], -m.at[1]], m_angle)
+                circle1=Part.Edge(Part.Circle(Base.Vector(xc, yc,0), Base.Vector(0, 0, 1), radius))
+                # print (mc.center,mc.end)
+                # print (xs,ys)
+                # print(radius)
                 circle2=circle1
                 if show_border:
                     Part.show(circle1)
@@ -12748,9 +12765,9 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                 PCBs.append(circle1)
                 EdgeCuts.append(circle2)
                 if aux_orig ==1 or grid_orig ==1:
-                    FpEdges_Geo.append(Part.Circle(Base.Vector(xs-off_x, ys-off_y,0), Base.Vector(0, 0, 1), radius))
+                    FpEdges_Geo.append(Part.Circle(Base.Vector(xc-off_x, yc-off_y,0), Base.Vector(0, 0, 1), radius))
                 else:
-                    FpEdges_Geo.append(Part.Circle(Base.Vector(xs, ys,0), Base.Vector(0, 0, 1), radius))
+                    FpEdges_Geo.append(Part.Circle(Base.Vector(xc, yc,0), Base.Vector(0, 0, 1), radius))
                 PCB.append(['Circle', x1, y1, radius])
                 #mod_circles.append (['Circle', x1, y1, e[2]])
                 #PCB.append(['Circle', x1, y1, radius])

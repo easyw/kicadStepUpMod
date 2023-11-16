@@ -1217,7 +1217,7 @@ Allowing or not Loading Multi Parts objects</string>
           <rect>
            <x>270</x>
            <y>295</y>
-           <width>245</width>
+           <width>71</width>
            <height>20</height>
           </rect>
          </property>
@@ -1225,7 +1225,7 @@ Allowing or not Loading Multi Parts objects</string>
           <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Skip importing pcb zone(s)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
-          <string notr="true">Skip importing pcb zone(s)</string>
+          <string notr="true">skpZone</string>
          </property>
          <property name="checked">
           <bool>false</bool>
@@ -1235,6 +1235,68 @@ Allowing or not Loading Multi Parts objects</string>
          </property>
          <property name="prefEntry" stdset="0">
           <cstring>skip_import_zones</cstring>
+         </property>
+         <property name="prefPath" stdset="0">
+          <cstring>Mod/kicadStepUpGui</cstring>
+         </property>
+        </widget>
+        <widget class="Gui::PrefCheckBox" name="cb_skip_tracks">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="geometry">
+          <rect>
+           <x>345</x>
+           <y>295</y>
+           <width>86</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Skip importing pcb tracks&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string notr="true">skpTracks</string>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
+         </property>
+         <property name="tristate">
+          <bool>false</bool>
+         </property>
+         <property name="prefEntry" stdset="0">
+          <cstring>skip_import_tracks</cstring>
+         </property>
+         <property name="prefPath" stdset="0">
+          <cstring>Mod/kicadStepUpGui</cstring>
+         </property>
+        </widget>
+        <widget class="Gui::PrefCheckBox" name="cb_skip_pads">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="geometry">
+          <rect>
+           <x>435</x>
+           <y>295</y>
+           <width>79</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Skip importing pcb pads&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string notr="true">skpPads</string>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
+         </property>
+         <property name="tristate">
+          <bool>false</bool>
+         </property>
+         <property name="prefEntry" stdset="0">
+          <cstring>skip_import_pads</cstring>
          </property>
          <property name="prefPath" stdset="0">
           <cstring>Mod/kicadStepUpGui</cstring>

@@ -48,7 +48,7 @@ StepUp Cheat sheet
 
 ### Known issues
 
-- on Linux *FreeCAD Snap and Flatpack* you may need to use 'mount bind' to have access to KiCad 3D models path
+- on Linux *FreeCAD Snap and Flatpak* you may need to use 'mount bind' to have access to KiCad 3D models path
 
 ### License
 

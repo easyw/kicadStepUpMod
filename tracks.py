@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global tracks_version
-tracks_version = '2.6.5'
+tracks_version = '2.6.7'
 
 import kicad_parser
 #import kicad_parser; import importlib; importlib.reload(kicad_parser)
@@ -338,6 +338,9 @@ def addtracks(fname = None):
         pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
         pg.SetString("last_pcb_path", make_string(last_pcb_path)) # py3 .decode("utf-8")
         prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
+        skip_import_zones = prefs.GetBool('skip_import_zones')
+        skip_import_pads = prefs.GetBool('skip_import_pads')
+        skip_import_tracks = prefs.GetBool('skip_import_tracks')
         pcb_color_pos = prefs.GetInt('pcb_color')
         #pcb_color_values = [light_green,green,blue,red,purple,darkgreen,darkblue,lightblue,yellow,black,white]
         assign_col=['#41c382','#5d917a','#2474cf','#ff4000','#9a1a85','#3c7f5d','#426091','#005fff','#fff956','#4d4d4d','#f0f0f0']
@@ -415,7 +418,8 @@ def addtracks(fname = None):
         else:
             objsNum = 0
         #pcb.makePads(shape_type='face',thickness=0.05,holes=True,fit_arcs=True) #,prefix='')
-        pcb.makePads(shape_type='face',thickness=0.05,holes=True,fit_arcs=True) #,prefix='')
+        if skip_import_pads != True:
+            pcb.makePads(shape_type='face',thickness=0.05,holes=True,fit_arcs=True) #,prefix='')
         if FreeCAD.ActiveDocument is not None:
             if objsNum < len(FreeCAD.ActiveDocument.Objects):
                 pads=FreeCAD.ActiveDocument.ActiveObject
@@ -430,7 +434,8 @@ def addtracks(fname = None):
             objsNum = len(FreeCAD.ActiveDocument.Objects)
         # pcb.makeTracks(shape_type='face',fit_arcs=True,thickness=0.05,holes=True) #,prefix='')
         # pcb.makeTracks(shape_type='face',fit_arcs=True,thickness=0.05,holes=True) #,prefix='')
-        pcb.makeTracks(shape_type='face',fit_arcs=True,thickness=0.05,holes=False) # holes=True) #,prefix='')
+        if skip_import_tracks != True:
+            pcb.makeTracks(shape_type='face',fit_arcs=True,thickness=0.05,holes=False) # holes=True) #,prefix='')
         if FreeCAD.ActiveDocument is not None:
             if objsNum < len(FreeCAD.ActiveDocument.Objects):
                 tracks_=FreeCAD.ActiveDocument.ActiveObject
@@ -584,8 +589,6 @@ def addtracks(fname = None):
         if FreeCAD.ActiveDocument is not None:
             objsNum = len(FreeCAD.ActiveDocument.Objects)
         #pcb.makeZones(shape_type='face',thickness=0.05, fit_arcs=True,holes=True) #,prefix='')
-        prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
-        skip_import_zones = prefs.GetBool('skip_import_zones')
         if skip_import_zones != True:
             pcb.makeZones(shape_type='face',thickness=0.05, fit_arcs=True,holes=True) #,prefix='')
         if FreeCAD.ActiveDocument is not None:
@@ -626,21 +629,27 @@ def addtracks(fname = None):
                 FC_majorV,FC_minorV,FC_git_Nbr=getFCversion()
                 if FC_majorV>=0 and FC_minorV>=21:
                     pcb_sk = Draft.makeSketch(f_max,autoconstraints=True)
-                    #pcb_sk.autoRemoveRedundants(True)
-                    #pcb_sk.solve()
-                    FreeCAD.ActiveDocument.recompute()   
-                    if len (pcb_sk.RedundantConstraints)>0:
-                        print('fixing over constrained sketch')
-                        new_constrains=[]
-                        list1 = pcb_sk.Constraints 
-                        index_list=pcb_sk.RedundantConstraints
-                        for i in range(len(index_list)):
-                            index_list[i] -= 1
-                        index_set = set(index_list) # optional but faster    
-                        new_constrains=[x for i, x in enumerate(list1) if i not in index_set]
-                        pcb_sk.Constraints=new_constrains
+                    if hasattr(pcb_sk,'RedundantConstraints'):
+                        #pcb_sk.autoRemoveRedundants(True)
+                        #pcb_sk.solve()
+                        FreeCAD.ActiveDocument.recompute()   
+                        if len (pcb_sk.RedundantConstraints)>0:
+                            print('fixing over constrained sketch')
+                            new_constrains=[]
+                            list1 = pcb_sk.Constraints 
+                            index_list=pcb_sk.RedundantConstraints
+                            for i in range(len(index_list)):
+                                index_list[i] -= 1
+                            index_set = set(index_list) # optional but faster    
+                            new_constrains=[x for i, x in enumerate(list1) if i not in index_set]
+                            pcb_sk.Constraints=new_constrains
+                            FreeCAD.ActiveDocument.recompute()
+                        # pcb_sk = Draft.makeSketch(f_max.OuterWire,autoconstraints=True)  # esternal perimeter 
+                    else:
+                        FreeCAD.Console.PrintWarning('Sketch attrib \'RedundantConstraints\' missing\n')
+                        FreeCAD.ActiveDocument.removeObject(pcb_sk.Name)
+                        pcb_sk = Draft.makeSketch(f_max,autoconstraints=False)
                         FreeCAD.ActiveDocument.recompute()
-                    # pcb_sk = Draft.makeSketch(f_max.OuterWire,autoconstraints=True)  # esternal perimeter 
                 else:
                     pcb_sk = Draft.makeSketch(f_max,autoconstraints=False)
                     FreeCAD.ActiveDocument.recompute()
@@ -698,7 +707,8 @@ def addtracks(fname = None):
         else:
             objsNum = 0
         #pcb.makePads(shape_type='face',thickness=0.05,holes=True,fit_arcs=True,prefix='')
-        pcb.makePads(shape_type='face',thickness=0.05,holes=True,fit_arcs=True) #,prefix='')
+        if skip_import_pads != True:
+            pcb.makePads(shape_type='face',thickness=0.05,holes=True,fit_arcs=True) #,prefix='')
         if FreeCAD.ActiveDocument is not None:
             if objsNum < len(FreeCAD.ActiveDocument.Objects):
                 doc=FreeCAD.ActiveDocument
@@ -713,7 +723,8 @@ def addtracks(fname = None):
         if FreeCAD.ActiveDocument is not None:
             objsNum = len(FreeCAD.ActiveDocument.Objects)
         # pcb.makeTracks(shape_type='face',fit_arcs=True,thickness=0.05,holes=True,prefix='')
-        pcb.makeTracks(shape_type='face',fit_arcs=True,thickness=0.05,holes=False) # holes=True) #,prefix='')
+        if skip_import_tracks != True:
+            pcb.makeTracks(shape_type='face',fit_arcs=True,thickness=0.05,holes=False) # holes=True) #,prefix='')
         if FreeCAD.ActiveDocument is not None:
             if objsNum < len(FreeCAD.ActiveDocument.Objects):
                 tracksB_=FreeCAD.ActiveDocument.ActiveObject
@@ -829,10 +840,27 @@ def addtracks(fname = None):
                             FreeCAD.ActiveDocument.getObject('Board_Geoms'+ftname_sfx).ViewObject.dropObject(botZones,botZones,'',[])
         if skip_import_zones == True:
             FreeCAD.Console.PrintWarning('import Zone(s) skipped'+'\n')
+        if skip_import_tracks == True:
+            FreeCAD.Console.PrintWarning('import Track(s) skipped'+'\n')
+        if skip_import_pads == True:
+            FreeCAD.Console.PrintWarning('import Pad(s) skipped'+'\n')
+        if skip_import_zones == True and skip_import_tracks == True and skip_import_pads == True:
+            FreeCAD.Console.PrintError('importing Zones, Tracks and Pads are skipped because of settings'+'\n')
+            QtGui.QApplication.restoreOverrideCursor()
+            msg="""importing <b>Zones</b>, <b>Tracks</b> and <b>Pads</b> are skipped because of settings!<br>"""
+            msg1="ERROR! ..."
+            QtGui.QApplication.restoreOverrideCursor()
+            #RotateXYZGuiClass().setGeometry(25, 250, 500, 500)
+            diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
+                                    msg1,
+                                    msg)
+            diag.setWindowModality(QtCore.Qt.ApplicationModal)
+            diag.exec_()
         say_time()
         
         if FreeCAD.ActiveDocument is not None:
             FreeCADGui.SendMsgToActiveView("ViewFit")
+            # FreeCADGui.ActiveDocument.ActiveView.setAxisCross(True)
             # FreeCADGui.ActiveDocument.activeView().viewAxonometric()
             return add_toberemoved
 ###
