@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global tracks_version
-tracks_version = '2.6.7'
+tracks_version = '2.6.8'
 
 import kicad_parser
 #import kicad_parser; import importlib; importlib.reload(kicad_parser)
@@ -366,7 +366,7 @@ def addtracks(fname = None):
         import kicad_parser 
         # reload_lib(kicad_parser)
         #pcb = kicad_parser.KicadFcad(filename,via_skip_hole=False,via_bound=0)
-        pcb = kicad_parser.KicadFcad(filename,merge_pads=False)  # creating multiple shape, one each pad item
+        pcb = kicad_parser.KicadFcad(filename,merge_pads=False, via_bound=(-1 if skip_import_tracks else 0))  # creating multiple shape, one each pad item
         # pcb = kicad_parser.KicadFcad(filename,merge_pads=True)
         #kicad.KicadFcad(filename,via_skip_hole=False,via_bound=1)
         ## pcb = kicad_parser.KicadFcad(filename, arc_fit_accuracy=1e-4) #to increase accuracy 

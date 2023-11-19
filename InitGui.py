@@ -10,13 +10,13 @@
 #*  Kicad STEPUP (TM) is a TradeMark and cannot be freely usable            *
 #*                                                                          *
 
-ksu_wb_version='v 10.21.4'
+ksu_wb_version='v 10.21.5'
 global myurlKWB, ksuWBpath
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=622 #  v10.21.4
+mycommitsKWB=623 #  v10.21.5
 global verKSU
-verKSU="10.9.9"
+verKSU="11.0.1"
 
 import FreeCAD, FreeCADGui, Part, os, sys
 import re, time
@@ -72,6 +72,9 @@ class kSU_MainPrefPage:
     def __init__(self, parent=None):
         from PySide import QtGui, QtCore
         import os, hlp, sys
+        # os.environ["QT_ENABLE_HIGHDPI_SCALING"]   = "1"
+        # os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
+        # os.environ["QT_SCALE_FACTOR"]             = "1"
         global ksuWBpath
         def reload_lib(lib):
             if (sys.version_info > (3, 0)):
@@ -86,8 +89,10 @@ class kSU_MainPrefPage:
         header_txt="""<font color=GoldenRod><b>kicad StepUp version """+verKSU+"""</font></b><br>"""
         help_t = header_txt+hlp.help_txt
         self.form = QtGui.QWidget()
+        #self.form.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
+        print ('physical aux page',self.form.physicalDpiX())
         scaling = self.form.logicalDpiX() / 96.0  # self is of QWidget
-        print ('scaling aux page',scaling)        
+        print ('scaling aux page',scaling)
         self.form.setWindowTitle("kSU \'Help Tips\'")
         self.form.verticalLayoutWidget = QtGui.QWidget(self.form)
         # w = 560*scaling; h = 630*scaling

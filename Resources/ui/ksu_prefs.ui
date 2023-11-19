@@ -1253,7 +1253,7 @@ Allowing or not Loading Multi Parts objects</string>
           </rect>
          </property>
          <property name="toolTip">
-          <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Skip importing pcb tracks&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Skip importing pcb tracks and vias&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
           <string notr="true">skpTracks</string>

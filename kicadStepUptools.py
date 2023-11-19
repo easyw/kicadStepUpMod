@@ -449,8 +449,8 @@ import re
 import time
 
 
-# max_recursion_limit=5000  # kSU issue#198
-# sys.setrecursionlimit(max_recursion_limit)
+max_recursion_limit=5000  # kSU issue#198
+sys.setrecursionlimit(max_recursion_limit)
 
 import ksu_locator
 
@@ -500,7 +500,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "10.9.9"
+___ver___ = "11.0.1"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
