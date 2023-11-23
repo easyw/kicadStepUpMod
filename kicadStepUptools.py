@@ -500,7 +500,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "11.0.1"
+___ver___ = "11.0.2"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -11676,8 +11676,6 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
     import FreeCAD, Part
     from PySide import QtGui, QtCore
     from math import pi
-    
-    blacklisted_model_elements=''
     
     say("PCB Loader ")
     ## NB use always float() to guarantee number not string!!!
