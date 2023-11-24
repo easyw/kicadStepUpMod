@@ -500,7 +500,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "11.0.2"
+___ver___ = "11.0.3"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -3202,6 +3202,9 @@ def cfg_read_all():
     if bklist.lower().find('none') !=-1 or len(bklist) == 0:
         blacklisted_model_elements=''
         bkl_none=True
+    elif not(bklist.endswith(";")):
+        bklist+=";"
+        # print(bklist)
     if bklist.lower().find('volume=') !=-1 and not bkl_none:
         vval=bklist.strip('\r\n')
         bklist_s=bklist
@@ -3277,6 +3280,8 @@ def cfg_read_all():
     if whitelist.lower().find('none') !=-1 or len(whitelist) == 0:
         whitelisted_3Dmodels=''
         whitel_none=True
+    elif not(whitelist.endswith(";")):
+        whitelist+=";"
     if whitelist.find(';') !=-1 or not whitel_none:
         whitelisted_3Dmodels=whitelist.strip('\r\n')
         #say(bklist);
