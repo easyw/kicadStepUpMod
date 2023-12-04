@@ -500,7 +500,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "11.0.3"
+___ver___ = "11.1.0"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -20840,12 +20840,12 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                     else:
                         sayw('removing existing drawings '+ssklayer)
                     ## removing old Edge
-                    repl = re.sub('\s\(gr_line(.+?)'+ssklayer+'(.+?)\)\)','',data, flags=re.MULTILINE|re.DOTALL)
-                    repl = re.sub('\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)','',repl, flags=re.MULTILINE|re.DOTALL)
-                    repl = re.sub('\s\(gr_arc(.+?)'+ssklayer+'(.+?)\)\)','',repl, flags=re.MULTILINE|re.DOTALL)
-                    repl = re.sub('\s\(gr_circle(.+?)'+ssklayer+'(.+?)\)\)','',repl, flags=re.MULTILINE|re.DOTALL)
-                    repl = re.sub('\s\(gr_rect(.+?)'+ssklayer+'(.+?)\)\)','',repl, flags=re.MULTILINE|re.DOTALL)
-                    repl = re.sub('\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)','',repl, flags=re.MULTILINE|re.DOTALL)
+                    d1 = re.sub('\s\(gr_line(.+?)'+ssklayer+'(.+?)\)\)','',data,   flags=re.MULTILINE) # re.MULTILINE|re.DOTALL)
+                    d2 = re.sub('\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)','',d1,    flags=re.MULTILINE) # re.MULTILINE|re.DOTALL)
+                    d1 = re.sub('\s\(gr_arc(.+?)'+ssklayer+'(.+?)\)\)','',d2,      flags=re.MULTILINE) # re.MULTILINE|re.DOTALL)
+                    d2 = re.sub('\s\(gr_circle(.+?)'+ssklayer+'(.+?)\)\)','',d1,   flags=re.MULTILINE) # re.MULTILINE|re.DOTALL)
+                    d1 = re.sub('\s\(gr_rect(.+?)'+ssklayer+'(.+?)\)\)','',d2,     flags=re.MULTILINE) # re.MULTILINE|re.DOTALL)
+                    repl = re.sub('\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)','',d1,   flags=re.MULTILINE) # re.MULTILINE|re.DOTALL)
                     #print("re.findall",re.findall('\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)', repl, re.MULTILINE|re.DOTALL))
                     #repl = re.sub('\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE)
                     #sayerr(replace)

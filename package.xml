@@ -2,7 +2,7 @@
 <package format="1" xmlns="https://wiki.freecad.org/Package_Metadata">
   <name>KicadStepUp Workbench</name>
   <description>A bidirectional ECAD/MCAD collaboration between KiCAD and FreeCAD.</description>
-  <version>10.21.7</version>
+  <version>10.21.8</version>
   <maintainer email="easyw@katamail.com">Maui</maintainer>
   <license file="LICENSE">AGPLv3.0</license>
   <url type="repository" branch="master">https://github.com/easyw/kicadStepUpMod</url>
