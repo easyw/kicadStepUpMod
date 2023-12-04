@@ -10,13 +10,13 @@
 #*  Kicad STEPUP (TM) is a TradeMark and cannot be freely usable            *
 #*                                                                          *
 
-ksu_wb_version='v 10.21.8'
+ksu_wb_version='v 10.21.9'
 global myurlKWB, ksuWBpath
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=626 #  v10.21.8
+mycommitsKWB=627 #  v10.21.9
 global verKSU
-verKSU="11.1.0"
+verKSU="11.1.1"
 
 import FreeCAD, FreeCADGui, Part, os, sys
 import re, time
@@ -84,15 +84,26 @@ class kSU_MainPrefPage:
                 reload (lib)
         
         print ("Created kSU Auxiliary Pref page")
+        
+        # https://stackoverflow.com/questions/71852282/qt-designer-not-playing-nicely-with-windows-display-scaling
+        # https://stackoverflow.com/questions/20464814/changing-dpi-scaling-size-of-display-make-qt-applications-font-size-get-rendere
+        
         #help_t = hlp.help_txt
         #reload_lib(hlp)
         header_txt="""<font color=GoldenRod><b>kicad StepUp version """+verKSU+"""</font></b><br>"""
         help_t = header_txt+hlp.help_txt
         self.form = QtGui.QWidget()
         #self.form.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
+        
+        # mw1 = FreeCADGui.getMainWindow()
+        # print ('physical DPI',mw1.screen().physicalDotsPerInch())
+        # print ('logical  DPI',mw1.screen().logicalDotsPerInch())
+            
         print ('physical aux page',self.form.physicalDpiX())
-        scaling = self.form.logicalDpiX() / 96.0  # self is of QWidget
+        print ('logical  aux page',self.form.logicalDpiX())
+        scaling = self.form.logicalDpiX() / self.form.physicalDpiX() # /96.0  # self is of QWidget
         print ('scaling aux page',scaling)
+        # print(self.form.screen.devicePixelRatio())
         self.form.setWindowTitle("kSU \'Help Tips\'")
         self.form.verticalLayoutWidget = QtGui.QWidget(self.form)
         # w = 560*scaling; h = 630*scaling
@@ -209,8 +220,15 @@ class KiCadStepUpWB ( Workbench ):
         #FreeCADGui.addPreferencePage( a2plib.pathOfModule() + '/GuiA2p/ui/a2p_prefs.ui','A2plus' )
         if pref_page:
             mw1 = FreeCADGui.getMainWindow()
-            scaling = mw1.logicalDpiX() / 96.0  # self is of QWidget
+            scaling = mw1.logicalDpiX() / mw1.physicalDpiX() # /96.0  # self is of QWidget
+            print('mw1.physicalDpiX()',mw1.physicalDpiX())
+            print('mw1.logicalDpiX()',mw1.logicalDpiX())
+            # print('physicalDotsPerInch()',mw1.screen().physicalDotsPerInch())
+            # print('logicalDotsPerInch()' ,mw1.screen().logicalDotsPerInch())
             print('scaling main',scaling)
+            # print ('physical DPI',mw1.screen().physicalDotsPerInch())
+            # print ('logical  DPI',mw1.screen().logicalDotsPerInch())
+            
             FreeCADGui.addPreferencePage(
                 ksuWB_ui_path + '/ksu_prefs.ui',
                 'kicadStepUpGui'

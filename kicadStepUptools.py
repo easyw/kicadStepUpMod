@@ -500,7 +500,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "11.1.0"
+___ver___ = "11.1.1"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -20839,16 +20839,31 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                         sayw('removing old pcb '+ssklayer)
                     else:
                         sayw('removing existing drawings '+ssklayer)
-                    ## removing old Edge
-                    d1 = re.sub('\s\(gr_line(.+?)'+ssklayer+'(.+?)\)\)','',data,   flags=re.MULTILINE) # re.MULTILINE|re.DOTALL)
-                    d2 = re.sub('\s\(gr_curve(.+?)'+ssklayer+'(.+?)\)\)','',d1,    flags=re.MULTILINE) # re.MULTILINE|re.DOTALL)
-                    d1 = re.sub('\s\(gr_arc(.+?)'+ssklayer+'(.+?)\)\)','',d2,      flags=re.MULTILINE) # re.MULTILINE|re.DOTALL)
-                    d2 = re.sub('\s\(gr_circle(.+?)'+ssklayer+'(.+?)\)\)','',d1,   flags=re.MULTILINE) # re.MULTILINE|re.DOTALL)
-                    d1 = re.sub('\s\(gr_rect(.+?)'+ssklayer+'(.+?)\)\)','',d2,     flags=re.MULTILINE) # re.MULTILINE|re.DOTALL)
-                    repl = re.sub('\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)','',d1,   flags=re.MULTILINE) # re.MULTILINE|re.DOTALL)
-                    #print("re.findall",re.findall('\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)', repl, re.MULTILINE|re.DOTALL))
-                    #repl = re.sub('\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\r\n|\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\r|\s\(gr_poly(.+?)'+ssklayer+'(.+?)\)\)\n','',repl, flags=re.MULTILINE)
-                    #sayerr(replace)
+                    ## removing old Edge w/ better parsing kv8 compat
+                    new_content = u""
+                    l = len (content)
+                    id = 0
+                    while id < l:
+                    # line in enumerate(content):
+                        line = content[id]
+                        add_line = True
+                        if '(gr_line ' in line or '(gr_curve' in line or '(gr_arc' in line or '(gr_circle' in line or '(gr_rect' in line or '(gr_poly' in line:
+                            if ssklayer in line:
+                                add_line = False
+                                id += 1
+                            elif id+1 <l:
+                                if ssklayer in content[id+1]:
+                                    add_line = False
+                                    id += 2
+                                else:
+                                    id += 1
+                            else:
+                                id += 1
+                        else:
+                            id += 1
+                        if add_line:
+                            new_content += line
+                    repl = new_content
                     k = repl.rfind(")")  #removing latest ')'
                     newcontent = repl[:k]
                 else:
