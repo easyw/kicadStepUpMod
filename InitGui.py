@@ -10,13 +10,13 @@
 #*  Kicad STEPUP (TM) is a TradeMark and cannot be freely usable            *
 #*                                                                          *
 
-ksu_wb_version='v 10.21.9'
+ksu_wb_version='v 10.22.0'
 global myurlKWB, ksuWBpath
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=627 #  v10.21.9
+mycommitsKWB=628 #  v10.22.0
 global verKSU
-verKSU="11.1.1"
+verKSU="11.1.2"
 
 import FreeCAD, FreeCADGui, Part, os, sys
 import re, time
@@ -221,10 +221,10 @@ class KiCadStepUpWB ( Workbench ):
         if pref_page:
             mw1 = FreeCADGui.getMainWindow()
             scaling = mw1.logicalDpiX() / mw1.physicalDpiX() # /96.0  # self is of QWidget
-            print('mw1.physicalDpiX()',mw1.physicalDpiX())
-            print('mw1.logicalDpiX()',mw1.logicalDpiX())
-            # print('physicalDotsPerInch()',mw1.screen().physicalDotsPerInch())
-            # print('logicalDotsPerInch()' ,mw1.screen().logicalDotsPerInch())
+            print('main win physicalDpiX()',mw1.physicalDpiX())
+            print('main win logicalDpiX()',mw1.logicalDpiX())
+            print('screen physicalDotsPerInch()',mw1.screen().physicalDotsPerInch())
+            print('screen logicalDotsPerInch()' ,mw1.screen().logicalDotsPerInch())
             print('scaling main',scaling)
             # print ('physical DPI',mw1.screen().physicalDotsPerInch())
             # print ('logical  DPI',mw1.screen().logicalDotsPerInch())

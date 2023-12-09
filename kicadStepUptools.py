@@ -500,7 +500,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "11.1.1"
+___ver___ = "11.1.2"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -6133,17 +6133,31 @@ def sanitizeSketch(s_name):
     
     s=FreeCAD.ActiveDocument.getObject(s_name)
     sayw('check to sanitize')
+    # print(s.TypeId)
     if 'Sketcher' in s.TypeId:
         idx_to_del=[]
+        #print(s.Geometry)
         for i,g in enumerate (s.Geometry):
             #print(g,i)
+            # g.length()
+            #print('str(g)',str(g))
             if 'Line' in str(g):
                 #print(g.length())
-                if g.length() <= edge_tolerance:
+                lng = distance(g.StartPoint, g.EndPoint)
+                #print(lng)
+                if lng <= edge_tolerance:
                     print(g,i,'too short')
                     idx_to_del.append(i)
-            elif 'Circle' in str(g):
+            if 'Circle' in str(g):
                 if g.Radius <= edge_tolerance:
+                    print(g,i,'too short')
+                    idx_to_del.append(i)
+            if 'Arc' in str(g):
+                #print('str(g)',str(g))
+                #stop
+                lng = distance(g.StartPoint, g.EndPoint)
+                #print(lng)
+                if lng <= edge_tolerance:
                     print(g,i,'too short')
                     idx_to_del.append(i)
         j=0
@@ -19694,7 +19708,7 @@ def getBoardOutline():
                         #print(type(j.Geometry[k]).__name__)
                         bezier_list  = []
                         bezier_list_tmp  = []
-                        if hasattr(j,'GeometryFacadeList'):
+                        if 0: #hasattr(j,'GeometryFacadeList'):
                             Gm = j.GeometryFacadeList
                         else:
                             Gm = j.Geometry
@@ -19704,14 +19718,14 @@ def getBoardOutline():
                             construction_geom.append(k)
                             sayw('construction skipped')
                             continue
-                        if 'Point' in type(j.Geometry[k]).__name__:  #skipping points
+                        if 'Point' in type(Gm[k]).__name__:  #skipping points
                             sayw('point skipped')
                             #sayerr('point')
                             continue
                         #if type(j.Geometry[k]).__name__ == 'LineSegment':
-                        if 'LineSegment' in type(j.Geometry[k]).__name__:
+                        if 'LineSegment' in type(Gm[k]).__name__:
                         #if 'Line' in type(j.Geometry[k]).__name__:
-                            sk_ge=j.Geometry[k].toShape() #needed to fix some issue on sketch geometry building
+                            sk_ge=Gm[k].toShape() #needed to fix some issue on sketch geometry building
                             outline.append([
                                 'line',
                                 sk_ge.Edges[0].Vertexes[0].Point.x,
@@ -19728,8 +19742,8 @@ def getBoardOutline():
                             #     j.Geometry[k].EndPoint.y
                             # ])
                         #elif type(j.Geometry[k]).__name__ == 'Circle':
-                        elif 'Circle' in type(j.Geometry[k]).__name__ and not 'ArcOfCircle' in type(j.Geometry[k]).__name__:
-                            sk_ge=j.Geometry[k].toShape()  #needed to fix some issue on sketch geometry building
+                        elif 'Circle' in type(Gm[k]).__name__ and not 'ArcOfCircle' in type(Gm[k]).__name__:
+                            sk_ge=Gm[k].toShape()  #needed to fix some issue on sketch geometry building
                             outline.append([
                                 'circle',
                                 sk_ge.Edges[0].Curve.Radius,
@@ -19745,28 +19759,28 @@ def getBoardOutline():
                             # ])
                         #elif type(j.Geometry[k]).__name__ == 'ArcOfCircle':
                         #elif isinstance(j.Geometry[k].Curve,Part.Circle)
-                        elif 'ArcOfCircle' in type(j.Geometry[k]).__name__:
+                        elif 'ArcOfCircle' in type(Gm[k]).__name__:
                             #if isinstance(j.Shape.Edges[k].Curve,Part.Circle):
                             #sayw(type(j.Geometry[k]))
                             #sayerr(j.Shape.Edges[k].Curve)
-                            sk_ge=j.Geometry[k].toShape() #needed to fix some issue on sketch geometry building
+                            #print('arc')
+                            sk_ge=Gm[k].toShape() #needed to fix some issue on sketch geometry building
                             outline.append([
                                 'arc',
-                                j.Geometry[k].Radius, 
+                                Gm[k].Radius, 
                                 sk_ge.Edges[0].Curve.Center.x,
                                 sk_ge.Edges[0].Curve.Center.y,
-                                j.Geometry[k].FirstParameter, 
-                                j.Geometry[k].LastParameter,
-                                j.Geometry[k].Axis[0],
-                                j.Geometry[k].Axis[1],
-                                j.Geometry[k].Axis[2],
-                                j.Geometry[k],
+                                Gm[k].FirstParameter, 
+                                Gm[k].LastParameter,
+                                Gm[k].Axis[0],
+                                Gm[k].Axis[1],
+                                Gm[k].Axis[2],
+                                Gm[k],
                                 sk_ge.Edges[0].Vertexes[0].Point,
                                 sk_ge.Edges[0].Vertexes[1].Point,
                                 sk_ge.Edges[0].Orientation,
                                 j.Label
                             ])
-                            
                             ##j.Geometry[k].Center.x, 
                             ##j.Geometry[k].Center.y, 
                                 
@@ -19799,8 +19813,8 @@ def getBoardOutline():
                             #         i.Axis[2],
                             #         i
                             #     ])
-                        elif (accept_spline) and ('BSplineCurve' in type(j.Geometry[k]).__name__):
-                            bs = j.Geometry[k]
+                        elif (accept_spline) and ('BSplineCurve' in type(Gm[k]).__name__):
+                            bs = Gm[k]
                             # Set degree
                             #maxDegree = 3 #kicad max degree of splines
                             if bs.Degree < maxDegree:
@@ -19832,10 +19846,10 @@ def getBoardOutline():
                                 #print(outline)
                         # elif (use_discretize) and (accept_spline) and ('Parabola' in type(j.Geometry[k]).__name__ or 'Hyperbola' in type(j.Geometry[k]).__name__\
                         #      or 'Ellipse' in type(j.Geometry[k]).__name__): 
-                        elif (accept_spline) and ('Parabol' in type(j.Geometry[k]).__name__ or 'Hyperbol' in type(j.Geometry[k]).__name__): 
+                        elif (accept_spline) and ('Parabol' in type(Gm[k]).__name__ or 'Hyperbol' in type(Gm[k]).__name__): 
                         ## discretizing
                          # or 'Ellipse' in type(j.Geometry[k]).__name__  ## Ellipses are not well approximated by Splines
-                            gd = j.Geometry[k]
+                            gd = Gm[k]
                             gds = gd.toShape()
                             pl = gds.discretize(QuasiDeflection=dqd)
                             #pl = gds.discretize(QuasiDeflection=1.0)
@@ -19864,12 +19878,12 @@ def getBoardOutline():
                                     j.Label,
                                 ])    
                                 #print(v1x,v1y,v2x,v2y,i)
-                        # elif (not use_discretize) and (accept_spline) and ('Parabola' in type(j.Geometry[k]).__name__ or 'Hyperbola' in type(j.Geometry[k]).__name__\
+                        # elif (not use_discretize) and (accept_spline) and ('Parabola' in type(j.Geometry[k]).__name__ or 'Hyperbola' in type(j.Gm[k]).__name__\
                         #      or 'Ellipse' in type(j.Geometry[k]).__name__): 
-                        elif (not use_discretize) and (accept_spline) and ('Ellipse' in type(j.Geometry[k]).__name__): 
+                        elif (not use_discretize) and (accept_spline) and ('Ellipse' in type(Gm[k]).__name__): 
                         ## toBiArcs 
                          # or 'Ellipse' in type(j.Geometry[k]).__name__  ## Ellipses are not well approximated by Splines
-                            gk = j.Geometry[k]
+                            gk = Gm[k]
                             bs = gk.toBSpline() # (tolerance, maxSegments, maxDegree)
                             gds = bs.toBiArcs(precision)
                             # import kicadStepUptools; import importlib; importlib.reload(kicadStepUptools) 
@@ -19956,7 +19970,7 @@ def getBoardOutline():
                         else:  ## dropped ... it shouldn't arrive here
                             #print j.Geometry[k],'; not supported'
                             to_discretize.append(k)  #to_discretize.append(k, j.Label)
-                            str_geom=str(j.Geometry[k])
+                            str_geom=str(Gm[k])
                             if 'ArcOfEllipse' in str_geom:
                                 str_geom='ArcOfEllipse'
                             elif 'ArcOfParabola' in str_geom:
@@ -20840,7 +20854,7 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                     else:
                         sayw('removing existing drawings '+ssklayer)
                     ## removing old Edge w/ better parsing kv8 compat
-                    new_content = u""
+                    clr_content = u""
                     l = len (content)
                     id = 0
                     while id < l:
@@ -20862,8 +20876,8 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                         else:
                             id += 1
                         if add_line:
-                            new_content += line
-                    repl = new_content
+                            clr_content += line
+                    repl = clr_content
                     k = repl.rfind(")")  #removing latest ')'
                     newcontent = repl[:k]
                 else:
@@ -20982,7 +20996,7 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                 #edge_nbr=0
                 sanitized_edge_list=[]
                 for border in new_edge_list:
-                    #print border # [0]
+                    #print (border) # [0]
                     if 'arc' in border[0]:
                         #print border[0]
                         if abs(float(border[3])) > maxRadius:
@@ -21010,6 +21024,7 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                     #sayw(createEdge(border))
                 #stop
                 new_edge=new_border+os.linesep+')'+os.linesep
+                # print(new_edge)
                 newcontent=newcontent+new_edge+u' '
             elif ssklayer == 'FillZone' or ssklayer == 'MaskZone':
                 newcontent=newcontent+pushFillZone(skname,offset,sklayer)+os.linesep+')'+os.linesep+u' '
