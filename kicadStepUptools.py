@@ -500,7 +500,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "11.1.2"
+___ver___ = "11.1.3"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -6166,6 +6166,11 @@ def sanitizeSketch(s_name):
         for i in idx_to_del:
             s.delGeometry(i-j)
             j+=1
+        if len(idx_to_del) >0:
+            tol1 = edge_tolerance #0.01
+            constr1='coincident'
+            import constrainator
+            constrainator.add_constraints(s.Name, tol1, constr1)
 ##
 def add_constraints(s_name):
     """ adding coincident points constraints """

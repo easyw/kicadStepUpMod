@@ -29,7 +29,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.3.9'
+ksuCMD_version__='2.4.0'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -1458,6 +1458,8 @@ class ksuToolsPushPCB:
                 print('evaluate to recompute')
                 ## s = sel[0].Shape
                 ## sk = Draft.make_sketch(s.Edges, autoconstraints=True)
+                kicadStepUptools.sanitizeSketch(sketch.Name)
+                FreeCAD.ActiveDocument.recompute()
                 sk = Draft.make_sketch(sketch, autoconstraints=True)
                 sk_obj = FreeCAD.ActiveDocument.ActiveObject
                 FreeCAD.ActiveDocument.recompute()
