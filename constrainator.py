@@ -13,7 +13,7 @@ import FreeCAD, Part, Sketcher
 from FreeCAD import Base
 from math import sqrt
 
-__ksuConstrainator_version__='1.2.2'
+__ksuConstrainator_version__='1.2.3'
 
 def sk_distance(p0, p1):
     return sqrt((p0[0] - p1[0])**2 + (p0[1] - p1[1])**2)
@@ -24,7 +24,7 @@ def sanitizeSkBsp(s_name, dist_tolerance):
     s=FreeCAD.ActiveDocument.getObject(s_name)
     FreeCAD.Console.PrintWarning('check to sanitize\n')
     if 'Sketcher' in s.TypeId:
-        FreeCAD.ActiveDocument.openTransaction('Sanitizing')
+        FreeCAD.ActiveDocument.openTransaction('Sanitizing BSpline')
         idx_to_del = []
         geo_to_del = []
         inverted=False
@@ -123,31 +123,49 @@ def sanitizeSkBsp(s_name, dist_tolerance):
 ##
 def sanitizeSk(s_name, edg_tol):
     ''' simplifying & sanitizing sketches '''
-    #global edge_tolerance
-    
+       
     s=FreeCAD.ActiveDocument.getObject(s_name)
     FreeCAD.Console.PrintWarning('check to sanitize\n')
+    # print(s.TypeId)
     if 'Sketcher' in s.TypeId:
         idx_to_del=[]
+        #print(s.Geometry)
         for i,g in enumerate (s.Geometry):
             #print(g,i)
+            # g.length()
+            #print('str(g)',str(g))
             if 'Line' in str(g):
                 #print(g.length())
-                if g.length() <= edg_tol:
-                    FreeCAD.Console.PrintMessage(str(g)+' '+str(i)+' too short\n')
+                lng = sk_distance(g.StartPoint, g.EndPoint)
+                #print(lng)
+                if lng <= edg_tol:
+                    print(g,i)
+                    FreeCAD.Console.PrintWarning('too short\n')
                     idx_to_del.append(i)
-            elif 'Circle' in str(g):
+            if 'Circle' in str(g):
                 if g.Radius <= edg_tol:
-                    FreeCAD.Console.PrintMessage(str(g)+' '+str(i)+' too short\n')
+                    print(g,i)
+                    FreeCAD.Console.PrintWarning('too short\n')
+                    idx_to_del.append(i)
+            if 'Arc' in str(g):
+                #print('str(g)',str(g))
+                #stop
+                lng = sk_distance(g.StartPoint, g.EndPoint)
+                #print(lng)
+                if lng <= edg_tol:
+                    print(g,i)
+                    FreeCAD.Console.PrintWarning('too short\n')
                     idx_to_del.append(i)
         j=0
         if len(idx_to_del) >0:
-            FreeCAD.Console.PrintMessage(u'sanitizing '+s.Label)
-            FreeCAD.Console.PrintMessage('\n')
-        for i in idx_to_del:
-            s.delGeometry(i-j)
-            j+=1
+            FreeCAD.Console.PrintWarning(u'sanitizing '+s.Label+'\n')
+            for i in idx_to_del:
+                s.delGeometry(i-j)
+                j+=1
+        else:
+            FreeCAD.Console.PrintMessage('nothing to sanitize\n')
 ##
+
 def add_constraints(s_name, edge_tolerance, add_Constraints):
     """ adding coincident points constraints """
     

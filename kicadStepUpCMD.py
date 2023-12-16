@@ -12,7 +12,7 @@
 
 import FreeCAD, FreeCADGui, Part
 from FreeCAD import Base
-import imp, os, sys, tempfile, re
+import os, sys, tempfile, re
 import Draft, DraftGeomUtils  #, OpenSCAD2Dgeom
 import PySide
 from PySide import QtGui, QtCore
@@ -29,7 +29,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.4.0'
+ksuCMD_version__='2.4.1'
 
 
 precision = 0.1 # precision in spline or bezier conversion

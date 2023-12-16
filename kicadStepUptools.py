@@ -500,7 +500,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "11.1.3"
+___ver___ = "11.1.4"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -6129,7 +6129,7 @@ def check_requirements():
 ###
 def sanitizeSketch(s_name):
     ''' simplifying & sanitizing sketches '''
-    global edge_tolerance
+    global edge_tolerance, addConstraints
     
     s=FreeCAD.ActiveDocument.getObject(s_name)
     sayw('check to sanitize')
@@ -6146,11 +6146,13 @@ def sanitizeSketch(s_name):
                 lng = distance(g.StartPoint, g.EndPoint)
                 #print(lng)
                 if lng <= edge_tolerance:
-                    print(g,i,'too short')
+                    print(g,i)
+                    sayw('too short')
                     idx_to_del.append(i)
             if 'Circle' in str(g):
                 if g.Radius <= edge_tolerance:
-                    print(g,i,'too short')
+                    print(g,i)
+                    sayw('too short')
                     idx_to_del.append(i)
             if 'Arc' in str(g):
                 #print('str(g)',str(g))
@@ -6158,19 +6160,22 @@ def sanitizeSketch(s_name):
                 lng = distance(g.StartPoint, g.EndPoint)
                 #print(lng)
                 if lng <= edge_tolerance:
-                    print(g,i,'too short')
+                    print(g,i)
+                    sayw('too short')
                     idx_to_del.append(i)
         j=0
-        if len(idx_to_del) >0:
-            print(u'sanitizing '+s.Label)
-        for i in idx_to_del:
-            s.delGeometry(i-j)
-            j+=1
-        if len(idx_to_del) >0:
+        if len(idx_to_del) >0 and addConstraints != 'none':
+            sayw(u'sanitizing '+s.Label)
+            for i in idx_to_del:
+                s.delGeometry(i-j)
+                j+=1
+        # if len(idx_to_del) >0 and addConstraints!='none':
             tol1 = edge_tolerance #0.01
             constr1='coincident'
             import constrainator
             constrainator.add_constraints(s.Name, tol1, constr1)
+        elif len(idx_to_del) >0 and addConstraints == 'none':
+            sayerr(u'sanitizing skipped because of constraints=\'None\' in kSU settings')
 ##
 def add_constraints(s_name):
     """ adding coincident points constraints """
