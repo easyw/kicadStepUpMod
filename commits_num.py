@@ -14,6 +14,7 @@ def commitCount(u, r):
         return '0'
     except:
         import urllib
+        print('using urllib')
         from urllib import request, error #URLError, HTTPError
         req = request.Request('https://api.github.com/repos/{}/{}/commits?per_page=1'.format(u, r))
         try:
@@ -23,11 +24,11 @@ def commitCount(u, r):
             i=(the_page.find("message"))
             j=the_page[i+10:].find("\"")
             cmt_msg=the_page[i+10:i+10+j]
-            print(cmt_msg)
+            #print(cmt_msg)
             #cmt_msg+="_cmtnum=634" NB all the commits must have commit message ending with _cmtnum=nnn
-            k=cmt_msg.find("_cmtnum=")
+            k=cmt_msg.find("cmtnum=")
             if k:
-                return(cmt_msg[k+8:])
+                return(cmt_msg[k+7:])
             else:
                 return('0')
             # print (int(cmt_msg[k+8:]))
