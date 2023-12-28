@@ -10,12 +10,12 @@
 #*  Kicad STEPUP (TM) is a TradeMark and cannot be freely usable            *
 #*                                                                          *
 
-ksu_wb_version='v 10.22.7'
+ksu_wb_version='v 10.22.8'
 global myurlKWB, ksuWBpath
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=635 #  v10.22.7 NB all the commits must have commit message ending with _cmtnum=nnn
-# _cmtnum=635
+mycommitsKWB=636 #  v10.22.8 NB all the commits must have commit message ending with _cmtnum=nnn
+# _cmtnum=636
 global verKSU
 verKSU="11.1.4"
 
@@ -428,15 +428,15 @@ class KiCadStepUpWB ( Workbench ):
                     s = ""
                     if delta >1:
                         s="s"
-                    FreeCAD.Console.PrintError('PLEASE UPDATE "Manipulator" WB.\n')
+                    FreeCAD.Console.PrintError('PLEASE UPDATE "kicadStepUp" WB.\n')
                     msg="""
-                    <font color=red>PLEASE UPDATE "Manipulator" WB.</font>
+                    <font color=red>PLEASE UPDATE "kicadStepUp" WB.</font>
                     <br>through \"Tools\" \"Addon manager\" Menu
                     <br><br><b>your release is """+str(delta)+""" commit"""+s+""" behind</b><br>
-                    <br><a href=\""""+myurlMWB+"""\">Manipulator WB</a>
+                    <br><a href=\""""+myurlKWB+"""\">kicadStepUp WB</a>
                     <br>
                     <br>set \'checkUpdates\' to \'False\' to avoid this checking
-                    <br>in \"Tools\", \"Edit Parameters\",<br>\"Preferences\"->\"Mod\"->\"Manipulator\"
+                    <br>in \"Tools\", \"Edit Parameters\",<br>\"Preferences\"->\"Mod\"->\"kicadStepUp\"
                     """
                     QtGui.QApplication.restoreOverrideCursor()
                     reply = QtGui.QMessageBox.information(None,"Warning", msg)
