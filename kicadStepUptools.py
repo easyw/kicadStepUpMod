@@ -500,7 +500,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "11.1.4"
+___ver___ = "11.1.5"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -20867,26 +20867,34 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                     clr_content = u""
                     l = len (content)
                     id = 0
+                    add_line = True
                     while id < l:
                     # line in enumerate(content):
                         line = content[id]
-                        add_line = True
                         if '(gr_line ' in line or '(gr_curve' in line or '(gr_arc' in line or '(gr_circle' in line or '(gr_rect' in line or '(gr_poly' in line:
+                            #print(line,id)
                             if ssklayer in line:
+                                #print('removed',id,line)
                                 add_line = False
                                 id += 1
                             elif id+1 <l:
                                 if ssklayer in content[id+1]:
+                                    #print('removed TWO LINES',id,id+1,line,content[id+1])
                                     add_line = False
                                     id += 2
                                 else:
+                                    add_line = True
                                     id += 1
                             else:
+                                add_line = True
                                 id += 1
                         else:
+                            add_line = True
                             id += 1
-                        if add_line:
+                        if add_line == True:
                             clr_content += line
+                            #print('adding',id,line)
+                        #print(id)
                     repl = clr_content
                     k = repl.rfind(")")  #removing latest ')'
                     newcontent = repl[:k]
