@@ -1309,7 +1309,7 @@ Allowing or not Loading Multi Parts objects</string>
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>105</y>
+          <y>90</y>
           <width>501</width>
           <height>34</height>
          </rect>
@@ -1363,7 +1363,7 @@ Allowing or not Loading Multi Parts objects</string>
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>145</y>
+          <y>115</y>
           <width>501</width>
           <height>34</height>
          </rect>
@@ -1413,6 +1413,61 @@ Allowing or not Loading Multi Parts objects</string>
          </item>
         </layout>
        </widget>
+
+       <widget class="QWidget" name="horizontalLayoutWidget_65">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>150</y>
+           <width>501</width>
+           <height>34</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_69">
+          <item>
+           <widget class="QLabel" name="label_kicad_commonjson">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Directory (full path) of kicad preferences for current user &lt;span style=&quot; font-weight:600;&quot;&gt;(contains kicad_common.json)&lt;/span&gt; &lt;/p&gt;&lt;p&gt; &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="text">
+             <string>path to 'kicad_common.json'</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="Gui::PrefFileChooser" name="sel_path_kicad_common_json" native="true">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="baseSize">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Directory (full path) &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;containing kicad_common.json&lt;/span&gt; usually (windows: %appdata%\kicad\x.y\) &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="prefEntry" stdset="0">
+             <cstring>dir_path_kicad_common_json</cstring>
+            </property>
+            <property name="prefPath" stdset="0">
+             <cstring>Mod/kicadStepUpGui</cstring>
+            </property>
+               <property name="mode">
+               <enum>Gui::FileChooser::Directory</enum>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+
        <widget class="Gui::PrefCheckBox" name="cb_dontuseNativeDlg">
         <property name="geometry">
          <rect>

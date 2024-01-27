@@ -2895,6 +2895,84 @@ def exportStep(objs, ffPathName):
     return
 ###
 
+####################################################################
+# Replace kicad path vars in model paths
+####################################################################
+import json
+
+def get_kicad_common_json_path_var_dict(dir_path_kicad_common_json:str):
+    
+    #say("Processing KiCad preferences directory '"+str(dir_path_kicad_common_json)+"' for KiCad path vars...")
+    kicad_path_var_dict = {}
+    if dir_path_kicad_common_json != "":
+        dir_path_kicad_common_json = os.path.expandvars(dir_path_kicad_common_json)
+        if os.path.isdir(dir_path_kicad_common_json):
+            dir_path_kicad_common_json = os.path.join(dir_path_kicad_common_json, 'kicad_common.json')
+        if not os.path.isfile(dir_path_kicad_common_json):
+            say("Not a directory or file: "+str(dir_path_kicad_common_json))
+            return kicad_path_var_dict
+        try:
+            with io.open(dir_path_kicad_common_json, 'r', encoding='utf-8') as kc_fh:
+                try:
+                    kcc = json.load(kc_fh)
+                    say("Loaded KiCad config from '"+dir_path_kicad_common_json+"'.")
+                    if not "environment" in kcc:
+                        say("Could not find 'environment' key in kicad_common.json, please check if location '"+str(dir_path_kicad_common_json)+"' is correct and check if KiCad Version is supported by ksu.")
+                    elif not "vars" in kcc["environment"]:
+                        say("Could not find 'vars' key in 'environment' section of kicad_common.json, please check if location '"+str(dir_path_kicad_common_json)+"' is correct and check if KiCad Version is supported by ksu.")
+                    elif not isinstance(kcc["environment"]["vars"], dict):
+                        say("'vars' key in 'environment' section of kicad_common.json is not a dictionary/json object. Please check contents of '"+str(dir_path_kicad_common_json)+"' and check if KiCad Version is supported by ksu.")
+                    else:
+                        for k,v in  kcc["environment"]["vars"].items():
+                            v_exp = os.path.expandvars(v)
+                            if os.path.isdir(v_exp):
+                                kicad_path_var_dict[k] = v_exp
+                                #say("    Added kicad path var '{$"+str(k)+"}' => '"+str(v)+"' = '"+str(v_exp)+"'.")
+                            else:
+                                say("!   Skipping kicad path var '{$"+str(k)+"}' => '"+str(v)+"' = '"+str(v_exp)+"'.")
+                                say("    '"+str(v_exp)+"' is not a valid directory. Check path and file system permissions.")
+                except Exception as e:
+                    say("Could load json and access environment.vars from "+repr(dir_path_kicad_common_json)+". Exception="+repr(e))
+        except Exception as e:
+            say("Could not open "+repr(dir_path_kicad_common_json)+" for reading. Check path and file permissions. Exception="+repr(e))
+    else:
+        say("Path to kicad_common.json is empty.")
+    if False:
+        summary = "kicad_path_var_dict = {"
+        summary_items = []
+        for k, v in kicad_path_var_dict.items():
+            summary_items += ["'"+k+"': "+"'"+v+"'"]
+        say(summary +  ", ".join(summary_items)+"}")
+    if True:
+        say("Loaded KiCad path vars "+", ".join(kicad_path_var_dict.keys())+".")
+
+    return kicad_path_var_dict
+
+def replace_kicad_path_vars(mod_3d_path, kicad_path_var_dict):
+    if not isinstance(kicad_path_var_dict, dict):
+        return mod_3d_path
+    for k,v in kicad_path_var_dict.items():
+        kk = f"${{{k}}}"
+        #say("Checking path '"+str(mod_3d_path)+"' for '"+kk+"':")
+        if kk in mod_3d_path:
+            mod_3d_path_new = mod_3d_path.replace(u'"', u'')  # strip out '"'
+            mod_3d_path_new = os.path.realpath(mod_3d_path_new.replace(kk, v, 1))
+            #say("  Match! Expanded '"+str(mod_3d_path)+"' using '"+str(kk)+"' => '"+str(v)+"' as '"+str(mod_3d_path_new)+"'.")
+            if os.path.isfile(mod_3d_path_new):
+                #say("    Valid! File '"+str(mod_3d_path_new)+"' exists.")
+                return mod_3d_path_new
+            else:
+                say("    Invalid path! Expanded File '"+str(mod_3d_path_new)+"' missing. Built from '"+str(mod_3d_path)+"' using '"+str(kk)+"' => '"+str(v)+"'.  Returning UNMODIFIED ORIGINAL path.")
+                return mod_3d_path
+        else:
+            continue
+    say("  Miss. No path var to expand in '"+str(mod_3d_path)+"'.")
+    return mod_3d_path
+
+# End 
+####################################################################
+
+
 home = expanduser("~")
 #QtGui.QMessageBox.information(None,"info ...","your home path is \r\n"+ home+"\r\n")
 sayw("kicad StepUp version "+str(___ver___))
@@ -3031,6 +3109,7 @@ def cfg_read_all():
     global ksu_config_fname, default_ksu_config_ini, applymaterials
     ##ksu pre-set
     global models3D_prefix, models3D_prefix2, models3D_prefix3, models3D_prefix4
+    global kicad_path_vars_dict
     global blacklisted_model_elements, col, colr, colg, colb, whitelisted_3Dmodels
     global bbox, volume_minimum, height_minimum, idf_to_origin, aux_orig
     global base_orig, base_point, bbox_all, bbox_list, whitelisted_model_elements
@@ -3095,6 +3174,9 @@ def cfg_read_all():
     models3D_prefix2 = prefs.GetString('prefix3d_2')
     models3D_prefix3 = prefs.GetString('prefix3d_3')
     models3D_prefix4 = prefs.GetString('prefix3d_4')
+    dir_path_kicad_common_json = prefs.GetString('dir_path_kicad_common_json')
+    kicad_path_vars_dict = get_kicad_common_json_path_var_dict(dir_path_kicad_common_json)
+
     light_green = [0.20,0.60,0.40] # std Green
     green = [0.3098,0.4823,0.4078] # Green (79,123,104)
     blue = [0.13,0.40,0.73] # Deep Sea Blue
@@ -4303,6 +4385,9 @@ def find_top_container(objs_list):
         return top_ag
 ##
 
+
+
+
 def check_wrl_transparency(step_module):
     prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
     step_transparency = 0
@@ -4358,7 +4443,7 @@ def check_wrl_transparency(step_module):
 ##
 def findModelPath(model_type, path_list):
     """ Find module in all paths and types specified """
-    global models3D_prefix, models3D_prefix2, models3D_prefix3, models3D_prefix4
+    global models3D_prefix, models3D_prefix2, models3D_prefix3, models3D_prefix4, kicad_path_vars_dict
 
     module_path='not-found'
     # model_type = [step_module,step_module_lw,step_module_up,step_module2,step_module2_up,step_module3,step_module3_up,step_module4,step_module4_up,step_module5,step_module5_up]
@@ -4374,16 +4459,21 @@ def findModelPath(model_type, path_list):
                 break
         for mpath in path_list:
             if (module_path=='not-found'):
-                model=model.replace(u'"', u'')  # strip out '"'
+                model_s=model.replace(u'"', u'')  # strip out '"'
                 mpath_U = re.sub("\\\\", "/", mpath)
                 # mpath_U = mpath_U.replace("\\", "/")
-                utf_path=os.path.join(make_unicode(mpath_U),make_unicode(model))
+                utf_path=os.path.join(make_unicode(mpath_U),make_unicode(model_s))
                 # sayerr('trying '+utf_path)
                 if os.path.exists(utf_path):
                     module_path=utf_path
                     # say('model found! on path: '+re.sub("\\\\", "/", module_path))
                     break
-
+        if False and (module_path=='not-found'):
+            module_path_v = replace_kicad_path_vars(make_unicode(model), kicad_path_vars_dict)
+            if os.path.exists(module_path_v):
+                module_path=module_path_v
+                say('model found! on var path: '+re.sub("\\\\", "/", module_path))
+                break
     return module_path
 ##
 def Load_models(pcbThickness,modules):
@@ -4393,6 +4483,7 @@ def Load_models(pcbThickness,modules):
     global last_pcb_path, full_placement, whitelisted_3Dmodels
     global allow_compound, compound_found, bklist, force_transparency, warning_nbr, use_AppPart
     global conv_offs, use_Links, links_imp_mode, use_pypro, use_LinkGroups, fname_sfx
+    global kicad_path_vars_dict
     
     #say (modules)
     missing_models = ''
@@ -4480,22 +4571,30 @@ def Load_models(pcbThickness,modules):
             encoded=1
             say('adjusting Local Path')
             say('step-module-replaced '+step_module)
-        elif (step_module.find('${')!=-1) and encoded==0:  #extra local ${ENV} 3D path
-            step_module= re.sub('\${.*?}/', '', step_module)
-            #step_module=step_module.decode("utf-8").replace(u'${}/', u'')
-            step_module=step_module.replace(u'${}/', u'')
-            step_module=step_module.replace(u'"', u'')  # name with spaces
-            encoded=1
-            say('adjusting 2nd Local Path')
-            say('step-module-replaced '+step_module)      
-        elif (step_module.find('$(')!=-1) and encoded==0:  #extra local $(ENV) 3D path
-            step_module= re.sub('\$(.*?)/', '', step_module)
-            #step_module=step_module.decode("utf-8").replace(u'${}/', u'')
-            step_module=step_module.replace(u'$()/', u'')
-            step_module=step_module.replace(u'"', u'')  # name with spaces
-            encoded=1
-            say('adjusting 2nd Local Path')
-            say('step-module-replaced '+step_module)      
+        else:
+            if (step_module.find('${')!=-1) and encoded==0:  #extra local ${ENV} 3D path
+                step_module1 = replace_kicad_path_vars(make_unicode(step_module), kicad_path_vars_dict)
+                if os.path.isfile(step_module1):
+                    say('adjusting using kicad path vars')
+                    say('step-module-replaced '+step_module)  
+                    encoded=1
+                    step_module = step_module1
+            if (step_module.find('${')!=-1) and encoded==0:  #extra local ${ENV} 3D path
+                step_module= re.sub('\${.*?}/', '', step_module)
+                #step_module=step_module.decode("utf-8").replace(u'${}/', u'')
+                step_module=step_module.replace(u'${}/', u'')
+                step_module=step_module.replace(u'"', u'')  # name with spaces
+                encoded=1
+                say('adjusting 2nd Local Path')
+                say('step-module-replaced '+step_module)      
+            elif (step_module.find('$(')!=-1) and encoded==0:  #extra local $(ENV) 3D path
+                step_module= re.sub('\$(.*?)/', '', step_module)
+                #step_module=step_module.decode("utf-8").replace(u'${}/', u'')
+                step_module=step_module.replace(u'$()/', u'')
+                step_module=step_module.replace(u'"', u'')  # name with spaces
+                encoded=1
+                say('adjusting 2nd Local Path')
+                say('step-module-replaced '+step_module)      
         if (encoded == 0):  #test local 3D path without the use of KIPRJMOD or ENV
             step_module_local = re.sub("\\\\", "/", step_module)     #subst '\\' with '/'
             # step_module_local = step_module_local.replace("\\", "/") #subst '\'  with '/'
