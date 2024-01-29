@@ -500,7 +500,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "11.1.5"
+___ver___ = "11.1.6"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -4421,11 +4421,15 @@ def Load_models(pcbThickness,modules):
         module_container = step_module
         #print(type(step_module))  #maui test py3
         #sayw('added '+str(i)+' model(s)')
-        #say(modules[i]);
+        # say(' modelname= '+modules[i][0]+' '+str(i));
+        # say(' modelLayer= '+modules[i][4]+' '+str(i));
+        # say(' modelparams '+str(modules[i])+' '+str(i));
         #FreeCAD.Console.PrintMessage('step-module '+step_module)
         encoded=0
         sayw(step_module) # utf-8 test
-        if (step_module.startswith(':')) or (step_module.startswith('":')):  #alias 3D path
+        if step_module == 'no3Dmodel' or modules[i][4] == 'noLayer':
+            say('virtual skipped')
+        elif (step_module.startswith(':')) or (step_module.startswith('":')):  #alias 3D path
             step_module_t=step_module.split(':', 1)[-1]
             step_module=step_module_t.split(':', 1)[-1]
             #step_module=step_module.decode("utf-8").replace(u'"', u'')  # name with spaces
@@ -4496,7 +4500,7 @@ def Load_models(pcbThickness,modules):
             encoded=1
             say('adjusting 2nd Local Path')
             say('step-module-replaced '+step_module)      
-        if (encoded == 0):  #test local 3D path without the use of KIPRJMOD or ENV
+        if (encoded == 0) and step_module != 'no3Dmodel' and modules[i][4] != 'noLayer':  #test local 3D path without the use of KIPRJMOD or ENV
             step_module_local = re.sub("\\\\", "/", step_module)     #subst '\\' with '/'
             # step_module_local = step_module_local.replace("\\", "/") #subst '\'  with '/'
             last_pcb_path_local = re.sub("\\\\", "/", last_pcb_path)
@@ -4568,7 +4572,9 @@ def Load_models(pcbThickness,modules):
                 encoded=1
                 say('adjusting Relative Path to pcb file')
                 say('step-module-replaced '+step_module)
-        if step_module != 'no3Dmodel':
+        # print(modules[i][4],i,step_module)
+        # print(modules[i][4] == 'noLayer')
+        if step_module != 'no3Dmodel' and modules[i][4] != 'noLayer':
             #model_type = step_module.split('.')[1]
             #if encoded!=1:
             step_module = re.sub("\\\\", "/", step_module)      #subst '\\' with '/'
@@ -4622,7 +4628,9 @@ def Load_models(pcbThickness,modules):
         ###
 
         if (blacklisted==0):
-            if step_module != 'no3Dmodel':
+            # print(modules[i][4],i,step_module)
+            # print(modules[i][4] == 'noLayer')
+            if step_module != 'no3Dmodel' and modules[i][4] != 'noLayer':
                 createScaledObjs=False
                 if model_name=="box_mcad" or model_name=="cylV_mcad" or model_name=="cylH_mcad":
                     createScaledObjs=True
