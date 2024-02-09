@@ -4,7 +4,7 @@
   <description>A bidirectional ECAD/MCAD collaboration between KiCAD and FreeCAD.</description>
   <version>10.23.0</version>
   <maintainer email="easyw@katamail.com">Maui</maintainer>
-  <license file="LICENSE">AGPLv3.0</license>
+  <license file="LICENSE">AGPL-3.0-or-later</license>
   <url type="repository" branch="master">https://github.com/easyw/kicadStepUpMod</url>
   <icon>Resources/icons/kicad-StepUp-tools-WB.svg</icon> <!-- If you include your icon here, you don't have to submit it to the main FreeCAD repo -->
 
