@@ -34,7 +34,7 @@ from fcad_parser import unquote #maui
 
 
 # from kicadStepUptools import KicadPCB,SexpList
-__kicad_parser_version__ = '2.3.2'
+__kicad_parser_version__ = '2.3.3'
 # https://github.com/realthunder/fcad_pcb/issues/20#issuecomment-586042341
 # FreeCAD.Console.PrintLog('kicad_parser_version '+__kicad_parser_version__+'\n') # maui 
 # print('kicad_parser_version '+__kicad_parser_version__)
@@ -492,7 +492,7 @@ def getKicadPath(env=''):
         if not os.path.isfile(kicad_common):
             logger.warning('cannot find kicad_common')
             return None
-    with open(kicad_common,'r') as f:
+    with open(kicad_common,'r', encoding='utf-8') as f:
         content = f.read()
     match = re.search(r'^\s*"*KISYS3DMOD"*\s*[:=]\s*([^\r\n]+)',content,re.MULTILINE)
     if not match:
