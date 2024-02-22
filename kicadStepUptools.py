@@ -500,7 +500,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "11.1.6"
+___ver___ = "11.1.7"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -11912,18 +11912,18 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
         # print('reference fp_text',rf)
         if hasattr(m,'property'):
             for p in m.property: #kv8 fp field
-                if 'dnp' in p[0].lower() or 'dnf' in p[0].lower():
-                    if 'dnp' in p[1].lower() or 'dnf' in p[1].lower():
+                if 'dnp' in str(p[0]).lower() or 'dnf' in str(p[0]).lower():
+                    if 'dnp' in str(p[1]).lower() or 'dnf' in str(p[1]).lower():
                         return True
         if hasattr(m,'fp_text'):
             for t in m.fp_text: #kv7 fp reference
                 # print("t[0]",t[0])
-                if t[0].lower()=='dnp' or t[0].lower()=='dnf':
-                    if 'dnp' in t[1].lower() or 'dnf' in t[1].lower():
+                if str(t[0]).lower()=='dnp' or str(t[0]).lower()=='dnf':
+                    if 'dnp' in str(t[1]).lower() or 'dnf' in str(t[1]).lower():
                         return True
-                if t[0].lower()=='user': #kv5 user added text
+                if str(t[0]).lower()=='user': #kv5 user added text
                     #print("t[0], t[1]",t[0], t[1]) 
-                    if 'dnp' in t[1].lower() or 'dnf' in t[1].lower():
+                    if 'dnp' in str(t[1]).lower() or 'dnf' in str(t[1]).lower():
                         return True
         return False
 
