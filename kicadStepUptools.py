@@ -21185,8 +21185,10 @@ def pushFillZone(skn, ofs, keepout=None):
     segments_nbr=len(edges)
     if segments_nbr<3:
         stop
+    skn = skn or ""
+    if skn.endswith(f'_{__name__}'): skn = skn[:-len(f'_{__name__}')]
     if 'Fill' in keepout:
-        fillzone = """  (zone (net 0) (net_name "") (layer """+keepout[:1]+""".Cu) (tstamp 0) (hatch edge 0.508)"""+os.linesep
+        fillzone = """  (zone (net 0) (net_name "") (layer """+keepout[:1]+""".Cu) (tstamp 0) (name \""""+skn+"""\") (hatch edge 0.508)"""+os.linesep
         fillzone+="""    (connect_pads (clearance 0.508))"""+os.linesep
         fillzone+="""    (min_thickness 0.254)"""+os.linesep
         fillzone+="""    (fill yes (arc_segments 32) (thermal_gap 0.508) (thermal_bridge_width 0.508))"""+os.linesep
@@ -21194,7 +21196,7 @@ def pushFillZone(skn, ofs, keepout=None):
     elif 'Mask' in keepout:
         fillzone = """  (gr_poly"""+os.linesep
     elif 'KeepOut' in keepout: #keepout zone
-        fillzone = """  (zone (net 0) (net_name "") (layers """+keepout[:1]+""".Cu) (tstamp 0) (hatch edge 0.508)"""+os.linesep
+        fillzone = """  (zone (net 0) (net_name "") (layers """+keepout[:1]+""".Cu) (tstamp 0) (name \""""+skn+"""\") (hatch edge 0.508)"""+os.linesep
         fillzone+="""    (connect_pads (clearance 0.508))"""+os.linesep
         fillzone+="""    (min_thickness 0.254)"""+os.linesep
         fillzone+="""    (keepout (tracks not_allowed) (vias not_allowed) (copperpour not_allowed))"""+os.linesep
