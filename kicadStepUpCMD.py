@@ -17,6 +17,8 @@ import Draft, DraftGeomUtils  #, OpenSCAD2Dgeom
 import PySide
 from PySide import QtGui, QtCore
 from PySide.QtCore import QT_TRANSLATE_NOOP
+from TranslateUtils import translate
+
 QtWidgets = QtGui
 
 from pivy import coin
@@ -653,7 +655,7 @@ class Ui_Offset_value(object):
     def setupUi(self, Offset_value):
         Offset_value.setObjectName("Offset_value")
         Offset_value.resize(292, 177)
-        Offset_value.setWindowTitle(translate("ksu","Offset value"))
+        Offset_value.setWindowTitle(translate("Ui_Offset_value", "Offset value"))
         Offset_value.setToolTip("")
         self.buttonBoxLayer = QtWidgets.QDialogButtonBox(Offset_value)
         self.buttonBoxLayer.setGeometry(QtCore.QRect(10, 130, 271, 32))
@@ -669,19 +671,19 @@ class Ui_Offset_value(object):
         self.offset_label = QtWidgets.QLabel(self.gridLayoutWidget)
         self.offset_label.setMinimumSize(QtCore.QSize(0, 0))
         self.offset_label.setToolTip("")
-        self.offset_label.setText(translate("ksu","Offset [+/- mm]:"))
+        self.offset_label.setText(translate("Ui_Offset_value", "Offset [+/- mm]:"))
         self.offset_label.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.offset_label.setObjectName("offset_label")
         self.gridLayout.addWidget(self.offset_label, 0, 0, 1, 1)
         self.lineEdit_offset = QtWidgets.QLineEdit(self.gridLayoutWidget)
-        self.lineEdit_offset.setToolTip(translate("ksu","Offset value [+/- mm]"))
+        self.lineEdit_offset.setToolTip(translate("Ui_Offset_value", "Offset value [+/- mm]"))
         self.lineEdit_offset.setText("0.16")
         self.lineEdit_offset.setObjectName("lineEdit_offset")
         self.gridLayout.addWidget(self.lineEdit_offset, 0, 1, 1, 1)
         self.checkBox = QtWidgets.QCheckBox(self.gridLayoutWidget)
-        self.checkBox.setToolTip(translate("ksu","Arc or Intersection Offset method"))
+        self.checkBox.setToolTip(translate("Ui_Offset_value", "Arc or Intersection Offset method"))
         self.checkBox.setLayoutDirection(QtCore.Qt.RightToLeft)
-        self.checkBox.setText(translate("ksu","Arc"))
+        self.checkBox.setText(translate("Ui_Offset_value", "Arc"))
         self.checkBox.setChecked(True)
         self.checkBox.setObjectName("checkBox")
         self.gridLayout.addWidget(self.checkBox, 2, 0, 1, 1)
@@ -689,12 +691,12 @@ class Ui_Offset_value(object):
         self.offset_label_2 = QtWidgets.QLabel(self.gridLayoutWidget)
         self.offset_label_2.setMinimumSize(QtCore.QSize(0, 0))
         self.offset_label_2.setToolTip("")
-        self.offset_label_2.setText(translate("ksu","Offset Y [mm]:"))
+        self.offset_label_2.setText(translate("Ui_Offset_value", "Offset Y [mm]:"))
         self.offset_label_2.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.offset_label_2.setObjectName("offset_label_2")
         self.gridLayout.addWidget(self.offset_label_2, 1, 0, 1, 1)
         self.lineEdit_offset_2 = QtWidgets.QLineEdit(self.gridLayoutWidget)
-        self.lineEdit_offset_2.setToolTip(translate("ksu","Offset Y value [+/- mm]"))
+        self.lineEdit_offset_2.setToolTip(translate("Ui_Offset_value", "Offset Y value [+/- mm]"))
         self.lineEdit_offset_2.setText("5.0")
         self.lineEdit_offset_2.setObjectName("lineEdit_offset_2")
         self.gridLayout.addWidget(self.lineEdit_offset_2, 1, 1, 1, 1)
@@ -733,19 +735,19 @@ class Ui_CDialog(object):
         self.buttonBox.setObjectName("buttonBox")
         self.Label_howto = QtGui.QLabel(CDialog)
         self.Label_howto.setGeometry(QtCore.QRect(20, 5, 265, 61))
-        self.Label_howto.setToolTip(translate("ksu","Select a Sketch and Parameters\n"
+        self.Label_howto.setToolTip(translate("Ui_CDialog", "Select a Sketch and Parameters\n"
 "to constraint the sketch\n"
 "NB the Sketch will be modified!"))
         self.Label_howto.setStatusTip("")
         self.Label_howto.setWhatsThis("")
-        self.Label_howto.setText(translate("ksu","<b>Select a Sketch and Parameters to<br>constrain the sketch.<br>NB the Sketch will be modified!</b>"))
+        self.Label_howto.setText(translate("Ui_CDialog", "<b>Select a Sketch and Parameters to<br>constrain the sketch.<br>NB the Sketch will be modified!</b>"))
         self.Label_howto.setObjectName("Label_howto")
         self.Constraints = QtGui.QGroupBox(CDialog)
         self.Constraints.setGeometry(QtCore.QRect(10, 70, 145, 166))
         self.Constraints.setToolTip("")
         self.Constraints.setStatusTip("")
         self.Constraints.setWhatsThis("")
-        self.Constraints.setTitle(translate("ksu","Constraints"))
+        self.Constraints.setTitle(translate("Ui_CDialog", "Constraints"))
         self.Constraints.setObjectName("Constraints")
         self.verticalLayoutWidget = QtGui.QWidget(self.Constraints)
         self.verticalLayoutWidget.setGeometry(QtCore.QRect(12, 20, 125, 137))
@@ -755,7 +757,7 @@ class Ui_CDialog(object):
         self.verticalLayout.setObjectName("verticalLayout")
         self.all_constraints = QtGui.QRadioButton(self.verticalLayoutWidget)
         self.all_constraints.setMinimumSize(QtCore.QSize(92, 64))
-        self.all_constraints.setToolTip(translate("ksu","Lock Coincident, Horizontal\n"
+        self.all_constraints.setToolTip(translate("Ui_CDialog", "Lock Coincident, Horizontal\n"
 "and Vertical"))
         self.all_constraints.setText("")
         self.all_constraints.setIcon(icon)
@@ -765,7 +767,7 @@ class Ui_CDialog(object):
         self.verticalLayout.addWidget(self.all_constraints)
         self.coincident = QtGui.QRadioButton(self.verticalLayoutWidget)
         self.coincident.setMinimumSize(QtCore.QSize(92, 64))
-        self.coincident.setToolTip(translate("ksu","Lock Coincident"))
+        self.coincident.setToolTip(translate("Ui_CDialog", "Lock Coincident"))
         self.coincident.setText("")
         icon1 = QtGui.QIcon()
         icon1.addPixmap(QtGui.QPixmap("Sketcher_LockCoincident.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
@@ -779,7 +781,7 @@ class Ui_CDialog(object):
         self.Tolerance.setToolTip("")
         self.Tolerance.setStatusTip("")
         self.Tolerance.setWhatsThis("")
-        self.Tolerance.setTitle(translate("ksu","Tolerance"))
+        self.Tolerance.setTitle(translate("Ui_CDialog", "Tolerance"))
         self.Tolerance.setObjectName("Tolerance")
         self.verticalLayoutWidget_2 = QtGui.QWidget(self.Tolerance)
         self.verticalLayoutWidget_2.setGeometry(QtCore.QRect(8, 20, 125, 57))
@@ -791,13 +793,13 @@ class Ui_CDialog(object):
         self.label.setToolTip("mm")
         self.label.setStatusTip("")
         self.label.setWhatsThis("")
-        self.label.setText(translate("ksu","tolerance in mm"))
+        self.label.setText(translate("Ui_CDialog", "tolerance in mm"))
         self.label.setObjectName("label")
         self.verticalLayout_2.addWidget(self.label)
         self.tolerance = QtGui.QLineEdit(self.verticalLayoutWidget_2)
         self.tolerance.setMinimumSize(QtCore.QSize(64, 22))
         self.tolerance.setMaximumSize(QtCore.QSize(64, 22))
-        self.tolerance.setToolTip(translate("ksu","Tolerance on Constraints"))
+        self.tolerance.setToolTip(translate("Ui_CDialog", "Tolerance on Constraints"))
         self.tolerance.setStatusTip("")
         self.tolerance.setWhatsThis("")
         self.tolerance.setInputMethodHints(QtCore.Qt.ImhPreferNumbers)
@@ -808,7 +810,7 @@ class Ui_CDialog(object):
         self.verticalLayout_2.addWidget(self.tolerance)
         self.rmvXGeo = QtGui.QCheckBox(CDialog)
         self.rmvXGeo.setGeometry(QtCore.QRect(170, 180, 141, 20))
-        self.rmvXGeo.setToolTip(translate("ksu","remove duplicated geometries"))
+        self.rmvXGeo.setToolTip(translate("Ui_CDialog", "remove duplicated geometries"))
         self.rmvXGeo.setStatusTip("")
         self.rmvXGeo.setText("rmv xtr geo")
         self.rmvXGeo.setObjectName("rmvXGeo")
@@ -863,7 +865,7 @@ class ksuTools:
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'kicad-StepUp-icon.svg') , # the name of a svg file available in the resources
                      'MenuText': QT_TRANSLATE_NOOP("ksuTools","ksu Tools") ,
-                     'ToolTip' : QT_TRANSLATE_NOOP("ksuTools","Activate the main\nkicad StepUp Tools Dialog")}
+                     'ToolTip' : QT_TRANSLATE_NOOP("ksuTools","Activate the main\nKiCad StepUp Tools Dialog")}
  
     def IsActive(self):
         #if FreeCAD.ActiveDocument == None:
@@ -994,8 +996,10 @@ class ksuToolsContour2Poly:
             
             
         doc.commitTransaction()
-        msg=translate("ksu","""PolyLine Contour generated<br><br>""")
-        msg+=translate("ksu","<b>For PolyLine Pads, please add \'circles\' inside each closed polyline</b><br>")
+        msg=translate(
+            "ksu",
+            "PolyLine Contour generated\n\n"
+            "<b>For PolyLine Pads, please add \'circles\' inside each closed polyline</b><br>")
         info_msg(msg)
         #stop
         #FreeCAD.ActiveDocument.recompute()
@@ -1276,10 +1280,10 @@ class ksuToolsExportModel:
       ##or made something as in load board
         #ini_content=kicadStepUptools.cfg_read_all()
         if FreeCAD.ActiveDocument.FileName == "":
-            msg="""please <b>save</b> your job file before exporting."""
+            msg = translate("Save", "Please <b>save</b> your job file before exporting.")
             QtGui.QApplication.restoreOverrideCursor()
-            QtGui.QMessageBox.information(None,"Info ...",msg)
-            FreeCADGui.SendMsgToActiveView("Save")
+            QtGui.QMessageBox.information(None,translate("Save", "Info ..."),msg)
+            FreeCADGui.SendMsgToActiveView(translate("Save", "Save"))
         
         from kicadStepUptools import routineScaleVRML
         if reload_Gui:
@@ -1301,8 +1305,8 @@ class ksuToolsImport3DStep:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'add_block_y.svg') , # the name of a svg file available in the resources
-                     'MenuText': QT_TRANSLATE_NOOP("ksuToolsImport3DStep","Import 3D Step") ,
-                     'ToolTip' : QT_TRANSLATE_NOOP("ksuToolsImport3DStep","ksu Import 3D Step Model")}
+                     'MenuText': QT_TRANSLATE_NOOP("ksuToolsImport3DStep","Import 3D STEP") ,
+                     'ToolTip' : QT_TRANSLATE_NOOP("ksuToolsImport3DStep","ksu Import 3D STEP Model")}
  
     def IsActive(self):
         #if FreeCAD.ActiveDocument == None:
@@ -1331,8 +1335,8 @@ class ksuToolsExport3DStep:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'export3DStep.svg') , # the name of a svg file available in the resources
-                     'MenuText': QT_TRANSLATE_NOOP("ksuToolsExport3DStep","Export 3D to Step") ,
-                     'ToolTip' : QT_TRANSLATE_NOOP("ksuToolsExport3DStep","ksu Export selected objects to Step Model")}
+                     'MenuText': QT_TRANSLATE_NOOP("ksuToolsExport3DStep","Export 3D to STEP") ,
+                     'ToolTip' : QT_TRANSLATE_NOOP("ksuToolsExport3DStep","ksu Export selected objects to STEP Model")}
  
     def IsActive(self):
         #if FreeCAD.ActiveDocument == None:
@@ -1755,7 +1759,7 @@ class ksuToolsSync3DModels:
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Sync3Dmodels.svg') , # the name of a svg file available in the resources
                      'MenuText': QT_TRANSLATE_NOOP("ksuToolsSync3DModels","Sync 3D model(s) Ref & TimeStamps with PCB") ,
-                     'ToolTip' : QT_TRANSLATE_NOOP("ksuToolsSync3DModels","ksu Sync 3D model(s) Ref & TimeStamps\nof the Selected 3D model with kicad PCB")}
+                     'ToolTip' : QT_TRANSLATE_NOOP("ksuToolsSync3DModels","ksu Sync 3D model(s) Ref & TimeStamps\nof the Selected 3D model with KiCad PCB")}
  
     def IsActive(self):
         #if FreeCAD.ActiveDocument == None:
@@ -1938,7 +1942,7 @@ class ksuToolsTurnTable:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'texture_turntable.svg') , # the name of a svg file available in the resources
-                     'MenuText': QT_TRANSLATE_NOOP("ksuToolsTurnTable","TurnTable") ,
+                     'MenuText': QT_TRANSLATE_NOOP("ksuToolsTurnTable","TurnTable"),
                      'ToolTip' : QT_TRANSLATE_NOOP("ksuToolsTurnTable","ksu TurnTable")}
  
     def IsActive(self):
@@ -2000,8 +2004,8 @@ class ksuToolsConstrainator:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Sketcher_LockAll.svg') , # the name of a svg file available in the resources
-                     'MenuText': QT_TRANSLATE_NOOP("ksuToolsTurnTable","Constrain a Sketch") ,
-                     'ToolTip' : QT_TRANSLATE_NOOP("ksuToolsTurnTable","ksu Fix & auto Constrain a Sketch")}
+                     'MenuText': QT_TRANSLATE_NOOP("ksuToolsConstrainator","Constrain a Sketch") ,
+                     'ToolTip' : QT_TRANSLATE_NOOP("ksuToolsConstrainator","ksu Fix & auto Constrain a Sketch")}
  
     def IsActive(self):
         return True
@@ -3887,7 +3891,7 @@ class ksuOpDXF:
     "ksu tools open Legacy DXF"
     
     def GetResources(self):
-        mybtn_tooltip ="open Legacy DXF"
+        mybtn_tooltip = QT_TRANSLATE_NOOP("ksuOpDXF", "open Legacy DXF")
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'openDXF.svg') , # the name of a svg file available in the resources
                      'MenuText': mybtn_tooltip ,
                      'ToolTip' : mybtn_tooltip+' v1.4.0'}
@@ -3933,7 +3937,7 @@ class ksuOpEzDXF:
     "ksu tools open ezDXF"
     
     def GetResources(self):
-        mybtn_tooltip ="open ezDXF"
+        mybtn_tooltip = QT_TRANSLATE_NOOP("ksuOpEzDXF", "open ezDXF")
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'openEzDXF.svg') , # the name of a svg file available in the resources
                      'MenuText': mybtn_tooltip ,
                      'ToolTip' : mybtn_tooltip }
@@ -3981,7 +3985,7 @@ class ksuImpDXF:
     "ksu tools import Legacy DXF"
     
     def GetResources(self):
-        mybtn_tooltip ="import Legacy DXF"
+        mybtn_tooltip = QT_TRANSLATE_NOOP("ksuImpDXF", "Import Legacy DXF")
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'importDXF.svg') , # the name of a svg file available in the resources
                      'MenuText': mybtn_tooltip ,
                      'ToolTip' : mybtn_tooltip+' v1.4.0'}
@@ -4247,7 +4251,7 @@ class ksuToolsExplode:
     "ksu tools Explode"
     
     def GetResources(self):
-        mybtn_tooltip =QT_TRANSLATE_NOOP("ksuToolsExplode","ksu Tools PCB Explode\nSelect the top container of a kicad PCB to exlode it")
+        mybtn_tooltip =QT_TRANSLATE_NOOP("ksuToolsExplode","ksu Tools PCB Explode\nSelect the top container of a KiCad PCB to exlode it")
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Explode_Pcb.svg') , # the name of a svg file available in the resources
                      'MenuText': mybtn_tooltip ,
                      'ToolTip' : mybtn_tooltip}
@@ -4381,7 +4385,7 @@ class ksuToolsAddSilks:
     "ksu tools Add Silks"
     
     def GetResources(self):
-        mybtn_tooltip =QT_TRANSLATE_NOOP("ksuToolsAddSilks","ksu tools Add Silks from kicad exported DXF\nNB: it could be a very intensive loading!")
+        mybtn_tooltip =QT_TRANSLATE_NOOP("ksuToolsAddSilks","ksu tools Add Silks from KiCad exported DXF\nNB: it could be a very intensive loading!")
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Silks.svg') , # the name of a svg file available in the resources
                      'MenuText': mybtn_tooltip ,
                      'ToolTip' : mybtn_tooltip}
@@ -4715,7 +4719,7 @@ class approximateCenter():
     def GetResources(self):
         mybtn_tooltip =QT_TRANSLATE_NOOP("approximateCenter","Create Center of Circle through 3 Vertices or Select two vertices to create a mid point or Select a Shape to create a center point")
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Three-Points-Center.svg') , # the name of a svg file available in the resources
-                     'MenuText': QT_TRANSLATE_NOOP("ksu","Create Center of Circle through 3 Vertices") ,
+                     'MenuText': QT_TRANSLATE_NOOP("approximateCenter","Create Center of Circle through 3 Vertices") ,
                      'ToolTip' : mybtn_tooltip}
 
     def Activated(self):        
@@ -4822,7 +4826,7 @@ class Create_BoundBox():
     "Create BoundBox of the Selected Object"
 
     def GetResources(self):
-        mybtn_tooltip ="Create BoundBox of the Selected Object"
+        mybtn_tooltip = QT_TRANSLATE_NOOP("Create_BoundBox", "Create BoundBox of the Selected Object")
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'BoundBox.svg') , # the name of a svg file available in the resources
                      'MenuText': mybtn_tooltip ,
                      'ToolTip' : mybtn_tooltip}
@@ -4977,8 +4981,8 @@ class ksuToolsImportFootprint:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'importFPs.svg') , # the name of a svg file available in the resources
-                     'MenuText': "Load FootPrint" ,
-                     'ToolTip' : "ksu Load KiCad PCB FootPrint"}
+                     'MenuText': QT_TRANSLATE_NOOP("ksuToolsImportFootprint", "Load FootPrint"),
+                     'ToolTip' : QT_TRANSLATE_NOOP("ksuToolsImportFootprint", "ksu Load KiCad PCB FootPrint")}
  
     def IsActive(self):
         #if FreeCAD.ActiveDocument == None:
@@ -5013,8 +5017,8 @@ class ksuToolsAlignView:
  
     def GetResources(self):
         return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'AlignView2Face.svg') , # the name of a svg file available in the resources
-                     'MenuText': "AlignView to Face" ,
-                     'ToolTip' : "ksu AlignView to Face"}
+                     'MenuText': QT_TRANSLATE_NOOP("ksuToolsAlignView", "AlignView to Face") ,
+                     'ToolTip' : QT_TRANSLATE_NOOP("ksuToolsAlignView", "ksu AlignView to Face")}
  
     def IsActive(self):
         doc = FreeCAD.ActiveDocument

@@ -927,13 +927,13 @@ Allowing or not Loading Multi Parts objects</string>
           </rect>
          </property>
          <property name="toolTip">
-          <string notr="true">Enable Materials for VRML exporting</string>
+          <string>Enable Materials for VRML exporting</string>
          </property>
          <property name="statusTip">
           <string notr="true"/>
          </property>
          <property name="text">
-          <string notr="true">Enable Materials for VRML exporting</string>
+          <string>Enable Materials for VRML exporting</string>
          </property>
          <property name="checked">
           <bool>true</bool>
@@ -1011,10 +1011,10 @@ Allowing or not Loading Multi Parts objects</string>
           </rect>
          </property>
          <property name="toolTip">
-          <string notr="true">Enable compressed STEP file ('.stpZ') generation exporting</string>
+          <string>Enable compressed STEP file ('.stpZ') generation exporting</string>
          </property>
          <property name="text">
-          <string notr="true">Enable compressed STEP file ('.stpZ') generation exporting</string>
+          <string>Enable compressed STEP file ('.stpZ') generation exporting</string>
          </property>
          <property name="checked">
           <bool>false</bool>
@@ -1042,10 +1042,10 @@ Allowing or not Loading Multi Parts objects</string>
           </rect>
          </property>
          <property name="toolTip">
-          <string notr="true">Enable compressed VRML file ('.wrz') generation exporting</string>
+          <string>Enable compressed VRML file ('.wrz') generation exporting</string>
          </property>
          <property name="text">
-          <string notr="true">Enable compressed VRML file ('.wrz') generation exporting</string>
+          <string>Enable compressed VRML file ('.wrz') generation exporting</string>
          </property>
          <property name="checked">
           <bool>false</bool>
@@ -1073,10 +1073,10 @@ Allowing or not Loading Multi Parts objects</string>
           </rect>
          </property>
          <property name="toolTip">
-          <string notr="true">Display STEP import settings warning</string>
+          <string>Display STEP import settings warning</string>
          </property>
          <property name="text">
-          <string notr="true">Display STEP import settings warning</string>
+          <string>Display STEP import settings warning</string>
          </property>
          <property name="checked">
           <bool>true</bool>
@@ -1104,10 +1104,10 @@ Allowing or not Loading Multi Parts objects</string>
           </rect>
          </property>
          <property name="toolTip">
-          <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Apply Transparency for 'Glass' Materials:&lt;/p&gt;&lt;p&gt;Force Transparency to STEP model if 'Glass' is found in '.wrl' model&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Apply Transparency for 'Glass' Materials:&lt;/p&gt;&lt;p&gt;Force Transparency to STEP model if 'Glass' is found in '.wrl' model&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
-          <string notr="true">Apply Transparency for 'Glass' Materials</string>
+          <string>Apply Transparency for 'Glass' Materials</string>
          </property>
          <property name="checked">
           <bool>false</bool>
@@ -1135,10 +1135,10 @@ Allowing or not Loading Multi Parts objects</string>
           </rect>
          </property>
          <property name="toolTip">
-          <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Apply Transparency for 'Led' Materials:&lt;/p&gt;&lt;p&gt;Force Transparency to STEP model if 'Led' is found in '.wrl' model&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Apply Transparency for 'Led' Materials:&lt;/p&gt;&lt;p&gt;Force Transparency to STEP model if 'Led' is found in '.wrl' model&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
-          <string notr="true">Apply Transparency for 'Led' Materials</string>
+          <string>Apply Transparency for 'Led' Materials</string>
          </property>
          <property name="checked">
           <bool>false</bool>

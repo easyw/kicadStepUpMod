@@ -826,7 +826,7 @@ STEP &amp; scaled VRML 1/2.54</string>
         </size>
        </property>
        <property name="toolTip">
-        <string>enalble loading
+        <string>enable loading
 virtual &amp; mechanical
 models</string>
        </property>
