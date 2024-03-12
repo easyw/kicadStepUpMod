@@ -32,7 +32,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.4.1'
+ksuCMD_version__='2.5.0'
 
 
 precision = 0.1 # precision in spline or bezier conversion

@@ -129,6 +129,9 @@ or 'KICAD6_3DMODEL_DIR'</string>
            <property name="prefPath" stdset="0">
             <cstring>Mod/kicadStepUpGui</cstring>
            </property>
+              <property name="mode">
+              <enum>Gui::FileChooser::Directory</enum>
+              </property>
           </widget>
          </item>
         </layout>
@@ -179,6 +182,9 @@ or 'KICAD6_3DMODEL_DIR'</string>
            </property>
            <property name="prefPath" stdset="0">
             <cstring>Mod/kicadStepUpGui</cstring>
+           </property>
+              <property name="mode">
+              <enum>Gui::FileChooser::Directory</enum>
            </property>
           </widget>
          </item>
@@ -1346,7 +1352,10 @@ Allowing or not Loading Multi Parts objects</string>
            <property name="prefPath" stdset="0">
             <cstring>Mod/kicadStepUpGui</cstring>
            </property>
-          </widget>
+              <property name="mode">
+              <enum>Gui::FileChooser::Directory</enum>
+           </property>
+           </widget>
          </item>
         </layout>
        </widget>
@@ -1396,6 +1405,9 @@ Allowing or not Loading Multi Parts objects</string>
            </property>
            <property name="prefPath" stdset="0">
             <cstring>Mod/kicadStepUpGui</cstring>
+           </property>
+              <property name="mode">
+              <enum>Gui::FileChooser::Directory</enum>
            </property>
           </widget>
          </item>

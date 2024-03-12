@@ -19,6 +19,7 @@ KiCad **StepUp tools** are a FreeCAD Macro and a FreeCAD WorkBench to help in **
 - **PULL a pcb Edge from a kicad_pcb Board**, edit it in FC Sketcher and PUSH it back to kicad
 - **design a new footprint in FreeCAD to get the power of Sketch in footprints**
 - **generate Blender compatible VRML files**
+- **translation infrastructure enabled**
 
 Please see [KiCad Info forum](https://forum.kicad.info/search?q=step) or [FreeCAD forum](https://forum.freecadweb.org/viewtopic.php?f=24&t=14276) to discuss or report issues regarding this Addon.
 
@@ -42,7 +43,7 @@ StepUp Cheat sheet
 
 - **FreeCAD** **0.18, 0.19, 0.20, 0.21, 0.22**
 
-- **KiCAD** **5.1**, **6.x**, **7.x**
+- **KiCAD** **5.1**, **6.x**, **7.x**, **8.x** (push-pull- 3D models position not implemented ATM)
 
 - **KiCAD *nigthly* (partially supported)**
 
