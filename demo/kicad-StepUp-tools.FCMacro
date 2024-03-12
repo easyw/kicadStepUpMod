@@ -14656,7 +14656,7 @@ class Ui_DockWidget(object):
 "Board .kicad_pcb")
         self.ScaleVRML.setToolTip("export to kicad:\n"
 "STEP & scaled VRML 1/2.54")
-        self.cb_virtual.setToolTip("enalble loading\n"
+        self.cb_virtual.setToolTip("enable loading\n"
 "virtual & mechanical\n"
 "models")
         self.cb_materials.setToolTip("use wrl\n"

@@ -32,12 +32,15 @@ else:  #py2
 import ksu_locator
 from kicadStepUpCMD import *
 
+
 ksuWBpath = os.path.dirname(ksu_locator.__file__)
 #sys.path.append(ksuWB + '/Gui')
 ksuWB_icons_path =  os.path.join( ksuWBpath, 'Resources', 'icons')
 ksuWB_ui_path = os.path.join( ksuWBpath, 'Resources','ui' )
+ksuWB_trans_path = os.path.join( ksuWBpath, 'translations')
 
-# FreeCADGui.addLanguagePath(ksuWBpath+"/translations")
+FreeCADGui.addLanguagePath(ksuWB_trans_path)
+FreeCADGui.updateLocale()
 
 global main_ksu_Icon
 main_ksu_Icon = os.path.join( ksuWB_icons_path , 'kicad-StepUp-tools-WB.svg')
@@ -150,14 +153,15 @@ class kSU_MainPrefPage:
         print(FreeCAD.getUserAppDataDir())
 ##
 class KiCadStepUpWB ( Workbench ):
+    from TranslateUtils import translate
     global main_ksu_Icon, ksu_wb_version, myurlKWB, mycommitsKWB, verKSU
     global ksuWB_ui_path, kSU_MainPrefPage, ksuWB_icons_path
     
     "KiCadStepUp WB object"
     Icon = main_ksu_Icon
     #Icon = ":Resources/icons/kicad-StepUp-tools-WB.svg"
-    MenuText = "KiCadStepUp"
-    ToolTip = "KiCadStepUp workbench"
+    MenuText = translate("KiCadStepUpWB", "KiCadStepUp")
+    ToolTip = translate("KiCadStepUpWB", "KiCadStepUp workbench")
  
     def GetClassName(self):
         return "Gui::PythonWorkbench"
@@ -167,6 +171,7 @@ class KiCadStepUpWB ( Workbench ):
         global pref_page
         pref_page = True # False #True #
         import FreeCADGui
+        from TranslateUtils import translate
 
         submenu = ['demo.kicad_pcb','d-pak.kicad_mod', 'demo-sketch.FCStd', 'demo.step',\
                    'footprint-template.FCStd', 'footprint-Edge-template.FCStd', 'footprint-template-roundrect-polylines.FCStd',\
@@ -178,14 +183,14 @@ class KiCadStepUpWB ( Workbench ):
                    'ECAD-MCAD-collaboration.pdf']
         dirs = self.ListDemos()
 
-        #self.appendToolbar("ksu Tools", ["ksuTools"])
-        self.appendToolbar("ksu Tools", ["ksuToolsEditPrefs","ksuTools","ksuToolsOpenBoard","ksuToolsImportFootprint",\
+        #self.appendToolbar(translate("Toolbar", "ksu Tools"), ["ksuTools"])
+        self.appendToolbar(translate("Toolbar", "ksu Tools"), ["ksuToolsEditPrefs","ksuTools","ksuToolsOpenBoard","ksuToolsImportFootprint",\
                            "ksuToolsExportModel","ksuToolsPushPCB","ksuToolsFootprintGen","Separator","ksuToolsAddTracks","ksuToolsAddSilks","Separator",\
                            "ksuToolsCollisions","ksuToolsImport3DStep","ksuToolsExport3DStep","ksuToolsMakeUnion",\
                            "ksuToolsMakeCompound", "ksuToolsUnion", "ksuToolsSimpleCopy", "ksuToolsDeepCopy", "ksuToolsColoredClone",\
                            "ksuToolsColoredBinder", "ksuToolsReLinkBinder", "ksuToolsCheckSolid"])
                            #, "ksuToolsPushMoved","ksuToolsSync3DModels"])
-        self.appendToolbar("ksu Sketching", ["ksuTools3D2D", "ksuTools2D2Sketch", "ksuTools2DtoFace",\
+        self.appendToolbar(translate("Toolbar", "ksu Sketching"), ["ksuTools3D2D", "ksuTools2D2Sketch", "ksuTools2DtoFace",\
                            "ksuToolsLoopSelection","ksuToolsEdges2Sketch","ksuToolsMoveSketch","ksuToolsOffset2D","ksuToolsExtrude","Create_BoundBox","ksuToolsMergeSketches",\
                            "ksuToolsSimplifySketck", "ksuToolsBsplineNormalize", "ksuToolsConstrainator", "ksuToolsSkValidate", "ksuToolsDiscretize",\
                            "ksuToolsContour2Poly", "Arcs2Circles", "approximateCenter"])
@@ -194,29 +199,29 @@ class KiCadStepUpWB ( Workbench ):
                  "Separator","ksuToolsGeneratePositions","ksuToolsComparePositions",\
                  "Separator","ksuToolsToggleTreeView","Separator","ksuRemoveTimeStamp","ksuRemoveSuffix","Separator","ksuToolsImportFootprint","ksuToolsFootprintGen"]
         #ksuTB.extend(["Separator","ksuToolsAligner","ksuToolsMover","ksuToolsCaliper"])
-        self.appendToolbar("ksu PushPull", ksuTB)
+        self.appendToolbar(translate("Toolbar", "ksu PushPull"), ksuTB)
         combined_path = '\t'.join(sys.path)
         if 'Manipulator' in combined_path:
             ksuDTB=["ksuToolsAligner","ksuToolsMover","ksuToolsCaliper", "ksuToolsAlignView","Separator","ksuToolsDefeaturingTools"]
-            self.appendToolbar("ksu Design Tools", ksuDTB)
+            self.appendToolbar(translate("Toolbar", "ksu Design Tools"), ksuDTB)
         else:
             ksuDTB=["ksuToolsAlignView"]
-            self.appendToolbar("ksu Design Tools", ksuDTB)
+            self.appendToolbar(translate("Toolbar", "ksu Design Tools"), ksuDTB)
         Hlp_TB = ["ksuToolsToggleTreeView", "Restore_Transparency", "ksuToolsTransparencyToggle", "ksuToolsHighlightToggle",\
                             "ksuToolsVisibilityToggle", "ksuToolsStepImportModeSTD", "ksuToolsStepImportModeComp",\
                             "ksuToolsCopyPlacement", "ksuToolsResetPlacement", "ksuToolsResetPartPlacement", "ksuToolsAddToTree",\
                             "ksuToolsRemoveFromTree", "ksuToolsRemoveSubTree", "checkSolidExpSTEP"]
         #if 'LinkView' in dir(FreeCADGui):
         #    Hlp_TB.remove("ksuToolsHighlightToggle")
-        self.appendToolbar("ksu Show", ["ksuToolsTurnTable", "ksuToolsExplode"])
-        self.appendToolbar("ksu Helpers", Hlp_TB)
-        #self.appendMenu("ksu Tools", ["ksuTools","ksuToolsEdit"])
-        self.appendMenu("ksu Tools", ["ksuTools","ksuToolsEditPrefs","ksuImpDXF","ksuOpDXF","ksuOpEzDXF"])
-        self.appendMenu("ksu PushPull", ["ksuToolsOpenBoard","ksuToolsPushPCB","ksuToolsPushMoved","ksuToolsSync3DModels","ksuToolsPullPCB","ksuToolsPullMoved",\
+        self.appendToolbar(translate("Toolbar", "ksu Show"), ["ksuToolsTurnTable", "ksuToolsExplode"])
+        self.appendToolbar(translate("Toolbar", "ksu Helpers"), Hlp_TB)
+        #self.appendMenu(translate("Menu", "ksu Tools"), ["ksuTools","ksuToolsEdit"])
+        self.appendMenu(translate("Menu", "ksu Tools"), ["ksuTools","ksuToolsEditPrefs","ksuImpDXF","ksuOpDXF","ksuOpEzDXF"])
+        self.appendMenu(translate("Menu", "ksu PushPull"), ["ksuToolsOpenBoard","ksuToolsPushPCB","ksuToolsPushMoved","ksuToolsSync3DModels","ksuToolsPullPCB","ksuToolsPullMoved",\
                         "Separator","ksuToolsGeneratePositions","ksuToolsComparePositions",\
                         "Separator","ksuRemoveTimeStamp","ksuRemoveSuffix",\
                         "Separator","ksuToolsImportFootprint","ksuToolsFootprintGen"])
-        self.appendMenu(["ksu Tools", "Demo"], submenu)
+        self.appendMenu([translate("Menu", "ksu Tools"), translate("Menu", "Demo")], submenu)
         
         #FreeCADGui.addPreferencePage( a2plib.pathOfModule() + '/GuiA2p/ui/a2p_prefs.ui','A2plus' )
         if pref_page:

@@ -429,6 +429,7 @@ from collections import namedtuple
 
 import PySide
 from PySide import QtGui, QtCore
+from TranslateUtils import translate
 QtWidgets = QtGui
 
 from time import sleep
@@ -1328,9 +1329,10 @@ btn_md_sizeX=26;btn_md_sizeY=26;
 def close_ksu():
     #def closeEvent(self, e):
     spc="""<font color='white'>****************************************************************************</font><br>"""
-    msg="""<b>Do you want to quit?</b>
-        <i>Have you saved your STEP artwork?</i><br>
-        """
+    msg=translate("Close",
+            "<b>Do you want to quit?</b> "
+            "<i>Have you saved your STEP artwork?</i><br>"
+        )
     #confirm on exit
     QtGui.QApplication.restoreOverrideCursor()
     #self.setGeometry(25, 250, 500, 500)
@@ -1338,7 +1340,9 @@ def close_ksu():
     res=''
     if test_flag_exit==False:
         QtGui.QApplication.restoreOverrideCursor()
-        res = QtGui.QMessageBox.question(None,"Close",msg,QtGui.QMessageBox.Yes|QtGui.QMessageBox.No)
+        res = QtGui.QMessageBox.question(
+            None,translate("Close", "Close"),msg,QtGui.QMessageBox.Yes|QtGui.QMessageBox.No
+        )
     if res is not QtGui.QMessageBox.No:
         #e.ignore()
         # KSUWidget.close()
@@ -1966,13 +1970,13 @@ class Ui_Dialog(object):
         comboBox_Changed(text)
 
     def retranslateUi(self, Dialog):
-        Dialog.setWindowTitle("Material Properties")
-        self.label.setText("Materials")
-        self.label_2.setText("Original")
-        self.plainTextEdit.setToolTip("Shape Color")
-        self.plainTextEdit_2.setToolTip("Diffuse Color")
-        self.label_3.setText("New")
-        self.label_4.setText("NB: set Material will unmatch colors between wrl and STEP")
+        Dialog.setWindowTitle(translate("Ui_Dialog", "Material Properties"))
+        self.label.setText(translate("Ui_Dialog", "Materials"))
+        self.label_2.setText(translate("Ui_Dialog", "Original"))
+        self.plainTextEdit.setToolTip(translate("Ui_Dialog", "Shape Color"))
+        self.plainTextEdit_2.setToolTip(translate("Ui_Dialog", "Diffuse Color"))
+        self.label_3.setText(translate("Ui_Dialog", "New"))
+        self.label_4.setText(translate("Ui_Dialog", "NB: set Material will unmatch colors between wrl and STEP"))
 ###
 def isWritable(path):
     try:
@@ -7331,7 +7335,7 @@ def routineR_XYZ(axe,alpha):
         doc.commitTransaction()
         #say("end of rotineZ!")
     else:
-        say("Select ONE single part object !")
+        say(translate("Say", "Select ONE single part object !"))
         say_single_obj()
         #QtGui.QMessageBox.information(None,"Info ...","Select ONE single part object !\r\n"+"\r\n")
 ###  end RotateXYZ
@@ -7379,7 +7383,7 @@ def routineT_XYZ(axe,v):
         doc.commitTransaction()
         #say("end of rotineT!")
     else:
-        say("Select ONE single part object !")
+        say(translate("Say", "Select ONE single part object !"))
         say_single_obj()
         #QtGui.QMessageBox.information(None,"Info ...","Select ONE single part object !\r\n"+"\r\n")
 ###  end TranslateXYZ
@@ -7456,7 +7460,7 @@ def routineResetPlacement(keepWB=None):
         #FreeCAD.activeDocument().recompute()
         #say("end of rotineRP!")
     else:
-        say("Select ONE single part object !")
+        say(translate("Say", "Select ONE single part object !"))
         say_single_obj()
         #QtGui.QMessageBox.information(None,"Info ...","Select ONE single part object !\r\n"+"\r\n")
         del objs
@@ -7465,11 +7469,11 @@ def routineResetPlacement(keepWB=None):
 def routineScaleVRML():
     global exportV, exportS, applymaterials
     if FreeCAD.ActiveDocument.FileName == "":
-        msg="""please <b>save</b> your job file before exporting."""
+        msg = translate("Save", "please <b>save</b> your job file before exporting.")
         QtGui.QApplication.restoreOverrideCursor()
-        QtGui.QMessageBox.information(None,"Info ...",msg)
-        FreeCADGui.SendMsgToActiveView("Save")
-    say('routine Scale to VRML 1/2.54')
+        QtGui.QMessageBox.information(None,translate("Save", "Info ..."),msg)
+        FreeCADGui.SendMsgToActiveView(translate("Save", "Save"))
+    say(translate("Say", 'routine Scale to VRML 1/2.54'))
     cfg_read_all()
     doc = FreeCAD.ActiveDocument
     doc.openTransaction('exportModel')
@@ -7541,7 +7545,7 @@ def routineScaleVRML():
             say('done')
             FreeCAD.ActiveDocument.commitTransaction()
     else:
-        say("Select ONE single part object !")
+        say(translate("Say", "Select ONE single part object !"))
         say_single_obj()
         #QtGui.QMessageBox.information(None,"Info ...","Select ONE single part object !\r\n"+"\r\n")
     return 0    
@@ -7610,7 +7614,7 @@ def routineScaleVRML_1():
         QtGui.QMessageBox.information(None,"Info ...",msg)
         self.setWindowState(QtCore.Qt.WindowActive)
     else:
-        say("Select ONE single part object !")
+        say(translate("Say", "Select ONE single part object !"))
         say_single_obj()
         #QtGui.QMessageBox.information(None,"Info ...","Select ONE single part object !\r\n"+"\r\n")
     return 0
@@ -7702,7 +7706,7 @@ def routineP_XYZ(axe):
     #FreeCADGui.SendMsgToActiveView("ViewFit")
     ##FreeCADGui.activeDocument().activeView().viewTop()
     doc = FreeCAD.ActiveDocument
-    say("Put on Axe XYZ !")
+    say(translate("Say", "Put on Axe XYZ !"))
     selEx = FreeCADGui.Selection.getSelectionEx()
     objs = [selobj.Object for selobj in selEx]
     if len(objs) == 1:
@@ -7755,18 +7759,22 @@ def routineP_XYZ(axe):
             routineResetPlacement()
         doc.commitTransaction()
     else:
-        say("Select ONE single part object !")
+        say(translate("Say", "Select ONE single part object !"))
         say_single_obj()
         #QtGui.QMessageBox.information(None,"Info ...","Select ONE single part object !\r\n")
 ###  end routineP_XYZ
 
 def say_single_obj():
         QtGui.QApplication.restoreOverrideCursor()
-        msg="""Select <b>ONE single part</b> object !<br>
-        suggestion for multi-part:<br>&nbsp;&nbsp;<b>Part Boolean Union (recommended)</b><br><i>or<br>&nbsp;&nbsp;Part Make compound (alternative choice)</i>"""
+        msg = translate("Say", "Select <b>ONE single part</b> object !<br>\n"
+            "suggestion for multi-part:<br>\n"
+            "&nbsp;&nbsp;<b>Part Boolean Union (recommended)</b><br>\n"
+            "or<br>\n"
+            "&nbsp;&nbsp;<i>Part Make compound (alternative choice)</i>"
+        )
         spc="""<font color='white'>*******************************************************************************</font><br>
         """
-        msg1="Error in selection"
+        msg1=translate("Say", "Error in selection")
         QtGui.QApplication.restoreOverrideCursor()
         #RotateXYZGuiClass().setGeometry(25, 250, 500, 500)
         diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
@@ -7777,10 +7785,14 @@ def say_single_obj():
 
 def say_select_obj():
         QtGui.QApplication.restoreOverrideCursor()
-        msg="""Select <b>a Compound</b> or <br><b>a Part Design group</b><br>or <b>more than one Part</b> object !<br>"""
+        msg = translate("Say",
+            "Select <b>a Compound</b> or <br>\n"
+            "<b>a Part Design group</b><br>\n"
+            "or <b>more than one Part</b> object !<br>"
+        )
         spc="""<font color='white'>*******************************************************************************</font><br>
         """
-        msg1="Error in selection"
+        msg1=translate("Say", "Error in selection")
         QtGui.QApplication.restoreOverrideCursor()
         #RotateXYZGuiClass().setGeometry(25, 250, 500, 500)
         diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
@@ -7794,7 +7806,7 @@ def say_warning(msg):
         # msg="""Select <b>a Compound</b> or <br><b>a Part Design group</b><br>or <b>more than one Part</b> object !<br>"""
         spc="""<font color='white'>*******************************************************************************</font><br>
         """
-        msg1="Warning ..."
+        msg1 = translate("Say", "Warning ...")
         QtGui.QApplication.restoreOverrideCursor()
         #RotateXYZGuiClass().setGeometry(25, 250, 500, 500)
         diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Warning,
@@ -7808,7 +7820,7 @@ def say_error(msg):
         # msg="""Select <b>a Compound</b> or <br><b>a Part Design group</b><br>or <b>more than one Part</b> object !<br>"""
         spc="""<font color='white'>*******************************************************************************</font><br>
         """
-        msg1="ERROR! ..."
+        msg1 = translate("Say", "ERROR! ...")
         QtGui.QApplication.restoreOverrideCursor()
         #RotateXYZGuiClass().setGeometry(25, 250, 500, 500)
         diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
@@ -7822,7 +7834,7 @@ def say_info(msg):
         # msg="""Select <b>a Compound</b> or <br><b>a Part Design group</b><br>or <b>more than one Part</b> object !<br>"""
         spc="""<font color='white'>*******************************************************************************</font><br>
         """
-        msg1="Info ..."
+        msg1 = translate("Say","Info ...")
         QtGui.QApplication.restoreOverrideCursor()
         #RotateXYZGuiClass().setGeometry(25, 250, 500, 500)
         diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Information,
@@ -7878,7 +7890,7 @@ def get_position():
             pass
     else:
         if exportS:
-            say("Select ONE single part object !")
+            say(translate("Say", "Select ONE single part object !"))
             ##QtGui.QMessageBox.information(None,"Info ...","Select ONE single part object !\r\n"+"\r\n")
             #QtGui.QApplication.restoreOverrideCursor()
             #msg="""Select <b>ONE single part</b> object !<br>
@@ -7944,7 +7956,7 @@ def routineM_XYZ(axe,v):
         doc.commitTransaction()
         #say("end of rotineM!")
     else:
-        say("Select an object !")
+        say(translate("Say", "Select an object !"))
         #QtGui.QMessageBox.information(None,"Info ...","Select ONE single part object !\r\n"+"\r\n")
 ###  end Move to Point XYZ
 
@@ -14435,7 +14447,7 @@ class Ui_DockWidget(object):
         local_link="<a href='"+ini_file_full_path+"' target='_blank'>"+ini_file_full_path_bold+"</a>"
         #self.config_ini_Lbl.setText(local_link)
         self.config_ini_Lbl.setText('')
-        self.config_ini_Lbl.setToolTip("ksu config ini file\nlocation")
+        self.config_ini_Lbl.setToolTip(translate("Ui_DockWidget", "ksu config ini file\nlocation"))
         self.textInputRX.setAlignment(QtCore.Qt.AlignRight)
         self.textInputRY.setAlignment(QtCore.Qt.AlignRight)
         self.textInputRZ.setAlignment(QtCore.Qt.AlignRight)
@@ -14488,62 +14500,62 @@ class Ui_DockWidget(object):
 ## retraslateUi Qt5 compatibility #############################################################################################################
     def retranslateUi(self, DockWidget):
         #DockWidget.setWindowTitle(QtGui.QApplication.translate("DockWidget", "kicad StepUp tools", None, QtGui.QApplication.UnicodeUTF8))
-        DockWidget.setWindowTitle("kicad StepUp tools")
-        self.dock_left.setToolTip("dock left")
-        self.dock_float.setToolTip("un-dock (floating)")
-        self.dock_minimize.setToolTip("minimize")
-        self.dock_right.setToolTip("dock right")
-        self.close.setToolTip("close")
-        self.textInputX.setToolTip("translate (+/- mm)")
+        DockWidget.setWindowTitle(translate("Ui_DockWidget", "KiCad StepUp tools"))
+        self.dock_left.setToolTip(translate("Ui_DockWidget", "dock left"))
+        self.dock_float.setToolTip(translate("Ui_DockWidget", "un-dock (floating)"))
+        self.dock_minimize.setToolTip(translate("Ui_DockWidget", "minimize"))
+        self.dock_right.setToolTip(translate("Ui_DockWidget", "dock right"))
+        self.close.setToolTip(translate("Ui_DockWidget", "close"))
+        self.textInputX.setToolTip(translate("Ui_DockWidget", "translate (+/- mm)"))
         self.textInputX.setText("0.10")
-        self.textInputZ.setToolTip("translate (+/- mm)")
+        self.textInputZ.setToolTip(translate("Ui_DockWidget", "translate (+/- mm)"))
         self.textInputZ.setText("0.10")
-        self.textInputY.setToolTip("translate (+/- mm)")
+        self.textInputY.setToolTip(translate("Ui_DockWidget", "translate (+/- mm)"))
         self.textInputY.setText("0.10")
-        self.TranslateX.setToolTip("translate X (+/- mm)")
-        self.TranslateY.setToolTip("translate Y (+/- mm)")
-        self.TranslateZ.setToolTip("translate Z (+/- mm)")
-        self.PutOnX.setToolTip("put on X")
-        self.PutOnY.setToolTip("put on Y")
-        self.PutOnZ.setToolTip("put on Z")
-        self.textInputRX.setToolTip("rotation angle (+/- deg)")
+        self.TranslateX.setToolTip(translate("Ui_DockWidget", "translate X (+/- mm)"))
+        self.TranslateY.setToolTip(translate("Ui_DockWidget", "translate Y (+/- mm)"))
+        self.TranslateZ.setToolTip(translate("Ui_DockWidget", "translate Z (+/- mm)"))
+        self.PutOnX.setToolTip(translate("Ui_DockWidget", "put on X"))
+        self.PutOnY.setToolTip(translate("Ui_DockWidget", "put on Y"))
+        self.PutOnZ.setToolTip(translate("Ui_DockWidget", "put on Z"))
+        self.textInputRX.setToolTip(translate("Ui_DockWidget", "rotation angle (+/- deg)"))
         self.textInputRX.setText("90")
-        self.textInputRY.setToolTip("rotation angle (+/- deg)")
+        self.textInputRY.setToolTip(translate("Ui_DockWidget", "rotation angle (+/- deg)"))
         self.textInputRY.setText("90")
-        self.textInputRZ.setToolTip("rotation angle (+/- deg)")
+        self.textInputRZ.setToolTip(translate("Ui_DockWidget", "rotation angle (+/- deg)"))
         self.textInputRZ.setText("90")
-        self.RotateX.setToolTip("rotate X (+/- deg)")
-        self.RotateY.setToolTip("rotate Y (+/- deg)")
-        self.RotateZ.setToolTip("rotate Z (+/- deg)")
-        self.CenterX.setToolTip("center X")
-        self.CenterY.setToolTip("center Y")
-        self.CenterZ.setToolTip("center Z")
-        self.makeCompound.setToolTip("make Compound of Parts")
-        self.LoadBoard.setToolTip("Load kicad\n"
-"Board .kicad_pcb")
-        self.ScaleVRML.setToolTip("export to kicad:\n"
-"STEP & scaled VRML 1/2.54")
-        self.cb_virtual.setToolTip("enalble loading\n"
+        self.RotateX.setToolTip(translate("Ui_DockWidget", "rotate X (+/- deg)"))
+        self.RotateY.setToolTip(translate("Ui_DockWidget", "rotate Y (+/- deg)"))
+        self.RotateZ.setToolTip(translate("Ui_DockWidget", "rotate Z (+/- deg)"))
+        self.CenterX.setToolTip(translate("Ui_DockWidget", "center X"))
+        self.CenterY.setToolTip(translate("Ui_DockWidget", "center Y"))
+        self.CenterZ.setToolTip(translate("Ui_DockWidget", "center Z"))
+        self.makeCompound.setToolTip(translate("Ui_DockWidget", "make Compound of Parts"))
+        self.LoadBoard.setToolTip(translate("Ui_DockWidget", "Load KiCad\n"
+"Board .kicad_pcb"))
+        self.ScaleVRML.setToolTip(translate("Ui_DockWidget", "export to KiCad:\n"
+"STEP & scaled VRML 1/2.54"))
+        self.cb_virtual.setToolTip(translate("Ui_DockWidget", "enable loading\n"
 "virtual & mechanical\n"
-"models")
-        self.cb_materials.setToolTip("use wrl\n"
-"material")
-        self.LoadFootprint.setToolTip("load kicad footprint\n"
-"\'kicad_mod\'")
-        self.cb_expStep.setToolTip("export STEP Board\n"
-"and Parts after loading")
-        self.makeUnion.setToolTip("make Union of Parts")
-        self.import3D.setToolTip("import STEP\n"
-"3D model")
-        self.checkCollisions.setToolTip("check Collisions\n"
-"tolerance 1e-06")
-        self.export3DStep.setToolTip("export selected objects to STEP")
-        self.CreateAxis.setToolTip("create reference Axis")
-        self.HelpPB.setToolTip("Help & starting Guide")
-        self.ConfigPB.setToolTip("view Config File content")
-        self.pushPCB.setToolTip("push PCB Edge to KiCad\n"
-"from Sketcher to pcbnew")
-        #self.config_ini_Lbl.setText("<b>TextLabel</b>")
+"models"))
+        self.cb_materials.setToolTip(translate("Ui_DockWidget", "use wrl\n"
+"material"))
+        self.LoadFootprint.setToolTip(translate("Ui_DockWidget", "load KiCad footprint\n"
+"\'kicad_mod\'"))
+        self.cb_expStep.setToolTip(translate("Ui_DockWidget", "export STEP Board\n"
+"and Parts after loading"))
+        self.makeUnion.setToolTip(translate("Ui_DockWidget", "make Union of Parts"))
+        self.import3D.setToolTip(translate("Ui_DockWidget", "import STEP\n"
+"3D model"))
+        self.checkCollisions.setToolTip(translate("Ui_DockWidget", "check Collisions\n"
+"tolerance 1e-06"))
+        self.export3DStep.setToolTip(translate("Ui_DockWidget", "export selected objects to STEP"))
+        self.CreateAxis.setToolTip(translate("Ui_DockWidget", "create reference Axis"))
+        self.HelpPB.setToolTip(translate("Ui_DockWidget", "Help & starting Guide"))
+        self.ConfigPB.setToolTip(translate("Ui_DockWidget", "view Config File content"))
+        self.pushPCB.setToolTip(translate("Ui_DockWidget", "push PCB Edge to KiCad\n"
+"from Sketcher to pcbnew"))
+        #self.config_ini_Lbl.setText("<b>TextLabel</b>"))
         #self.config_ini_Lbl.setText("<b>TextLabel</b>")
 
 
@@ -14694,7 +14706,7 @@ class Ui_DockWidget(object):
         pm.loadFromData(base64.b64decode(stop_b64))
         self.collisionLbl.setPixmap(pm)
         self.collisionLbl.setEnabled(False)
-        self.collisionLbl.setToolTip('collisions result status')
+        self.collisionLbl.setToolTip(translate("Ui_DockWidget", 'collisions result status'))
         #self.setPixmap(pm)
         #self.pixmap = QtGui.QPixmap(pm)
         #self.repaint() # repaint() will trigger the paintEvent(self, event), this way the new pixmap will be drawn on the label
@@ -14710,7 +14722,7 @@ class Ui_DockWidget(object):
         self.checkCollisions.setIcon(pm)
         #self.checkCollisions.setEnabled(True)
         QtCore.QTimer.singleShot(timer_Collisions, self.changePixmap_button_base)
-        self.checkCollisions.setToolTip('NO collisions found')
+        self.checkCollisions.setToolTip(translate("Ui_DockWidget", 'NO collisions found'))
         #self.setPixmap(pm)
         ##self.pixmap = QtGui.QPixmap(pm)
         #self.repaint() # repaint() will trigger the paintEvent(self, event), this way the new pixmap will be drawn on the label
@@ -14725,7 +14737,7 @@ class Ui_DockWidget(object):
         self.checkCollisions.setIcon(pm)
         #self.checkCollisions.setEnabled(True)
         #QtCore.QTimer.singleShot(timer_Collisions, self.changePixmap_stop_disabled)
-        self.checkCollisions.setToolTip('check Collisions\ntolerance 1e-06')
+        self.checkCollisions.setToolTip(translate("Ui_DockWidget", 'check Collisions\ntolerance 1e-06'))
         #self.setPixmap(pm)
         ##self.pixmap = QtGui.QPixmap(pm)
         #self.repaint() # repaint() will trigger the paintEvent(self, event), this way the new pixmap will be drawn on the label
@@ -14737,7 +14749,7 @@ class Ui_DockWidget(object):
         self.checkCollisions.setIconSize(QtCore.QSize(btn_md_sizeX,btn_md_sizeY))
         self.checkCollisions.setIcon(pm)
         QtCore.QTimer.singleShot(timer_Collisions, self.changePixmap_button_base)
-        self.checkCollisions.setToolTip('collisions FOUND!')
+        self.checkCollisions.setToolTip(translate("Ui_DockWidget", 'collisions FOUND!'))
         #self.setPixmap(pm)
         #self.pixmap = QtGui.QPixmap(pm)
         #self.repaint() # repaint() will trigger the paintEvent(self, event), this way the new pixmap will be drawn on the label
@@ -14749,7 +14761,7 @@ class Ui_DockWidget(object):
         self.collisionLbl.setPixmap(pm)
         self.collisionLbl.setEnabled(True)
         QtCore.QTimer.singleShot(timer_Collisions, self.changePixmap_stop_disabled)
-        self.collisionLbl.setToolTip('collisions FOUND!')
+        self.collisionLbl.setToolTip(translate("Ui_DockWidget", 'collisions FOUND!'))
         #self.setPixmap(pm)
         #self.pixmap = QtGui.QPixmap(pm)
         #self.repaint() # repaint() will trigger the paintEvent(self, event), this way the new pixmap will be drawn on the label
@@ -14855,7 +14867,7 @@ class Ui_DockWidget(object):
             #KSUWidget.setGeometry(xp, yp, sizeXMax, sizeY)
             textEdit_dim = textEdit_dim_base
             self.textEdit.setGeometry(textEdit_dim[0],textEdit_dim[1],textEdit_dim[2],textEdit_dim[3])
-            self.textEdit.setToolTip("ksu config ini file\ncontent")
+            self.textEdit.setToolTip(translate("Ui_DockWidget", "ksu config ini file\ncontent"))
             centerOnScreen (KSUWidget)
             #say("your home path is "+ expanduser("~"))
             sayw("kicad StepUp version "+str(___ver___))
@@ -15006,7 +15018,7 @@ class Ui_DockWidget(object):
             #KSUWidget.setGeometry(xp, yp, sizeXMax, sizeY)
             textEdit_dim = textEdit_dim_base
             self.textEdit.setGeometry(textEdit_dim[0],textEdit_dim[1],textEdit_dim[2],textEdit_dim[3])
-            self.textEdit.setToolTip("Help Start Guide")
+            self.textEdit.setToolTip(translate("Ui_DockWidget", "Help Start Guide"))
             centerOnScreen (KSUWidget)
             #ini_content=read_ini_file()
             font_color="""<font color=black>"""
@@ -15440,19 +15452,19 @@ class Ui_LayerSelection(object):
         self.comboBoxLayerSel.setObjectName("comboBoxLayerSel")
         self.verticalLayout.addWidget(self.comboBoxLayerSel)
         self.radioBtn_newdoc = QtWidgets.QRadioButton(self.verticalLayoutWidget)
-        self.radioBtn_newdoc.setToolTip("open in new FreeCAD document")
-        self.radioBtn_newdoc.setText("open in new document")
+        self.radioBtn_newdoc.setToolTip(translate("Ui_LayerSelection", "open in new FreeCAD document"))
+        self.radioBtn_newdoc.setText(translate("Ui_LayerSelection", "open in new document"))
         self.radioBtn_newdoc.setChecked(True)
         self.radioBtn_newdoc.setObjectName("radioBtn_newdoc")
         self.verticalLayout.addWidget(self.radioBtn_newdoc)
         self.radioBtn_replace_pcb = QtWidgets.QRadioButton(self.verticalLayoutWidget)
-        self.radioBtn_replace_pcb.setToolTip("<html><head/><body><p>replace PCB in current document</p><p><span style=\" font-weight:600; color:#aa0000;\">N.B.</span> Sketch constrains will be deleted!</p></body></html>")
-        self.radioBtn_replace_pcb.setText("replace PCB and Sketch in current document")
+        self.radioBtn_replace_pcb.setToolTip(translate("Ui_LayerSelection", "<html><head/><body><p>replace PCB in current document</p><p><span style=\" font-weight:600; color:#aa0000;\">N.B.</span> Sketch constrains will be deleted!</p></body></html>"))
+        self.radioBtn_replace_pcb.setText(translate("Ui_LayerSelection", "replace PCB and Sketch in current document"))
         self.radioBtn_replace_pcb.setObjectName("radioBtn_replace_pcb")
         self.verticalLayout.addWidget(self.radioBtn_replace_pcb)
         self.radioBtn_keep_sketch = QtWidgets.QRadioButton(self.verticalLayoutWidget)
-        self.radioBtn_keep_sketch.setToolTip("<html><head/><body><p>keep Sketch in current document</p><p><span style=\" font-weight:600; color:#aa0000;\">N.B.</span> this option will keep Sketch &amp; constrains but replace the PCB</p><p>This could lead to a unsynced Sketch feature</p></body></html>")
-        self.radioBtn_keep_sketch.setText("replace PCB and keep Sketch in curr. doc")
+        self.radioBtn_keep_sketch.setToolTip(translate("Ui_LayerSelection", "<html><head/><body><p>keep Sketch in current document</p><p><span style=\" font-weight:600; color:#aa0000;\">N.B.</span> this option will keep Sketch &amp; constrains but replace the PCB</p><p>This could lead to a unsynced Sketch feature</p></body></html>"))
+        self.radioBtn_keep_sketch.setText(translate("Ui_LayerSelection", "replace PCB and keep Sketch in curr. doc"))
         self.radioBtn_keep_sketch.setObjectName("radioBtn_keep_sketch")
         self.verticalLayout.addWidget(self.radioBtn_keep_sketch)
 
@@ -15517,12 +15529,12 @@ class Ui_LayerSelectionOut(object):
         self.width_label = QtWidgets.QLabel(self.verticalLayoutWidget_2)
         self.width_label.setMinimumSize(QtCore.QSize(150, 0))
         self.width_label.setToolTip("")
-        self.width_label.setText("Line Width:")
+        self.width_label.setText(translate("Ui_LayerSelectionOut", "Line Width:"))
         self.width_label.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.width_label.setObjectName("width_label")
         self.horizontalLayout.addWidget(self.width_label)
         self.lineEdit_width = QtWidgets.QLineEdit(self.verticalLayoutWidget_2)
-        self.lineEdit_width.setToolTip("Line width for drawings")
+        self.lineEdit_width.setToolTip(translate("Ui_LayerSelectionOut", "Line width for drawings"))
         self.lineEdit_width.setText("0.16")
         self.lineEdit_width.setObjectName("lineEdit_width")
         self.horizontalLayout.addWidget(self.lineEdit_width)
@@ -15555,9 +15567,9 @@ def PushPCB():
     global last_3d_path, start_time, load_sketch, last_pcb_path, edge_width
     #say("export3DSTEP")
     if load_sketch==False:
-        msg="""<b>Edge editing NOT supported on FC0.15!</b><br>please upgrade your FC release"""
+        msg = translate("PushPCB", "<b>Edge editing NOT supported on FC0.15!</b><br>please upgrade your FC release")
         say_warning(msg)
-        msg="Edge editing NOT supported on FC0.15!"
+        msg = translate("PushPCB", "Edge editing NOT supported on FC0.15!")
         sayerr(msg)            
     #if 0:
     #if FreeCAD.ActiveDocument is None:
@@ -15575,7 +15587,7 @@ def PushPCB():
                 if 0:
                     from pivy import coin
                     from math import degrees
-                    print('getting camera view')
+                    print(translate("PushPCB", "getting camera view"))
                     pcam = FreeCADGui.ActiveDocument.ActiveView.getCamera()
                     sketch = sel[0]
                     rot = sketch.getGlobalPlacement().Rotation
@@ -15583,10 +15595,10 @@ def PushPCB():
                     cam = FreeCADGui.ActiveDocument.ActiveView.getCameraNode()
                     if rot.Angle < 0.001:
                         rot.Angle = 0
-                        print ('forcing rotAngle to 0')
+                        print (translate("PushPCB", "forcing rotAngle to 0"))
                     cam.orientation.setValue(coin.SbVec3f(rot.Axis.x, rot.Axis.y, rot.Axis.z), rot.Angle) #-pi)
                     FreeCADGui.ActiveDocument.ActiveView.fitAll()
-                    print('evaluate to recompute')
+                    print(translate("PushPCB", "evaluate to recompute"))
                     FreeCAD.ActiveDocument.recompute()
                     #sel[0].ViewObject.Visibility = False
                     #print(sel[0].Label)
@@ -15639,7 +15651,7 @@ def PushPCB():
                         else:
                             if not (name.endswith("kicad_pcb")):
                                 name = name + ".kicad_pcb"
-                            msg="Saving to an empty KiCad pcb file"+'\n'+name
+                            msg = translate("PushPCB", "Saving to an empty KiCad pcb file")+'\n'+name
                             sayw(msg)
                             last_pcb_path=os.path.dirname(name)
                             pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
@@ -15655,19 +15667,19 @@ def PushPCB():
                             # msg="Save to an EXISTING KiCad pcb file to update your Edge!"
                             # sayerr(msg)
                 else:  #cancel
-                    print('Cancel')
+                    print(translate("PushPCB", "Cancel"))
                     pass    
                 if 0:
-                    print('restoring cam view')
+                    print(translate("PushPCB", "Restoring cam view"))
                     FreeCADGui.ActiveDocument.ActiveView.setCamera(pcam)
                     # sel[0].ViewObject.Visibility = True
             else:
-                msg="""select one Sketch to be pushed to kicad board!"""
+                msg = translate("PushPCB", "Select one Sketch to be pushed to kicad board!")
                 sayerr(msg)
                 say_warning(msg)
         
         else:
-            msg="""select one Sketch to be pushed to kicad board!"""
+            msg = translate("PushPCB", "Select one Sketch to be pushed to kicad board!")
             sayerr(msg)
             say_warning(msg)
 ##

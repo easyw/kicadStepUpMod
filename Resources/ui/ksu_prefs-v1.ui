@@ -133,7 +133,7 @@
              </font>
             </property>
             <property name="accessibleDescription">
-             <string>sdfsdfsdfds</string>
+             <string></string>
             </property>
             <property name="text">
              <string>Temporary directories</string>

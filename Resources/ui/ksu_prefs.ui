@@ -54,7 +54,7 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>517</width>
+        <width>522</width>
         <height>900</height>
        </rect>
       </property>
@@ -88,7 +88,7 @@
           <x>10</x>
           <y>25</y>
           <width>501</width>
-          <height>34</height>
+          <height>39</height>
          </rect>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -129,9 +129,6 @@ or 'KICAD6_3DMODEL_DIR'</string>
            <property name="prefPath" stdset="0">
             <cstring>Mod/kicadStepUpGui</cstring>
            </property>
-              <property name="mode">
-              <enum>Gui::FileChooser::Directory</enum>
-              </property>
           </widget>
          </item>
         </layout>
@@ -142,7 +139,7 @@ or 'KICAD6_3DMODEL_DIR'</string>
           <x>10</x>
           <y>65</y>
           <width>501</width>
-          <height>34</height>
+          <height>39</height>
          </rect>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -183,9 +180,6 @@ or 'KICAD6_3DMODEL_DIR'</string>
            <property name="prefPath" stdset="0">
             <cstring>Mod/kicadStepUpGui</cstring>
            </property>
-              <property name="mode">
-              <enum>Gui::FileChooser::Directory</enum>
-           </property>
           </widget>
          </item>
         </layout>
@@ -208,14 +202,14 @@ or 'KICAD6_3DMODEL_DIR'</string>
            <x>10</x>
            <y>20</y>
            <width>491</width>
-           <height>26</height>
+           <height>29</height>
           </rect>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_12">
           <item>
            <widget class="QLabel" name="label_20">
             <property name="toolTip">
-             <string>PCB color</string>
+             <string>PCBs color.</string>
             </property>
             <property name="text">
              <string>PCB color</string>
@@ -317,7 +311,7 @@ or 'KICAD6_3DMODEL_DIR'</string>
            <x>10</x>
            <y>50</y>
            <width>491</width>
-           <height>26</height>
+           <height>29</height>
           </rect>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_13">
@@ -386,7 +380,7 @@ or 'KICAD6_3DMODEL_DIR'</string>
            <x>10</x>
            <y>80</y>
            <width>491</width>
-           <height>26</height>
+           <height>29</height>
           </rect>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_14">
@@ -812,14 +806,14 @@ LED_D5.0mm_IRBlack;USB_Mini-B_Lumberg_2486_01_Horizontal;&lt;br/&gt;&lt;span sty
            <x>9</x>
            <y>80</y>
            <width>491</width>
-           <height>26</height>
+           <height>29</height>
           </rect>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_11">
           <item>
            <widget class="QLabel" name="label_19">
             <property name="toolTip">
-             <string>STEP export mode</string>
+             <string>STEP export mode.</string>
             </property>
             <property name="text">
              <string>STEP export mode</string>
@@ -881,14 +875,14 @@ LED_D5.0mm_IRBlack;USB_Mini-B_Lumberg_2486_01_Horizontal;&lt;br/&gt;&lt;span sty
            <x>8</x>
            <y>110</y>
            <width>491</width>
-           <height>26</height>
+           <height>29</height>
           </rect>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_15">
           <item>
            <widget class="QLabel" name="label_23">
             <property name="toolTip">
-             <string>3D Loading mode</string>
+             <string>3D Loading mode.</string>
             </property>
             <property name="text">
              <string>3D Loading mode</string>
@@ -960,7 +954,7 @@ Allowing or not Loading Multi Parts objects</string>
           </rect>
          </property>
          <property name="toolTip">
-          <string>Assembly3 Links allowed</string>
+          <string>Assembly3 Links allowed.</string>
          </property>
          <property name="text">
           <string>Assembly3 Links allowed</string>
@@ -985,13 +979,13 @@ Allowing or not Loading Multi Parts objects</string>
           </rect>
          </property>
          <property name="toolTip">
-          <string notr="true">Enable Materials for VRML exporting</string>
+          <string>Enables Materials for VRML exporting.</string>
          </property>
          <property name="statusTip">
           <string notr="true"/>
          </property>
          <property name="text">
-          <string notr="true">Enable Materials for VRML exporting</string>
+          <string>Enable Materials for VRML exporting</string>
          </property>
          <property name="checked">
           <bool>true</bool>
@@ -1016,7 +1010,7 @@ Allowing or not Loading Multi Parts objects</string>
           </rect>
          </property>
          <property name="toolTip">
-          <string>Start Turntable after loading</string>
+          <string>Start Turntable after loading.</string>
          </property>
          <property name="text">
           <string>Start Turntable after loading</string>
@@ -1041,7 +1035,7 @@ Allowing or not Loading Multi Parts objects</string>
           </rect>
          </property>
          <property name="toolTip">
-          <string>Assembly3 LinkGroups allowed</string>
+          <string>Assembly3 LinkGroups allowed.</string>
          </property>
          <property name="text">
           <string>Assembly3 LinkGroups allowed</string>
@@ -1069,10 +1063,10 @@ Allowing or not Loading Multi Parts objects</string>
           </rect>
          </property>
          <property name="toolTip">
-          <string notr="true">Enable compressed STEP file ('.stpZ') generation exporting</string>
+          <string>Enables compressed STEP file ('.stpZ') generation exporting.</string>
          </property>
          <property name="text">
-          <string notr="true">Enable compressed STEP file ('.stpZ') generation exporting</string>
+          <string>Enable compressed STEP file ('.stpZ') generation exporting</string>
          </property>
          <property name="checked">
           <bool>false</bool>
@@ -1100,10 +1094,10 @@ Allowing or not Loading Multi Parts objects</string>
           </rect>
          </property>
          <property name="toolTip">
-          <string notr="true">Enable compressed VRML file ('.wrz') generation exporting</string>
+          <string>Enables compressed VRML file ('.wrz') generation exporting.</string>
          </property>
          <property name="text">
-          <string notr="true">Enable compressed VRML file ('.wrz') generation exporting</string>
+          <string>Enable compressed VRML file ('.wrz') generation exporting</string>
          </property>
          <property name="checked">
           <bool>false</bool>
@@ -1131,10 +1125,10 @@ Allowing or not Loading Multi Parts objects</string>
           </rect>
          </property>
          <property name="toolTip">
-          <string notr="true">Display STEP import settings warning</string>
+          <string>Displays STEP import settings warning.</string>
          </property>
          <property name="text">
-          <string notr="true">Display STEP import settings warning</string>
+          <string>Display STEP import settings warning</string>
          </property>
          <property name="checked">
           <bool>true</bool>
@@ -1162,10 +1156,10 @@ Allowing or not Loading Multi Parts objects</string>
           </rect>
          </property>
          <property name="toolTip">
-          <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Apply Transparency for 'Glass' Materials:&lt;/p&gt;&lt;p&gt;Force Transparency to STEP model if 'Glass' is found in '.wrl' model&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Apply Transparency for 'Glass' Materials:&lt;/p&gt;&lt;p&gt;Force Transparency to STEP model if 'Glass' is found in '.wrl' model&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
-          <string notr="true">Apply Transparency for 'Glass' Materials</string>
+          <string>Apply Transparency for 'Glass' Materials</string>
          </property>
          <property name="checked">
           <bool>false</bool>
@@ -1193,10 +1187,10 @@ Allowing or not Loading Multi Parts objects</string>
           </rect>
          </property>
          <property name="toolTip">
-          <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Apply Transparency for 'Led' Materials:&lt;/p&gt;&lt;p&gt;Force Transparency to STEP model if 'Led' is found in '.wrl' model&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Apply Transparency for 'Led' Materials:&lt;/p&gt;&lt;p&gt;Force Transparency to STEP model if 'Led' is found in '.wrl' model&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
-          <string notr="true">Apply Transparency for 'Led' Materials</string>
+          <string>Apply Transparency for 'Led' Materials</string>
          </property>
          <property name="checked">
           <bool>false</bool>
@@ -1224,10 +1218,10 @@ Allowing or not Loading Multi Parts objects</string>
           </rect>
          </property>
          <property name="toolTip">
-          <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Skip importing pcb zone(s)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Skip importing pcb zone(s)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
-          <string notr="true">skpZone</string>
+          <string>skpZone</string>
          </property>
          <property name="checked">
           <bool>false</bool>
@@ -1255,10 +1249,10 @@ Allowing or not Loading Multi Parts objects</string>
           </rect>
          </property>
          <property name="toolTip">
-          <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Skip importing pcb tracks and vias&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Skip importing pcb tracks and vias&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
-          <string notr="true">skpTracks</string>
+          <string>skpTracks</string>
          </property>
          <property name="checked">
           <bool>false</bool>
@@ -1286,10 +1280,10 @@ Allowing or not Loading Multi Parts objects</string>
           </rect>
          </property>
          <property name="toolTip">
-          <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Skip importing pcb pads&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Skip importing pcb pads&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
-          <string notr="true">skpPads</string>
+          <string>skpPads</string>
          </property>
          <property name="checked">
           <bool>false</bool>
@@ -1311,7 +1305,7 @@ Allowing or not Loading Multi Parts objects</string>
           <x>10</x>
           <y>105</y>
           <width>501</width>
-          <height>34</height>
+          <height>39</height>
          </rect>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_8">
@@ -1352,10 +1346,7 @@ Allowing or not Loading Multi Parts objects</string>
            <property name="prefPath" stdset="0">
             <cstring>Mod/kicadStepUpGui</cstring>
            </property>
-              <property name="mode">
-              <enum>Gui::FileChooser::Directory</enum>
-           </property>
-           </widget>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -1365,7 +1356,7 @@ Allowing or not Loading Multi Parts objects</string>
           <x>10</x>
           <y>145</y>
           <width>501</width>
-          <height>34</height>
+          <height>39</height>
          </rect>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_9">
@@ -1405,9 +1396,6 @@ Allowing or not Loading Multi Parts objects</string>
            </property>
            <property name="prefPath" stdset="0">
             <cstring>Mod/kicadStepUpGui</cstring>
-           </property>
-              <property name="mode">
-              <enum>Gui::FileChooser::Directory</enum>
            </property>
           </widget>
          </item>
@@ -1461,7 +1449,7 @@ Allowing or not Loading Multi Parts objects</string>
          </rect>
         </property>
         <property name="toolTip">
-         <string>Generate Sketches for differences on PCB Edge</string>
+         <string>Generates Sketches for differences on PCB Edge.</string>
         </property>
         <property name="text">
          <string>Generate Sketches for differences on PCB Edge</string>
