@@ -769,7 +769,18 @@ Permitir o no cargar objetos Multi Partes</translation>
         <location filename="../hlp.py" line="28"/>
         <source>&lt;b&gt;Kicad StepUp&lt;/b&gt; is a tool set to easily &lt;b&gt;collaborate between kicad pcb EDA&lt;/b&gt; (board and 3D parts) as STEP models &lt;b&gt;and FreeCAD MCAD&lt;/b&gt; modeler.&lt;br&gt;
 &lt;/font&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;b&gt;Kicad StepUp&lt;/b&gt; es un conjunto herramientas que de forma sencilla &lt;b&gt;colabora entre kicad pcb EDA&lt;/b&gt; (tarjetas y piezas 3D) como modelo STEP &lt;b&gt;y FreeCAD MCAD&lt;/b&gt; modelador.&lt;br&gt;
+&lt;/font&gt;</translation>
+    </message>
+    <message>
+        <location filename="../hlp.py" line="28"/>
+        <source>The artwork can be used for MCAD interchange and collaboration, and for enclosure design.&lt;br&gt;</source>
+        <translation>La obra de arte puede ser utilizada para intercambio y colaboración en MCAD y para diseño de recintos</translation>
+    </message>
+    <message>
+        <location filename="../hlp.py" line="29"/>
+        <source>The 3D visualization of components on board assemblies in kicad 3dviewer, will be the same in your mechanical software, because of the STEP interchange format.&lt;br&gt;It is also possible to &lt;b&gt;Update a pcb Edge from a FC Sketcher.&lt;/b&gt;&lt;br&gt;</source>
+        <translation>La visualización 3D de los componentes en el ensamblaje de la placa en KiCad 3DViewer, será la misma en su software mecánico, debido al formato de intercambio STEP. &lt;br&gt;También es posible &lt;b&gt;actualizar un borde de PCB desde un croquis de Sketcher FC. &lt;/b&gt;&lt;br&gt;</translation>
     </message>
     <message>
         <location filename="../hlp.py" line="34"/>
@@ -779,49 +790,18 @@ The 3D visualization of components on board assemblies in kicad 3dviewer, will b
 because of the STEP interchange format.&lt;br&gt;
 It is also possible to &lt;b&gt;Update a pcb Edge from a FC Sketcher.&lt;/b&gt;&lt;br&gt;
 &lt;b&gt;configuration options:&lt;/b&gt;&lt;br&gt;Configuration options are located in the preferences system of FreeCAD, which is located in the Edit menu -&amp;gt; Preferences.&lt;br&gt;
-</source>
+        </source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../hlp.py" line="36"/>
+        <source>starter Guide:&lt;br&gt;&lt;a href=&apos;{}{}demo{}{}{}{}&apos; target=&apos;_blank&apos;&gt;{}&lt;/a&gt;&lt;br&gt;</source>
+        <translation>Guía de inicio:&lt;br&gt;&lt;a href=&apos;{}{}demo{}{}{}{}&apos; target=&apos;_blank&apos;&gt;{}&lt;/a&gt;&lt;br&gt;</translation>
     </message>
     <message>
         <location filename="../hlp.py" line="45"/>
         <source>starter Guide:&lt;br&gt;&lt;a href=&apos;{}{}demo{}{}&apos; target=&apos;_blank&apos;&gt;{}&lt;/a&gt;&lt;br&gt;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../hlp.py" line="48"/>
-        <source>&lt;b&gt;Note:&lt;/b&gt; each button has its own &lt;b&gt;Tooltip&lt;/b&gt;&lt;br&gt;
-useful buttons:&lt;br&gt;&lt;b&gt;Load kicad Board directly&lt;/b&gt; -&gt; will load kicad board and parts in FreeCAD coming from kicad &apos;.kicad_pcb&apos; file&lt;br&gt;
-&lt;b&gt;Load kicad Footprint module&lt;/b&gt; -&gt; will load directly kicad footprint in FreeCAD to easily align the 3D model to footprint&lt;br&gt;
-&lt;b&gt;Export to kicad STEP &amp; scaled VRML&lt;/b&gt; -&gt; will convert MCAD model to STEP and VRML to be used by Kicad and kicad StepUp&lt;br&gt;
-&lt;b&gt;   -&gt; VRML can be multipart;&lt;br&gt;   -&gt; STEP must be single part&lt;/b&gt;&lt;br&gt;(&lt;i&gt;&apos;Part Boolean Union&apos;&lt;/i&gt; or &lt;i&gt;&apos;Part Makecompound&apos;&lt;/i&gt;)&lt;br&gt;
-&lt;i&gt;assign material to selected colors and your VRML 3D models will have nice shiny effects&lt;/i&gt;&lt;br&gt;
-&lt;b&gt;Push pcb Sketch to kicad_pcb Edge&lt;/b&gt; -&gt; will push pcb Sketch to kicad_pcb Edge in your design; it can be done with an empty or with an existing pcb Edge&lt;br&gt;
-&lt;br&gt;for a more detailed help have a look at &lt;br&gt;&lt;b&gt;kicadStepUp-starter-Guide.pdf&lt;/b&gt;&lt;br&gt;
-or just follow the &lt;b&gt;YouTube video tutorials&lt;/b&gt; &lt;br&gt;&lt;a href=&apos;https://youtu.be/h6wMU3lE_sA&apos;  target=&apos;_blank&apos;&gt;kicadStepUp basics&lt;/a&gt;&lt;br&gt;
-&lt;a href=&apos;https://youtu.be/O6vr8QFnYGw&apos; target=&apos;_blank&apos;&gt;kicadStepUp STEP alignment to Kicad footprint&lt;/a&gt;&lt;br&gt;
-&lt;a href=&apos;https://github.com/easyw/kicadStepUpMod&apos; target=&apos;_blank&apos;&gt;check always the latest release of kicadStepUp&lt;/a&gt;&lt;br&gt;&lt;br&gt;
-Designing in kicad native 3d-viewer will produce a fully aligned STEP MCAD version 
-with the same view of kicad 3d render.&lt;br&gt;
-Moreover, KiCad StepUp tool set &lt;b&gt;will let you to load the kicad footprint inside FreeCAD and align the 3D part with a visual real time feedback 
-of the 3d model and footprint reciprocal position.&lt;/b&gt;&lt;br&gt;
-With this tool is possible to download a part from on-line libraries, align the model to kicad footprint 
-and export the model to wrl, for immediate 3d-viewer alignment in pcbnew.&lt;br&gt;
-Now the two words are connected for a better collaboration; just &lt;b&gt;design in kicad EDA&lt;/b&gt; and transfer 
-the artwork to &lt;b&gt;MCAD (FreeCAD)&lt;/b&gt; smoothly.&lt;br&gt;
-&lt;b&gt;The workflow is very simple&lt;/b&gt; and maintains the usual way to work with kicad:&lt;br&gt;
-Add models to your library creating 3D models in FreeCAD, or getting models from online libs 
-or from the parametric 3D lib expressly done to kicad &lt;a href=&apos;https://github.com/easyw/kicad-3d-models-in-freecad&apos; target=&apos;_blank&apos;&gt;kicadStepUp 3D STEP models generator&lt;/a&gt;&lt;br&gt;
-Once you have your 3D MCAD model, &lt;b&gt;you need to have a copy of that in STEP and VRML format.&lt;/b&gt; &lt;br&gt;
-(with the latest kicad release you can only have STEP model, VRML is not needed anymore, but &lt;b&gt;it is possible
- to mix VRML, STEP and IGES format&lt;/b&gt;)&lt;br&gt;
-Just exporting the model with FreeCAD and put your model in the same folder in which 
-normally you are used to put vrml models; the script will assembly the MCAD board and models as in 3d-viewer of kicad.
-&lt;br&gt;&lt;b&gt;NB&lt;br&gt;STEP model has to be fused in single object&lt;/b&gt;&lt;br&gt;(Part Boolean Union of objects)
-&lt;br&gt;&lt;b&gt;or a Compoud&lt;/b&gt; (Part Makecompound of objects)&lt;/b&gt;
-&lt;hr&gt;&lt;b&gt;enable &apos;Report view&apos; Panel to see helping messages&lt;/b&gt;
-&lt;/font&gt;
-&lt;br&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>Guía de inicio:&lt;br&gt;&lt;a href=&apos;{}{}demo{}{}&apos; target=&apos;_blank&apos;&gt;{}&lt;/a&gt;&lt;br&gt;</translation>
     </message>
 </context>
 <context>
@@ -964,28 +944,30 @@ or&lt;br&gt;
         <source>Select &lt;b&gt;a Compound&lt;/b&gt; or &lt;br&gt;
 &lt;b&gt;a Part Design group&lt;/b&gt;&lt;br&gt;
 or &lt;b&gt;more than one Part&lt;/b&gt; object !&lt;br&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>Selecciona &lt;b&gt;un compuesto&lt;/b&gt; o &lt;br&gt;
+&lt;b&gt;un grupo de Part Design&lt;/b&gt;&lt;br&gt;
+o &lt;b&gt;mas de un objeto pieza!&lt;/b&gt;&lt;br&gt;</translation>
     </message>
     <message>
         <location filename="../kicadStepUptools.py" line="7795"/>
         <location filename="../kicadStepUptools.py" line="7777"/>
         <source>Error in selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Error en selección</translation>
     </message>
     <message>
         <location filename="../kicadStepUptools.py" line="7809"/>
         <source>Warning ...</source>
-        <translation type="unfinished"></translation>
+        <translation>Advertencia ...</translation>
     </message>
     <message>
         <location filename="../kicadStepUptools.py" line="7823"/>
         <source>ERROR! ...</source>
-        <translation type="unfinished"></translation>
+        <translation>ERROR! ...</translation>
     </message>
     <message>
         <location filename="../kicadStepUptools.py" line="7837"/>
         <source>Info ...</source>
-        <translation type="unfinished"></translation>
+        <translation>Informacion ...</translation>
     </message>
     <message>
         <location filename="../kicadStepUptools.py" line="7893"/>
@@ -996,12 +978,12 @@ or &lt;b&gt;more than one Part&lt;/b&gt; object !&lt;br&gt;</source>
         <location filename="../kicadStepUptools.py" line="7386"/>
         <location filename="../kicadStepUptools.py" line="7338"/>
         <source>Select ONE single part object !</source>
-        <translation type="unfinished"></translation>
+        <translation>Selecciona UN objecto simple pieza !</translation>
     </message>
     <message>
         <location filename="../kicadStepUptools.py" line="7959"/>
         <source>Select an object !</source>
-        <translation type="unfinished"></translation>
+        <translation>Selecciona un objecto !</translation>
     </message>
 </context>
 <context>
@@ -1009,17 +991,16 @@ or &lt;b&gt;more than one Part&lt;/b&gt; object !&lt;br&gt;</source>
     <message>
         <location filename="../InitGui.py" line="187"/>
         <source>ksu Tools</source>
-        <translation>KSU Herramientas</translation>
+        <translation>Herramientas ksu</translation>
     </message>
     <message>
         <location filename="../InitGui.py" line="193"/>
         <source>ksu Sketching</source>
-        <translation>KSU Croquis</translation>
     </message>
     <message>
         <location filename="../InitGui.py" line="202"/>
         <source>ksu PushPull</source>
-        <translation>KSU PushPull</translation>
+        <translation>ksu EnviarCargar</translation>
     </message>
     <message>
         <location filename="../InitGui.py" line="209"/>
@@ -1136,9 +1117,7 @@ y vertical</translation>
         <location filename="../kicadStepUptools.py" line="14439"/>
         <source>ksu config ini file
 location</source>
-        <translation>KSU ubicación del archivo
-de configuración ini
-</translation>
+        <translation>ksu ubicación de archivo de configuración INI</translation>
     </message>
     <message>
         <location filename="../kicadStepUptools.py" line="14492"/>
@@ -1329,8 +1308,8 @@ modelo 3D</translation>
         <location filename="../kicadStepUptools.py" line="14545"/>
         <source>push PCB Edge to KiCad
 from Sketcher to pcbnew</source>
-        <translation>Enviar el borde de la PCB a KiCad
-desde Sketcher a PCBNew</translation>
+        <translation>Envia arista de PCB a KiCad
+from Sketcher to pcbnew</translation>
     </message>
     <message>
         <location filename="../kicadStepUptools.py" line="14698"/>
@@ -1390,17 +1369,17 @@ de configuración ini
     <message>
         <location filename="../kicadStepUptools.py" line="15451"/>
         <source>replace PCB and Sketch in current document</source>
-        <translation>reemplazar PCB y croquis en el documento actual</translation>
+        <translation>Remplaza PCB y Croquis en el documento actual</translation>
     </message>
     <message>
         <location filename="../kicadStepUptools.py" line="15455"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;keep Sketch in current document&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; color:#aa0000;&quot;&gt;N.B.&lt;/span&gt; this option will keep Sketch &amp;amp; constrains but replace the PCB&lt;/p&gt;&lt;p&gt;This could lead to a unsynced Sketch feature&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;keep Sketch in current document&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; color:#aa0000;&quot;&gt;N.B.&lt;/span&gt; this option will keep Sketch &amp; constrains but replace the PCB&lt;/p&gt;&lt;p&gt;This could lead to a unsynced Sketch feature&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Mantiene croquis en el documento actual&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; color:#aa0000;&quot;&gt;N.B.&lt;/span&gt; Esta opcion mantendra las restricciones del croquis &amp; pero remplazara la PCB&lt;/p&gt;&lt;p&gt;Esto podria conducir a caracteristicas del croquis desincronizadas&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="../kicadStepUptools.py" line="15456"/>
         <source>replace PCB and keep Sketch in curr. doc</source>
-        <translation>reemplazar PCB y croquis en el documento actual</translation>
+        <translation>Remplaza PCB y mantiene croquis en documento actual</translation>
     </message>
 </context>
 <context>
@@ -1436,7 +1415,7 @@ de configuración ini
     <message>
         <location filename="../kicadStepUpCMD.py" line="682"/>
         <source>Arc or Intersection Offset method</source>
-        <translation>Método de desplazamiento de arco o intersección</translation>
+        <translation>Metodo de arco o interseccion</translation>
     </message>
     <message>
         <location filename="../kicadStepUpCMD.py" line="684"/>
@@ -1464,7 +1443,7 @@ de configuración ini
     <message>
         <location filename="../kicadStepUpCMD.py" line="4720"/>
         <source>Create Center of Circle through 3 Vertices</source>
-        <translation>Crear centro de círculo a través de 3 vértices</translation>
+        <translation>Crea un centro de circulo a travez de 3 vertices</translation>
     </message>
 </context>
 <context>
@@ -1481,12 +1460,8 @@ exportada a STEP como un único sólido</translation>
     <name>ksu</name>
     <message>
         <location filename="../kicadStepUpCMD.py" line="997"/>
-        <source>PolyLine Contour generated
-
-&lt;b&gt;For PolyLine Pads, please add &apos;circles&apos; inside each closed polyline&lt;/b&gt;&lt;br&gt;</source>
-        <translation>Contorno polilínea generado
-
-&lt;b&gt;Para los pads polilínea, agregue &apos;círculos&apos; dentro de cada polilínea cerrada&lt;/b&gt;&lt;br&gt;</translation>
+        <source>PolyLine Contour generated&lt;b&gt;For PolyLine Pads, please add &apos;circles&apos; inside each closed polyline&lt;/b&gt;&lt;br&gt;</source>
+        <translation type="unfinished">Contorno de polilinea generada&lt;b&gt;For PolyLine Pads, please add &apos;circles&apos; inside each closed polyline&lt;/b&gt;&lt;br&gt;</translation>
     </message>
     <message>
         <location filename="../kicadStepUpCMD.py" line="1033"/>
@@ -1536,7 +1511,7 @@ exportada a STEP como un único sólido</translation>
     <message>
         <location filename="../kicadStepUpCMD.py" line="4138"/>
         <source>Remove &apos;custom&apos; Suffix from Labels</source>
-        <translation>Eliminar sufijo &apos;custom&apos; de las etiquetas</translation>
+        <translation>Elimina sufijo &apos;custom&apos; de las etiquetas</translation>
     </message>
 </context>
 <context>
@@ -1544,7 +1519,7 @@ exportada a STEP como un único sólido</translation>
     <message>
         <location filename="../kicadStepUpCMD.py" line="4061"/>
         <source>Remove TimeStamp from Labels</source>
-        <translation>Eliminar marcas de tiempo de las etiquetas</translation>
+        <translation>Elimina marcas de tiempo de las etiquetas</translation>
     </message>
 </context>
 <context>
@@ -1598,7 +1573,7 @@ principal de KiCad StepUp</translation>
     <message>
         <location filename="../kicadStepUpCMD.py" line="1896"/>
         <source>ksu 3D object to 2D projection</source>
-        <translation>KSU Objeto 3D a proyección 2D</translation>
+        <translation>ksu Objecto 3D a proyeccion 2D</translation>
     </message>
 </context>
 <context>
@@ -1623,9 +1598,9 @@ Nota: ¡podría ser una carga muy intensiva!</translation>
         <source>ksu Add Object(s) to Container Tree
 keeping Placement
 First Selection is the Container</source>
-        <translation>KSU Agregar objetos al árbol contenedor
-manteniendo la ubicación
-La primer selección es el contenedor</translation>
+        <translation>ksu Agrega objecto(s) a un contenedor de arbol
+manteniendo ubicación
+Primera seleccion es el contenedor</translation>
     </message>
 </context>
 <context>
@@ -1643,12 +1618,12 @@ Nota: ¡podría ser una carga muy intensiva!</translation>
     <message>
         <location filename="../kicadStepUpCMD.py" line="5019"/>
         <source>AlignView to Face</source>
-        <translation>Alinear vista a cara</translation>
+        <translation>Alinea vista a la cara</translation>
     </message>
     <message>
         <location filename="../kicadStepUpCMD.py" line="5020"/>
         <source>ksu AlignView to Face</source>
-        <translation>KSU Alinear vista a cara</translation>
+        <translation>ksu Alinea vista a la cara</translation>
     </message>
 </context>
 <context>
@@ -1656,7 +1631,7 @@ Nota: ¡podría ser una carga muy intensiva!</translation>
     <message>
         <location filename="../kicadStepUpCMD.py" line="3723"/>
         <source>Manipulator tools &apos;Aligner&apos;</source>
-        <translation>Herramientas manipuladoras &apos;Alineador&apos;</translation>
+        <translation>Herramientas de manipulador &apos;Alineador&apos;</translation>
     </message>
 </context>
 <context>
@@ -1739,16 +1714,12 @@ Alternar sufijo</translation>
     <message>
         <location filename="../kicadStepUpCMD.py" line="1821"/>
         <source>tools Compare 3D models Positions</source>
-        <translation>Herramientas KSU Comparar posiciones de modelos 3D</translation>
+        <translation>herramientas Compara posiciones de modelos 3D</translation>
     </message>
     <message>
         <location filename="../kicadStepUpCMD.py" line="1822"/>
-        <source>ksu Compare 3D models Positions
-Data with the Active Document
-[MCAD Synchronize]</source>
-        <translation>KSU Comparar datos de posiciones de
-modelos 3D con el documento activo
-[Sincronizar MCAD]</translation>
+        <source>ksu Compare 3D models Positions Data with the Active Document [MCAD Synchronize] </source>
+        <translation>ksu Compara datos de posiciones de modelos 3D con el documento activo [MCAD sincronizado] </translation>
     </message>
 </context>
 <context>
@@ -1761,7 +1732,7 @@ modelos 3D con el documento activo
     <message>
         <location filename="../kicadStepUpCMD.py" line="2006"/>
         <source>ksu Fix &amp; auto Constrain a Sketch</source>
-        <translation>KSU Reparar y restringir automáticamente un croquis</translation>
+        <translation>ksu repara &amp; auto restriciones de un croquis</translation>
     </message>
 </context>
 <context>
@@ -1770,8 +1741,8 @@ modelos 3D con el documento activo
         <location filename="../kicadStepUpCMD.py" line="894"/>
         <source>ksu tools &apos;RF PolyLined Sketch&apos;
 Selection&apos;s Shapes to PolyLine Sketch</source>
-        <translation>Herramientas KSU &apos;Croquis de polilínea de RF&apos;
-Formas de selección a croquis de polilínea</translation>
+        <translation>ksu herramientas &apos;Croquis con polilinea RF&apos;
+Selecciona&apos;es formas a croquis polilinea</translation>
     </message>
 </context>
 <context>
@@ -1779,12 +1750,12 @@ Formas de selección a croquis de polilínea</translation>
     <message>
         <location filename="../kicadStepUpCMD.py" line="2708"/>
         <source>Copy Placement 1st to 2nd</source>
-        <translation>Copiar ubicación del 1.º al 2.º</translation>
+        <translation>Copia primera ubicacion a segunda</translation>
     </message>
     <message>
         <location filename="../kicadStepUpCMD.py" line="2709"/>
         <source>ksu tools Copy Placement 1st to 2nd</source>
-        <translation>Herramientas KSU Copiar ubicación del 1.º al 2.º</translation>
+        <translation>herramientas ksu copia primera ubicación a la segunda</translation>
     </message>
 </context>
 <context>
@@ -1792,16 +1763,12 @@ Formas de selección a croquis de polilínea</translation>
     <message>
         <location filename="../kicadStepUpCMD.py" line="3096"/>
         <source>PartDN Copy</source>
-        <translation>Copia de parte DN</translation>
+        <translation>Copia PartDN</translation>
     </message>
     <message>
         <location filename="../kicadStepUpCMD.py" line="3097"/>
-        <source>ksu PartDN Copy object
-with relative placement
-[flattened model]</source>
-        <translation>KSU Objeto de copia PartDN
-con colocación relativa
-[modelo aplanado]</translation>
+        <source>ksu PartDN Copy object with relative placement [flattened model] </source>
+        <translation>ksu copia objecto PartDN con ubicacion relativa [flattened model] </translation>
     </message>
 </context>
 <context>
@@ -1809,7 +1776,7 @@ con colocación relativa
     <message>
         <location filename="../kicadStepUpCMD.py" line="4275"/>
         <source>Defeaturing Tools from Defeaturing WorkBench</source>
-        <translation>Herramientas de eliminación de características del entorno de trabajo Defeaturing</translation>
+        <translation>Herramientas de decaraterizado desde el entorno de trabajo Defeaturing</translation>
     </message>
 </context>
 <context>
@@ -1834,12 +1801,8 @@ con colocación relativa
     </message>
     <message>
         <location filename="../kicadStepUpCMD.py" line="2116"/>
-        <source>ksu Select coplanar edge(s) or Face(s) or 
-a single Vertex of a coplanar outline 
-to get a corresponding Sketch</source>
-        <translation>KSU Seleccionar arista(s) coplanar(es) o cara(s) o
-un único vértice de un contorno coplanar 
-para obtener el croquis correspondiente</translation>
+        <source>ksu Select coplanar edge(s) or Face(s) or a single Vertex of a coplanar outline to get a corresponding Sketch</source>
+        <translation>ksu Selecciona arista(s) coplanar o cara(s) o un simple vertize de una linea exterior coplanar para obtener una croquis correspondiente</translation>
     </message>
 </context>
 <context>
@@ -1854,10 +1817,8 @@ para obtener el croquis correspondiente</translation>
     <name>ksuToolsExplode</name>
     <message>
         <location filename="../kicadStepUpCMD.py" line="4252"/>
-        <source>ksu Tools PCB Explode
-Select the top container of a KiCad PCB to exlode it</source>
-        <translation>Heramientas KSU Explosionar PCB
-Seleccione el contenedor superior de una PCB de KiCad para explosionarla</translation>
+        <source>ksu Tools PCB Explode Select the top container of a KiCad PCB to explode it</source>
+        <translation>Herramientas ksu Explosionar PCB Explode Selecciona el contenedor superior de una PCB de KiCad para explosionar</translation>
     </message>
 </context>
 <context>
@@ -1906,7 +1867,7 @@ Extruir la selección</translation>
     <message>
         <location filename="../kicadStepUpCMD.py" line="2609"/>
         <source>ksu Footprint editor and exporter</source>
-        <translation>KSU Editor y exportador de huellas</translation>
+        <translation>ksu Editor de huellas y exportador</translation>
     </message>
 </context>
 <context>
@@ -1914,16 +1875,12 @@ Extruir la selección</translation>
     <message>
         <location filename="../kicadStepUpCMD.py" line="1794"/>
         <source>tools Generate 3D models Positions</source>
-        <translation>Herramientas KSU Generar posiciones de modelos 3D</translation>
+        <translation>herramientas Generar posiciones de modelos 3D</translation>
     </message>
     <message>
         <location filename="../kicadStepUpCMD.py" line="1795"/>
-        <source>ksu Generate 3D models Positions
-Data for Active Document
-[MCAD Synchronize]</source>
-        <translation>KSU Generar datos de posiciones de
-modelos 3D para el documento activo
-[Sincronizar MCAD]</translation>
+        <source>ksu Generate 3D models Positions Data for Active Document [MCAD Synchronize] </source>
+        <translation>ksu Generar posiciones de modelos 3D para un documento activo [MCAD Synchronize] </translation>
     </message>
 </context>
 <context>
@@ -1982,10 +1939,8 @@ modelos 3D para el documento activo
     <name>ksuToolsLoopSelection</name>
     <message>
         <location filename="../kicadStepUpCMD.py" line="3805"/>
-        <source>ksu tools &apos;LoopSelection&apos;
-Loop selection on a xy outline</source>
-        <translation>Herramientas KSU &apos;Selección de bucle&apos;
-Selección de bucle en un contorno XY</translation>
+        <source>ksu tools &apos;LoopSelection&apos;Loop selection on a xy outline</source>
+        <translation>Herramientas ksu&apos;Seleccionar bucle&apos;seleccionar bucle sobre una linea exterior en XY</translation>
     </message>
 </context>
 <context>
@@ -1993,12 +1948,12 @@ Selección de bucle en un contorno XY</translation>
     <message>
         <location filename="../kicadStepUpCMD.py" line="1396"/>
         <source>Make Compound</source>
-        <translation>Crear cuerpo compuesto</translation>
+        <translation>Crear compuesto</translation>
     </message>
     <message>
         <location filename="../kicadStepUpCMD.py" line="1397"/>
         <source>ksu Make a Compound of selected objects</source>
-        <translation>KSU Crear una composición de objetos seleccionados</translation>
+        <translation>ksu Crear un compuesto de los objetos seleccionados</translation>
     </message>
 </context>
 <context>
@@ -2055,7 +2010,7 @@ the mover moves things</translation>
     <message>
         <location filename="../kicadStepUpCMD.py" line="1086"/>
         <source>ksu Offset 2D object</source>
-        <translation>KSU Desplazamiento de objeto 2D</translation>
+        <translation>ksu Desfasar objetos 2D</translation>
     </message>
 </context>
 <context>
@@ -2076,12 +2031,12 @@ the mover moves things</translation>
     <message>
         <location filename="../kicadStepUpCMD.py" line="1589"/>
         <source>Pull 3D model(s) placement from PCB</source>
-        <translation>Recibir la ubicación de los modelos 3D de la PCB</translation>
+        <translation>Cargar ubicacion de modelo(s) 3D desde la PCB</translation>
     </message>
     <message>
         <location filename="../kicadStepUpCMD.py" line="1590"/>
         <source>ksu Pull 3D model(s) placement from PCB</source>
-        <translation>KSU Recibir la ubicación de los modelos 3D de la PCB</translation>
+        <translation>ksu Cargar ubicacion de modelo(s) 3D desde la PCB</translation>
     </message>
 </context>
 <context>
@@ -2089,12 +2044,12 @@ the mover moves things</translation>
     <message>
         <location filename="../kicadStepUpCMD.py" line="1518"/>
         <source>Pull Sketch from PCB</source>
-        <translation>Recibir croquis desde PCB</translation>
+        <translation>Cargar croquis desde PCB</translation>
     </message>
     <message>
         <location filename="../kicadStepUpCMD.py" line="1519"/>
         <source>ksu Pull Sketch from PCB Edge</source>
-        <translation>KSU Recibir croquis desde borde de PCB</translation>
+        <translation>ksu Cargar croquis desde borde de PCB</translation>
     </message>
 </context>
 <context>
@@ -2102,7 +2057,7 @@ the mover moves things</translation>
     <message>
         <location filename="../kicadStepUpCMD.py" line="1555"/>
         <source>Push 3D moved model(s) to PCB</source>
-        <translation>Enviar los modelos movidos en 3D a la PCB</translation>
+        <translation>Enviar modelos 3D desplazados a la PCB</translation>
     </message>
     <message>
         <location filename="../kicadStepUpCMD.py" line="1556"/>
