@@ -404,7 +404,7 @@ class KiCadStepUpWB ( Workbench ):
             """
             QtGui.QApplication.restoreOverrideCursor()
             reply = QtGui.QMessageBox.information(None,"Warning", msg)
-            # FreeCADGui.runCommand("Std_DlgPreferences") it cannot launched here until InitGui has run!!!
+            # FreeCADGui.showPreferences("kicadStepUpGui") it cannot launched here until InitGui has run!!!
         ##
         time_interval = pg.GetInt("updateDaysInterval")
         if time_interval <= 0:

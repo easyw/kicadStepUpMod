@@ -14853,7 +14853,7 @@ class Ui_DockWidget(object):
             #if "ksuWB" not in FreeCADGui.activeWorkbench().name():
             if 'pref_page' not in globals():
                 FreeCADGui.activateWorkbench("KiCadStepUpWB")
-            FreeCADGui.runCommand("Std_DlgPreferences")
+            FreeCADGui.showPreferences("kicadStepUpGui")
         elif expanded_view!=1:
             temporary_undock() #to do ....
             #undock()

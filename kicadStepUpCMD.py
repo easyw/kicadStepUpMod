@@ -3881,7 +3881,7 @@ class ksuToolsEditPrefs:
         #import kicadStepUptools
         # import hlp
         # reload_lib(hlp)
-        FreeCADGui.runCommand("Std_DlgPreferences")
+        FreeCADGui.showPreferences("kicadStepUpGui")
         
 FreeCADGui.addCommand('ksuToolsEditPrefs',ksuToolsEditPrefs())
 
@@ -3909,7 +3909,7 @@ class ksuOpDXF:
         #import kicadStepUptools
         # import hlp
         # reload_lib(hlp)
-        #FreeCADGui.runCommand("Std_DlgPreferences") 
+        #FreeCADGui.showPreferences("kicadStepUpGui") 
         
         import _DXF_Import
         import os
@@ -3955,7 +3955,7 @@ class ksuOpEzDXF:
         #import kicadStepUptools
         # import hlp
         # reload_lib(hlp)
-        #FreeCADGui.runCommand("Std_DlgPreferences") 
+        #FreeCADGui.showPreferences("kicadStepUpGui") 
         from ezDXF_import import open_ezdxf
         try:
             import ezdxf
@@ -4003,7 +4003,7 @@ class ksuImpDXF:
         #import kicadStepUptools
         # import hlp
         # reload_lib(hlp)
-        #FreeCADGui.runCommand("Std_DlgPreferences") 
+        #FreeCADGui.showPreferences("kicadStepUpGui") 
         
         import _DXF_Import
         from dxf_parser import _importDXF
@@ -4052,7 +4052,7 @@ if 0:
             #import kicadStepUptools
             # import hlp
             # reload_lib(hlp)
-            FreeCADGui.runCommand("Std_DlgPreferences")
+            FreeCADGui.showPreferences("kicadStepUpGui")
             
     FreeCADGui.addCommand('ksuExpDXF',ksuExpDXF())
 #####
