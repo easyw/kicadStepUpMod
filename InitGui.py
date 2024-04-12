@@ -86,62 +86,55 @@ class kSU_MainPrefPage:
                 importlib.reload(lib)
             else:
                 reload (lib)
-        
+
         print ("Created kSU Auxiliary Pref page")
-        
+
         # https://stackoverflow.com/questions/71852282/qt-designer-not-playing-nicely-with-windows-display-scaling
         # https://stackoverflow.com/questions/20464814/changing-dpi-scaling-size-of-display-make-qt-applications-font-size-get-rendere
-        
+
         #help_t = hlp.help_txt
         #reload_lib(hlp)
         header_txt="""<font color=GoldenRod><b>kicad StepUp version """+verKSU+"""</font></b><br>"""
         help_t = header_txt+hlp.help_txt
         self.form = QtGui.QWidget()
         #self.form.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
-        
+
         # mw1 = FreeCADGui.getMainWindow()
         # print ('physical DPI',mw1.screen().physicalDotsPerInch())
         # print ('logical  DPI',mw1.screen().logicalDotsPerInch())
-            
+
         print ('physical aux page',self.form.physicalDpiX())
         print ('logical  aux page',self.form.logicalDpiX())
         scaling = self.form.logicalDpiX() / self.form.physicalDpiX() # /96.0  # self is of QWidget
         print ('scaling aux page',scaling)
         # print(self.form.screen.devicePixelRatio())
-        self.form.setWindowTitle("kSU \'Help Tips\'")
-        self.form.verticalLayoutWidget = QtGui.QWidget(self.form)
-        # w = 560*scaling; h = 630*scaling
-        # self.form.verticalLayoutWidget.setGeometry(QtCore.QRect(0, 0, w, h)) #top corner, width, height
-        self.form.verticalLayoutWidget.setGeometry(QtCore.QRect(0, 0, 560, 630)) #top corner, width, height
-        self.form.verticalLayoutWidget.setObjectName("verticalLayoutWidget")
-        self.form.verticalLayout = QtGui.QVBoxLayout(self.form.verticalLayoutWidget)
-        self.form.verticalLayout.setContentsMargins(0, 0, 0, 0)
-        self.form.verticalLayout.setObjectName("verticalLayout")
-        #self.form.label = QtGui.QLabel(self.form.verticalLayoutWidget)
-        #self.form.label.setObjectName("label")
-        #self.form.label.setText("Hello world!")
-        #self.form.verticalLayout.addWidget(self.form.label)
-        self.form.textEdit = QtGui.QTextBrowser(self.form.verticalLayoutWidget)
-        # self.form.textEdit.setGeometry(QtCore.QRect(00, 10, w-20, h-20)) #top corner, width, height
-        self.form.textEdit.setGeometry(QtCore.QRect(00, 10, 540, 610)) #top corner, width, height
+        self.form.setWindowTitle("kSU 'Help Tips'")
+        self.form.mainLayout = QtGui.QGridLayout(self.form)
+        self.form.mainLayout.setObjectName("mainLayout")
+        self.form.groupBox = QtGui.QGroupBox("KSU Help Tips", self.form)
+        self.form.groupBoxLayout = QtGui.QVBoxLayout(self.form.groupBox)
+        self.form.groupBoxLayout.setObjectName("groupBoxLayout")
+        self.form.textEdit = QtGui.QTextBrowser(self.form.groupBox)
         self.form.textEdit.setOpenExternalLinks(True)
         self.form.textEdit.setObjectName("textEdit")
-        self.form.textEdit.setText(help_t)        
-# Button UI
+        self.form.textEdit.setText(help_t)
+        self.form.groupBoxLayout.addWidget(self.form.textEdit)
+        self.form.mainLayout.addWidget(self.form.groupBox, 0, 0, 1, 1)
+        # Button UI
         add_button=False
         if add_button:
             self.form.btn = QtGui.QPushButton('Create Folder', self.form.verticalLayoutWidget)
             self.form.btn.setToolTip('This creates the folders.')
             self.form.btn.resize(self.form.btn.sizeHint())
-            self.form.btn.move(5, 60)       
-            self.form.btn.clicked.connect(self.selectDirectory)   
-            self.form.verticalLayout.addWidget(self.form.btn)        
-        
+            self.form.btn.move(5, 60)
+            self.form.btn.clicked.connect(self.selectDirectory)
+            self.form.verticalLayout.addWidget(self.form.btn)
+
     def saveSettings(self):
         print ("saveSettings Helper")
         import SaveSettings
         SaveSettings.update_ksuGui()
-        
+
     def loadSettings(self):
         print ("loadSettings Helper")
         prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui").GetString('prefix3d_1')+'/'
@@ -151,7 +144,7 @@ class kSU_MainPrefPage:
         #    for p in prefs.GetContents():
         #        print (p)
         print(FreeCAD.getUserAppDataDir())
-##
+
 class KiCadStepUpWB ( Workbench ):
     from TranslateUtils import translate
     global main_ksu_Icon, ksu_wb_version, myurlKWB, mycommitsKWB, verKSU
