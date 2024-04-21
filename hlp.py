@@ -7,30 +7,25 @@ import ksu_locator, os
 
 ksuWBpath = os.path.dirname(ksu_locator.__file__)
 
-font_color = "<font color=black>"
+# font_color = "<font color=black>"
 
 import FreeCAD, FreeCADGui
 
 # paramGet = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/MainWindow")
 # if 'dark' in paramGet.GetString("StyleSheet").lower(): #we are using a StyleSheet
-font_color = "<font color=ghostwhite>"
+# font_color = "<font color=ghostwhite>"
 from PySide2 import QtGui
 from TranslateUtils import translate
 
-font_color = (
-    "<font color=" + FreeCADGui.getMainWindow().palette().text().color().name() + ">"
-)
-# FreeCADGui.getMainWindow().palette().background().color()
+font_color = "<font color=" + FreeCADGui.getMainWindow().palette().text().color().name() + ">"
 
+# FreeCADGui.getMainWindow().palette().background().color()
 # help_txt="""<font color=GoldenRod><b>kicad StepUp version """+verKSU+"""</font></b><br>"""
-help_txt = "<font color=black>"
-help_txt += font_color
-help_txt += translate(
+
+help_txt = translate(
     "Help",
-    "<b>Kicad StepUp</b> is a tool set to easily <b>collaborate between kicad pcb EDA</b> (board and 3D parts) as STEP models <b>and FreeCAD MCAD</b> modeler.<br>\n"
-    "</font>",
+    "<b>Kicad StepUp</b> is a tool set to easily <b>collaborate between kicad pcb EDA</b> (board and 3D parts) as STEP models <b>and FreeCAD MCAD</b> modeler.<br>\n",
 )
-help_txt += font_color
 help_txt += translate(
     "Help",
     "<b>StepUp</b> can also be used <b>to align 3D model to kicad footprint</b>.<br>\n"
@@ -77,6 +72,5 @@ help_txt += translate(
     "<br><b>NB<br>STEP model has to be fused in single object</b><br>(Part Boolean Union of objects)\n"
     "<br><b>or a Compoud</b> (Part Makecompound of objects)</b>\n"
     "<hr><b>enable 'Report view' Panel to see helping messages</b>\n"
-    "</font>\n"
     "<br>",
 )
