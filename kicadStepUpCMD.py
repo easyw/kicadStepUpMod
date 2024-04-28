@@ -32,7 +32,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.5.0'
+ksuCMD_version__='2.5.1'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -77,6 +77,7 @@ conv_started = False
 
 global max_geo_admitted
 max_geo_admitted = 1500 # after this number, no recompute is applied
+global restore_specular_cls, restore_light
 
 from sys import platform as _platform
 
@@ -4348,6 +4349,8 @@ class ksuToolsAddTracks:
         import tracks
         from kicadStepUptools import removesubtree
         from kicadStepUptools import ZoomFitThread
+        from kicadStepUptools import restore_specular
+        from kicadStepUptools import restore_specular_cls
         from PySide import QtGui, QtCore
         if FreeCAD.ActiveDocument is not None:
             doc = FreeCAD.ActiveDocument
@@ -4356,7 +4359,12 @@ class ksuToolsAddTracks:
         #doc.commitTransaction()
         #doc.UndoMode = 1
         doc.openTransaction('add_tracks_kicad')
+        objs_pre=[]
+        if doc is not None:
+            objs_pre=doc.Objects
         add_toberemoved = tracks.addtracks()
+        if restore_specular_cls:
+            restore_specular(objs_pre)
         # print(add_toberemoved)
         doc.commitTransaction()
         doc.recompute()

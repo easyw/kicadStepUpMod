@@ -501,7 +501,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "12.0.1"
+___ver___ = "12.0.2"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -527,9 +527,12 @@ global timer_Collisions, last_3d_path, expanded_view, mingui
 global textEdit_dim_base, textEdit_dim_hide #textEdit dimensions for hiding showing text content
 global warning_nbr, original_filename, edge_width, load_sketch, grid_orig, dvm, pt_osx, pt_lnx, dqd, running_time
 global addConstraints, precision, conv_offs, maxRadius, pad_nbr, use_pypro, accept_spline, maxDegree, maxSegments
-global zfit
+global zfit, restore_specular_cls, preset_light
 
 zfit = False
+
+restore_specular_cls=False
+preset_light= True #False
 
 maxRadius = 500.0 # 500mm maxRadius of arc from bspline
 pad_nbr = 1 #first nbr of fp pads
@@ -1112,7 +1115,7 @@ led_black="""material DEF LED-BLACK Material {
         }"""
 
 glass_grey="""material DEF GLASS-19 Material {
-        ambientIntensity 2.018212
+        ambientIntensity 0.2018212
         diffuseColor 0.400769 0.441922 0.459091
         specularColor 0.573887 0.649271 0.810811
         emissiveColor 0.000000 0.000000 0.000000
@@ -3637,6 +3640,9 @@ def Display_info(blacklisted_models):
     say("pcb dimensions: ("+"{0:.2f}".format(pcb_bbx.XLength)+";"+"{0:.2f}".format(pcb_bbx.YLength)+";"+"{0:.2f}".format(pcb_bbx.ZLength)+")")          
     if missingHeight:
         sayerr('MISSING pcb height from stack; forced 1.6mm value')
+    hld=FreeCAD.ParamGet("User parameter:BaseApp/Preferences/View").GetString('HeadlightDirection')
+    if len(hld) >0:
+        say('Headlight Direction: '+hld)
     if (show_messages==True):
         QtGui.QApplication.restoreOverrideCursor()
         #RotateXYZGuiClass().setGeometry(25, 250, 500, 500)
@@ -4389,6 +4395,30 @@ def findModelPath(model_type, path_list):
                     break
 
     return module_path
+##
+def restore_specular(obj_pre_list):
+    
+    doc=FreeCAD.ActiveDocument
+    objs=doc.Objects
+    os = 0.5
+    ds = 0.05
+    restored=False
+    for o in objs:
+        if o not in obj_pre_list:
+            # print(o.Label)
+            if (hasattr(o,'ViewObject')):
+                if (hasattr(o.ViewObject,'ShapeMaterial')):
+                    # print(o.ViewObject.ShapeMaterial.SpecularColor)
+                    if (hasattr(o.ViewObject,'DiffuseColor')):
+                        d=o.ViewObject.DiffuseColor
+                        s=o.ViewObject.ShapeMaterial.SpecularColor
+                        if (s[0]>=os and s[1]>=os and s[2]>=os):
+                            o.ViewObject.ShapeMaterial.SpecularColor=(ds, ds, ds) #(0.0, 0.0, 0.0)
+                            o.ViewObject.DiffuseColor=d
+                            restored=True
+    if restored:
+        FreeCAD.Console.PrintWarning('default specular color restored\n')
+
 ##
 def Load_models(pcbThickness,modules):
     global off_x, off_y, volume_minimum, height_minimum, bbox_all, bbox_list
@@ -6556,6 +6586,30 @@ def crc_gen(data):
     #print(data +u'_'+ hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:])
     return u'_'+ make_unicode(hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:])
 ##
+def check_lightDir(set_default=False):
+    
+    pg=FreeCAD.ParamGet("User parameter:BaseApp/Preferences/View")
+    # pg.GetString('HeadlightDirection')
+    # FreeCAD.ParamGet("User parameter:BaseApp/Preferences/View").SetString('HeadlightDirection','(-0.0,-0.0,-1.0)')
+    # pg.SetString('HeadlightDirection','(-0.299424,-0.0339817,-0.953515)')
+    hld=pg.GetString('HeadlightDirection')
+    if len(hld)>3:
+        hx=float(hld.split(',')[0][1:])
+        hy=float(hld.split(',')[1])
+        hz=float(hld.split(',')[2][:-1])
+        if (hx==0 and hy==0 and hz==-1 and set_default):
+            pg.SetString('HeadlightDirection','(-0.3,0.3,-1.0)')
+            #pg.SetString('HeadlightDirection','(0.2, -0.2, -1)')
+            sayw('default light direction applied')
+        else:
+            say('light direction: '+hld)
+    elif len(hld)==0:
+        pg.SetString('HeadlightDirection','(-0.3,0.3,-1.0)')
+        sayw('default light direction applied')
+    else:
+        pass
+        #say('HeadlightDirection NOT defined') #pre FC0.22 02.2024
+##
 def onLoadBoard(file_name=None,load_models=None,insert=None):
     #name=QtGui.QFileDialog.getOpenFileName(this,tr("Open Image"), "/home/jana", tr("Image Files (*.png *.jpg *.bmp)"))[0]
     #global module_3D_dir
@@ -6570,7 +6624,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
     global last_fp_path, last_pcb_path, plcmnt, xp, yp, exportFusing
     global ignore_utf8, ignore_utf8_incfg, pcb_path, disable_VBO, use_AppPart, force_oldGroups, use_Links, use_LinkGroups
     global original_filename, edge_width, load_sketch, grid_orig, warning_nbr, running_time, addConstraints
-    global conv_offs, zfit, fname_sfx, missingHeight
+    global conv_offs, zfit, fname_sfx, missingHeight, restore_specular_cls, preset_light
 
     import fcad_parser
     from fcad_parser import KicadPCB,SexpList
@@ -6578,6 +6632,13 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
     objs_toberemoved = []
     ImportMode_status=0
     import_drawings = False
+    objs_pre=[]
+    doc=FreeCAD.ActiveDocument
+    if doc is not None:
+        objs_pre=doc.Objects
+    
+    if preset_light:
+        check_lightDir(set_default=True)
 
     pull_sketch = False
     override_pcb = None
@@ -7176,6 +7237,9 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                     Display_info(blacklisted_model_elements)
                 if (zfit):
                     FreeCADGui.SendMsgToActiveView("ViewFit")
+            if restore_specular_cls:
+                restore_specular(objs_pre)
+
             msg="running time: "+str(round(running_time,3))+"sec"    
             say(msg)
             zf= Timer (0.3,ZoomFitThread)
@@ -12575,15 +12639,17 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                         line.append(virtual)
                         if hasattr(m,'tstamp'):
                             line.append(m.tstamp) # fp tstamp
+                        elif hasattr(m,'uuid'):
+                            line.append(m.uuid) # fp tstamp
                         else:
                             sayw('missing \'TimeStamp\'')
                             line.append('null')
-                        try:
-                            #print(m.fp_text[0])
-                            line.append(m.fp_text[0][1]) #fp reference
-                        except:
+                        try: # trying the kv8 property Reference
                             #print(m.property[0])
                             line.append(m.property[0][1]) #fp reference kv8
+                        except: # using the old kv5-kv7 method
+                            #print(m.fp_text[0])
+                            line.append(m.fp_text[0][1]) #fp reference
                         line.append(n_md) #number of models in module
                         line.append(md_hide)
                         PCB_Models.append(line)
@@ -15779,8 +15845,11 @@ def Sync3DModel():
                                         if Ref.lstrip('"').rstrip('"') == matching_Reference:
                                             say ('found Reference:  '+Ref)
                                             ref_found=True
-                                            if hasattr(m,'tstamp'):
-                                                matching_TimeStamp=m.tstamp
+                                            if hasattr(m,'tstamp') or hasattr(m,'uuid'):
+                                                if hasattr(m,'tstamp'):
+                                                    matching_TimeStamp=m.tstamp
+                                                elif hasattr(m,'uuid'):
+                                                    matching_TimeStamp=m.uuid
                                                 say ('linked TimeStamp: '+matching_TimeStamp)
                                                 if sel[0].Label.rfind('_') < sel[0].Label.rfind('['):
                                                     ts = sel[0].Label[sel[0].Label.rfind('_')+1:sel[0].Label.rfind('[')]
@@ -16226,6 +16295,8 @@ def getModelsData(mypcb):
                     line.append(virtual)
                     if hasattr(m,'tstamp'):
                         line.append(m.tstamp) # fp tstamp
+                    elif hasattr(m,'uuid'):
+                        line.append(m.uuid) # fp tstamp
                     else:
                         sayw('missing \'TimeStamp\'')
                         line.append('null')
@@ -21369,7 +21440,7 @@ def push3D2pcb(s,cnt,tsp):
         for i,ln in enumerate (cnt):
             #if '(tstamp '+s.TimeStamp in ln:
             #if '(tstamp '+tsp in ln:
-            if '(tstamp ' in ln:
+            if '(tstamp ' in ln or '(uuid' in ln:
                 if tsp in ln:
                     idxF=i
                     #print(ln)
