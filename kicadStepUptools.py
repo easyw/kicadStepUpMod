@@ -501,7 +501,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "12.0.2"
+___ver___ = "12.0.3"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -13924,7 +13924,7 @@ class Ui_DockWidget(object):
     def link(self, linkStr):
         #QtGui.QDesktopServices.openUrl(QtCore.QUrl(linkStr))
         try:
-            QtGui.QDesktopServices.openUrl(QtCore.QUrl(linkStr))  #workaround Qt5 waiting for PySide2
+            QtGui.QDesktopServices.openUrl(QtCore.QUrl(linkStr))  #workaround Qt5 waiting for PySide
         except:
             #QtGui.QDesktopServices.openUrl(QtCore.QUrl(linkStr.fromLocalFile()))
             pass
@@ -15092,7 +15092,7 @@ class Ui_DockWidget(object):
             # paramGet = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/MainWindow")
             # if 'dark' in paramGet.GetString("StyleSheet").lower(): #we are using a StyleSheet
             font_color="""<font color=ghostwhite>"""
-            from PySide2 import QtGui
+            from PySide import QtGui
             font_color="""<font color="""+ FreeCADGui.getMainWindow().palette().text().color().name()+""">"""
             #FreeCADGui.getMainWindow().palette().background().color()
             sayw("kicad StepUp version "+str(___ver___))
