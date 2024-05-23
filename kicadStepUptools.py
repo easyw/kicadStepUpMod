@@ -21732,6 +21732,12 @@ if singleInstance():
         cv = t.findChild(QtGui.QDockWidget, "Model")
         if cv is None:
             cv = t.findChild(QtGui.QDockWidget, "Tree view")
+            if cv is None:
+                cv = [o for o in t.children () if o.objectName () == "Combo View"]
+                if cv:
+                    cv = cv[0]
+                else:
+                    cv = None
     #say( "Combo View" + str(cv))
     ## print( "KSUWidget" + str(wf))        
     cv.setFeatures( QtGui.QDockWidget.DockWidgetMovable | QtGui.QDockWidget.DockWidgetFloatable|QtGui.QDockWidget.DockWidgetClosable )
