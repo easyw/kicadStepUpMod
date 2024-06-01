@@ -501,7 +501,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "12.0.3"
+___ver___ = "12.0.4"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -21729,9 +21729,11 @@ if singleInstance():
     ## wf = t.findChild(QtGui.QDockWidget, "KSUWidget")
     cv = t.findChild(QtGui.QDockWidget, "Combo View")
     if cv is None:
-        cv = t.findChild(QtGui.QDockWidget, "Model")
+        cv = t.findChild(QtGui.QDockWidget, "ComboView")
         if cv is None:
-            cv = t.findChild(QtGui.QDockWidget, "Tree view")
+            cv = t.findChild(QtGui.QDockWidget, "Model")
+            if cv is None:
+                cv = t.findChild(QtGui.QDockWidget, "Tree view")
     #say( "Combo View" + str(cv))
     ## print( "KSUWidget" + str(wf))        
     cv.setFeatures( QtGui.QDockWidget.DockWidgetMovable | QtGui.QDockWidget.DockWidgetFloatable|QtGui.QDockWidget.DockWidgetClosable )
