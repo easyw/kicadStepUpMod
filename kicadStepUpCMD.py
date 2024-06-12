@@ -1466,7 +1466,8 @@ class ksuToolsPushPCB:
                 ## sk = Draft.make_sketch(s.Edges, autoconstraints=True)
                 kicadStepUptools.sanitizeSketch(sketch.Name)
                 FreeCAD.ActiveDocument.recompute()
-                sk = Draft.make_sketch(sketch, autoconstraints=True)
+                # match the labels, append a suffix to avoid duplicates in the tree and remove later
+                sk = Draft.make_sketch(sketch, autoconstraints=True, name=f'{sketch.Label}_{kicadStepUptools.__name__}')
                 sk_obj = FreeCAD.ActiveDocument.ActiveObject
                 FreeCAD.ActiveDocument.recompute()
                 FreeCADGui.Selection.clearSelection()
