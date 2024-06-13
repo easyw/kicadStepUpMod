@@ -501,7 +501,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "12.0.4"
+___ver___ = "12.1.1"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -21406,6 +21406,10 @@ def push3D2pcb(s,cnt,tsp):
         #old_pos=re.findall('\s\(tstamp(\s'+sel[0].TimeStamp+'.+?'+'\(at'+'\s.+?)\)',data, re.MULTILINE|re.DOTALL)[0]
         #print (old_pos)
         # new_pos=old_pos.split('(at')[0]+'(at 1.23 5.67 890'
+    elif len(re.findall('\s\(uuid(\s.*'+tsp.lower()+'+\))',data,  re.MULTILINE|re.DOTALL))>0 or \
+        len(re.findall('\s\(uuid(\s.*'+tsp.upper()+'+\))',data,  re.MULTILINE|re.DOTALL))>0:  #kv6 puts tstamp in lower case
+        tstamp_found=True
+    
     if tstamp_found:
         oft=None
         if aux_orig == 1:
@@ -21543,9 +21547,13 @@ def push3D2pcb(s,cnt,tsp):
                     else:
                         nMdCnt+=1
                 if '(pad ' in ln:
-                    #print (ln)
+                    # print (ln)
                     #print (ln.split('(at ')[1].split(')')[0].split(' '))
-                    pad_values=ln.split('(at ')[1].split(')')[0].split(' ')
+                    if '(at ' in ln: # pre kv8
+                        pad_values=ln.split('(at ')[1].split(')')[0].split(' ')
+                    else:
+                        ln_n=cnt[idxF+ik+1]
+                        pad_values=ln_n.split('(at ')[1].split(')')[0].split(' ')
                     if len(pad_values) == 3:
                         #print(pad_values[2])
                         old_pad_angle = (float(pad_values[2]))
@@ -21555,24 +21563,42 @@ def push3D2pcb(s,cnt,tsp):
                     id_pad = idxF+ik
                     pads_2rot.append([base_pad_angle,id_pad,pad_values])
                     #print(content[idxF+ik])
-                if '(fp_text reference' in ln:
+                if '(fp_text reference' in ln or '(property "Reference"' in ln:
                     #print (ln)
                     #print (ln.split('(at ')[1].split(')')[0].split(' '))
-                    ref_values=ln.split('(at ')[1].split(')')[0].split(' ')
+                    if '(at ' in ln: # pre kv8
+                        ref_values=ln.split('(at ')[1].split(')')[0].split(' ')
+                    else:
+                        ln_n=cnt[idxF+ik+1]
+                        ref_values=ln_n.split('(at ')[1].split(')')[0].split(' ')
                     old_ref_angle = 0
                     if len(ref_values) == 3:
                         #print(pad_values[2])
-                        print(ref_values[2])
+                        #print(ref_values[2])
                         if ref_values[2] != 'unlocked':
                             old_ref_angle = (float(ref_values[2]))
                     #else:
                     #    old_ref_angle = 0
                     #print (pad_values);print(ln.split('(at '))
+                    base_ref_angle = old_ref_angle - mod_old_angle
+                    new_ref_angle = ' '+("{0:.3f}".format(base_ref_angle + bbpa))
+                    if float(new_ref_angle) == 0:
+                        new_ref_angle=''
+                    #print (pad_values);print(ln.split('(at '))
                     idx_ref=idxF+ik
-                if '(fp_text value' in ln:
+                    if '(at ' in ln: # pre kv8
+                        cnt[idxF+ik] = ln.split('(at ')[0]+'(at ' + ref_values[0] +' '+ ref_values[1]+new_ref_angle+ln[ln.index(') '):]
+                    else:
+                        ln_n=cnt[idxF+ik+1]
+                        cnt[idxF+ik+1] = ln_n.split('(at ')[0]+'(at ' + ref_values[0] +' '+ ref_values[1]+new_ref_angle+ln_n[ln_n.index(')'):]
+                if '(fp_text value' in ln or '(property "Value"' in ln:
                     #print (ln)
                     #print (ln.split('(at ')[1].split(')')[0].split(' '))
-                    val_values=ln.split('(at ')[1].split(')')[0].split(' ')
+                    if '(at ' in ln: # pre kv8
+                        val_values=ln.split('(at ')[1].split(')')[0].split(' ')
+                    else:
+                        ln_n=cnt[idxF+ik+1]
+                        val_values=ln_n.split('(at ')[1].split(')')[0].split(' ')
                     old_val_angle = 0
                     if len(val_values) == 3:
                         #print(pad_values[2])
@@ -21586,11 +21612,19 @@ def push3D2pcb(s,cnt,tsp):
                         new_val_angle=''
                     #print (pad_values);print(ln.split('(at '))
                     idx_val=idxF+ik
-                    cnt[idxF+ik] = ln.split('(at ')[0]+'(at ' + val_values[0] +' '+ val_values[1]+new_val_angle+ln[ln.index(') '):]
+                    if '(at ' in ln: # pre kv8
+                        cnt[idxF+ik] = ln.split('(at ')[0]+'(at ' + val_values[0] +' '+ val_values[1]+new_val_angle+ln[ln.index(') '):]
+                    else:
+                        ln_n=cnt[idxF+ik+1]
+                        cnt[idxF+ik+1] = ln_n.split('(at ')[0]+'(at ' + val_values[0] +' '+ val_values[1]+new_val_angle+ln_n[ln_n.index(')'):]
                 if '(fp_text user' in ln:
                     #print (ln)
                     #print (ln.split('(at ')[1].split(')')[0].split(' '))
-                    usr_values=ln.split('(at ')[1].split(')')[0].split(' ')
+                    if '(at ' in ln: # pre kv8
+                        usr_values=ln.split('(at ')[1].split(')')[0].split(' ')
+                    else:
+                        ln_n=cnt[idxF+ik+1]
+                        usr_values=ln_n.split('(at ')[1].split(')')[0].split(' ')
                     old_usr_angle = 0
                     if len(usr_values) == 3:
                         #print(pad_values[2])
@@ -21604,7 +21638,11 @@ def push3D2pcb(s,cnt,tsp):
                         new_usr_angle=''
                     #print (pad_values);print(ln.split('(at '))
                     idx_usr=idxF+ik
-                    cnt[idxF+ik] = ln.split('(at ')[0]+'(at ' + usr_values[0] +' '+ usr_values[1]+new_usr_angle+ln[ln.index(') '):]
+                    if '(at ' in ln: # pre kv8
+                        cnt[idxF+ik] = ln.split('(at ')[0]+'(at ' + usr_values[0] +' '+ usr_values[1]+new_usr_angle+ln[ln.index(') '):]
+                    else:
+                        ln_n=cnt[idxF+ik+1]
+                        cnt[idxF+ik+1] = ln_n.split('(at ')[0]+'(at ' + usr_values[0] +' '+ usr_values[1]+new_usr_angle+ln_n[ln_n.index(')'):]
             #adjusting footprint
             if FLayer==1.:
                 new_angle=bbpa+z_rot
@@ -21626,21 +21664,34 @@ def push3D2pcb(s,cnt,tsp):
                 if float(new_ref_angle) == 0:
                     new_ref_angle=''
                 ln=cnt[idx_ref]
-                cnt[idx_ref] = ln.split('(at ')[0]+'(at ' + ref_values[0] +' '+ ref_values[1]+new_ref_angle+ln[ln.index(') '):]
+                if ('at' in ln): # pre kv8
+                    cnt[idx_ref] = ln.split('(at ')[0]+'(at ' + ref_values[0] +' '+ ref_values[1]+new_ref_angle+ln[ln.index(') '):]
+                else:
+                    ln_n=cnt[idx_ref+1]
+                    cnt[idx_ref+1] = ln_n.split('(at ')[0]+'(at ' + ref_values[0] +' '+ ref_values[1]+new_ref_angle+ln_n[ln_n.index(')'):]
             if old_val_angle is not None:
-                base_val_angle = old_ref_angle - mod_old_angle # 
+                base_val_angle = old_val_angle - mod_old_angle # 
                 new_val_angle = ' '+("{0:.3f}".format(base_val_angle + bbpa + z_rot))
                 if float(new_val_angle) == 0:
                     new_val_angle=''
                 ln=cnt[idx_val]
-                cnt[idx_val] = ln.split('(at ')[0]+'(at ' + val_values[0] +' '+ val_values[1]+new_val_angle+ln[ln.index(') '):]
+                if ('at' in ln): # pre kv8
+                    cnt[idx_val] = ln.split('(at ')[0]+'(at ' + val_values[0] +' '+ val_values[1]+new_val_angle+ln[ln.index(') '):]
+                else:
+                    ln_n=cnt[idx_val+1]
+                    cnt[idx_val+1] = ln_n.split('(at ')[0]+'(at ' + val_values[0] +' '+ val_values[1]+new_val_angle+ln_n[ln_n.index(')'):]
             if old_usr_angle is not None:
                 base_usr_angle = old_usr_angle - mod_old_angle # 
                 new_usr_angle = ' '+("{0:.3f}".format(base_usr_angle + bbpa + z_rot))
                 if float(new_usr_angle) == 0:
                     new_usr_angle=''
                 ln=cnt[idx_usr]
-                cnt[idx_usr] = ln.split('(at ')[0]+'(at ' + usr_values[0] +' '+ usr_values[1]+new_usr_angle+ln[ln.index(') '):]
+                #print(ln)
+                if ('at' in ln): # pre kv8
+                    cnt[idx_usr] = ln.split('(at ')[0]+'(at ' + usr_values[0] +' '+ usr_values[1]+new_usr_angle+ln[ln.index(') '):]
+                else:
+                   ln_n=cnt[idx_usr+1]
+                   cnt[idx_usr+1] = ln_n.split('(at ')[0]+'(at ' + usr_values[0] +' '+ usr_values[1]+new_usr_angle+ln_n[ln_n.index(')'):] 
                 #print(new_ref_angle);print(old_ref_angle);print(z_rot);print(bbpa);print(base_ref_angle+bbpa);stop
             for p2r in pads_2rot:
                 new_pad_angle = ' '+("{0:.3f}".format(p2r[0] + bbpa + z_rot))
@@ -21649,7 +21700,13 @@ def push3D2pcb(s,cnt,tsp):
                 #print (pad_values);print(ln.split('(at '))
                 ln  = cnt[p2r[1]]
                 pad_val = p2r[2]
-                cnt[p2r[1]] = ln.split('(at ')[0]+'(at ' + pad_val[0] +' '+ pad_val[1]+new_pad_angle+ln[ln.index(') '):]                    
+                #print(ln)
+                if ('at' in ln): # pre kv8
+                    cnt[p2r[1]] = ln.split('(at ')[0]+'(at ' + pad_val[0] +' '+ pad_val[1]+new_pad_angle+ln[ln.index(') '):]
+                else:
+                    ln_n=cnt[p2r[1]+1]
+                    #print(ln_n)
+                    cnt[p2r[1]+1] = ln_n.split('(at ')[0]+'(at ' + pad_val[0] +' '+ pad_val[1]+new_pad_angle+ln_n[ln_n.index(')'):]                  
             #stop # 'we need to search for pads in module and add rotation angle each'
         #stop
         #newdata=u''.join(content)

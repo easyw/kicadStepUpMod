@@ -41,9 +41,9 @@ StepUp Cheat sheet
 
 ### Requirements
 
-- **FreeCAD** **0.18, 0.19, 0.20, 0.21, 0.22**
+- **FreeCAD** **0.19, 0.20, 0.21, 0.22**
 
-- **KiCAD** **5.1**, **6.x**, **7.x**, **8.x** (push-pull- 3D models position not implemented ATM)
+- **KiCAD** **5.1**, **6.x**, **7.x**, **8.x**
 
 - **KiCAD *nigthly* (partially supported)**
 
