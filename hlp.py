@@ -38,8 +38,9 @@ help_txt += translate(
 pdf_name = "kicadStepUp-starter-Guide.pdf"
 # help_txt+="starter Guide:<br><a href='"+ksuWBpath+os.sep+"demo"+os.sep+pdf_name+"' target='_blank'>"+pdf_name+"</a><br>"
 help_txt += translate(
-    "Help", "starter Guide:<br><a href='{}{}demo{}{}' target='_blank'>{}</a><br>"
-).format(ksuWBpath, os.sep, os.sep, pdf_name, pdf_name)
+    "Help", "starter Guide:<br><a href='{}demo{}{}' target='_blank'>{}demo{}{}</a><br>"
+).format(ksuWBpath.rstrip("."), os.sep, pdf_name, ksuWBpath.rstrip("."), os.sep, pdf_name)
+##   "Help", "starter Guide:<br><a href='{}{}demo{}{}' target='_blank'>{}{}demo{}{}</a><br>"
 help_txt += translate(
     "Help",
     "<b>Note:</b> each button has its own <b>Tooltip</b><br>\n"

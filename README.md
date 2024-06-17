@@ -45,7 +45,7 @@ StepUp Cheat sheet
 
 - **KiCAD** **5.1**, **6.x**, **7.x**, **8.x**
 
-- **KiCAD *nigthly* (partially supported)**
+- **KiCAD *8.99 nigthly* (partially supported)**
 
 ### Known issues
 
