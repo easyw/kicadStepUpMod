@@ -501,7 +501,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "12.2.1"
+___ver___ = "12.2.2"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -20728,6 +20728,33 @@ def getAuxOrigin(dt):
         # return [0.0,0.0]
         return None
 ##
+def searchInsideFootprint (cnt, i):
+    # check if the lines are inside a footprint... then they have to be skipped because they mixed fp_ and gr_ prefixes https://gitlab.com/kicad/code/kicad/-/issues/16660
+    l=len(cnt)
+    line = cnt[i]
+    closed=False
+    j=i
+    open_p=0
+    close_p=0
+    # print (line + ' ' + str(i))
+    if '(footprint' in line:
+        # print ('fp ' + line + ' ' + str(i))
+        open_p=line.count('(')
+        close_p=line.count(')')
+        j+=1
+        while j < l and closed==False:  # kv8 utilizzo il conteggio parentesi dalla prima alla chiusura o il parser
+            line_next=cnt[j]
+            open_p+=line_next.count('(')
+            close_p+=line_next.count(')')
+            # print (line_next + ' ' + str(j) + ' open_p=' + str(open_p) + ' close_p=' + str(close_p))
+            if open_p == close_p:
+                #print (line_next + ' closed fp')
+                return j+1
+            j+=1
+    else:
+        return i
+    
+##
 def search_content(cnt, i,layer):
     # first call include '(gr_line' in line or '(gr_curve' in line or '(gr_arc' in line or '(gr_circle' in line or '(gr_rect' in line or '(gr_poly' in line:
     # offset,add_line = search_content(content,id,ssklayer)
@@ -20902,6 +20929,12 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                         edg_segms+=1
                         break
             if edg_segms == 0:
+                for rr in mypcb.gr_rect:
+                    if ssklayer in rr.layer:
+                        #say(ln.layer)
+                        edg_segms+=1
+                        break
+            if edg_segms == 0:
                 for lp in mypcb.gr_poly:
                     #print(lp)
                     #print(lp.layer)
@@ -21025,9 +21058,20 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                     #offset_id=id+1
                     add_line = True
                     #line = content[id]
-                    while id < l:  # kv8 TDB utilizzare il conteggio parentesi dalla prima alla chiusura o il parser
+                    while id < l:
                         line = content[id]
                         #print (line,id)
+                        # kv8 Check if given Parentheses expression is balanced
+                        ## checking if gr_something is inside a footprint https://gitlab.com/kicad/code/kicad/-/issues/16660
+                        idr = searchInsideFootprint (content, id)
+                        if id != idr: # bypassing the fp content
+                            cnt=id
+                            while cnt<idr:
+                                clr_content += content[cnt]
+                                cnt+=1
+                        # stop
+                        id = idr
+                        line = content[id]
                         if '(gr_line' in line or '(gr_curve' in line or '(gr_arc' in line or '(gr_circle' in line or '(gr_rect' in line or '(gr_poly' in line:
                             #print ('inside', line,id)
                             add_line,delta = search_content(content,id,ssklayer)
