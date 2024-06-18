@@ -501,7 +501,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "12.2.2"
+___ver___ = "12.2.3"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -20728,7 +20728,7 @@ def getAuxOrigin(dt):
         # return [0.0,0.0]
         return None
 ##
-def searchInsideFootprint (cnt, i):
+def searchInsideFootprint (cnt, i):  #not used atm
     # check if the lines are inside a footprint... then they have to be skipped because they mixed fp_ and gr_ prefixes https://gitlab.com/kicad/code/kicad/-/issues/16660
     l=len(cnt)
     line = cnt[i]
@@ -20758,63 +20758,51 @@ def searchInsideFootprint (cnt, i):
 def search_content(cnt, i,layer):
     # first call include '(gr_line' in line or '(gr_curve' in line or '(gr_arc' in line or '(gr_circle' in line or '(gr_rect' in line or '(gr_poly' in line:
     # offset,add_line = search_content(content,id,ssklayer)
+    # check if the lines are inside a footprint... then they have to be skipped because they mixed fp_ and gr_ prefixes https://gitlab.com/kicad/code/kicad/-/issues/16660
+    # kv8 Check if given Parentheses expression is balanced
     add_ln=True
     l=len(cnt)
     line = cnt[i]
     closed=False
     j=i
     found_tag=False
-    if '(layer' in line and '))' in line: #kv5
-        if layer in line: #kv5
-            add_ln = False
-            i =j+1
-            closed=True
-        else:
-            add_ln = True
-            i =j+1
-            closed=True
-        return add_ln, i
-    # here if not kv5
-    while j < l and closed==False:  # kv8 TDB utilizzare il conteggio parentesi dalla prima alla chiusura o il parser
+    open_p=0
+    close_p=0
+    ## if '(layer' in line and '))' in line: #kv5
+    ##     if layer in line: #kv5
+    ##         add_ln = False
+    ##         i =j+1
+    ##         closed=True
+    ##     else:
+    ##         add_ln = True
+    ##         i =j+1
+    ##         closed=True
+    ##     return add_ln, i
+    ## # here if not kv5
+    while j < l and closed==False:  # kv6-kv8 Check if given Parentheses expression is balanced
         line_next=cnt[j]
         if '(gr_line' in line_next or '(gr_curve' in line_next or '(gr_arc' in line_next or '(gr_circle' in line_next or '(gr_rect' in line_next or '(gr_poly' in line_next:
             #starting group
             found_tag=True
+            open_p+=line_next.count('(')
+            close_p+=line_next.count(')')
+            if '(layer' in line_next and layer in line_next:
+                add_ln = False
+            if open_p == close_p:
+                #print (line_next + ' closed fp')
+                return add_ln, j+1
             j+=1
         elif found_tag==True and closed==False:
             #line_next=cnt(j)
-            if '(layer' in line_next and '))' in line_next: #kv7 '(gr_rect' or '(gr_line' or '(gr_circle' or '(gr_poly'
-                j+=1
-                closed=True
-                if layer in line_next:
-                    add_ln = False
-                else:
-                    add_ln = True
-                return add_ln, j
-            elif '(layer' in line_next and not '))' in line_next: #kv8,kv9 '(gr_rect' or '(gr_line' or '(gr_circle' or '(gr_poly'
-                j+=3
-                closed=True
-                if layer in line_next:
-                    add_ln = False
-                else:
-                    add_ln = True
-                return add_ln, j            
-            else:
-                j+=1
-            # elif '))' in line_next: #kv7 not layer
-            #     i = j+1
-            #     add_ln = True
-            #     closed=True
-            # elif layer in line_next and '))' not in line_next:  #kv8
-            #     i = j+3
-            #     add_ln = False
-            #     closed=True
-            # elif '(uuid' in line_next:
-            #     i = j+2
-            #     add_ln = True
-            #     closed=True
-        #else:
-        #    j+=1
+            open_p+=line_next.count('(')
+            close_p+=line_next.count(')')
+            if '(layer' in line_next and layer in line_next:
+                add_ln = False
+            if open_p == close_p:
+                #print (line_next + ' closed fp')
+                return add_ln, j+1
+                #return j+1
+            j+=1
     stop #we shouldn't arrive here
     # return j, add_ln
 
@@ -21063,15 +21051,15 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                         #print (line,id)
                         # kv8 Check if given Parentheses expression is balanced
                         ## checking if gr_something is inside a footprint https://gitlab.com/kicad/code/kicad/-/issues/16660
-                        idr = searchInsideFootprint (content, id)
-                        if id != idr: # bypassing the fp content
-                            cnt=id
-                            while cnt<idr:
-                                clr_content += content[cnt]
-                                cnt+=1
-                        # stop
-                        id = idr
-                        line = content[id]
+                        ## idr = searchInsideFootprint (content, id)
+                        ## if id != idr: # bypassing the fp content
+                        ##     cnt=id
+                        ##     while cnt<idr:
+                        ##         clr_content += content[cnt]
+                        ##         cnt+=1
+                        ## # stop
+                        ## id = idr
+                        ## line = content[id]
                         if '(gr_line' in line or '(gr_curve' in line or '(gr_arc' in line or '(gr_circle' in line or '(gr_rect' in line or '(gr_poly' in line:
                             #print ('inside', line,id)
                             add_line,delta = search_content(content,id,ssklayer)
