@@ -501,7 +501,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "12.2.3"
+___ver___ = "12.2.4"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -2328,6 +2328,7 @@ def export(componentObjs, fullfilePathName, scale=None, label=None):
         transparency=[]
         for obj in componentObjs:
             #say(obj.Label)
+            ## if hasattr(obj,'ShapeColor'):
             color.append(FreeCADGui.ActiveDocument.getObject(obj.Name).ShapeColor)
             transparency.append(FreeCADGui.ActiveDocument.getObject(obj.Name).Transparency/100.0)
             #say("color")
@@ -4781,7 +4782,7 @@ def Load_models(pcbThickness,modules):
                                 FreeCAD.ActiveDocument.removeObject(newStep.Name)
                             else: #use Label for timestamp
                                 myReference=str(modules[i][11]).rstrip('"').lstrip('"')
-                                myTimeStamp=str(modules[i][10])
+                                myTimeStamp=str(modules[i][10]).rstrip('"').lstrip('"')
                                 if len(myTimeStamp)> 8:
                                     myTimeStamp=myTimeStamp[-12:]
                                 myModelNbr=(modules[i][12])
@@ -4961,7 +4962,7 @@ def Load_models(pcbThickness,modules):
                                     else:
                                         impPart.Label = 'REF_'+loaded_model_objs[idxO].Label + '_' + myTimeStamp
                                 else:
-                                    myTimeStamp=str(modules[i][10])
+                                    myTimeStamp=str(modules[i][10]).rstrip('"').lstrip('"')
                                     if len(myTimeStamp)> 8:
                                         myTimeStamp=myTimeStamp[-12:]
                                     myReference=str(modules[i][11]).rstrip('"').lstrip('"')
