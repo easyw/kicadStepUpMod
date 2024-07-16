@@ -501,7 +501,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "12.2.5"
+___ver___ = "12.2.6"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -15839,10 +15839,15 @@ def Sync3DModel():
                                     matching_TimeStamp='Null'
                                     for m in mypcb.module:
                                         try:
-                                            Ref = m.fp_text[0][1]
-                                        except:
                                             Ref = m.property[0][1] #kv8 fp reference
-                                        #print(Ref);print(len(Ref))
+                                            #Ref = m.fp_text[0][1]
+                                            ##if '$REFERENCE' in Ref:
+                                            ##    Ref = m.property[0][1] #kv8 fp reference
+                                        except:
+                                            Ref = m.fp_text[0][1]
+                                            #Ref = m.property[0][1] #kv8 fp reference
+                                        # print(m.property[0]);print(Ref);print(len(Ref))
+                                        #print(m.property[0]);print(m.property[0][0]);print(m.property[0][1]);
                                         if Ref.lstrip('"').rstrip('"') == matching_Reference:
                                             say ('found Reference:  '+Ref)
                                             ref_found=True
@@ -15850,7 +15855,7 @@ def Sync3DModel():
                                                 if hasattr(m,'tstamp'):
                                                     matching_TimeStamp=m.tstamp
                                                 elif hasattr(m,'uuid'):
-                                                    matching_TimeStamp=m.uuid
+                                                    matching_TimeStamp=m.uuid.rstrip('"')
                                                 say ('linked TimeStamp: '+matching_TimeStamp)
                                                 if sel[0].Label.rfind('_') < sel[0].Label.rfind('['):
                                                     ts = sel[0].Label[sel[0].Label.rfind('_')+1:sel[0].Label.rfind('[')]

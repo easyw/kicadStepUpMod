@@ -32,7 +32,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.5.1'
+ksuCMD_version__='2.5.2'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -1559,12 +1559,12 @@ class ksuToolsPushMoved:
                      'ToolTip' : QT_TRANSLATE_NOOP("ksuToolsPushMoved","ksu Push 3D moved model(s) to PCB")}
  
     def IsActive(self):
-        #if FreeCAD.ActiveDocument == None:
-        #    return False
-        #else:
-        #    return True
+        if FreeCAD.ActiveDocument == None:
+            return False
+        else:
+            return True
         #import kicadStepUptools
-        return True
+        #return True
  
     def Activated(self):
         # do something here...
@@ -1575,7 +1575,11 @@ class ksuToolsPushMoved:
             reload_lib( kicadStepUptools )
         #from kicadStepUptools import onPushPCB
         #FreeCAD.Console.PrintWarning( 'active :)\n' )
+        # doc=FreeCAD.ActiveDocument
+        # doc.openTransaction('push3D')
+        # this cannot be undone!
         kicadStepUptools.PushMoved()
+        # doc.commitTransaction()
         # ppcb=kicadStepUptools.KSUWidget
         # ppcb.onPushPCB()
  
@@ -1593,12 +1597,12 @@ class ksuToolsPullMoved:
                      'ToolTip' : QT_TRANSLATE_NOOP("ksuToolsPullMoved","ksu Pull 3D model(s) placement from PCB")}
  
     def IsActive(self):
-        #if FreeCAD.ActiveDocument == None:
-        #    return False
-        #else:
-        #    return True
+        if FreeCAD.ActiveDocument == None:
+            return False
+        else:
+            return True
         #import kicadStepUptools
-        return True
+        #return True
  
     def Activated(self):
         # do something here...
@@ -1609,7 +1613,10 @@ class ksuToolsPullMoved:
             reload_lib( kicadStepUptools )
         #from kicadStepUptools import onPushPCB
         #FreeCAD.Console.PrintWarning( 'active :)\n' )
+        doc=FreeCAD.ActiveDocument
+        doc.openTransaction('pull3D')
         kicadStepUptools.PullMoved()
+        doc.commitTransaction()
         # ppcb=kicadStepUptools.KSUWidget
         # ppcb.onPushPCB()
 
