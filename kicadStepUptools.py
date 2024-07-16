@@ -501,7 +501,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "12.2.4"
+___ver___ = "12.2.5"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -15856,7 +15856,7 @@ def Sync3DModel():
                                                     ts = sel[0].Label[sel[0].Label.rfind('_')+1:sel[0].Label.rfind('[')]
                                                     nbrModel = sel[0].Label[sel[0].Label.rfind('['):]
                                                 else:
-                                                    ts = sel[0].Label[sel[0].Label.rfind('_')+1:]
+                                                    ts = sel[0].Label[sel[0].Label.rfind('_')+1:] # tstamp
                                                     nbrModel = ''
                                                 #ts = sel[0].Label[sel[0].Label.rfind('_')+1:]
                                                 #mmodel=m.model[0][0]
@@ -15961,7 +15961,7 @@ def PushMoved():
                     ts = s.Label[s.Label.rfind('_')+1:s.Label.rfind('[')]
                 else:
                     ts = s.Label[s.Label.rfind('_')+1:]
-                if len (ts) == 8 or len (ts) == 12:
+                if len (ts) == 8 or len (ts) == 12:  # NB kv8 enlarged uuid to 32+4 chrs
                     #print(ts);stop
                     check_ok=True
                     #stop
@@ -21506,8 +21506,10 @@ def push3D2pcb(s,cnt,tsp):
         #old_pos=re.findall('\s\(tstamp(\s'+sel[0].TimeStamp+'.+?'+'\(at'+'\s.+?)\)',data, re.MULTILINE|re.DOTALL)[0]
         #print (old_pos)
         # new_pos=old_pos.split('(at')[0]+'(at 1.23 5.67 890'
-    elif len(re.findall('\s\(uuid(\s.*'+tsp.lower()+'+\))',data,  re.MULTILINE|re.DOTALL))>0 or \
-        len(re.findall('\s\(uuid(\s.*'+tsp.upper()+'+\))',data,  re.MULTILINE|re.DOTALL))>0:  #kv6 puts tstamp in lower case
+    elif len(re.findall('\s*\(uuid(\s.*'+tsp.lower()+'\"*\))',data,  re.MULTILINE|re.DOTALL))>0 or \
+        len(re.findall('\s*\(uuid(\s.*'+tsp.upper()+'\"*\))',data,  re.MULTILINE|re.DOTALL))>0:  #kv6 puts tstamp in lower case kv8 new mode '"'
+        #'\s\(uuid(\s.*'+tsp.lower()+'+\))',data,  re.MULTILINE|re.DOTALL))>0 or \
+        #'\s\(uuid(\s.*'+tsp.upper()+'+\))',data,  re.MULTILINE|re.DOTALL))>0:  #kv6 puts tstamp in lower case
         tstamp_found=True
     
     if tstamp_found:

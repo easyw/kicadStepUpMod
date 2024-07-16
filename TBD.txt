@@ -1,5 +1,6 @@
 TBD:
 
+- simple copy keep colors w/ FC0.22
 - implement fp_rect for hole board loading
 - implement keepout zones load/save for footprints
 - implement edgecut load for footprints
