@@ -501,7 +501,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "12.2.6"
+___ver___ = "12.2.7"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -1375,6 +1375,12 @@ def tabify():
             cv = t.findChild(QtGui.QDockWidget, "Model")
             if cv is None:
                 cv = t.findChild(QtGui.QDockWidget, "Tree view")
+                if cv is None:
+                    cv = [o for o in t.children () if o.objectName () == "Combo View"]
+                    if cv:
+                        cv = cv[0]
+                    else:
+                        cv = None
     if KSUWidget and cv:
         dw=t.findChildren(QtGui.QDockWidget)
         try:
@@ -21898,6 +21904,12 @@ if singleInstance():
             cv = t.findChild(QtGui.QDockWidget, "Model")
             if cv is None:
                 cv = t.findChild(QtGui.QDockWidget, "Tree view")
+                if cv is None:
+                    cv = [o for o in t.children () if o.objectName () == "Combo View"]
+                    if cv:
+                        cv = cv[0]
+                    else:
+                        cv = None
     #say( "Combo View" + str(cv))
     ## print( "KSUWidget" + str(wf))        
     cv.setFeatures( QtGui.QDockWidget.DockWidgetMovable | QtGui.QDockWidget.DockWidgetFloatable|QtGui.QDockWidget.DockWidgetClosable )
