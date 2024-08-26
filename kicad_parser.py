@@ -34,7 +34,7 @@ from fcad_parser import unquote #maui
 
 
 # from kicadStepUptools import KicadPCB,SexpList
-__kicad_parser_version__ = '2.3.3'
+__kicad_parser_version__ = '2.3.4'
 # https://github.com/realthunder/fcad_pcb/issues/20#issuecomment-586042341
 # FreeCAD.Console.PrintLog('kicad_parser_version '+__kicad_parser_version__+'\n') # maui 
 # print('kicad_parser_version '+__kicad_parser_version__)
@@ -1754,6 +1754,8 @@ class KicadFcad:
                     if isinstance(wire, Part.Edge):
                         wire = Part.Wire(wire)
                     wires.append(wire)
+                elif not wire:
+                    pass
                 else:
                     wire = self._makeWires(wire, name=None, offset=width*0.5)
                     wires += wire.Wires
@@ -1840,8 +1842,11 @@ class KicadFcad:
                     wp = make_shape(Vector(*p.size),p)
                     if shape_type == 'wire':
                         # keeping visualization of internal reference pad ONLY for footprint loading
-                        w = Part.makeCompound([w,wp])
-                        wp = ''
+                        if w is not None:
+                            w = Part.makeCompound([w,wp])
+                            wp = ''
+                        else:
+                            w=wp
                     # Part.show(wp)
                     # maui end
                 else:
