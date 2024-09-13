@@ -501,7 +501,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "12.3.0"
+___ver___ = "12.3.1"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -21507,21 +21507,27 @@ def push3D2pcb(s,cnt,tsp):
     doc=FreeCAD.ActiveDocument
     data=u''.join(cnt)
     tstamp_found=False
-    #if len(re.findall('\s\(tstamp(.+?)\)',data, re.MULTILINE|re.DOTALL))>0:
-    #if len(re.findall('\s\(tstamp(\s'+s.TimeStamp+'.+?)\)',data, re.MULTILINE|re.DOTALL))>0:
-    #if len(re.findall('\s\(tstamp(\s'+tsp+'.+?)\)',data, re.MULTILINE|re.DOTALL))>0:
-    if len(re.findall('\s\(tstamp(\s.*'+tsp.lower()+'+\))',data,  re.MULTILINE|re.DOTALL))>0 or \
-        len(re.findall('\s\(tstamp(\s.*'+tsp.upper()+'+\))',data,  re.MULTILINE|re.DOTALL))>0:  #kv6 puts tstamp in lower case
-    #if len(re.findall('\s\(tstamp(\s'+tsp+'.+?)\)',data, re.MULTILINE|re.DOTALL))>0:
-        tstamp_found=True
-        #old_pos=re.findall('\s\(tstamp(\s'+sel[0].TimeStamp+'.+?'+'\(at'+'\s.+?)\)',data, re.MULTILINE|re.DOTALL)[0]
-        #print (old_pos)
-        # new_pos=old_pos.split('(at')[0]+'(at 1.23 5.67 890'
-    elif len(re.findall('\s*\(uuid(\s.*'+tsp.lower()+'\"*\))',data,  re.MULTILINE|re.DOTALL))>0 or \
-        len(re.findall('\s*\(uuid(\s.*'+tsp.upper()+'\"*\))',data,  re.MULTILINE|re.DOTALL))>0:  #kv6 puts tstamp in lower case kv8 new mode '"'
-        #'\s\(uuid(\s.*'+tsp.lower()+'+\))',data,  re.MULTILINE|re.DOTALL))>0 or \
-        #'\s\(uuid(\s.*'+tsp.upper()+'+\))',data,  re.MULTILINE|re.DOTALL))>0:  #kv6 puts tstamp in lower case
-        tstamp_found=True
+    if 0:
+        #if len(re.findall('\s\(tstamp(.+?)\)',data, re.MULTILINE|re.DOTALL))>0:
+        #if len(re.findall('\s\(tstamp(\s'+s.TimeStamp+'.+?)\)',data, re.MULTILINE|re.DOTALL))>0:
+        #if len(re.findall('\s\(tstamp(\s'+tsp+'.+?)\)',data, re.MULTILINE|re.DOTALL))>0:
+        if len(re.findall('\s\(tstamp(\s.*'+tsp.lower()+'+\))',data,  re.MULTILINE|re.DOTALL))>0 or \
+            len(re.findall('\s\(tstamp(\s.*'+tsp.upper()+'+\))',data,  re.MULTILINE|re.DOTALL))>0:  #kv6 puts tstamp in lower case
+        #if len(re.findall('\s\(tstamp(\s'+tsp+'.+?)\)',data, re.MULTILINE|re.DOTALL))>0:
+            tstamp_found=True
+            #old_pos=re.findall('\s\(tstamp(\s'+sel[0].TimeStamp+'.+?'+'\(at'+'\s.+?)\)',data, re.MULTILINE|re.DOTALL)[0]
+            #print (old_pos)
+            # new_pos=old_pos.split('(at')[0]+'(at 1.23 5.67 890'
+        elif len(re.findall('\s*\(uuid(\s.*'+tsp.lower()+'\"*\))',data,  re.MULTILINE|re.DOTALL))>0 or \
+            len(re.findall('\s*\(uuid(\s.*'+tsp.upper()+'\"*\))',data,  re.MULTILINE|re.DOTALL))>0:  #kv6 puts tstamp in lower case kv8 new mode '"'
+            #'\s\(uuid(\s.*'+tsp.lower()+'+\))',data,  re.MULTILINE|re.DOTALL))>0 or \
+            #'\s\(uuid(\s.*'+tsp.upper()+'+\))',data,  re.MULTILINE|re.DOTALL))>0:  #kv6 puts tstamp in lower case
+            tstamp_found=True
+    else:
+        for i,ln in enumerate (cnt):
+            if '(tstamp ' in ln or '(uuid' in ln:
+                if tsp.lower() in ln or tsp.upper() in ln:
+                    tstamp_found=True
     
     if tstamp_found:
         oft=None
