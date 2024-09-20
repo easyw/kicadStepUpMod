@@ -33,27 +33,35 @@ help_txt += translate(
     "The 3D visualization of components on board assemblies in kicad 3dviewer, will be the same in your mechanical software, \n"
     "because of the STEP interchange format.<br>\n"
     "It is also possible to <b>Update a pcb Edge from a FC Sketcher.</b><br>\n"
-    "<b>configuration options:</b><br>Configuration options are located in the preferences system of FreeCAD, which is located in the Edit menu -&gt; Preferences.<br>\n",
+    "<b>configuration options:</b><br>Configuration options are located in the preferences system of FreeCAD, which is located in the Edit menu -&gt; Preferences.<br>\n"
+    "Starter Guide: "
+    "<a href='https://github.com/easyw/kicadStepUpMod/blob/master/demo/kicadStepUp-cheat-sheet.pdf'  target='_blank'>kicadStepUp-cheat-sheet.pdf</a><br>\n"
+    "ECAD-MCAD-collaboration: "
+    "<a href='https://github.com/easyw/kicadStepUpMod/blob/master/demo/ECAD-MCAD-collaboration.pdf'  target='_blank'>ECAD-MCAD-collaboration.pdf</a><br><br>\n",
 )
-pdf_name = "kicadStepUp-starter-Guide.pdf"
-# help_txt+="starter Guide:<br><a href='"+ksuWBpath+os.sep+"demo"+os.sep+pdf_name+"' target='_blank'>"+pdf_name+"</a><br>"
-help_txt += translate(
-    "Help", "starter Guide:<br><a href='{}demo{}{}' target='_blank'>{}demo{}{}</a><br>"
-).format(ksuWBpath.rstrip("."), os.sep, pdf_name, ksuWBpath.rstrip("."), os.sep, pdf_name)
-##   "Help", "starter Guide:<br><a href='{}{}demo{}{}' target='_blank'>{}{}demo{}{}</a><br>"
+# pdf_name = "kicadStepUp-starter-Guide.pdf"
+# # help_txt+="starter Guide:<br><a href='"+ksuWBpath+os.sep+"demo"+os.sep+pdf_name+"' target='_blank'>"+pdf_name+"</a><br>"
+# help_txt += translate(
+#     "Help", "starter Guide:<br><a href='{}demo{}{}' target='_blank'>{}demo{}{}</a><br>"
+# ).format(ksuWBpath.rstrip("."), os.sep, pdf_name, ksuWBpath.rstrip("."), os.sep, pdf_name)
+# ##   "Help", "starter Guide:<br><a href='{}{}demo{}{}' target='_blank'>{}{}demo{}{}</a><br>"
+
 help_txt += translate(
     "Help",
     "<b>Note:</b> each button has its own <b>Tooltip</b><br>\n"
     "useful buttons:<br><b>Load kicad Board directly</b> -> will load kicad board and parts in FreeCAD coming from kicad '.kicad_pcb' file<br>\n"
     "<b>Load kicad Footprint module</b> -> will load directly kicad footprint in FreeCAD to easily align the 3D model to footprint<br>\n"
+    "<a href='https://youtu.be/eMdX3R9ni7g?t=843'  target='_blank'>Load kicad Footprint module in 3D FreeCAD environment</a><br>\n"
     "<b>Export to kicad STEP & scaled VRML</b> -> will convert MCAD model to STEP and VRML to be used by Kicad and kicad StepUp<br>\n"
     "<b>   -> VRML can be multipart;<br>   -> STEP must be single part</b><br>(<i>'Part Boolean Union'</i> or <i>'Part Makecompound'</i>)<br>\n"
     "<i>assign material to selected colors and your VRML 3D models will have nice shiny effects</i><br>\n"
     "<b>Push pcb Sketch to kicad_pcb Edge</b> -> will push pcb Sketch to kicad_pcb Edge in your design; it can be done with an empty or with an existing pcb Edge<br>\n"
+    "<a href='https://youtu.be/eMdX3R9ni7g?t=1050' target='_blank'>Push a complex pcb Sketch from FreeCAD to kicad_pcb Edge board</a>\n"
     "<br>for a more detailed help have a look at <br><b>kicadStepUp-starter-Guide.pdf</b><br>\n"
     "or just follow the <b>YouTube video tutorials</b> <br><a href='https://youtu.be/h6wMU3lE_sA'  target='_blank'>kicadStepUp basics</a><br>\n"
-    "<a href='https://youtu.be/O6vr8QFnYGw' target='_blank'>kicadStepUp STEP alignment to Kicad footprint</a><br>\n"
-    "<a href='https://github.com/easyw/kicadStepUpMod' target='_blank'>check always the latest release of kicadStepUp</a><br><br>\n"
+    "<a href='https://youtu.be/O6vr8QFnYGw' target='_blank'>kicadStepUp STEP alignment to Kicad footprint</a><br>"
+    "<a href='https://youtu.be/6R6UEUScjgA' target='_blank'>ECAD MCAD Collaboration and Synchronization</a><br>"
+    "<a href='https://github.com/easyw/kicadStepUpMod' target='_blank'>check always the latest release of kicadStepUp</a><br>"
     "Designing in kicad native 3d-viewer will produce a fully aligned STEP MCAD version \n"
     "with the same view of kicad 3d render.<br>\n"
     "Moreover, KiCad StepUp tool set <b>will let you to load the kicad footprint inside FreeCAD and align the 3D part with a visual real time feedback \n"

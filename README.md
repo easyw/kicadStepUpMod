@@ -39,6 +39,15 @@ StepUp Cheat sheet
 
 [kicad StepUp Cheat sheet](https://github.com/easyw/kicadStepUpMod/raw/master/demo/kicadStepUp-cheat-sheet.pdf)
 
+StepUp Videos
+------------------
+
+[ECAD-MCAD-collaboration: Complex Sketch to PCB](https://youtu.be/eMdX3R9ni7g?t=1050)
+
+[ECAD MCAD Synchronization: Push & Pull model placement in 3D environment](https://youtu.be/6R6UEUScjgA)
+
+[ECAD-MCAD-collaboration: Footprint in FreeCAD](https://youtu.be/eMdX3R9ni7g?t=843)
+
 ### Requirements
 
 - **FreeCAD** **0.19, 0.20, 0.21, 0.22**
