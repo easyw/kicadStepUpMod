@@ -42,15 +42,21 @@ StepUp Cheat sheet
 StepUp Videos
 ------------------
 
-[ECAD-MCAD-collaboration: Complex Sketch to PCB](https://youtu.be/eMdX3R9ni7g?t=1050)
+[ECAD-MCAD-collaboration: Complex Edge Sketch to PCB](https://youtu.be/eMdX3R9ni7g?t=1050)
+[![ECAD-MCAD-collaboration: Complex Edge Sketch to PCB](demo/gifs/StepUp-board-shaping.gif)](https://youtu.be/eMdX3R9ni7g?t=1050)
+
+[ECAD-MCAD-collaboration: Push&Pull Edge to PCB](https://youtu.be/n44iBpu_YjY)
+[![ECAD-MCAD-collaboration: Push&Pull Edge to PCB](demo/gifs/StepUp-getting-to-blinky.gif)](https://www.youtube.com/embed/n44iBpu_YjY)
 
 [ECAD MCAD Synchronization: Push & Pull model placement in 3D environment](https://youtu.be/6R6UEUScjgA)
+[![ECAD MCAD Synchronization: Push & Pull model placement in 3D environment](demo/gifs/StepUp-ECAD-MCAD-sync.gif)](https://youtu.be/6R6UEUScjgA)
 
 [ECAD-MCAD-collaboration: Footprint in FreeCAD](https://youtu.be/eMdX3R9ni7g?t=843)
+[![ECAD-MCAD-collaboration: Footprint in FreeCAD](demo/gifs/StepUp-3d-model-from-footprint.gif)](https://youtu.be/eMdX3R9ni7g?t=843)
 
 ### Requirements
 
-- **FreeCAD** **0.19, 0.20, 0.21, 0.22**
+- **FreeCAD** **0.19, 0.20, 0.21, 0.22, 1.0**
 
 - **KiCAD** **5.1**, **6.x**, **7.x**, **8.x**
 
