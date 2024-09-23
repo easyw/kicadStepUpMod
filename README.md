@@ -38,6 +38,7 @@ StepUp Cheat sheet
 ------------------
 
 [kicad StepUp Cheat sheet](https://github.com/easyw/kicadStepUpMod/raw/master/demo/kicadStepUp-cheat-sheet.pdf)
+[![kicad StepUp Cheat sheet](demo/gifs/pdf-download.jpg)](https://github.com/easyw/kicadStepUpMod/raw/master/demo/kicadStepUp-cheat-sheet.pdf)
 
 StepUp Videos
 ------------------
