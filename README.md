@@ -46,7 +46,7 @@ StepUp Videos
 [![ECAD-MCAD-collaboration: Complex Edge Sketch to PCB](demo/gifs/StepUp-board-shaping.gif)](https://youtu.be/eMdX3R9ni7g?t=1050)
 
 [ECAD-MCAD-collaboration: Push&Pull Edge to PCB](https://youtu.be/n44iBpu_YjY)
-[![ECAD-MCAD-collaboration: Push&Pull Edge to PCB](demo/gifs/StepUp-getting-to-blinky.gif)](https://www.youtube.com/n44iBpu_YjY)
+[![ECAD-MCAD-collaboration: Push&Pull Edge to PCB](demo/gifs/StepUp-getting-to-blinky.gif)](https://youtu.be/n44iBpu_YjY)
 
 [ECAD MCAD Synchronization: Push & Pull model placement in 3D environment](https://youtu.be/6R6UEUScjgA)
 [![ECAD MCAD Synchronization: Push & Pull model placement in 3D environment](demo/gifs/StepUp-ECAD-MCAD-sync.gif)](https://youtu.be/6R6UEUScjgA)
