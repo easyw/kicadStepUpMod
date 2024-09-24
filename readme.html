@@ -1,0 +1,48 @@
+<h1>kicadStepUp-WB</h1>
+<p><img src="Resources/icons/kicad-StepUp-tools-WB.svg" alt="icon"></p>
+<p><a href="https://www.python.org/"><img src="images/made-with-python.svg" alt="made-with-python"></a></p>
+<p><a href="https://www.freecad.org"><img src="images/FreeCAD-addon-manager-available.svg" alt="FreeCAD Addokn manager status"></a></p>
+<p>KiCad <strong>StepUp tools</strong> are a FreeCAD Macro and a FreeCAD WorkBench to help in <strong>Mechanical Collaboration</strong> between <strong>KiCad EDA</strong> and <strong>FreeCAD</strong> or a <strong>Mechanical CAD</strong>.</p>
+<p><strong>KiCad StepUp features:</strong> </p>
+<ul>
+<li><strong>load kicad board and parts in FreeCAD and export it to STEP</strong> (or IGES) for a full ECAD MCAD collaboration</li>
+<li><strong>load kicad_mod footprint in FreeCAD to easy and precisely align the mechanical model to kicad footprint</strong></li>
+<li><strong>convert the STEP 3D model of parts, board, enclosure to VRML with Materials properties</strong> for the best use in kicad</li>
+<li><strong>check interference and collisions</strong> for enclosure and footprint design </li>
+<li><strong>design a new pcb Edge with FreeCAD Sketcher and PUSH it to an existing kicad_pcb Board</strong> </li>
+<li><strong>PULL a pcb Edge from a kicad_pcb Board</strong>, edit it in FC Sketcher and PUSH it back to kicad</li>
+<li><strong>design a new footprint in FreeCAD to get the power of Sketch in footprints</strong></li>
+<li><strong>generate Blender compatible VRML files</strong></li>
+<li><strong>translation infrastructure enabled</strong></li>
+</ul>
+<p>Please see <a href="https://forum.kicad.info/search?q=stepup">KiCad Info forum</a> or <a href="https://forum.freecadweb.org/viewtopic.php?f=24&t=14276">FreeCAD forum</a> to discuss or report issues regarding this Addon.</p>
+<p><img src="images/crazyflie.png" alt="CrazyFlie" width="1024" ></p>
+<h2>Installing</h2>
+<p>Download and install your corresponding version of FreeCAD from <a href="http://www.freecadweb.org/wiki/Download">wiki Download page</a> and either install</p>
+<ul>
+<li>automatically using the <a href="https://github.com/FreeCAD/FreeCAD-addons">FreeCAD Add-on Manager</a> (bundled in to FreeCAD under Tools Menu)</li>
+<li>manually by copying the kicadStepUpMod folder to the Mod sub-directory of the FreeCAD application.</li>
+</ul>
+<h2>StepUp Cheat sheet</h2>
+<p><a href="https://github.com/easyw/kicadStepUpMod/raw/master/demo/kicadStepUp-cheat-sheet.pdf">kicad StepUp Cheat sheet</a><br><a href="https://github.com/easyw/kicadStepUpMod/raw/master/demo/kicadStepUp-cheat-sheet.pdf"><img src="demo/gifs/pdf-download.png" alt="kicad StepUp Cheat sheet"></a></p>
+<h2>StepUp Videos</h2>
+<p><a href="https://youtu.be/eMdX3R9ni7g?t=1050">ECAD-MCAD-collaboration: Complex Edge Sketch to PCB</a><br><a href="https://youtu.be/eMdX3R9ni7g?t=1050"><img src="demo/gifs/StepUp-board-shaping.gif" alt="ECAD-MCAD-collaboration: Complex Edge Sketch to PCB"></a></p>
+<p><a href="https://youtu.be/n44iBpu_YjY">ECAD-MCAD-collaboration: Push&amp;Pull Edge to PCB</a><br><a href="https://youtu.be/n44iBpu_YjY"><img src="demo/gifs/StepUp-getting-to-blinky.gif" alt="ECAD-MCAD-collaboration: Push&amp;Pull Edge to PCB"></a></p>
+<p><a href="https://youtu.be/6R6UEUScjgA">ECAD MCAD Synchronization: Push &amp; Pull model placement in 3D environment</a><br><a href="https://youtu.be/6R6UEUScjgA"><img src="demo/gifs/StepUp-ECAD-MCAD-sync.gif" alt="ECAD MCAD Synchronization: Push &amp; Pull model placement in 3D environment"></a></p>
+<p><a href="https://youtu.be/eMdX3R9ni7g?t=843">ECAD-MCAD-collaboration: Footprint in FreeCAD</a><br><a href="https://youtu.be/eMdX3R9ni7g?t=843"><img src="demo/gifs/StepUp-3d-model-from-footprint.gif" alt="ECAD-MCAD-collaboration: Footprint in FreeCAD"></a></p>
+<p><a href="https://www.youtube.com/watch?v=ov3PpaP9uHI">ECAD-MCAD-collaboration: FreeCAD + KiCAD complete walkthrough design</a><br><a href="https://www.youtube.com/watch?v=ov3PpaP9uHI"><img src="demo/gifs/FreeCAD+KiCAD-complete-walkthrough-design.gif" alt="ECAD-MCAD-collaboration: FreeCAD + KiCAD complete walkthrough design"></a></p>
+<h3>Requirements</h3>
+<ul>
+<li><p><strong>FreeCAD</strong> <strong>0.19, 0.20, 0.21, 0.22, 1.0</strong></p>
+</li>
+<li><p><strong>KiCAD</strong> <strong>5.1</strong>, <strong>6.x</strong>, <strong>7.x</strong>, <strong>8.x</strong></p>
+</li>
+<li><p><strong>KiCAD <em>8.99 nigthly</em> (partially supported)</strong></p>
+</li>
+</ul>
+<h3>Known issues</h3>
+<ul>
+<li>on Linux <em>FreeCAD Snap and Flatpak</em> you may need to use &#39;mount bind&#39; to have access to KiCad 3D models path</li>
+</ul>
+<h3>License</h3>
+<p><a href="https://www.gnu.org/licenses/agpl-3.0.en.html">GNU AFFERO GENERAL PUBLIC LICENSE</a></p>

@@ -21,9 +21,9 @@ KiCad **StepUp tools** are a FreeCAD Macro and a FreeCAD WorkBench to help in **
 - **generate Blender compatible VRML files**
 - **translation infrastructure enabled**
 
-Please see [KiCad Info forum](https://forum.kicad.info/search?q=step) or [FreeCAD forum](https://forum.freecadweb.org/viewtopic.php?f=24&t=14276) to discuss or report issues regarding this Addon.
+Please see [KiCad Info forum](https://forum.kicad.info/search?q=stepup) or [FreeCAD forum](https://forum.freecadweb.org/viewtopic.php?f=24&t=14276) to discuss or report issues regarding this Addon.
 
-![screenshot](https://cdn.hackaday.io/images/7537561443908546062.png)
+![CrazyFlie](images/crazyflie.png)
 
 
 Installing
@@ -38,7 +38,7 @@ StepUp Cheat sheet
 ------------------
 
 [kicad StepUp Cheat sheet](https://github.com/easyw/kicadStepUpMod/raw/master/demo/kicadStepUp-cheat-sheet.pdf)
-[![kicad StepUp Cheat sheet](demo/gifs/pdf-download.jpg)](https://github.com/easyw/kicadStepUpMod/raw/master/demo/kicadStepUp-cheat-sheet.pdf)
+[![kicad StepUp Cheat sheet](demo/gifs/pdf-download.png)](https://github.com/easyw/kicadStepUpMod/raw/master/demo/kicadStepUp-cheat-sheet.pdf)
 
 StepUp Videos
 ------------------
