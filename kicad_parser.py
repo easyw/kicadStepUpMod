@@ -20,7 +20,12 @@ import FreeCADGui
 import Part
 from FreeCAD import Console,Vector,Placement,Rotation
 import DraftGeomUtils,DraftVecUtils
-import Path
+print(FreeCAD.Version())
+if FreeCAD.Version()[0] < '1':
+    import Path
+    CAM = Path
+else:
+    import CAM
 
 import sys, os
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
@@ -1124,7 +1129,7 @@ class KicadFcad:
 
             recomputeObj(ret)
         else:
-            ret = Path.Area(Fill=fill,
+            ret = CAM.Area(Fill=fill,
                             FitArcs=fit_arcs,
                             Coplanar=0,
                             Reorient=reorient,
