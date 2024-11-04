@@ -52,8 +52,8 @@ StepUp Videos
 [ECAD MCAD Synchronization: Push & Pull model placement in 3D environment](https://youtu.be/6R6UEUScjgA)
 [![ECAD MCAD Synchronization: Push & Pull model placement in 3D environment](demo/gifs/StepUp-ECAD-MCAD-sync.gif)](https://youtu.be/6R6UEUScjgA)
 
-[ECAD-MCAD-collaboration: Footprint in FreeCAD](https://youtu.be/eMdX3R9ni7g?t=843)
-[![ECAD-MCAD-collaboration: Footprint in FreeCAD](demo/gifs/StepUp-3d-model-from-footprint.gif)](https://youtu.be/eMdX3R9ni7g?t=843)
+[ECAD-MCAD-collaboration: Footprint in FreeCAD](https://youtu.be/eMdX3R9ni7g?t=839)
+[![ECAD-MCAD-collaboration: Footprint in FreeCAD](demo/gifs/StepUp-3d-model-from-footprint.gif)](https://youtu.be/eMdX3R9ni7g?t=839)
 
 [ECAD-MCAD-collaboration: FreeCAD + KiCAD complete walkthrough design](https://www.youtube.com/watch?v=ov3PpaP9uHI)
 [![ECAD-MCAD-collaboration: FreeCAD + KiCAD complete walkthrough design](demo/gifs/FreeCAD+KiCAD-complete-walkthrough-design.gif)](https://www.youtube.com/watch?v=ov3PpaP9uHI)

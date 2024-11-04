@@ -45,7 +45,10 @@ help_txt += translate(
 #     "Help", "starter Guide:<br><a href='{}demo{}{}' target='_blank'>{}demo{}{}</a><br>"
 # ).format(ksuWBpath.rstrip("."), os.sep, pdf_name, ksuWBpath.rstrip("."), os.sep, pdf_name)
 # ##   "Help", "starter Guide:<br><a href='{}{}demo{}{}' target='_blank'>{}{}demo{}{}</a><br>"
-
+# html_name = "readme.html"
+# help_txt += translate(
+#      "Help", "KiCAD StepUp ReadMe:<br><a href='file:///{}{}' target='_blank'>{}{}</a><br>"
+#  ).format(ksuWBpath.rstrip("."), html_name, ksuWBpath.rstrip("."), html_name)
 help_txt += translate(
     "Help",
     "<b>Note:</b> each button has its own <b>Tooltip</b><br>\n"
