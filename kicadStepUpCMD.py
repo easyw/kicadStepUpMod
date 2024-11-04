@@ -32,7 +32,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.5.2'
+ksuCMD_version__='2.5.3'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -1448,7 +1448,7 @@ class ksuToolsPushPCB:
         #FreeCAD.Console.PrintWarning( 'active :)\n' )
         sel = FreeCADGui.Selection.getSelection()
         if len (sel) ==1:
-            if 'Sketcher' in sel[0].TypeId:
+            if 'Sketcher' in sel[0].TypeId or 'Shape2DView' in sel[0].Name:
                 #FreeCADGui.ActiveDocument.ActiveView.setCameraOrientation(sel[0].Placement.Rotation)
                 #FreeCAD.ActiveDocument.recompute(None,True,True)
                 FreeCAD.ActiveDocument.openTransaction('pushpcb')
@@ -1464,10 +1464,42 @@ class ksuToolsPushPCB:
                 print('evaluate to recompute')
                 ## s = sel[0].Shape
                 ## sk = Draft.make_sketch(s.Edges, autoconstraints=True)
-                kicadStepUptools.sanitizeSketch(sketch.Name)
-                FreeCAD.ActiveDocument.recompute()
-                sk = Draft.make_sketch(sketch, autoconstraints=True)
-                sk_obj = FreeCAD.ActiveDocument.ActiveObject
+                if 'Sketcher' in sel[0].TypeId:
+                    kicadStepUptools.sanitizeSketch(sketch.Name)
+                    FreeCAD.ActiveDocument.recompute()
+                if 0:
+                    # sk = Draft.make_sketch(sketch, autoconstraints=True)
+                    sk = Draft.make_sketch(sketch, autoconstraints=False) #, avoidredundant=False)
+                    sk_obj = FreeCAD.ActiveDocument.ActiveObject
+                    FreeCADGui.ActiveDocument.getObject(sk_obj.Name).AvoidRedundant = False
+                else:
+                    doc = FreeCAD.ActiveDocument
+                    FreeCADGui.Selection.clearSelection()
+                    if 'Shape2DView' in sel[0].Name:
+                        shp=FreeCAD.ActiveDocument.getObject(sketch.Name).Shape
+                        Part.show(shp)
+                        shp=FreeCAD.ActiveDocument.ActiveObject
+                        FreeCADGui.Selection.addSelection(doc.Name,shp.Name)
+                        FreeCAD.ActiveDocument.ActiveObject.ViewObject.Visibility=False
+                    else:
+                        FreeCADGui.Selection.addSelection(doc.Name,sketch.Name)
+                    FreeCADGui.runCommand('Std_Copy',0)
+                    FreeCADGui.runCommand('Std_Paste',0)
+                    sk_obj = FreeCAD.ActiveDocument.ActiveObject
+                    if 'Shape2DView' in sel[0].Name:
+                        sk = Draft.make_sketch(sk_obj, autoconstraints=False) #, avoidredundant=False)
+                        FreeCAD.ActiveDocument.getObject(sk_obj.Name).ViewObject.Visibility=False
+                        sk_obj = FreeCAD.ActiveDocument.ActiveObject
+                        FreeCADGui.ActiveDocument.getObject(sk_obj.Name).AvoidRedundant = False
+                        # FreeCAD.ActiveDocument.getObject(sk_obj.Name).purgeTouched() #mark to NOT recompute object
+                        # App.ActiveDocument.Dwgs_Sketch.purgeTouched()
+                    else: # a sketch that is already sanitized
+                        # sk = Draft.make_sketch(sketch, autoconstraints=True)
+                        # FreeCAD.ActiveDocument.getObject(sk_obj.Name).ViewObject.Visibility=False
+                        # sk_obj = FreeCAD.ActiveDocument.ActiveObject
+                        FreeCADGui.ActiveDocument.getObject(sk_obj.Name).Autoconstraints = True
+                        FreeCADGui.ActiveDocument.getObject(sk_obj.Name).AvoidRedundant = True
+                
                 FreeCAD.ActiveDocument.recompute()
                 FreeCADGui.Selection.clearSelection()
                 FreeCADGui.Selection.addSelection(sk_obj)
@@ -1500,7 +1532,7 @@ class ksuToolsPushPCB:
                 FreeCAD.Console.PrintWarning('\n')
                 kicadStepUptools.say_warning(msg)
         else:
-            msg="""select one Sketch to be pushed to kicad board!"""
+            msg="""select one Sketch or a Shape2DView to be pushed to kicad board!"""
             FreeCAD.Console.PrintError(msg)
             FreeCAD.Console.PrintWarning('\n')
             kicadStepUptools.say_warning(msg)
@@ -1933,8 +1965,8 @@ class ksuTools3D2D:
                     new_sks.append(FreeCAD.ActiveDocument.ActiveObject)
                 FreeCAD.ActiveDocument.recompute()
                 for s in new_sks:
-                    FreeCADGui.ActiveDocument.getObject(s.Name).LineColor = (1.00,1.00,1.00)
-                    FreeCADGui.ActiveDocument.getObject(s.Name).PointColor = (1.00,1.00,1.00)
+                    FreeCADGui.ActiveDocument.getObject(s.Name).LineColor =  (85,170,255) #(1.00,1.00,1.00)
+                    FreeCADGui.ActiveDocument.getObject(s.Name).PointColor = (85,170,255) #(1.00,1.00,1.00)
             else:
                 reply = QtGui.QMessageBox.information(None,"Warning", "select something\nto project it to a 2D shape in the document")
                 FreeCAD.Console.PrintError('select something\nto project it to a 2D shape in the document\n')
@@ -2336,8 +2368,6 @@ class ksuTools2D2Sketch:
         if FreeCADGui.Selection.getSelection():
             max_geo_admitted = 1500 # after this number, no recompute is applied
             try:
-                edges=sum((obj.Shape.Edges for obj in \
-                FreeCADGui.Selection.getSelection() if hasattr(obj,'Shape')),[])
                 #for edge in edges:
                 #    print "geomType ",DraftGeomUtils.geomType(edge)
                 ##face = OpenSCAD2Dgeom.edgestofaces(edges)
@@ -2348,8 +2378,11 @@ class ksuTools2D2Sketch:
                 FC_majorV=int(float(FreeCAD.Version()[0]))
                 FC_minorV=int(float(FreeCAD.Version()[1]))
                 using_draft_makeSketch=True
+                exposingInternalGeo=False
                 faceobj=None
                 if not using_draft_makeSketch or (FC_majorV==0 and FC_minorV<=16):
+                    edges=sum((obj.Shape.Edges for obj in \
+                        FreeCADGui.Selection.getSelection() if hasattr(obj,'Shape')),[])
                     try:
                         faceobj=None
                         face = kicadStepUptools.OSCD2Dg_edgestofaces(edges,3 , kicadStepUptools.edge_tolerance)
@@ -2491,9 +2524,10 @@ class ksuTools2D2Sketch:
                     sname=FreeCAD.ActiveDocument.ActiveObject.Name
                     FreeCAD.ActiveDocument.ActiveObject.ViewObject.LineColor = (1.00,1.00,1.00)
                     FreeCAD.ActiveDocument.ActiveObject.ViewObject.PointColor = (1.00,1.00,1.00)
-                    for i,g in enumerate (sk.Geometry):
-                        if 'BSplineCurve object' in str(g):
-                            sk.exposeInternalGeometry(i)
+                    if exposingInternalGeo: #this is particularly intensive in calculation for BSplines
+                        for i,g in enumerate (sk.Geometry):
+                            if 'BSplineCurve object' in str(g):
+                                sk.exposeInternalGeometry(i)
                     using_draft_makeSketch=True
                     for obj in FreeCADGui.Selection.getSelection():
                         FreeCADGui.ActiveDocument.getObject(obj.Name).Visibility=False

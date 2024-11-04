@@ -20,7 +20,7 @@ import FreeCADGui
 import Part
 from FreeCAD import Console,Vector,Placement,Rotation
 import DraftGeomUtils,DraftVecUtils
-print(FreeCAD.Version())
+
 if FreeCAD.Version()[0] < '1':
     import Path
     CAM = Path

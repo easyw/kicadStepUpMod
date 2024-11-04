@@ -501,7 +501,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "12.3.1"
+___ver___ = "12.3.3"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -3063,18 +3063,21 @@ def cfg_read_all():
     if _platform == "linux" or _platform == "linux2":
         # linux
         pt_lnx = True
-        default_prefix3d = '/usr/share/kicad/modules/packages3d'
+        # default_prefix3d = '/usr/share/kicad/modules/packages3d'
+        default_prefix3d = '/usr/share/kicad/3dmodels/' # kv7 kv8
         #'/usr/share/kicad/modules/packages3d'
     elif _platform == "darwin":
         #osx
         pt_osx = True
-        default_prefix3d = '/Library/Application Support/kicad/packages3d' 
+        # default_prefix3d = '/Library/Application Support/kicad/packages3d'  
+        default_prefix3d = '/Applications/KiCad/KiCad.app/Contents/SharedSupport/3dmodels/' # kv7 kv8 ???
         #/Library/Application Support/kicad/modules/packages3d/' wrong location
     else:
         # Windows
         pt_win = True
         #default_prefix3d = os.path.join(os.environ["ProgramFiles"],u'\\KiCad\\share\\kicad\\modules\\packages3d')
-        default_prefix3d = (os.environ["ProgramFiles"]+u'\\KiCad\\share\\kicad\\modules\\packages3d')
+        # default_prefix3d = (os.environ["ProgramFiles"]+u'\\KiCad\\share\\kicad\\modules\\packages3d')
+        default_prefix3d = (os.environ["ProgramFiles"]+u'\\KiCad\\8.0\\share\\kicad\\3dmodels') # kv7 kv8
         #print (default_prefix3d)
         default_prefix3d = re.sub("\\\\", "/", default_prefix3d) #default_prefix3d.replace('\\','/')
         #print (default_prefix3d)
@@ -21023,7 +21026,7 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                 testing=False
                 if testing is True:
                     off_x=0;off_y=0
-                if ksu_found==True or testing==True:
+                if ksu_found==True or testing==True or ssklayer != 'Edge':
                     if pcb_found==True:
                         #FreeCAD.ActiveDocument.getObject(skname).recompute(True)
                         #bbpx=-FreeCAD.ActiveDocument.getObject('Pcb').Placement.Base[0]+FreeCAD.ActiveDocument.getObject(skt_name).Placement.Base[0]
