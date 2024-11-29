@@ -21,11 +21,11 @@ import Part
 from FreeCAD import Console,Vector,Placement,Rotation
 import DraftGeomUtils,DraftVecUtils
 
-if FreeCAD.Version()[0] < '1':
+try:
+    import CAM
+except:
     import Path
     CAM = Path
-else:
-    import CAM
 
 import sys, os
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
