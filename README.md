@@ -58,6 +58,9 @@ StepUp Videos
 [ECAD-MCAD-collaboration: FreeCAD + KiCAD complete walkthrough design](https://www.youtube.com/watch?v=ov3PpaP9uHI)
 [![ECAD-MCAD-collaboration: FreeCAD + KiCAD complete walkthrough design](demo/gifs/FreeCAD+KiCAD-complete-walkthrough-design.gif)](https://www.youtube.com/watch?v=ov3PpaP9uHI)
 
+[ECAD-MCAD-collaboration: Designing a Complex PCB Edge from a 3D model Enclosure](https://www.youtube.com/watch?v=pJCeprBhWLs)
+[![ECAD-MCAD-collaboration: Designing a Complex PCB Edge from a 3D model Enclosure](demo/gifs/Designing-a-Complex-PCB-Edge-from-a-3D-model-Enclosure.gif)](https://www.youtube.com/watch?v=pJCeprBhWLs)
+
 ### Requirements
 
 - **FreeCAD** **0.19, 0.20, 0.21, 0.22, 1.0**

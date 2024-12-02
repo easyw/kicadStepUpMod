@@ -32,7 +32,11 @@ import utf8test; reload(utf8test)
 
     first time 
     print('Creating first time ksu preferences')
+
+
 #TBD
+check color matching in exp wrl
+
 check program with utf-8
 update hlp
 update cheatsheet

@@ -501,7 +501,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "12.3.3"
+___ver___ = "12.3.4"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -2785,7 +2785,9 @@ def align_colors_to_materials(objects):
                             color_vector[idx]=color
                     idx+=1
                 if(applyDiffuse):
+                    obj_transparency=FreeCADGui.ActiveDocument.getObject(obj.Name).Transparency
                     FreeCADGui.ActiveDocument.getObject(obj.Name).DiffuseColor=color_vector
+                    FreeCADGui.ActiveDocument.getObject(obj.Name).Transparency=obj_transparency
                 else:
                     #say(color_vector)
                     #FreeCADGui.ActiveDocument.getObject(obj.Name).ShapeColor=color_vector[0]
