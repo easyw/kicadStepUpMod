@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.1" language="es-ES" sourcelanguage="en">
+<TS version="2.1" language="es_ES" sourcelanguage="en_US">
   <context>
     <name>CDialog</name>
     <message>
@@ -33,58 +33,244 @@
       <translation>General</translation>
     </message>
     <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="83"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="83"/>
-      <source>3D Prefix working folder</source>
-      <translation>Carpeta de trabajo de prefijo 3D</translation>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="751"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="699"/>
+      <source>Import/Export settings</source>
+      <translation>Ajustes para importar/exportar</translation>
     </message>
     <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="98"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="98"/>
-      <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;your &lt;span style=&quot; font-weight:600;&quot;&gt;KISYS3DMOD&lt;/span&gt; path&lt;/p&gt;&lt;p&gt;or 3D model &lt;span style=&quot; font-weight:600;&quot;&gt;main prefix path&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-      <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;tu &lt;span style=&quot; font-weight:600;&quot;&gt;ruta&lt;/span&gt; KISYS3DMOD&lt;/p&gt;&lt;p&gt;o prefijo de ruta principal &lt;span style=&quot; font-weight:600;&quot;&gt;de modelos 3D&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="763"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="711"/>
+      <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enable/Disable &lt;span style=&quot; font-weight:600;&quot;&gt;fusion (union)&lt;/span&gt; of all 3D models.&lt;/p&gt;&lt;p&gt;Be careful ... fusion can be heavy or generate FC crash with a lot of objects.&lt;/p&gt;&lt;p&gt;Please consider to use bbox or blacklist small objects&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+      <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Habilitar/Deshabilitar &lt;span style=&quot; font-weight:600;&quot;&gt;fusion (union)&lt;/span&gt; de todos los modelos 3D.&lt;/p&gt;&lt;p&gt;Tener cuidado ... la fusion puede ser pesada o generar colapso de FreCAD con muchos objetos.&lt;/p&gt;&lt;p&gt;Por favor considere el uso de bbox o lista negra para objetos pequeños &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="101"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="101"/>
-      <source>main 3D folder location &apos;KISYS3DMOD&apos;
-or &apos;KICAD6_3DMODEL_DIR&apos;</source>
-      <translation>ubicación de la carpeta principal 3D &apos;KISYS3DMOD&apos;
- o &apos;KICAD6_3DMODEL_DIR&apos;</translation>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="766"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="714"/>
+      <source>Make a Union of 3D models</source>
+      <translation>Crear una unión de modelos 3D</translation>
     </message>
     <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="124"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="124"/>
-      <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;main 3D folder location&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;&apos;KISYS3DMOD&apos;&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-      <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ubicación de la carpeta principal 3D&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;&apos;KISYS3DMOD&apos;&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="788"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="736"/>
+      <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Directly &lt;span style=&quot; font-weight:600;&quot;&gt;Export STEP&lt;/span&gt; after Loading&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+      <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Directly &lt;span style=&quot; font-weight:600;&quot;&gt;Exportar a STEP&lt;/span&gt; despues de cargar&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="149"/>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="1315"/>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="1366"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="152"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="1239"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="1293"/>
-      <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;your &lt;span style=&quot; font-weight:600;&quot;&gt;ALIAS&lt;/span&gt; 3D&lt;/p&gt;&lt;p&gt;model prefix path&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-      <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;tu &lt;span style=&quot; font-weight:600;&quot;&gt;ALIAS&lt;/span&gt; 3D&lt;/p&gt;&lt;p&gt;ruta del prefijo del modelo&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="791"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="739"/>
+      <source>Directly Export STEP after Loading</source>
+      <translation>Exportar STEP directamente después de cargar</translation>
     </message>
     <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="152"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="155"/>
-      <source>secondary 3D folder loc
-&apos;ALT2 3DMOD&apos;</source>
-      <translation>carpeta secundaria 3D loc
- &apos;ALT2 3DMOD&apos;</translation>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="816"/>
+      <source>STEP export mode.</source>
+      <translation>Modo de exportación STEP.</translation>
     </message>
     <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="175"/>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="1341"/>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="1392"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="178"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="1265"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="1319"/>
-      <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;secondary 3D folder location&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;&apos;ALT3DMOD&apos;&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-      <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ubicación de carpeta 3D secundaria&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;&apos;ALT3DMOD&apos;&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="819"/>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="842"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="764"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="767"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="790"/>
+      <source>STEP export mode</source>
+      <translation>Modo de exportación STEP</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="855"/>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="925"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="803"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="873"/>
+      <source>Hierarchy</source>
+      <translation>Jerarquía</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="860"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="808"/>
+      <source>Flat</source>
+      <translation>Plano</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="865"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="813"/>
+      <source>One Container</source>
+      <translation>Un contenedor</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="885"/>
+      <source>3D Loading mode.</source>
+      <translation>Modo de carga 3D.</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="888"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="833"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="836"/>
+      <source>3D Loading mode</source>
+      <translation>Modo de carga 3D</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="911"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="859"/>
+      <source>3D_loading_mode
+Allowing or not Loading Multi Parts objects</source>
+      <translation>Modo de carga 3D
+Permitir o no cargar objetos Multi Partes</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="930"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="878"/>
+      <source>Simplified</source>
+      <translation>Simplificado</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="935"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="883"/>
+      <source>NotMultiParts</source>
+      <translation>No Multi Partes</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="940"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="888"/>
+      <source>Standard</source>
+      <translation>Estándar</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="957"/>
+      <source>Assembly3 Links allowed.</source>
+      <translation>Enlaces de Assembly3 permitidos.</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="960"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="905"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="908"/>
+      <source>Assembly3 Links allowed</source>
+      <translation>Enlaces de Assembly3 permitidos</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="1038"/>
+      <source>Assembly3 LinkGroups allowed.</source>
+      <translation>Enlaces de grupo de Assembly3 permitidos.</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="1041"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="986"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="989"/>
+      <source>Assembly3 LinkGroups allowed</source>
+      <translation>Enlaces de grupo de Assembly3 permitidos</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="982"/>
+      <source>Enables Materials for VRML exporting.</source>
+      <translation>Habilita la exportación de materiales para VRML.</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="988"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="930"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="936"/>
+      <source>Enable Materials for VRML exporting</source>
+      <translation>Habilita la exportación de materiales para VRML</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="1097"/>
+      <source>Enables compressed VRML file (&apos;.wrz&apos;) generation exporting.</source>
+      <translation>Habilita la exportación de generación de archivos VRML comprimidos (&apos;.wrz&apos;).</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="1100"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="1045"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="1048"/>
+      <source>Enable compressed VRML file (&apos;.wrz&apos;) generation exporting</source>
+      <translation>Habilita la exportación de generación de archivos VRML comprimidos (&apos;.wrz&apos;)</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="1066"/>
+      <source>Enables compressed STEP file (&apos;.stpZ&apos;) generation exporting.</source>
+      <translation>Habilita la exportación de generación de archivos STEP comprimidos (&apos;.stpZ&apos;).</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="1069"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="1014"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="1017"/>
+      <source>Enable compressed STEP file (&apos;.stpZ&apos;) generation exporting</source>
+      <translation>Habilita la exportación de generación de archivos STEP comprimidos (&apos;.stpZ&apos;)</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="1159"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="1107"/>
+      <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Apply Transparency for &apos;Glass&apos; Materials:&lt;/p&gt;&lt;p&gt;Force Transparency to STEP model if &apos;Glass&apos; is found in &apos;.wrl&apos; model&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+      <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Aplicar transparencia para Materiales de &apos;Cristal:&apos;&lt;/p&gt;&lt;p&gt;Forza transparencia a modelo STEP si &apos;Cristal&apos; es encontrado en el modelo&apos;.wrl&apos;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="1162"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="1110"/>
+      <source>Apply Transparency for &apos;Glass&apos; Materials</source>
+      <translation>Aplicar transparencia para materiales &apos;de cristal&apos; </translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="1190"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="1138"/>
+      <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Apply Transparency for &apos;Led&apos; Materials:&lt;/p&gt;&lt;p&gt;Force Transparency to STEP model if &apos;Led&apos; is found in &apos;.wrl&apos; model&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+      <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Aplicar transparencia para Materiales de &apos;LED:&apos;&lt;/p&gt;&lt;p&gt;Forza transparencia a modelo STEP si &apos;LED&apos; es encontrado en el modelo&apos;.wrl&apos;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="1193"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="1141"/>
+      <source>Apply Transparency for &apos;Led&apos; Materials</source>
+      <translation>Aplicar transparencia para materiales &apos;LED&apos;</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="1128"/>
+      <source>Displays STEP import settings warning.</source>
+      <translation>Muestra la advertencia de configuración de importación STEP.</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="1131"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="1076"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="1079"/>
+      <source>Display STEP import settings warning</source>
+      <translation>Muestra la advertencia de configuración de importación STEP</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="1013"/>
+      <source>Start Turntable after loading.</source>
+      <translation>Iniciar Turntable después de cargar.</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="1016"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="961"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="964"/>
+      <source>Start Turntable after loading</source>
+      <translation>Iniciar Turntable después de cargar</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="1221"/>
+      <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Skip importing pcb zone(s)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+      <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Omitir importar zona(s) de PCB&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="1224"/>
+      <source>skpZone</source>
+      <translation>Saltar zona</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="1252"/>
+      <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Skip importing pcb tracks and vias&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+      <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Saltar la importación de pistas y vías de PCB&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="1255"/>
+      <source>skpTracks</source>
+      <translation>Saltar pistas</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="1283"/>
+      <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Skip importing pcb pads&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+      <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Saltar la importación de pads de PCB&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="1286"/>
+      <source>skpPads</source>
+      <translation>Saltar pads</translation>
     </message>
     <message>
       <location filename="../Resources/ui/ksu_prefs.ui" line="197"/>
@@ -242,6 +428,28 @@ or &apos;KICAD6_3DMODEL_DIR&apos;</source>
       <translation>Ninguno</translation>
     </message>
     <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="647"/>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="671"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="648"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="672"/>
+      <source>minimum Edge Tolerance applied to PCB
+default &apos;0.01mm&apos;</source>
+      <translation>Tolerancia de borde mínima aplicada a PCB
+ predeterminado &apos;0.01 mm&apos;</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="651"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="652"/>
+      <source>minimum edge tolerance</source>
+      <translation>Tolerancia de borde mínima</translation>
+    </message>
+    <message>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="675"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="676"/>
+      <source>0.01</source>
+      <translation>0.01</translation>
+    </message>
+    <message>
       <location filename="../Resources/ui/ksu_prefs.ui" line="461"/>
       <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="462"/>
       <source>Enable/Disable Virtual 3D
@@ -304,28 +512,6 @@ or &apos;KICAD6_3DMODEL_DIR&apos;</source>
       <translation>Lista negra</translation>
     </message>
     <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="647"/>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="671"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="648"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="672"/>
-      <source>minimum Edge Tolerance applied to PCB
-default &apos;0.01mm&apos;</source>
-      <translation>Tolerancia de borde mínima aplicada a PCB
- predeterminado &apos;0.01 mm&apos;</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="651"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="652"/>
-      <source>minimum edge tolerance</source>
-      <translation>Tolerancia de borde mínima</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="675"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="676"/>
-      <source>0.01</source>
-      <translation>0.01</translation>
-    </message>
-    <message>
       <location filename="../Resources/ui/ksu_prefs.ui" line="700"/>
       <location filename="../Resources/ui/ksu_prefs.ui" line="724"/>
       <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;White List:&lt;/span&gt;&lt;br/&gt;put here your model names that you must load (e.g. smallest ones)&lt;br/&gt;separated by a semicolon.&lt;br/&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Examples:&lt;/span&gt;&lt;br/&gt;
@@ -339,244 +525,58 @@ LED_D5.0mm_IRBlack;USB_Mini-B_Lumberg_2486_01_Horizontal;&lt;br/&gt;&lt;span sty
       <translation>Lista blanca</translation>
     </message>
     <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="751"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="699"/>
-      <source>Import/Export settings</source>
-      <translation>Ajustes para importar/exportar</translation>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="83"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="83"/>
+      <source>3D Prefix working folder</source>
+      <translation>Carpeta de trabajo de prefijo 3D</translation>
     </message>
     <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="763"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="711"/>
-      <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enable/Disable &lt;span style=&quot; font-weight:600;&quot;&gt;fusion (union)&lt;/span&gt; of all 3D models.&lt;/p&gt;&lt;p&gt;Be careful ... fusion can be heavy or generate FC crash with a lot of objects.&lt;/p&gt;&lt;p&gt;Please consider to use bbox or blacklist small objects&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-      <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Habilitar/Deshabilitar &lt;span style=&quot; font-weight:600;&quot;&gt;fusion (union)&lt;/span&gt; de todos los modelos 3D.&lt;/p&gt;&lt;p&gt;Tener cuidado ... la fusion puede ser pesada o generar colapso de FreCAD con muchos objetos.&lt;/p&gt;&lt;p&gt;Por favor considere el uso de bbox o lista negra para objetos pequeños &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="98"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="98"/>
+      <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;your &lt;span style=&quot; font-weight:600;&quot;&gt;KISYS3DMOD&lt;/span&gt; path&lt;/p&gt;&lt;p&gt;or 3D model &lt;span style=&quot; font-weight:600;&quot;&gt;main prefix path&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+      <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;tu &lt;span style=&quot; font-weight:600;&quot;&gt;ruta&lt;/span&gt; KISYS3DMOD&lt;/p&gt;&lt;p&gt;o prefijo de ruta principal &lt;span style=&quot; font-weight:600;&quot;&gt;de modelos 3D&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="766"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="714"/>
-      <source>Make a Union of 3D models</source>
-      <translation>Crear una unión de modelos 3D</translation>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="101"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="101"/>
+      <source>main 3D folder location &apos;KISYS3DMOD&apos;
+or &apos;KICAD6_3DMODEL_DIR&apos;</source>
+      <translation>ubicación de la carpeta principal 3D &apos;KISYS3DMOD&apos;
+ o &apos;KICAD6_3DMODEL_DIR&apos;</translation>
     </message>
     <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="788"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="736"/>
-      <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Directly &lt;span style=&quot; font-weight:600;&quot;&gt;Export STEP&lt;/span&gt; after Loading&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-      <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Directly &lt;span style=&quot; font-weight:600;&quot;&gt;Exportar a STEP&lt;/span&gt; despues de cargar&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="124"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="124"/>
+      <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;main 3D folder location&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;&apos;KISYS3DMOD&apos;&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+      <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ubicación de la carpeta principal 3D&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;&apos;KISYS3DMOD&apos;&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="791"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="739"/>
-      <source>Directly Export STEP after Loading</source>
-      <translation>Exportar STEP directamente después de cargar</translation>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="149"/>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="1315"/>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="1366"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="152"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="1239"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="1293"/>
+      <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;your &lt;span style=&quot; font-weight:600;&quot;&gt;ALIAS&lt;/span&gt; 3D&lt;/p&gt;&lt;p&gt;model prefix path&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+      <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;tu &lt;span style=&quot; font-weight:600;&quot;&gt;ALIAS&lt;/span&gt; 3D&lt;/p&gt;&lt;p&gt;ruta del prefijo del modelo&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="816"/>
-      <source>STEP export mode.</source>
-      <translation>Modo de exportación STEP.</translation>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="152"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="155"/>
+      <source>secondary 3D folder loc
+&apos;ALT2 3DMOD&apos;</source>
+      <translation>carpeta secundaria 3D loc
+ &apos;ALT2 3DMOD&apos;</translation>
     </message>
     <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="819"/>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="842"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="764"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="767"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="790"/>
-      <source>STEP export mode</source>
-      <translation>Modo de exportación STEP</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="855"/>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="925"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="803"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="873"/>
-      <source>Hierarchy</source>
-      <translation>Jerarquía</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="860"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="808"/>
-      <source>Flat</source>
-      <translation>Plano</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="865"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="813"/>
-      <source>One Container</source>
-      <translation>Un contenedor</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="885"/>
-      <source>3D Loading mode.</source>
-      <translation>Modo de carga 3D.</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="888"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="833"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="836"/>
-      <source>3D Loading mode</source>
-      <translation>Modo de carga 3D</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="911"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="859"/>
-      <source>3D_loading_mode
-Allowing or not Loading Multi Parts objects</source>
-      <translation>Modo de carga 3D
-Permitir o no cargar objetos Multi Partes</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="930"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="878"/>
-      <source>Simplified</source>
-      <translation>Simplificado</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="935"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="883"/>
-      <source>NotMultiParts</source>
-      <translation>No Multi Partes</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="940"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="888"/>
-      <source>Standard</source>
-      <translation>Estándar</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="957"/>
-      <source>Assembly3 Links allowed.</source>
-      <translation>Enlaces de Assembly3 permitidos.</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="960"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="905"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="908"/>
-      <source>Assembly3 Links allowed</source>
-      <translation>Enlaces de Assembly3 permitidos</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="982"/>
-      <source>Enables Materials for VRML exporting.</source>
-      <translation>Habilita la exportación de materiales para VRML.</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="988"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="930"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="936"/>
-      <source>Enable Materials for VRML exporting</source>
-      <translation>Habilita la exportación de materiales para VRML</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="1013"/>
-      <source>Start Turntable after loading.</source>
-      <translation>Iniciar Turntable después de cargar.</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="1016"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="961"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="964"/>
-      <source>Start Turntable after loading</source>
-      <translation>Iniciar Turntable después de cargar</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="1038"/>
-      <source>Assembly3 LinkGroups allowed.</source>
-      <translation>Enlaces de grupo de Assembly3 permitidos.</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="1041"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="986"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="989"/>
-      <source>Assembly3 LinkGroups allowed</source>
-      <translation>Enlaces de grupo de Assembly3 permitidos</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="1066"/>
-      <source>Enables compressed STEP file (&apos;.stpZ&apos;) generation exporting.</source>
-      <translation>Habilita la exportación de generación de archivos STEP comprimidos (&apos;.stpZ&apos;).</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="1069"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="1014"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="1017"/>
-      <source>Enable compressed STEP file (&apos;.stpZ&apos;) generation exporting</source>
-      <translation>Habilita la exportación de generación de archivos STEP comprimidos (&apos;.stpZ&apos;)</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="1097"/>
-      <source>Enables compressed VRML file (&apos;.wrz&apos;) generation exporting.</source>
-      <translation>Habilita la exportación de generación de archivos VRML comprimidos (&apos;.wrz&apos;).</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="1100"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="1045"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="1048"/>
-      <source>Enable compressed VRML file (&apos;.wrz&apos;) generation exporting</source>
-      <translation>Habilita la exportación de generación de archivos VRML comprimidos (&apos;.wrz&apos;)</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="1128"/>
-      <source>Displays STEP import settings warning.</source>
-      <translation>Muestra la advertencia de configuración de importación STEP.</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="1131"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="1076"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="1079"/>
-      <source>Display STEP import settings warning</source>
-      <translation>Muestra la advertencia de configuración de importación STEP</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="1159"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="1107"/>
-      <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Apply Transparency for &apos;Glass&apos; Materials:&lt;/p&gt;&lt;p&gt;Force Transparency to STEP model if &apos;Glass&apos; is found in &apos;.wrl&apos; model&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-      <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Aplicar transparencia para Materiales de &apos;Cristal:&apos;&lt;/p&gt;&lt;p&gt;Forza transparencia a modelo STEP si &apos;Cristal&apos; es encontrado en el modelo&apos;.wrl&apos;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="1162"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="1110"/>
-      <source>Apply Transparency for &apos;Glass&apos; Materials</source>
-      <translation>Aplicar transparencia para materiales &apos;de cristal&apos; </translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="1190"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="1138"/>
-      <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Apply Transparency for &apos;Led&apos; Materials:&lt;/p&gt;&lt;p&gt;Force Transparency to STEP model if &apos;Led&apos; is found in &apos;.wrl&apos; model&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-      <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Aplicar transparencia para Materiales de &apos;LED:&apos;&lt;/p&gt;&lt;p&gt;Forza transparencia a modelo STEP si &apos;LED&apos; es encontrado en el modelo&apos;.wrl&apos;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="1193"/>
-      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="1141"/>
-      <source>Apply Transparency for &apos;Led&apos; Materials</source>
-      <translation>Aplicar transparencia para materiales &apos;LED&apos;</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="1221"/>
-      <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Skip importing pcb zone(s)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-      <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Omitir importar zona(s) de PCB&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="1224"/>
-      <source>skpZone</source>
-      <translation>Saltar zona</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="1252"/>
-      <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Skip importing pcb tracks and vias&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-      <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Saltar la importación de pistas y vías de PCB&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="1255"/>
-      <source>skpTracks</source>
-      <translation>Saltar pistas</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="1283"/>
-      <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Skip importing pcb pads&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-      <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Saltar la importación de pads de PCB&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
-    </message>
-    <message>
-      <location filename="../Resources/ui/ksu_prefs.ui" line="1286"/>
-      <source>skpPads</source>
-      <translation>Saltar pads</translation>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="175"/>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="1341"/>
+      <location filename="../Resources/ui/ksu_prefs.ui" line="1392"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="178"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="1265"/>
+      <location filename="../Resources/ui/ksu_prefs-v2b.ui" line="1319"/>
+      <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;secondary 3D folder location&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;&apos;ALT3DMOD&apos;&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+      <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ubicación de carpeta 3D secundaria&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;&apos;ALT3DMOD&apos;&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
       <location filename="../Resources/ui/ksu_prefs.ui" line="1318"/>
@@ -757,6 +757,13 @@ Permitir o no cargar objetos Multi Partes</translation>
   <context>
     <name>Help</name>
     <message>
+      <location filename="../hlp.py" line="25"/>
+      <source>&lt;b&gt;Kicad StepUp&lt;/b&gt; is a tool set to easily &lt;b&gt;collaborate between kicad pcb EDA&lt;/b&gt; (board and 3D parts) as STEP models &lt;b&gt;and FreeCAD MCAD&lt;/b&gt; modeler.&lt;br&gt;
+</source>
+      <translation>&lt;b&gt;Kicad StepUp&lt;/b&gt; es un conjunto de herramienta para &lt;b&gt;collaborar fácilmente entre KiCad PCB EDA&lt;/b&gt; (placa y partes 3D) como modelos STEP &lt;b&gt;y el modelador FreeCAD&lt;/b&gt; MCAD.&lt;br&gt;
+</translation>
+    </message>
+    <message>
       <location filename="../hlp.py" line="28"/>
       <source>&lt;b&gt;Kicad StepUp&lt;/b&gt; is a tool set to easily &lt;b&gt;collaborate between kicad pcb EDA&lt;/b&gt; (board and 3D parts) as STEP models &lt;b&gt;and FreeCAD MCAD&lt;/b&gt; modeler.&lt;br&gt;
 &lt;/font&gt;</source>
@@ -779,6 +786,76 @@ It is also possible to &lt;b&gt;Update a pcb Edge from a FC Sketcher.&lt;/b&gt;&
  También es posible &lt;b>Actualizar un borde de PCB desde un croquis de FC.&lt;/b>&lt;br>
  &lt;b>opciones de configuración:&lt;/b>&lt;br>Las opciones de configuración se encuentran en el sistema de preferencias de FreeCAD, que se encuentra en el menú Editar -&amp;gt; Preferencias.&lt;br>
 </translation>
+    </message>
+    <message>
+      <location filename="../hlp.py" line="40"/>
+      <source>starter Guide:&lt;br&gt;&lt;a href=&apos;{}demo{}{}&apos; target=&apos;_blank&apos;&gt;{}demo{}{}&lt;/a&gt;&lt;br&gt;</source>
+      <translation>Guía de inicio:&lt;br&gt;&lt;a href=&apos;{}demo{}{}&apos; target=&apos;_blank&apos;&gt;{}demostración{}{}&lt;/a&gt;&lt;br&gt;</translation>
+    </message>
+    <message>
+      <location filename="../hlp.py" line="43"/>
+      <source>&lt;b&gt;Note:&lt;/b&gt; each button has its own &lt;b&gt;Tooltip&lt;/b&gt;&lt;br&gt;
+useful buttons:&lt;br&gt;&lt;b&gt;Load kicad Board directly&lt;/b&gt; -&gt; will load kicad board and parts in FreeCAD coming from kicad &apos;.kicad_pcb&apos; file&lt;br&gt;
+&lt;b&gt;Load kicad Footprint module&lt;/b&gt; -&gt; will load directly kicad footprint in FreeCAD to easily align the 3D model to footprint&lt;br&gt;
+&lt;b&gt;Export to kicad STEP &amp; scaled VRML&lt;/b&gt; -&gt; will convert MCAD model to STEP and VRML to be used by Kicad and kicad StepUp&lt;br&gt;
+&lt;b&gt;   -&gt; VRML can be multipart;&lt;br&gt;   -&gt; STEP must be single part&lt;/b&gt;&lt;br&gt;(&lt;i&gt;&apos;Part Boolean Union&apos;&lt;/i&gt; or &lt;i&gt;&apos;Part Makecompound&apos;&lt;/i&gt;)&lt;br&gt;
+&lt;i&gt;assign material to selected colors and your VRML 3D models will have nice shiny effects&lt;/i&gt;&lt;br&gt;
+&lt;b&gt;Push pcb Sketch to kicad_pcb Edge&lt;/b&gt; -&gt; will push pcb Sketch to kicad_pcb Edge in your design; it can be done with an empty or with an existing pcb Edge&lt;br&gt;
+&lt;br&gt;for a more detailed help have a look at &lt;br&gt;&lt;b&gt;kicadStepUp-starter-Guide.pdf&lt;/b&gt;&lt;br&gt;
+or just follow the &lt;b&gt;YouTube video tutorials&lt;/b&gt; &lt;br&gt;&lt;a href=&apos;https://youtu.be/h6wMU3lE_sA&apos;  target=&apos;_blank&apos;&gt;kicadStepUp basics&lt;/a&gt;&lt;br&gt;
+&lt;a href=&apos;https://youtu.be/O6vr8QFnYGw&apos; target=&apos;_blank&apos;&gt;kicadStepUp STEP alignment to Kicad footprint&lt;/a&gt;&lt;br&gt;
+&lt;a href=&apos;https://github.com/easyw/kicadStepUpMod&apos; target=&apos;_blank&apos;&gt;check always the latest release of kicadStepUp&lt;/a&gt;&lt;br&gt;&lt;br&gt;
+Designing in kicad native 3d-viewer will produce a fully aligned STEP MCAD version 
+with the same view of kicad 3d render.&lt;br&gt;
+Moreover, KiCad StepUp tool set &lt;b&gt;will let you to load the kicad footprint inside FreeCAD and align the 3D part with a visual real time feedback 
+of the 3d model and footprint reciprocal position.&lt;/b&gt;&lt;br&gt;
+With this tool is possible to download a part from on-line libraries, align the model to kicad footprint 
+and export the model to wrl, for immediate 3d-viewer alignment in pcbnew.&lt;br&gt;
+Now the two words are connected for a better collaboration; just &lt;b&gt;design in kicad EDA&lt;/b&gt; and transfer 
+the artwork to &lt;b&gt;MCAD (FreeCAD)&lt;/b&gt; smoothly.&lt;br&gt;
+&lt;b&gt;The workflow is very simple&lt;/b&gt; and maintains the usual way to work with kicad:&lt;br&gt;
+Add models to your library creating 3D models in FreeCAD, or getting models from online libs 
+or from the parametric 3D lib expressly done to kicad &lt;a href=&apos;https://github.com/easyw/kicad-3d-models-in-freecad&apos; target=&apos;_blank&apos;&gt;kicadStepUp 3D STEP models generator&lt;/a&gt;&lt;br&gt;
+Once you have your 3D MCAD model, &lt;b&gt;you need to have a copy of that in STEP and VRML format.&lt;/b&gt; &lt;br&gt;
+(with the latest kicad release you can only have STEP model, VRML is not needed anymore, but &lt;b&gt;it is possible
+ to mix VRML, STEP and IGES format&lt;/b&gt;)&lt;br&gt;
+Just exporting the model with FreeCAD and put your model in the same folder in which 
+normally you are used to put vrml models; the script will assembly the MCAD board and models as in 3d-viewer of kicad.
+&lt;br&gt;&lt;b&gt;NB&lt;br&gt;STEP model has to be fused in single object&lt;/b&gt;&lt;br&gt;(Part Boolean Union of objects)
+&lt;br&gt;&lt;b&gt;or a Compoud&lt;/b&gt; (Part Makecompound of objects)&lt;/b&gt;
+&lt;hr&gt;&lt;b&gt;enable &apos;Report view&apos; Panel to see helping messages&lt;/b&gt;
+&lt;br&gt;</source>
+      <translation>&lt;b>Nota:&lt;/b>  cada botón tiene su propia &lt;b>ayuda de herramienta&lt;/b>&lt;br>
+Botones útiles:&lt;br>&lt;b>Cargar placa de KiCad directamente&lt;/b>  ->  cargará la placa de KiCad y las piezas en FreeCAD provenientes de KiCad &apos;.kicad_pcb&apos;  archivo&lt;br>
+&lt;b>Cargar el módulo de huella de KiCad&lt;/b>  ->  cargará directamente la huella de KiCad en FreeCAD para alinear fácilmente el modelo 3D con la huella&lt;br>
+&lt;b>Exportar a KiCad STEP y VRML escalado&lt;/b>  ->  convertirá el modelo MCAD a STEP y VRML para ser utilizado por KiCad y KiCad StepUp&lt;br>
+&lt;b>  ->  VRML puede ser multiparte;&lt;br>  ->  STEP debe ser una sola parte&lt;/b>&lt;br>(&lt;i>&apos;Parte Boolean Union&apos;&lt;/i> o &lt;i>&apos;Parte Makecompound&apos;&lt;/i>)&lt;br>
+&lt;i>Asigne material a los colores seleccionados y sus modelos VRML 3D tendrán bonitos efectos brillantes&lt;/i>&lt;br>
+&lt;b>Envíar el croquis de la PCB al borde de la placa de KiCad&lt;/b>  ->  enviará el croquis de la PCB  a a la capa Edge (borde) de la placa en KiCad en su diseño;  se puede hacer con una PCB vacía o con borde existente&lt;br>
+&lt;br>para obtener ayuda más detallada, consulte &lt;br>&lt;b>kicadStepUp-starter-Guide.pdf&lt;/b>&lt;br>
+o simplemente siga los &lt;b>videotutoriales en YouTube&lt;/b>  &lt;br>&lt;a href=&apos;https://youtu.be/h6wMU3lE_sA&apos;  target=&apos;_blank&apos;>conceptos básicos de KiCadStepUp&lt;/a>&lt;br>
+&lt;a href=&apos;https://youtu.be/O6vr8QFnYGw&apos;  target=&apos;_blank&apos;>kicadStepUp Alineación de STEP con la huella de Kicad&lt;/a>&lt;br>
+&lt;a href=&apos;https://github.com/easyw/kicadStepUpMod&apos;  target=&apos;_blank&apos;>verifique siempre la última versión de kicadStepUp&lt;/a>&lt;br>&lt;br>
+El diseño en el visor 3D nativo de KiCad producirá una versión STEP MCAD completamente alineada 
+con la misma vista del render 3D de KiCad.&lt;br>
+Además, el conjunto de herramientas KiCad StepUp &lt;b>le permitirá cargar la huella de KiCad dentro de FreeCAD y alinear la pieza 3D con información visual en tiempo real. 
+del modelo 3d y la posición recíproca de la huella.&lt;/b>&lt;br>
+Con esta herramienta es posible descargar una pieza de bibliotecas en línea y alinear el modelo con la huella de KiCad 
+y exportar el modelo a WRL, para una alineación inmediata con el visor 3D en Pcbnew.&lt;br>
+Ahora las dos palabras están conectadas para una mejor colaboración;  simplemente &lt;b>diseñoe en KiCad EDA&lt;/b>  y transfiera
+el diseño en &lt;b>MCAD (FreeCAD)&lt;/b>  sin problemas.&lt;br>
+&lt;b>El flujo de trabajo es muy sencillo&lt;/b> y mantiene la forma habitual de trabajar con KiCad:&lt;br>
+Agregue modelos a su biblioteca creando modelos 3D en FreeCAD u obteniendo modelos de bibliotecas en línea 
+o desde la biblioteca 3D paramétrica hecha expresamente para KiCad &lt;a href=&apos;https://github.com/easyw/kicad-3d-models-in-freecad&apos;  target=&apos;_blank&apos;>kicadStepUp Generador de modelos STEP 3D&lt;/a>&lt;br>
+Una vez que tenga su modelo 3D MCAD, &lt;b>deberá tener una copia en formato STEP y VRML.&lt;/b>  &lt;br>
+(con la última versión de KiCad solo puedes tener el modelo STEP, VRML ya no es necesario, pero &lt;b>es posible
+mezclar formatos VRML, STEP e IGES&lt;/b>)&lt;br>
+Simplemente exporte el modelo con FreeCAD y coloque su modelo en la misma carpeta en la que 
+normalmente estas acostumbrado a poner modelos vrml;  el script ensamblará la placa MCAD y los modelos como en el visor 3D de kicad.
+&lt;br>&lt;b>NB&lt;br>El modelo STEP debe fusionarse en un solo objeto&lt;/b>&lt;br>(Parte de la unión booleana de objetos)
+&lt;br>&lt;b>o un Compoud&lt;/b>  (Parte Makecompuesto de objetos)&lt;/b>
+&lt;hr>&lt;b>habilite el panel &apos;Vista de informes&apos;  para ver mensajes de ayuda&lt;/b>
+&lt;br></translation>
     </message>
     <message>
       <location filename="../hlp.py" line="45"/>
@@ -820,37 +897,37 @@ normally you are used to put vrml models; the script will assembly the MCAD boar
 &lt;/font&gt;
 &lt;br&gt;</source>
       <translation>&lt;b>Nota:&lt;/b>  cada botón tiene su propia &lt;b>Información sobre herramientas&lt;/b>&lt;br>
- Botones útiles:&lt;br>&lt;b>Cargar tablero kicad directamente&lt;/b>  ->  cargará el tablero kicad y las piezas en FreeCAD provenientes de kicad &apos;.kicad_pcb&apos;  archivo&lt;br>
- &lt;b>Cargar el módulo Huella de kicad&lt;/b>  ->  cargará directamente la huella de kicad en FreeCAD para alinear fácilmente el modelo 3D con la huella&lt;br>
- &lt;b>Exportar a kicad STEP y VRML escalado&lt;/b>  ->  convertirá el modelo MCAD a STEP y VRML para ser utilizado por Kicad y kicad StepUp&lt;br>
- &lt;b>  ->  VRML puede ser multiparte;&lt;br>  ->  STEP debe ser una sola parte&lt;/b>&lt;br>(&lt;i>&apos;Parte Boolean Union&apos;&lt;/i> o &lt;i>&apos;Parte Makecompound&apos;&lt;/i>)&lt;br>
- &lt;i>asigne material a los colores seleccionados y sus modelos VRML 3D tendrán bonitos efectos brillantes&lt;/i>&lt;br>
- &lt;b>Empuje el boceto de la PCB al borde kicad_pcb&lt;/b>  ->  enviará PCB Sketch a kicad_pcb Edge en su diseño;  se puede hacer con una PCB vacía o existente Edge&lt;br>
- &lt;br>para obtener ayuda más detallada, consulte &lt;br>&lt;b>kicadStepUp-starter-Guide.pdf&lt;/b>&lt;br>
- o simplemente sigue los &lt;b>videotutoriales de YouTube&lt;/b>  &lt;br>&lt;a href=&apos;https://youtu.be/h6wMU3lE_sA&apos;  target=&apos;_blank&apos;>conceptos básicos de kicadStepUp&lt;/a>&lt;br>
- &lt;a href=&apos;https://youtu.be/O6vr8QFnYGw&apos;  target=&apos;_blank&apos;>kicadStepUp Alineación de PASO con la huella de Kicad&lt;/a>&lt;br>
- &lt;a href=&apos;https://github.com/easyw/kicadStepUpMod&apos;  target=&apos;_blank&apos;>verifique siempre la última versión de kicadStepUp&lt;/a>&lt;br>&lt;br>
- El diseño en el visor 3D nativo de kicad producirá una versión STEP MCAD completamente alineada 
- con la misma vista del render 3d de kicad.&lt;br>
- Además, el conjunto de herramientas KiCad StepUp &lt;b>le permitirá cargar la huella de kicad dentro de FreeCAD y alinear la pieza 3D con información visual en tiempo real. 
- del modelo 3d y la posición recíproca de la huella.&lt;/b>&lt;br>
- Con esta herramienta es posible descargar una pieza de bibliotecas en línea y alinear el modelo con la huella de kicad. 
- y exporte el modelo a wrl, para una alineación inmediata del visor 3D en pcbnew.&lt;br>
- Ahora las dos palabras están conectadas para una mejor colaboración;  simplemente &lt;b>diseño en kicad EDA&lt;/b>  y transferir 
- el diseño en &lt;b>MCAD (FreeCAD)&lt;/b>  sin problemas.&lt;br>
- &lt;b>El flujo de trabajo es muy sencillo&lt;/b>  y mantiene la forma habitual de trabajar con kicad:&lt;br>
- Agregue modelos a su biblioteca creando modelos 3D en FreeCAD u obteniendo modelos de bibliotecas en línea 
- o desde la biblioteca 3D paramétrica hecha expresamente para kicad &lt;a href=&apos;https://github.com/easyw/kicad-3d-models-in-freecad&apos;  target=&apos;_blank&apos;>kicadStepUp Generador de modelos STEP 3D&lt;/a>&lt;br>
- Una vez que tenga su modelo 3D MCAD, &lt;b>deberá tener una copia en formato STEP y VRML.&lt;/b>  &lt;br>
- (con la última versión de kicad solo puedes tener el modelo STEP, VRML ya no es necesario, pero &lt;b>es posible
-  para mezclar formatos VRML, STEP e IGES&lt;/b>)&lt;br>
- Simplemente exporte el modelo con FreeCAD y coloque su modelo en la misma carpeta en la que 
- normalmente estas acostumbrado a poner modelos vrml;  el script ensamblará la placa MCAD y los modelos como en el visor 3D de kicad.
- &lt;br>&lt;b>NB&lt;br>El modelo STEP debe fusionarse en un solo objeto&lt;/b>&lt;br>(Parte de la unión booleana de objetos)
- &lt;br>&lt;b>o un Compoud&lt;/b>  (Parte Makecompuesto de objetos)&lt;/b>
- &lt;hr>&lt;b>habilitar &apos;Vista de informes&apos;  Panel para ver mensajes de ayuda&lt;/b>
- &lt;/font>
- &lt;br></translation>
+Botones útiles:&lt;br>&lt;b>Cargar tablero kicad directamente&lt;/b>  ->  cargará el tablero kicad y las piezas en FreeCAD provenientes de kicad &apos;.kicad_pcb&apos;  archivo&lt;br>
+&lt;b>Cargar el módulo Huella de kicad&lt;/b>  ->  cargará directamente la huella de kicad en FreeCAD para alinear fácilmente el modelo 3D con la huella&lt;br>
+&lt;b>Exportar a kicad STEP y VRML escalado&lt;/b>  ->  convertirá el modelo MCAD a STEP y VRML para ser utilizado por Kicad y kicad StepUp&lt;br>
+&lt;b>  ->  VRML puede ser multiparte;&lt;br>  ->  STEP debe ser una sola parte&lt;/b>&lt;br>(&lt;i>&apos;Parte Boolean Union&apos;&lt;/i> o &lt;i>&apos;Parte Makecompound&apos;&lt;/i>)&lt;br>
+&lt;i>asigne material a los colores seleccionados y sus modelos VRML 3D tendrán bonitos efectos brillantes&lt;/i>&lt;br>
+&lt;b>Empuje el boceto de la PCB al borde kicad_pcb&lt;/b>  ->  enviará PCB Sketch a kicad_pcb Edge en su diseño;  se puede hacer con una PCB vacía o existente Edge&lt;br>
+&lt;br>para obtener ayuda más detallada, consulte &lt;br>&lt;b>kicadStepUp-starter-Guide.pdf&lt;/b>&lt;br>
+o simplemente sigue los &lt;b>videotutoriales de YouTube&lt;/b>  &lt;br>&lt;a href=&apos;https://youtu.be/h6wMU3lE_sA&apos;  target=&apos;_blank&apos;>conceptos básicos de kicadStepUp&lt;/a>&lt;br>
+&lt;a href=&apos;https://youtu.be/O6vr8QFnYGw&apos;  target=&apos;_blank&apos;>kicadStepUp Alineación de STEP con la huella de Kicad&lt;/a>&lt;br>
+&lt;a href=&apos;https://github.com/easyw/kicadStepUpMod&apos;  target=&apos;_blank&apos;>verifique siempre la última versión de kicadStepUp&lt;/a>&lt;br>&lt;br>
+El diseño en el visor 3D nativo de kicad producirá una versión STEP MCAD completamente alineada 
+con la misma vista del render 3d de kicad.&lt;br>
+Además, el conjunto de herramientas KiCad StepUp &lt;b>le permitirá cargar la huella de kicad dentro de FreeCAD y alinear la pieza 3D con información visual en tiempo real. 
+del modelo 3d y la posición recíproca de la huella.&lt;/b>&lt;br>
+Con esta herramienta es posible descargar una pieza de bibliotecas en línea y alinear el modelo con la huella de kicad. 
+y exporte el modelo a wrl, para una alineación inmediata del visor 3D en pcbnew.&lt;br>
+Ahora las dos herramientas están conectadas para una mejor colaboración;  simplemente &lt;b>diseñe en KiCad EDA&lt;/b>  y transfiera
+el diseño a &lt;b>MCAD (FreeCAD)&lt;/b>  sin problemas.&lt;br>
+&lt;b>El flujo de trabajo es muy sencillo&lt;/b>  y mantiene la forma habitual de trabajar con kicad:&lt;br>
+Agregue modelos a su biblioteca creando modelos 3D en FreeCAD u obtenga modelos de bibliotecas en línea 
+o desde la biblioteca 3D paramétrica hecha expresamente para KiCad &lt;a href=&apos;https://github.com/easyw/kicad-3d-models-in-freecad&apos;  target=&apos;_blank&apos;>kicadStepUp Generador de modelos STEP 3D&lt;/a>&lt;br>
+Una vez que tenga su modelo 3D MCAD, &lt;b>deberá tener una copia en formato STEP y VRML.&lt;/b>  &lt;br>
+(con la última versión de KiCad solo puedes tener el modelo STEP, VRML ya no es necesario, pero &lt;b>es posible
+mezclar formatos VRML, STEP e IGES&lt;/b>)&lt;br>
+Simplemente exporte el modelo con FreeCAD y coloque su modelo en la misma carpeta en la que 
+normalmente estas acostumbrado a poner modelos vrml;  el script ensamblará la placa MCAD y los modelos como en el visor 3D de kicad.
+&lt;br>&lt;b>NB&lt;br>El modelo STEP debe fusionarse en un solo objeto&lt;/b>&lt;br>(Parte de la unión booleana de objetos)
+&lt;br>&lt;b>o un Compoud&lt;/b>  (Parte Makecompuesto de objetos)&lt;/b>
+&lt;hr>&lt;b>habilite el panel &apos;Vista de informes&apos;  para ver mensajes de ayuda&lt;/b>
+&lt;/font>
+&lt;br></translation>
     </message>
   </context>
   <context>
