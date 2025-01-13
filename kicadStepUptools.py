@@ -501,7 +501,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "12.3.4"
+___ver___ = "12.4.1"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -11987,22 +11987,40 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
     #    say('aux origin not used')
     ## NB use always float() to guarantee number not string!!!
 
-    def get_mod_Ref(mod):
+    def get_mod_Ref(m):
         #if hasattr(m,'property'):
-        try:
-            Ref = m.property[0][1] #kv8 fp reference
-        #elif hasattr(m,'fp_text'):
-        except:
-            Ref = m.fp_text[0][1]
-        return Ref
+        if hasattr(m,'property'):
+            for p in m.property: #kv8 fp field
+                #print(str(p[0]),str(p[1]))
+                if 'reference' in str(p[0]).lower():
+                #    if 'reference' in str(p[1]).lower():
+                    Ref = str(p[1])
+                    #print (Ref)
+                    #stop
+                    return Ref
+        if hasattr(m,'fp_text'):
+            for p in m.fp_text: #kv7 fp field
+                #print(str(p[0]),str(p[1]))
+                if 'reference' in str(p[0]).lower():
+                #    if 'reference' in str(p[1]).lower():
+                    Ref = str(p[1])
+                    return Ref
+        ## try:
+        ##     Ref = m.property[0][1] #kv8 fp reference
+        ## #elif hasattr(m,'fp_text'):
+        ## except:
+        ##     Ref = m.fp_text[0][1]
+        ## return Ref
         
     def get_mod_dnp(m,rf):
         # print('reference fp_text',rf)
-        if hasattr(m,'property'):
-            for p in m.property: #kv8 fp field
-                if 'dnp' in str(p[0]).lower() or 'dnf' in str(p[0]).lower():
-                    if 'dnp' in str(p[1]).lower() or 'dnf' in str(p[1]).lower():
-                        return True
+        # (attr through_hole dnp) kv8
+        if hasattr(m,'attr'):
+            for p in m.attr: #kv8 fp attr if 'dnp' in str(p[0]).lower():
+                # print (str(p.lower()))
+                # print(len(p))
+                if str(p.lower())== 'dnp':
+                    return True
         if hasattr(m,'fp_text'):
             for t in m.fp_text: #kv7 fp reference
                 # print("t[0]",t[0])
@@ -12656,12 +12674,13 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                         else:
                             sayw('missing \'TimeStamp\'')
                             line.append('null')
-                        try: # trying the kv8 property Reference
-                            #print(m.property[0])
-                            line.append(m.property[0][1]) #fp reference kv8
-                        except: # using the old kv5-kv7 method
-                            #print(m.fp_text[0])
-                            line.append(m.fp_text[0][1]) #fp reference
+                        line.append(get_mod_Ref(m)) #fp reference kv8
+                        # try: # trying the kv8 property Reference
+                        #     #print(m.property[0])
+                        #     line.append(m.property[0][1]) #fp reference kv8
+                        # except: # using the old kv5-kv7 method
+                        #     #print(m.fp_text[0])
+                        #     line.append(m.fp_text[0][1]) #fp reference
                         line.append(n_md) #number of models in module
                         line.append(md_hide)
                         PCB_Models.append(line)
@@ -15849,13 +15868,14 @@ def Sync3DModel():
                                     matching_Reference=input_ref[0] #'LD1'
                                     matching_TimeStamp='Null'
                                     for m in mypcb.module:
-                                        try:
-                                            Ref = m.property[0][1] #kv8 fp reference
-                                            #Ref = m.fp_text[0][1]
-                                            ##if '$REFERENCE' in Ref:
-                                            ##    Ref = m.property[0][1] #kv8 fp reference
-                                        except:
-                                            Ref = m.fp_text[0][1]
+                                        Ref = get_mod_Ref
+                                        ## try:
+                                        ##     Ref = m.property[0][1] #kv8 fp reference
+                                        ##     #Ref = m.fp_text[0][1]
+                                        ##     ##if '$REFERENCE' in Ref:
+                                        ##     ##    Ref = m.property[0][1] #kv8 fp reference
+                                        ## except:
+                                        ##     Ref = m.fp_text[0][1]
                                             #Ref = m.property[0][1] #kv8 fp reference
                                         # print(m.property[0]);print(Ref);print(len(Ref))
                                         #print(m.property[0]);print(m.property[0][0]);print(m.property[0][1]);
