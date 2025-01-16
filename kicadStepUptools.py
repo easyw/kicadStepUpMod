@@ -501,7 +501,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "12.4.1"
+___ver___ = "12.4.2"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -16940,6 +16940,9 @@ def PushFootprint():
                     #    say_warning(msg)
                     #    msg="Save to an EXISTING KiCad pcb file to update your Edge!"
                     #    sayerr(msg)
+            #elif 'Shape2DView' in sel[0].Name: #TBD Shape2DView to fp
+            #    if 'F_Silks' in o.Label or 'F_Fab' in o.Label or 'F_CrtYd' in o.Label \
+            #        or 'Dwg' in o.Label or 'Cmts' in o.Label:
             else:
                 msg="""Select Group or Sketch/Text elements to be converted to KiCad Footprint!"""
                 sayerr(msg)
@@ -21808,7 +21811,7 @@ def push3D2pcb(s,cnt,tsp):
                 if float(new_ref_angle) == 0:
                     new_ref_angle=''
                 ln=cnt[idx_ref]
-                if ('at' in ln): # pre kv8
+                if ('(at' in ln): # pre kv8
                     cnt[idx_ref] = ln.split('(at ')[0]+'(at ' + ref_values[0] +' '+ ref_values[1]+new_ref_angle+ln[ln.index(') '):]
                 else:
                     ln_n=cnt[idx_ref+1]
@@ -21819,7 +21822,7 @@ def push3D2pcb(s,cnt,tsp):
                 if float(new_val_angle) == 0:
                     new_val_angle=''
                 ln=cnt[idx_val]
-                if ('at' in ln): # pre kv8
+                if ('(at' in ln): # pre kv8
                     cnt[idx_val] = ln.split('(at ')[0]+'(at ' + val_values[0] +' '+ val_values[1]+new_val_angle+ln[ln.index(') '):]
                 else:
                     ln_n=cnt[idx_val+1]
@@ -21831,7 +21834,7 @@ def push3D2pcb(s,cnt,tsp):
                     new_usr_angle=''
                 ln=cnt[idx_usr]
                 #print(ln)
-                if ('at' in ln): # pre kv8
+                if ('(at' in ln): # pre kv8
                     cnt[idx_usr] = ln.split('(at ')[0]+'(at ' + usr_values[0] +' '+ usr_values[1]+new_usr_angle+ln[ln.index(') '):]
                 else:
                    ln_n=cnt[idx_usr+1]
@@ -21845,7 +21848,7 @@ def push3D2pcb(s,cnt,tsp):
                 ln  = cnt[p2r[1]]
                 pad_val = p2r[2]
                 #print(ln)
-                if ('at' in ln): # pre kv8
+                if ('(at' in ln): # pre kv8
                     cnt[p2r[1]] = ln.split('(at ')[0]+'(at ' + pad_val[0] +' '+ pad_val[1]+new_pad_angle+ln[ln.index(') '):]
                 else:
                     ln_n=cnt[p2r[1]+1]
