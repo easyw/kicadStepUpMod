@@ -65,9 +65,9 @@ StepUp Videos
 
 - **FreeCAD** **0.19, 0.20, 0.21, 0.22, 1.0**
 
-- **KiCAD** **5.1**, **6.x**, **7.x**, **8.x**
+- **KiCAD** **5.1**, **6.x**, **7.x**, **8.x**, **9.x** (not embedding 3d Models ATM)
 
-- **KiCAD *8.99 nigthly* (partially supported)**
+- **KiCAD *9.99 nigthly* (partially supported)**
 
 ### Known issues
 

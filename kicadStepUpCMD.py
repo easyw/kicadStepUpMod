@@ -32,7 +32,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.5.3'
+ksuCMD_version__='2.5.5'
 
 
 precision = 0.1 # precision in spline or bezier conversion
@@ -2992,7 +2992,7 @@ class ksuToolsUnion:
     "ksu tools Make Union objects"
  
     def GetResources(self):
-        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Part-Fuse.svg') , # the name of a svg file available in the resources
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Geofeature-Fuse.svg') , # the name of a svg file available in the resources
                      'MenuText': QT_TRANSLATE_NOOP("ksuToolsUnion","Fuse objects") ,
                      'ToolTip' : QT_TRANSLATE_NOOP("ksuToolsUnion","Make Union (Fuse) objects")}
  
@@ -3003,6 +3003,7 @@ class ksuToolsUnion:
         # do something here...
         if FreeCADGui.Selection.getSelection():
             sel=FreeCADGui.Selection.getSelection()
+            doc=FreeCAD.activeDocument()
             def mk_str(input):
                 if (sys.version_info > (3, 0)):  #py3
                     if isinstance(input, str):
@@ -3017,15 +3018,48 @@ class ksuToolsUnion:
                     else:
                         return input
             ##
-            if len(sel)<=1:
-                    msg="Select at least two objects with Shape to be copied!\n"
+            doc.openTransaction('union')
+            if len(sel)<1:
+                    msg="Select one or two objects with Shape to be copied!\n"
                     reply = QtGui.QMessageBox.information(None,"Warning", msg)
                     FreeCAD.Console.PrintWarning(msg)             
+            elif sel[0].TypeId == 'App::Part':
+                unionLbl=sel[0].Label+"_"
+                unionPlc=sel[0].Placement
+                sel[0].ViewObject.Visibility = False
+                FreeCAD.activeDocument().addObject("Part::MultiFuse","Fusion")
+                Fusion = FreeCAD.activeDocument().ActiveObject
+                #o_list = sel[0].OutList
+                o_list = sel[0].OutListRecursive
+                FreeCADGui.Selection.clearSelection()
+                #print("sel",sel)
+                for o in o_list:
+                    #if (hasattr(o, 'Shape')) \
+                    #        and ('Axis' not in o.Label and 'Plane' not in o.Label and 'Sketch' not in o.Label):
+                    if hasattr(o, 'Shape'):
+                        if o.TypeId == 'App::Link' or o.TypeId == 'Part::Feature' or o.TypeId == 'PartDesign::Body':
+                            #print (o.Label,o.Name)
+                            FreeCADGui.Selection.addSelection(o)
+                            print(o.Label)
+                sel=FreeCADGui.Selection.getSelection()
+                #print(sel)
+                objs_in_doc=FreeCAD.ActiveDocument.Objects
+                FreeCADGui.runCommand('ksuToolsDeepCopy',0)
+                new_objs_in_doc=FreeCAD.ActiveDocument.Objects
+                new_objs=[]
+                for o in new_objs_in_doc:
+                    if o not in objs_in_doc:
+                        new_objs.append(o)
+                Fusion.Shapes = new_objs
+                Fusion.Label=unionLbl
+                Fusion.Placement=unionPlc
+                FreeCAD.ActiveDocument.recompute()                
             else: #sel[0].TypeId != 'PartDesign::Body'):
                 FreeCAD.activeDocument().addObject("Part::MultiFuse","Fusion")
                 Fusion = FreeCAD.activeDocument().ActiveObject
                 Fusion.Shapes = sel
                 FreeCAD.ActiveDocument.recompute()
+            doc.commitTransaction()
         else:
             #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
             reply = QtGui.QMessageBox.information(None,"Warning", "Select at least two objects with Shape to be copied!")
@@ -5061,6 +5095,37 @@ class ksuToolsImportFootprint:
         
 FreeCADGui.addCommand('ksuToolsImportFootprint',ksuToolsImportFootprint())
 ##
+class ksuToolsSelection2Edges:
+    "ksu tools Selection 2 Edges"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'Select_edges.svg') , # the name of a svg file available in the resources
+                     'MenuText': QT_TRANSLATE_NOOP("ksuToolsSelection2Edges","Selection 2 Edges") ,
+                     'ToolTip' : QT_TRANSLATE_NOOP("ksuToolsSelection2Edges","ksu Selection 2 Edges")}
+ 
+    def IsActive(self):
+        selEx=FreeCADGui.Selection.getSelectionEx()
+        if len (selEx) > 0:
+            return True
+ 
+    def Activated(self):
+        # do something here...
+        selEx=FreeCADGui.Selection.getSelectionEx()
+        if len (selEx) > 0:
+            # print('here')
+            import selection2edges
+            selection2edges.sel2edges()
+            
+        else:
+            #FreeCAD.Console.PrintError("Select elements from dxf imported file\n")
+            reply = QtGui.QMessageBox.information(None,"Warning", "Select one or more edge(s) to create a sketch!")
+            FreeCAD.Console.PrintWarning("Select one or more edge(s) to create a sketch!\n")             
+
+FreeCADGui.addCommand('ksuToolsSelection2Edges',ksuToolsSelection2Edges())
+
+#####
+
+
 class ksuToolsAlignView:
     "ksu tools AlignView to Face"
  

@@ -501,7 +501,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "12.4.2"
+___ver___ = "12.5.0"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -516,7 +516,7 @@ global start_time, show_messages
 global show_messages, applymaterials
 global real_board_pos_x, real_board_pos_y, board_base_point_x, board_base_point_y
 global ksu_config_fname, ini_content, configFilePath
-global models3D_prefix, models3D_prefix2, models3D_prefix3, models3D_prefix4
+global models3D_prefix, models3D_prefix2, models3D_prefix3, models3D_prefix4, default_prefix3d
 global blacklisted_model_elements, col, colr, colg, colb
 global bbox, volume_minimum, height_minimum, idf_to_origin, aux_orig
 global base_orig, base_point, bbox_all, bbox_list, whitelisted_model_elements
@@ -3046,7 +3046,7 @@ font_size = 8
 def cfg_read_all():
     global ksu_config_fname, default_ksu_config_ini, applymaterials
     ##ksu pre-set
-    global models3D_prefix, models3D_prefix2, models3D_prefix3, models3D_prefix4
+    global models3D_prefix, models3D_prefix2, models3D_prefix3, models3D_prefix4,default_prefix3d
     global blacklisted_model_elements, col, colr, colg, colb, whitelisted_3Dmodels
     global bbox, volume_minimum, height_minimum, idf_to_origin, aux_orig
     global base_orig, base_point, bbox_all, bbox_list, whitelisted_model_elements
@@ -3079,7 +3079,13 @@ def cfg_read_all():
         pt_win = True
         #default_prefix3d = os.path.join(os.environ["ProgramFiles"],u'\\KiCad\\share\\kicad\\modules\\packages3d')
         # default_prefix3d = (os.environ["ProgramFiles"]+u'\\KiCad\\share\\kicad\\modules\\packages3d')
-        default_prefix3d = (os.environ["ProgramFiles"]+u'\\KiCad\\8.0\\share\\kicad\\3dmodels') # kv7 kv8
+        for i in range(10,5,-1): #searching from kv10 to kv6
+            print(os.environ["ProgramFiles"]+u'\\KiCad\\'+str(i)+'.0\\share\\kicad\\3dmodels')
+            if os.path.exists(os.environ["ProgramFiles"]+u'\\KiCad\\'+str(i)+'.0\\share\\kicad\\3dmodels'):
+                default_prefix3d = (os.environ["ProgramFiles"]+u'\\KiCad\\'+str(i)+'.0\\share\\kicad\\3dmodels') # kv7 kv8
+                break    # break after founding a valid path
+            else:
+                default_prefix3d = (os.environ["ProgramFiles"]+u'\\KiCad\\9.0\\share\\kicad\\3dmodels') # kv7 kv8
         #print (default_prefix3d)
         default_prefix3d = re.sub("\\\\", "/", default_prefix3d) #default_prefix3d.replace('\\','/')
         #print (default_prefix3d)
@@ -4380,14 +4386,14 @@ def check_wrl_transparency(step_module):
 ##
 def findModelPath(model_type, path_list):
     """ Find module in all paths and types specified """
-    global models3D_prefix, models3D_prefix2, models3D_prefix3, models3D_prefix4
+    global models3D_prefix, models3D_prefix2, models3D_prefix3, models3D_prefix4,default_prefix3d
 
     module_path='not-found'
     # model_type = [step_module,step_module_lw,step_module_up,step_module2,step_module2_up,step_module3,step_module3_up,step_module4,step_module4_up,step_module5,step_module5_up]
     # path_list  = [models3D_prefix,models3D_prefix2,models3D_prefix3,models3D_prefix4]
     path_list = list(filter(None, path_list)) #removing empty paths
     # sayw('searching models:'+str(model_type))
-    # sayw('on '+str(len(path_list))+' paths: '+str(path_list))
+    say('on '+str(len(path_list))+' paths: '+str(path_list))
     for model in model_type:
         if (module_path=='not-found'):
             # sayerr('trying '+model)
@@ -4435,7 +4441,7 @@ def restore_specular(obj_pre_list):
 def Load_models(pcbThickness,modules):
     global off_x, off_y, volume_minimum, height_minimum, bbox_all, bbox_list
     global whitelisted_model_elements
-    global models3D_prefix, models3D_prefix2, models3D_prefix3, models3D_prefix4
+    global models3D_prefix, models3D_prefix2, models3D_prefix3, models3D_prefix4,default_prefix3d
     global last_pcb_path, full_placement, whitelisted_3Dmodels
     global allow_compound, compound_found, bklist, force_transparency, warning_nbr, use_AppPart
     global conv_offs, use_Links, links_imp_mode, use_pypro, use_LinkGroups, fname_sfx
@@ -4682,6 +4688,9 @@ def Load_models(pcbThickness,modules):
                     createScaledObjs=True
                 if not createScaledObjs:
                     path_list = [models3D_prefix,models3D_prefix2,models3D_prefix3,models3D_prefix4]
+                    if default_prefix3d not in path_list:
+                        if os.path.exists(default_prefix3d):
+                            path_list.insert(0, default_prefix3d)
                     model_type = [step_module,step_module_lw,step_module_up,step_module2,step_module2_up,step_module3,step_module3_up,step_module4,step_module4_up,step_module5,step_module5_up]
                     module_path = findModelPath(model_type, path_list)     # Find module in all paths and types specified
                 else:
@@ -6628,7 +6637,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
     global test_flag, last_pcb_path, configParser, configFilePath, start_time
     global aux_orig, base_orig, base_point, idf_to_origin, off_x, off_y, export_board_2step
     global real_board_pos_x, real_board_pos_y, board_base_point_x, board_base_point_y
-    global models3D_prefix, models3D_prefix2, models3D_prefix3, models3D_prefix4
+    global models3D_prefix, models3D_prefix2, models3D_prefix3, models3D_prefix4,default_prefix3d
     global blacklisted_model_elements, col, colr, colg, colb, whitelisted_3Dmodels
     global bbox, volume_minimum, height_minimum, idf_to_origin, aux_orig
     global base_orig, base_point, bbox_all, bbox_list, whitelisted_model_elements

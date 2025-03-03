@@ -22,10 +22,10 @@ from FreeCAD import Console,Vector,Placement,Rotation
 import DraftGeomUtils,DraftVecUtils
 
 try:
+    import CAM
+except:
     import Path
     CAM = Path
-except:
-    import CAM
 
 import sys, os
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))

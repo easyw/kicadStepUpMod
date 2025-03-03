@@ -10,14 +10,14 @@
 #*  Kicad STEPUP (TM) is a TradeMark and cannot be freely usable            *
 #*                                                                          *
 
-ksu_wb_version='v 11.05.2'
+ksu_wb_version='v 11.05.4'
 global myurlKWB, ksuWBpath
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=694 #   v11.05.2 NB all the commits must have commit message ending with _cmtnum=nnn
-# cmtnum=694'
+mycommitsKWB=697 #   v11.05.1 NB all the commits must have commit message ending with _cmtnum=nnn
+# cmtnum=697'
 global verKSU
-verKSU="12.4.2"
+verKSU="12.5.0"
 
 import FreeCAD, FreeCADGui, Part, os, sys
 import re, time
@@ -184,7 +184,7 @@ class KiCadStepUpWB ( Workbench ):
                            "ksuToolsColoredBinder", "ksuToolsReLinkBinder", "ksuToolsCheckSolid"])
                            #, "ksuToolsPushMoved","ksuToolsSync3DModels"])
         self.appendToolbar(translate("Toolbar", "ksu Sketching"), ["ksuTools3D2D", "ksuTools2D2Sketch", "ksuTools2DtoFace",\
-                           "ksuToolsLoopSelection","ksuToolsEdges2Sketch","ksuToolsMoveSketch","ksuToolsOffset2D","ksuToolsExtrude","Create_BoundBox","ksuToolsMergeSketches",\
+                           "ksuToolsLoopSelection","ksuToolsEdges2Sketch","ksuToolsSelection2Edges","ksuToolsMoveSketch","ksuToolsOffset2D","ksuToolsExtrude","Create_BoundBox","ksuToolsMergeSketches",\
                            "ksuToolsSimplifySketck", "ksuToolsBsplineNormalize", "ksuToolsConstrainator", "ksuToolsSkValidate", "ksuToolsDiscretize",\
                            "ksuToolsContour2Poly", "Arcs2Circles", "approximateCenter"])
                            #, "ksuToolsPushMoved","ksuToolsSync3DModels"])
