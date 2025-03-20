@@ -501,7 +501,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "12.5.0"
+___ver___ = "12.6.0"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -2044,6 +2044,67 @@ def shapeToMesh(shape, color, transp, mesh_deviation, scale=None):
                 color = color, transp=transp)
     return newMesh
 
+def assignSTEPmaterials(objects, filepath):
+    """Export step file with material properties
+    """
+    global ui, shape_col
+    global color_list, color_list_mat
+    color_list=[]
+    color_list_mat=[]
+    index_color=-1
+    Dialog = QtGui.QDialog()
+    ui = Ui_Dialog()
+    ui.setupUi(Dialog)
+    ui.comboBox.addItems(material_properties_names)
+    material="as is"
+    for obj in objects:
+        for color in obj.ViewObject.DiffuseColor:
+            shape_col= color
+            #say(shape_col)
+            if shape_col not in color_list:
+                #sayw(shape_col);say('not found')
+                idc=0;material_index=0
+                found_mat=False
+                for mat_diff_col in material_properties_diffuse:
+                    #say(mat_diff_col)
+                    delta_col=0.01
+                    if ((abs(shape_col[0]-mat_diff_col[0])<delta_col) and (abs(shape_col[1]-mat_diff_col[1])<delta_col)\
+                        and (abs(shape_col[2]-mat_diff_col[2])<delta_col) and (abs(shape_col[3]-mat_diff_col[3])<delta_col)) and not found_mat:
+                        #sayw('found a match')
+                        material_index=idc
+                        found_mat=True
+                        #stop
+                    idc+=1
+                ui.plainTextEdit.setStyleSheet("#plainTextEdit {background-color:rgb("+str(shape_col[0]*255)+","+str(shape_col[1]*255)+","+str(shape_col[2]*255)+");}") 
+                ui.plainTextEdit_2.setStyleSheet("#plainTextEdit_2 {background-color:rgb("+str(shape_col[0]*255)+","+str(shape_col[1]*255)+","+str(shape_col[2]*255)+");}") 
+                ui.comboBox.setCurrentIndex(material_index)
+                color_list.append(shape_col)
+                index_color=index_color+1
+                #say(color_list)
+                #ui.comboBox.addItems(color_list)
+                if Materials:
+                    ## material_index=material_properties_names.index(color_list_mat[col_index])
+                    ## ui.comboBox.setCurrentIndex(index_color)
+                    reply=Dialog.exec_()
+                    #Dialog.exec_()
+                    #say(reply)
+                    if reply==1:
+                        material=str(ui.comboBox.currentText())
+                    else:
+                        material="as is"
+                color_list_mat.append(material)
+                sayw(material)
+        col_index=color_list.index(shape_col)
+        #print (color_list_mat[col_index],col_index)
+        #say(color_list_mat[col_index])
+        if not Materials or color_list_mat[col_index]=="as is":
+            shape_transparency=obj.ViewObject.Transparency
+        else:
+            material_index=material_properties_names.index(color_list_mat[col_index])
+            #say(material_properties[material_index])    
+    say('step color materials assigned')
+
+
 def exportVRMLmaterials(objects, filepath):
     """Export given list of Mesh objects to a VRML file.
     with material properties
@@ -2278,22 +2339,30 @@ def export(componentObjs, fullfilePathName, scale=None, label=None):
             filename=path+os.sep+exp_name+'_1_1.wrl'
     say(filename)
     exportV=True
-    mesh_deviation_default=0.9 # 0.03 or 0.1 0.9 smaller files
-    mesh_dev=mesh_deviation_default #the smaller the best quality, 1 coarse
-    if os.path.exists(filename):
-        say('file exists')
-        QtGui.QApplication.restoreOverrideCursor()
-        reply = QtGui.QMessageBox.question(None, "Info", filename+"\nwrl file exists, overwrite?",
-        QtGui.QMessageBox.Yes | QtGui.QMessageBox.No, QtGui.QMessageBox.No)
-        if reply == QtGui.QMessageBox.Yes:
-            # this is where the code relevant to a 'Yes' answer goes
-            exportV=True
-            #pass
-        if reply == QtGui.QMessageBox.No:
-            # this is where the code relevant to a 'No' answer goes
-            exportV=False
-            #pass
+    if prefs.GetBool('wrl_disable') == True:
+        #'stpz'
+        exportV=False
+    else:
+        exportV=True
+    # if exportV == False:
+    #     assignSTEPmaterials(objects, filepath)
+    #     return # 'wrl export disabled'
     if exportV:
+        mesh_deviation_default=0.9 # 0.03 or 0.1 0.9 smaller files
+        mesh_dev=mesh_deviation_default #the smaller the best quality, 1 coarse
+        if os.path.exists(filename):
+            say('file exists')
+            QtGui.QApplication.restoreOverrideCursor()
+            reply = QtGui.QMessageBox.question(None, "Info", filename+"\nwrl file exists, overwrite?",
+            QtGui.QMessageBox.Yes | QtGui.QMessageBox.No, QtGui.QMessageBox.No)
+            if reply == QtGui.QMessageBox.Yes:
+                # this is where the code relevant to a 'Yes' answer goes
+                exportV=True
+                #pass
+            if reply == QtGui.QMessageBox.No:
+                # this is where the code relevant to a 'No' answer goes
+                exportV=False
+                #pass
         reply = QtGui.QInputDialog.getText(None, "Mesh Deviation","Mesh Deviation ([range:0.01-1] the smaller the better quality)",QtGui.QLineEdit.Normal,str(mesh_deviation_default))
         if reply[1]:
                 # user clicked OK
@@ -2329,62 +2398,65 @@ def export(componentObjs, fullfilePathName, scale=None, label=None):
         #say(mesh_deviation)
         say("mesh deviation: "+str(mesh_dev)) # 1 for small wrl files
         say("creaseAngle: "+str(creaseAngle)) # 0 for small wrl files
-        color=[]
-        Diffuse_color=[]
-        transparency=[]
-        for obj in componentObjs:
-            #say(obj.Label)
-            ## if hasattr(obj,'ShapeColor'):
-            color.append(FreeCADGui.ActiveDocument.getObject(obj.Name).ShapeColor)
-            transparency.append(FreeCADGui.ActiveDocument.getObject(obj.Name).Transparency/100.0)
-            #say("color")
-            #say(FreeCADGui.ActiveDocument.getObject(obj.Name).DiffuseColor)
-            Diffuse_color.append(FreeCADGui.ActiveDocument.getObject(obj.Name).DiffuseColor)
-        i=0
-        meshes=[]
-        #say("diffuse color")
-        #say(Diffuse_color)
-        indexColor=0;
-        color_vector=[]
-        applyDiffuse=0
-        for obj in componentObjs:
-            shape1=obj.Shape
-            single_color=Diffuse_color[i];
-            #check length color
-            #say("len color")
-            #say(len(single_color))
-            #colors less then faces
-            if(len(single_color)!=len(shape1.Faces)):
-                applyDiffuse=0;
-                #copy color to all faces
-            #else copy singular colors for faces
-            else:
-                applyDiffuse=1;
-                for color in single_color:
-                    color_vector.append(color)
-            #say("color_vector")
-            #say(color_vector)
-            for index in range(len(shape1.Faces)):
-                #say("color x")
-                #say(color_vector[indexColor])
-                singleFace=shape1.Faces[index]
+    color=[]
+    Diffuse_color=[]
+    transparency=[]
+    for obj in componentObjs:
+        #say(obj.Label)
+        ## if hasattr(obj,'ShapeColor'):
+        color.append(FreeCADGui.ActiveDocument.getObject(obj.Name).ShapeColor)
+        transparency.append(FreeCADGui.ActiveDocument.getObject(obj.Name).Transparency/100.0)
+        #say("color")
+        #say(FreeCADGui.ActiveDocument.getObject(obj.Name).DiffuseColor)
+        Diffuse_color.append(FreeCADGui.ActiveDocument.getObject(obj.Name).DiffuseColor)
+    i=0
+    meshes=[]
+    #say("diffuse color")
+    #say(Diffuse_color)
+    indexColor=0;
+    color_vector=[]
+    applyDiffuse=0
+    for obj in componentObjs:
+        shape1=obj.Shape
+        single_color=Diffuse_color[i];
+        #check length color
+        #say("len color")
+        #say(len(single_color))
+        #colors less then faces
+        if(len(single_color)!=len(shape1.Faces)):
+            applyDiffuse=0;
+            #copy color to all faces
+        #else copy singular colors for faces
+        else:
+            applyDiffuse=1;
+            for color in single_color:
+                color_vector.append(color)
+        #say("color_vector")
+        #say(color_vector)
+        for index in range(len(shape1.Faces)):
+            #say("color x")
+            #say(color_vector[indexColor])
+            singleFace=shape1.Faces[index]
+            if exportV:
                 if(applyDiffuse):
                     #say(color_vector[indexColor])
                     meshes.append(shapeToMesh(singleFace, color_vector[indexColor], transparency[i], mesh_dev, scale))
                 else:
                     #say(single_color[0])
                     meshes.append(shapeToMesh(singleFace, single_color[0], transparency[i], mesh_dev, scale))
-                indexColor=indexColor+1
-                #meshes.append(shapeToMesh(face, Diffuse_color[i], transparency[i], scale))
-            color_vector=[]
-            indexColor=0;
-            i=i+1
-        if enable_materials == 1:
-        #    print 'ciao'
-        #if applymaterials==1:
-            exportVRMLmaterials(meshes, filename)
-        else:
-            exportVRML(meshes, filename)
+            indexColor=indexColor+1
+            #meshes.append(shapeToMesh(face, Diffuse_color[i], transparency[i], scale))
+        color_vector=[]
+        indexColor=0;
+        i=i+1
+    if enable_materials == 1 and exportV:
+    #    print 'ciao'
+    #if applymaterials==1:
+        exportVRMLmaterials(meshes, filename)
+    elif exportV:
+        exportVRML(meshes, filename)
+    elif enable_materials == 1:
+        assignSTEPmaterials(componentObjs, filename)
     return
 ###
 def check_AP():
@@ -2726,12 +2798,27 @@ def go_export(fPathName):
             if len(objs) == 1 or 'App::Part' in sel[0].TypeId:
                 exportS=True
                 if 'App::Part' in sel[0].TypeId:
-                    exportStep([sel[0]], fPathName)
+                    step_name=exportStep([sel[0]], fPathName)
+                    if float(FreeCAD.Version()[0])==1 and float(FreeCAD.Version()[1])==0 and float(FreeCAD.Version()[2])==0:
+                        if step_name is not None:
+                            sayw(step_name)
+                            import step_amend
+                            found_transp_issue=step_amend.transp_rmv(step_name)
+                            if found_transp_issue:
+                                sayw(step_name+' file amended')
                     # need to refresh color changing
                     FreeCADGui.Selection.addSelection(sel[0])
                     #FreeCADGui.Selection.clearSelection()
                 else:
-                    exportStep(objs, fPathName)
+                    step_name=exportStep(objs, fPathName)
+                    if float(FreeCAD.Version()[0])==1 and float(FreeCAD.Version()[1])==0 and float(FreeCAD.Version()[2])==0:
+                        if step_name is not None:
+                            sayw(step_name)
+                            import step_amend
+                            found_transp_issue=step_amend.transp_rmv(step_name)
+                            if found_transp_issue:
+                                sayw(step_name+' file amended')
+                            #step_amend(fPathName)    
             else:
                 #say("Select ONE single part object !")
                 exportS=False
@@ -2747,7 +2834,7 @@ def go_export(fPathName):
 ###
 def align_colors_to_materials(objects):
     global exportS, applymaterials, enable_materials
-    global color_list, color_list_mat
+    global color_list, color_list_mat, align_vrml_step_colors
     
     newobj_list= objects
     
@@ -2908,6 +2995,7 @@ def exportStep(objs, ffPathName):
         #say(old_Auth)
         #say(old_Comp)
         FreeCAD.activeDocument().recompute()
+        return fullFilePathNameStep
     return
 ###
 

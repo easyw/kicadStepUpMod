@@ -259,16 +259,21 @@ Allowing or not Loading Multi Parts objects</string>
         </item>
        </layout>
       </item>
-      <item>
+       <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_18">
+        <property name="topMargin">
+         <number>1</number>
+        </property>
+        <item>
        <widget class="Gui::PrefCheckBox" name="cb_vrml_materials">
         <property name="toolTip">
-         <string>Enables Materials for VRML exporting.</string>
+         <string>Enables Materials for VRML-STEP exporting.</string>
         </property>
         <property name="statusTip">
          <string notr="true"/>
         </property>
         <property name="text">
-         <string>Enable Materials for VRML exporting</string>
+         <string>Enable Materials for VRML-STEP exporting</string>
         </property>
         <property name="checked">
          <bool>true</bool>
@@ -284,7 +289,41 @@ Allowing or not Loading Multi Parts objects</string>
         </property>
        </widget>
       </item>
-      <item>
+        <item>
+         <spacer name="horizontalSpacer_18">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="Gui::PrefCheckBox" name="cb_vrml_enable">
+          <property name="toolTip">
+           <string>Disable wrl export.</string>
+          </property>
+          <property name="text">
+           <string>Disable wrl export</string>
+          </property>
+          <property name="checked">
+           <bool>false</bool>
+          </property>
+          <property name="prefEntry" stdset="0">
+           <cstring>wrl_disable</cstring>
+          </property>
+          <property name="prefPath" stdset="0">
+           <cstring>Mod/kicadStepUpGui</cstring>
+          </property>
+         </widget>
+        </item>
+       </layout>
+       </item>
+       <item>
        <widget class="Gui::PrefCheckBox" name="cb_wrz_export">
         <property name="enabled">
          <bool>true</bool>
