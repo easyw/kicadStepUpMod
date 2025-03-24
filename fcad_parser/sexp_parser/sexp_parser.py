@@ -27,7 +27,7 @@ from collections import OrderedDict
 __author__ = "Zheng, Lei"
 __copyright__ = "Copyright 2016, Zheng, Lei"
 __license__ = "MIT"
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 __email__ = "realthunder.dev@gmail.com"
 __status__ = "Prototype"
 
@@ -759,10 +759,18 @@ def parseSexp(sexp, quote_no_parse=None):
     count = 0
     if isinstance(sexp,string_types):
         sexp = sexp.splitlines(False)
+    sexpb=[] # maui
     for l in iter(sexp):
         count += len(l)
         lines.append(count)
-    sexp = ''.join(sexp)
+        if '(property' in l:
+            if '\\\\' in l: #maui removing backslash on values
+                #l=re.sub('\\\\','/',l)
+                l=l.replace('\\\\','/')
+        sexpb.append(l)
+
+    sexp = ''.join(sexpb)
+    #sexp = ''.join(sexp) # maui end
 
     regex = _sexp_regex
 
