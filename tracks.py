@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global tracks_version
-tracks_version = '2.6.8'
+tracks_version = '2.6.9'
 
 import kicad_parser
 #import kicad_parser; import importlib; importlib.reload(kicad_parser)
@@ -472,7 +472,11 @@ def addtracks(fname = None):
         if 0:
             ply_area=[]
             for lp in mypcb.gr_poly: #pcb area polylines    
-                if 'F.Cu' not in lp.layer:
+                if hasattr(lp, 'layer'):
+                    k_test=lp.layer
+                else:
+                    k_test=lp.layers
+                if 'F.Cu' not in k_test:
                     continue
                 # print(lp, lp.fill)
                 if lp.fill != 'solid':
@@ -511,7 +515,11 @@ def addtracks(fname = None):
         ws=[]
         wst=[]
         for j,pl in enumerate(mypcb.gr_poly): #pcb area polylines          
-            if unquote(pl.layer) == 'F.Cu':
+            if hasattr(pl, 'layer'):
+                k_test=pl.layer
+            else:
+                k_test=pl.layers
+            if unquote(k_test) == 'F.Cu':
                 pln=Part.Wire(make_gr_poly(pl))
                 if pl.fill == 'solid':
                     ws.append((pln))
@@ -545,7 +553,11 @@ def addtracks(fname = None):
         #stop
         gr_rects=[]
         for r in mypcb.gr_rect: #pcb area from rect
-            if 'F.Cu' not in r.layer:
+            if hasattr(r, 'layer'):
+                k_test=r.layer
+            else:
+                k_test=r.layers
+            if 'F.Cu' not in k_test:
                 continue
             if r.fill != 'solid':
                 continue
@@ -568,7 +580,11 @@ def addtracks(fname = None):
         
         gr_circles=[]
         for c in mypcb.gr_circle: #pcb area from circles
-            if 'F.Cu' not in c.layer:
+            if hasattr(c, 'layer'):
+                k_test=c.layer
+            else:
+                k_test=c.layers
+            if 'F.Cu' not in k_test:
                 continue
             if c.fill != 'solid':
                 continue        

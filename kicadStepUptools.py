@@ -501,7 +501,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "12.6.1"
+___ver___ = "12.6.2"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -5117,7 +5117,7 @@ def Load_models(pcbThickness,modules):
                         #say("impPart "+ impPart.Name)
                         obj = FreeCAD.ActiveDocument.getObject(model3D)
                         FreeCADGui.Selection.addSelection(obj)
-                        obj=FreeCAD.ActiveDocument.ActiveObject
+                        # obj=FreeCAD.ActiveDocument.ActiveObject # issue for Part containers
                         #volume_minimum=1
                         myPart=FreeCAD.ActiveDocument.getObject(obj.Name)   #mauitemp min vol
                         if md_hide:
@@ -11975,18 +11975,33 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
         #print(lyr)
     
     for ln in mypcb.gr_line:
-        if lyr in ln.layer:
+        if hasattr(ln, 'layer'):
+            k_test=ln.layer
+        else:
+            k_test=ln.layers
+       # if hasattr(ln, 'layer'):
+        if lyr in k_test: #ln.layer:
             #say(ln.layer)
             edg_segms+=1
+        #elif lyr in ln.layers:
+        #    edg_segms+=1
     for ar in mypcb.gr_arc:
-        if lyr in ar.layer:
+        if hasattr(ar, 'layer'):
+            k_test=ar.layer
+        else:
+            k_test=ar.layers
+        if lyr in k_test:
             #say(ln.layer)
             edg_segms+=1
     for lp in mypcb.gr_poly:
         #print(lp)
         #print(lp.layer)
         #print(lp.pts)
-        if lyr in lp.layer:
+        if hasattr(lp, 'layer'):
+            k_test=lp.layer
+        else:
+            k_test=lp.layers
+        if lyr in k_test:
             #sayerr(lp.layer)
             try:
                 for p in lp.pts.xy:
@@ -11995,16 +12010,24 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
             except:
                 for a in lp.pts.arc:
                     edg_segms+=1
-            #stop
-            #edg_segms+=1
+        #stop
+        #edg_segms+=1
     for bs in mypcb.gr_curve:
-        if lyr in bs.layer:
+        if hasattr(bs, 'layer'):
+            k_test=bs.layer
+        else:
+            k_test=bs.layers
+        if lyr in k_test:
             #sayerr(bs.layer)
             for p in bs.pts.xy:
                 edg_segms+=1
             #edg_segms+=1
     for r in mypcb.gr_rect:
-        if lyr in r.layer:
+        if hasattr(r, 'layer'):
+            k_test=r.layer
+        else:
+            k_test=r.layers
+        if lyr in k_test:
             #sayerr(bs.layer)
             edg_segms+=4
             #edg_segms+=1
@@ -12159,8 +12182,12 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
     
     for l in mypcb.gr_line: #pcb lines
         #if l.layer != 'Edge.Cuts':
-        if lyr not in l.layer:
-            continue
+        if hasattr(l, 'layer'):
+            k_test=l.layer
+        else:
+            k_test=l.layers
+        if lyr not in k_test:
+                continue
         #edges.append(Part.makeLine(makeVect(l.start),makeVect(l.end)))
         #say(l.start);say(l.end)
         #edge_tolerance_warning
@@ -12168,7 +12195,11 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
 
     for r in mypcb.gr_rect: #pcb lines from rect
         #if l.layer != 'Edge.Cuts':
-        if lyr not in r.layer:
+        if hasattr(r, 'layer'):
+            k_test=r.layer
+        else:
+            k_test=r.layers
+        if lyr not in k_test:
             continue
         #segms = [r.start[0],r.start[1]][r.end[0],r.start[1]]
         line1=Part.Edge(PLine(Base.Vector(r.start[0],-r.start[1],0), Base.Vector(r.end[0],-r.start[1],0)))
@@ -12387,7 +12418,11 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
 
     # k_index = 0
     for lp in mypcb.gr_poly: #pcb polylines
-        if lyr not in lp.layer:
+        if hasattr(lp, 'layer'):
+            k_test=lp.layer
+        else:
+            k_test=lp.layers
+        if lyr not in k_test:
         # if lp.layer != 'Edge.Cuts':
             continue
         ply_lines = []
@@ -12402,14 +12437,14 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                         if aux_orig ==1 or grid_orig ==1:
                             #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0]-off_x,-l.start[1]-off_y,0), Base.Vector(l.end[0]-off_x,-l.end[1]-off_y,0)))
                             PCB_Geo.append(PLine(Base.Vector(lp.pts.xy[l-1][0]-off_x,-lp.pts.xy[l-1][1]-off_y,0), Base.Vector(lp.pts.xy[0][0]-off_x,-lp.pts.xy[0][1]-off_y,0)))
-                            if lp.layer != 'Edge.Cuts':
+                            if k_test != 'Edge.Cuts':
                                 line2=Part.Edge(PLine(Base.Vector(lp.pts.xy[l-1][0]-off_x,-lp.pts.xy[l-1][1]-off_y,0), Base.Vector(lp.pts.xy[0][0]-off_x,-lp.pts.xy[0][1]-off_y,0)))
                         else:
                             #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0],-l.start[1],0), Base.Vector(l.end[0],-l.end[1],0)))
                             PCB_Geo.append(PLine(Base.Vector(lp.pts.xy[l-1][0],-lp.pts.xy[l-1][1],0), Base.Vector(lp.pts.xy[0][0],-lp.pts.xy[0][1],0)))
-                            if lp.layer != 'Edge.Cuts':
+                            if k_test != 'Edge.Cuts':
                                 line2=Part.Edge(PLine(Base.Vector(lp.pts.xy[l-1][0],-lp.pts.xy[l-1][1],0), Base.Vector(lp.pts.xy[0][0],-lp.pts.xy[0][1],0)))
-                    if lp.layer != 'Edge.Cuts':
+                    if k_test != 'Edge.Cuts':
                         ply_lines.append(line2)
                 else:
                     line1=Part.Edge(PLine(Base.Vector(lp.pts.xy[ind-1][0],-lp.pts.xy[ind-1][1],0), Base.Vector(lp.pts.xy[ind][0],-lp.pts.xy[ind][1],0)))
@@ -12418,14 +12453,14 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                         if aux_orig ==1 or grid_orig ==1:
                             #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0]-off_x,-l.start[1]-off_y,0), Base.Vector(l.end[0]-off_x,-l.end[1]-off_y,0)))
                             PCB_Geo.append(PLine(Base.Vector(lp.pts.xy[ind-1][0]-off_x,-lp.pts.xy[ind-1][1]-off_y,0), Base.Vector(lp.pts.xy[ind][0]-off_x,-lp.pts.xy[ind][1]-off_y,0)))
-                            if lp.layer != 'Edge.Cuts':
+                            if k_test != 'Edge.Cuts':
                                 line2=Part.Edge(PLine(Base.Vector(lp.pts.xy[ind-1][0]-off_x,-lp.pts.xy[ind-1][1]-off_y,0), Base.Vector(lp.pts.xy[ind][0]-off_x,-lp.pts.xy[ind][1]-off_y,0)))
                         else:
                             #FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0],-l.start[1],0), Base.Vector(l.end[0],-l.end[1],0)))
                             PCB_Geo.append(PLine(Base.Vector(lp.pts.xy[ind-1][0],-lp.pts.xy[ind-1][1],0), Base.Vector(lp.pts.xy[ind][0],-lp.pts.xy[ind][1],0)))
-                            if lp.layer != 'Edge.Cuts':
+                            if k_test != 'Edge.Cuts':
                                 line2=Part.Edge(PLine(Base.Vector(lp.pts.xy[ind-1][0],-lp.pts.xy[ind-1][1],0), Base.Vector(lp.pts.xy[ind][0],-lp.pts.xy[ind][1],0)))
-                    if lp.layer != 'Edge.Cuts':
+                    if k_test != 'Edge.Cuts':
                         ply_lines.append(line2)
                 ind+=1
         else: # hasattr(params.pts,"arc")
@@ -12455,7 +12490,11 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
     #bsplines
     for bs in mypcb.gr_curve:
         # if bs.layer != 'Edge.Cuts':
-        if lyr not in bs.layer:
+        if hasattr(bs, 'layer'):
+            k_test=bs.layer
+        else:
+            k_test=bs.layers
+        if lyr not in k_test:
             continue
         ind = 0
         #sayerr(bs.layer)
@@ -12504,7 +12543,11 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
     pa=""
     for a in mypcb.gr_arc: #pcb arcs
         # if a.layer != 'Edge.Cuts':
-        if lyr not in a.layer:
+        if hasattr(a, 'layer'):
+            k_test=a.layer
+        else:
+            k_test=a.layers
+        if lyr not in k_test:
             continue
         # for gr_arc, 'start' is actual the center, and 'end' is the start
         #edges.append(makeArc(makeVect(l.start),makeVect(l.end),l.angle))
@@ -12514,7 +12557,11 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
     ## NB use always float() to guarantee number not string!!!
     for c in mypcb.gr_circle: #pcb circles
         # if c.layer != 'Edge.Cuts':
-        if lyr not in c.layer:
+        if hasattr(c, 'layer'):
+            k_test=c.layer
+        else:
+            k_test=c.layers
+        if lyr not in k_test:
             continue
         [xs, ys] = c.center
         [x1, y1] = c.end
