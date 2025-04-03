@@ -39,7 +39,7 @@ from fcad_parser import unquote #maui
 
 
 # from kicadStepUptools import KicadPCB,SexpList
-__kicad_parser_version__ = '2.3.5'
+__kicad_parser_version__ = '2.3.6'
 # https://github.com/realthunder/fcad_pcb/issues/20#issuecomment-586042341
 # FreeCAD.Console.PrintLog('kicad_parser_version '+__kicad_parser_version__+'\n') # maui 
 # print('kicad_parser_version '+__kicad_parser_version__)
@@ -1129,16 +1129,55 @@ class KicadFcad:
 
             recomputeObj(ret)
         else:
-            ret = CAM.Area(Fill=fill,
-                            FitArcs=fit_arcs,
-                            Coplanar=0,
-                            Reorient=reorient,
-                            Accuracy=self.arc_fit_accuracy,
-                            Offset=offset)
-            ret.setPlane(self.work_plane)
-            for o in obj:
-                ret.add(o,op=op)
-            ret = ret.getShape()
+            try: # maui CAM.Area is missing from F1.0 ahead
+                ret = CAM.Area(Fill=fill,
+                                FitArcs=fit_arcs,
+                                Coplanar=0,
+                                Reorient=reorient,
+                                Accuracy=self.arc_fit_accuracy,
+                                Offset=offset)
+                ret.setPlane(self.work_plane)
+                for o in obj:
+                    ret.add(o,op=op)
+                ret = ret.getShape()
+            except: # maui emulating CAM.Area functions
+                objn=[]
+                name='nm'
+                for o in obj:
+                    print(o)
+                    Part.show(o)
+                    # f = Part.Face(o)
+                    # Part.show(f)
+                    ao=FreeCAD.ActiveDocument.ActiveObject
+                    recomputeObj(ao)
+                    objn.append(ao)
+                ret = self._makeObject('Path::FeatureArea',
+                                        '{}_area'.format(name),label)
+                ret.Accuracy = self.arc_fit_accuracy
+                print(objn)
+                ret.Sources = objn
+                ret.Operation = op
+                ret.Fill = fill
+                ret.Offset = offset
+                ret.Coplanar = 0
+                ret.WorkPlane = self.work_plane
+                ret.FitArcs = fit_arcs
+                ret.Reorient = reorient
+                for o in objn:
+                    o.ViewObject.Visibility = False
+                recomputeObj(ret)
+                #retf=Part.Face(ret.Shape.Wires)
+                # retf=ret.Shape.Wires
+                to_del=[]
+                for o in objn:
+                    to_del.append(o)
+                #to_del.append(ret)
+                for o in to_del:
+                    #print(o)
+                    FreeCAD.ActiveDocument.removeObject(o.Name)
+                ret1=ret.Shape
+                FreeCAD.ActiveDocument.removeObject(ret.Name)
+                ret=ret1
         return ret
 
 
