@@ -10,11 +10,11 @@
 #*  Kicad STEPUP (TM) is a TradeMark and cannot be freely usable            *
 #*                                                                          *
 
-ksu_wb_version='v 11.06.0'
+ksu_wb_version='v 11.06.1'
 global myurlKWB, ksuWBpath
 myurlKWB='https://github.com/easyw/kicadStepUpMod'
 global mycommitsKWB
-mycommitsKWB=703 #   v11.05.1 NB all the commits must have commit message ending with _cmtnum=nnn
+mycommitsKWB=704 #   v11.05.1 NB all the commits must have commit message ending with _cmtnum=nnn
 # cmtnum=699'
 global verKSU
 verKSU="12.6.2"
@@ -46,6 +46,7 @@ global main_ksu_Icon
 main_ksu_Icon = os.path.join( ksuWB_icons_path , 'kicad-StepUp-tools-WB.svg')
 
 from PySide import QtGui
+from threading import Timer
 
 import hlp
 header_txt="""<font color=GoldenRod><b>kicad StepUp version """+verKSU+"""</font></b><br>"""
@@ -201,7 +202,7 @@ class KiCadStepUpWB ( Workbench ):
             ksuDTB=["ksuToolsAlignView"]
             self.appendToolbar(translate("Toolbar", "ksu Design Tools"), ksuDTB)
         Hlp_TB = ["ksuToolsToggleTreeView", "Restore_Transparency", "ksuToolsTransparencyToggle", "ksuToolsHighlightToggle",\
-                            "ksuToolsVisibilityToggle", "ksuToolsStepImportModeSTD", "ksuToolsStepImportModeComp",\
+                            "ksuToolsVisibilityToggle", "ksuToolsVisibilityRestore", "ksuToolsStepImportModeSTD", "ksuToolsStepImportModeComp",\
                             "ksuToolsCopyPlacement", "ksuToolsResetPlacement", "ksuToolsResetPartPlacement", "ksuToolsAddToTree",\
                             "ksuToolsRemoveFromTree", "ksuToolsRemoveSubTree", "checkSolidExpSTEP"]
         #if 'LinkView' in dir(FreeCADGui):
@@ -436,8 +437,15 @@ class KiCadStepUpWB ( Workbench ):
                     <br>set \'checkUpdates\' to \'False\' to avoid this checking
                     <br>in \"Tools\", \"Edit Parameters\",<br>\"Preferences\"->\"Mod\"->\"kicadStepUp\"
                     """
-                    QtGui.QApplication.restoreOverrideCursor()
-                    reply = QtGui.QMessageBox.information(None,"Warning", msg)
+                    def warn_update_msg():
+                        QtGui.QApplication.restoreOverrideCursor()
+                        reply = QtGui.QMessageBox.information(None,"Warning", msg)
+                    if FreeCAD.GuiUp:
+                        # avoiding issue in losing panel & toolbar settings
+                        from PySide import QtCore, QtGui
+                        dl=1000.0 #ms
+                        QtCore.QTimer.singleShot(dl,warn_update_msg)
+                    
                 else:
                     FreeCAD.Console.PrintMessage('the WB is Up to Date\n')
                 #<li class="commits">

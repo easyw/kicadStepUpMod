@@ -32,8 +32,10 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.5.5'
+ksuCMD_version__='2.5.6'
 
+global invisible_objs
+invisible_objs=[]
 
 precision = 0.1 # precision in spline or bezier conversion
 q_deflection = 0.02 # quasi deflection parameter for discretization
@@ -1464,6 +1466,19 @@ class ksuToolsPushPCB:
                 print('evaluate to recompute')
                 ## s = sel[0].Shape
                 ## sk = Draft.make_sketch(s.Edges, autoconstraints=True)
+                #print(sel[0].InListRecursive, sel[0].Label)
+                for o in sel[0].InListRecursive:
+                    if 'PartDesign::Body' in o.TypeId: #issue if sketch is in Body
+                        FreeCADGui.runCommand('ksuTools2D2Sketch',0)
+                        #FreeCADGui.Selection.removeSelection(sel[0])
+                        FreeCADGui.Selection.clearSelection()
+                        FreeCADGui.Selection.addSelection(FreeCAD.activeDocument().ActiveObject)
+                        sel = FreeCADGui.Selection.getSelection()
+                        lbl=sketch.Label
+                        sketch = sel[0]
+                        sketch.Label=lbl
+                        #stop
+                        break
                 if 'Sketcher' in sel[0].TypeId:
                     kicadStepUptools.sanitizeSketch(sketch.Name)
                     FreeCAD.ActiveDocument.recompute()
@@ -3262,6 +3277,13 @@ def deep_copy_part(doc, part, compound='flat',suffix='(copy)'):
     if make_compound=='compound':
         compound = doc.addObject('Part::Compound', mk_str_u(part.Label)+suffix)
         compound.Links = copied_subobjects
+        if 0:
+            o=copied_subobjects[0]
+            print('here',oo.Name,oo.Label)
+            if o.Name.startswith('Link'):
+                oo=o.LinkedObject
+                print(oo.Name,oo.Label)
+                compound.ViewObject.ShapeAppearance = oo.ViewObject.ShapeAppearance
         pName = doc.ActiveObject.Name
     elif make_compound=='part':
         doc.addObject('App::Part',mk_str_u(part.Label)+'_')
@@ -3579,7 +3601,8 @@ class ksuToolsTransparencyToggle:
                      'ToolTip' : QT_TRANSLATE_NOOP("ksuToolsTransparencyToggle","ksu Selection Transparency Toggle")}
  
     def IsActive(self):
-        return True
+        if FreeCADGui.Selection.getSelection():
+            return True
  
     def Activated(self):
         # do something here...
@@ -3603,6 +3626,65 @@ class ksuToolsTransparencyToggle:
 FreeCADGui.addCommand('ksuToolsTransparencyToggle',ksuToolsTransparencyToggle())
 
 #####
+#####
+
+class ksuToolsVisibilityRestore:
+    "ksu tools Visibility Restore"
+ 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( ksuWB_icons_path , 'restoreVisibility.svg') , # the name of a svg file available in the resources
+                     'MenuText': QT_TRANSLATE_NOOP("ksuToolsVisibilityRestore","Show hidden/toggle") ,
+                     'ToolTip' : QT_TRANSLATE_NOOP("VisibilityRestore","ksu Show hidden/toggle")}
+ 
+    def IsActive(self):
+        if 1: #FreeCADGui.Selection.getSelection():
+            return True
+ 
+    def Activated(self):
+        global invisible_objs
+        # do something here...
+        if FreeCADGui.Selection.getSelection():
+            sel=FreeCADGui.Selection.getSelection()
+            docG=FreeCADGui.ActiveDocument
+            doc=FreeCAD.ActiveDocument
+            doc.openTransaction('visibilityRestore')
+            #if 'invisible_objs' not in globals():
+            invisible_objs=[]
+            for obj in sel:
+                if "App::Part" not in obj.TypeId and "App::LinkGroup" not in obj.TypeId:
+                    if hasattr(docG.getObject(obj.Name), 'Visibility'):
+                        if docG.getObject(obj.Name).Visibility == False:
+                            docG.getObject(obj.Name).Visibility = True
+                            invisible_objs.append(obj.Name)
+                        # else:
+                        #     doc.getObject(obj.Name).Transparency = 0
+                else:
+                    for o in doc.getObject(obj.Name).OutListRecursive:
+                        if o.ViewObject.Visibility == False:
+                            if not(o.Name.startswith('Origin')) and not(o.Name.startswith('Local_CS')):
+                                o.ViewObject.Visibility = True
+                                invisible_objs.append(o.Name)
+            FreeCADGui.Selection.clearSelection()
+            #print(invisible_objs)
+            for nm in invisible_objs:
+                FreeCADGui.Selection.addSelection(doc.getObject(nm))
+            doc.commitTransaction()
+        else:
+            if 'invisible_objs' not in globals():
+                invisible_objs=[]
+            doc=FreeCAD.ActiveDocument
+            doc.openTransaction('visibilityToggle')
+            for nm in invisible_objs:
+                FreeCADGui.Selection.addSelection(doc.getObject(nm))
+                o=doc.getObject(nm)
+                if o.ViewObject.Visibility == True:
+                    if not(o.Name.startswith('Origin')) and not(o.Name.startswith('Local_CS')):
+                        o.ViewObject.Visibility = False
+            doc.commitTransaction()
+            
+FreeCADGui.addCommand('ksuToolsVisibilityRestore',ksuToolsVisibilityRestore())
+
+#####
 
 ##
 class ksuToolsHighlightToggle:
@@ -3614,7 +3696,8 @@ class ksuToolsHighlightToggle:
                      'ToolTip' : QT_TRANSLATE_NOOP("ksuToolsHighlightToggle","ksu Selection Highlight Toggle")}
  
     def IsActive(self):
-        return True
+        if FreeCADGui.Selection.getSelection():
+            return True
  
     def Activated(self):
         # do something here...
@@ -3642,7 +3725,8 @@ class ksuToolsVisibilityToggle:
                      'ToolTip' : QT_TRANSLATE_NOOP("ksuToolsVisibilityToggle","ksu Selection Visibility Toggle")}
  
     def IsActive(self):
-        return True
+        if FreeCADGui.Selection.getSelection():
+            return True
  
     def Activated(self):
         # do something here...
