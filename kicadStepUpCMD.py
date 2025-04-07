@@ -32,7 +32,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.5.6'
+ksuCMD_version__='2.5.7'
 
 global invisible_objs
 invisible_objs=[]
@@ -3650,6 +3650,7 @@ class ksuToolsVisibilityRestore:
             doc.openTransaction('visibilityRestore')
             #if 'invisible_objs' not in globals():
             invisible_objs=[]
+            invisible_lbls=[]
             for obj in sel:
                 if "App::Part" not in obj.TypeId and "App::LinkGroup" not in obj.TypeId:
                     if hasattr(docG.getObject(obj.Name), 'Visibility'):
@@ -3661,13 +3662,15 @@ class ksuToolsVisibilityRestore:
                 else:
                     for o in doc.getObject(obj.Name).OutListRecursive:
                         if o.ViewObject.Visibility == False:
-                            if not(o.Name.startswith('Origin')) and not(o.Name.startswith('Local_CS')):
+                            if not(o.Name.startswith('Origin')) and not(o.Name.startswith('Local_CS')) and not('Sketch' in o.Name):
                                 o.ViewObject.Visibility = True
                                 invisible_objs.append(o.Name)
+                                invisible_lbls.append(o.Label)
             FreeCADGui.Selection.clearSelection()
             #print(invisible_objs)
             for nm in invisible_objs:
                 FreeCADGui.Selection.addSelection(doc.getObject(nm))
+            print(str(invisible_lbls))
             doc.commitTransaction()
         else:
             if 'invisible_objs' not in globals():
