@@ -501,7 +501,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "12.6.4"
+___ver___ = "12.6.5"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -15412,10 +15412,10 @@ def Export3DStepF():
             prefs_ = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
             if not(prefs_.GetBool('not_native_dlg')):
                 name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Export 3D STEP ...",
-                    make_unicode(last_3d_path), "*.step *.stp")
+                    make_unicode(last_3d_path), "*.step *.stp *.stpZ *.stpz")
             else:
                 name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Export 3D STEP ...",
-                    make_unicode(last_3d_path), "*.step *.stp",options=QtWidgets.QFileDialog.DontUseNativeDialog)
+                    make_unicode(last_3d_path), "*.step *.stp *.stpZ *.stpz",options=QtWidgets.QFileDialog.DontUseNativeDialog)
             #say(name)
             if name:
                 doc=FreeCAD.ActiveDocument
@@ -15464,7 +15464,14 @@ def Export3DStepF():
                 # say(fcv[0])
                 if (stp_exp_mode == 'hierarchy' and not fcb) or (fcv[0]==0 and fcv[1]<=16):  # FC not bugged or < 0.17
                     sayw('exporting hierarchy')
-                    ImportGui.export(sel,name)
+                    if name.lower().endswith('step') or name.lower().endswith('stp'):
+                        ImportGui.export(sel,name)
+                    else:
+                        try:
+                            import stepZ
+                            stepZ.export(sel,name)
+                        except:
+                            sayerr('.stpZ not supported!')
                     step_name=name
                     if float(FreeCAD.Version()[0])==1 and float(FreeCAD.Version()[1])==0 and float(FreeCAD.Version()[2])==0: ## FC 1.0.0
                         import step_amend
@@ -15495,7 +15502,14 @@ def Export3DStepF():
                     __objs__=[]
                     __objs__.append(FreeCAD.ActiveDocument.getObject(to_export_name))
                     #import ImportGui
-                    ImportGui.export(__objs__,name)
+                    if name.lower().endswith('step') or name.lower().endswith('stp'):
+                        ImportGui.export(__objs__,name)
+                    else:
+                        try:
+                            import stepZ
+                            stepZ.export(__objs__,name)
+                        except:
+                            sayerr('.stpZ not supported!')
                     step_name=name
                     if float(FreeCAD.Version()[0])==1 and float(FreeCAD.Version()[1])==0 and float(FreeCAD.Version()[2])==0: ## FC 1.0.0
                         import step_amend
@@ -15532,8 +15546,14 @@ def Export3DStepF():
                                 # say ('adding ') 
                                 # FreeCADGui.Selection.addSelection(o)
                                 __objs__.append(o)
-                        ImportGui.export(__objs__,name)
-                        step_name=name
+                        if name.lower().endswith('step') or name.lower().endswith('stp'):
+                            ImportGui.export(__objs__,name)
+                        else:
+                            try:
+                                import stepZ
+                                stepZ.export(__objs__,name)
+                            except:
+                                sayerr('.stpZ not supported!')                        step_name=name
                         if float(FreeCAD.Version()[0])==1 and float(FreeCAD.Version()[1])==0 and float(FreeCAD.Version()[2])==0: ## FC 1.0.0
                             import step_amend
                             found_transp_issue=step_amend.transp_rmv(step_name)
