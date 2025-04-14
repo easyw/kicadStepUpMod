@@ -501,7 +501,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "12.6.2"
+___ver___ = "12.6.4"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -747,6 +747,7 @@ def ZoomFitThread():
         FreeCADGui.SendMsgToActiveView("ViewFit")
     #stop
 
+#
 def collaps_Tree():
     FreeCAD.Console.PrintWarning('thread Collapsing\n')
     if FreeCAD.ActiveDocument is not None:
@@ -2799,7 +2800,7 @@ def go_export(fPathName):
                 exportS=True
                 if 'App::Part' in sel[0].TypeId:
                     step_name=exportStep([sel[0]], fPathName)
-                    if float(FreeCAD.Version()[0])==1 and float(FreeCAD.Version()[1])==0 and float(FreeCAD.Version()[2])==0:
+                    if float(FreeCAD.Version()[0])==1 and float(FreeCAD.Version()[1])==0 and float(FreeCAD.Version()[2])==0: ## FC 1.0.0
                         if step_name is not None:
                             sayw(step_name)
                             import step_amend
@@ -2811,7 +2812,7 @@ def go_export(fPathName):
                     #FreeCADGui.Selection.clearSelection()
                 else:
                     step_name=exportStep(objs, fPathName)
-                    if float(FreeCAD.Version()[0])==1 and float(FreeCAD.Version()[1])==0 and float(FreeCAD.Version()[2])==0:
+                    if float(FreeCAD.Version()[0])==1 and float(FreeCAD.Version()[1])==0 and float(FreeCAD.Version()[2])==0: ## FC 1.0.0
                         if step_name is not None:
                             sayw(step_name)
                             import step_amend
@@ -3845,7 +3846,7 @@ def checkFCbug(fcv):
     return False
 ##
 def find_skt_in_Doc():
-    """ is returning a list of Sketches and relative Group"""
+    """ is returning a list of Sketches and Local_CS and relative Group"""
     #print sel_name
     sk_list=[]
     for MObject1 in FreeCAD.ActiveDocument.Objects:
@@ -3859,6 +3860,9 @@ def find_skt_in_Doc():
                             if MObject2.Name not in sk_list:
                                 sk_list.append([MObject2.Name,MObject1.Name])
                             #return MObject2.Name, MObject1.Name
+                        if 'Local_CS_' in MObject2.Name:
+                            sk_list.append([MObject2.Name,MObject1.Name])
+
     #print 'loop closed'
     return sk_list
     
@@ -15414,6 +15418,8 @@ def Export3DStepF():
                     make_unicode(last_3d_path), "*.step *.stp",options=QtWidgets.QFileDialog.DontUseNativeDialog)
             #say(name)
             if name:
+                doc=FreeCAD.ActiveDocument
+                doc.openTransaction('exp3D')
                 last_3d_path=os.path.dirname(name)
                 pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
                 pg.SetString("last_3d_path",make_string(last_3d_path))
@@ -15436,6 +15442,9 @@ def Export3DStepF():
                         if 'Sketch' in e.TypeId:
                             FreeCADGui.Selection.removeSelection(FreeCAD.ActiveDocument.getObject(e.Name))
                             sel = FreeCADGui.Selection.getSelection()
+                        if 'Local_CS_' in e.Name:
+                            FreeCADGui.Selection.removeSelection(FreeCAD.ActiveDocument.getObject(e.Name))
+                            sel = FreeCADGui.Selection.getSelection()
                 else:
                     #skl=[sk,grp]
                     skl=[]
@@ -15456,6 +15465,12 @@ def Export3DStepF():
                 if (stp_exp_mode == 'hierarchy' and not fcb) or (fcv[0]==0 and fcv[1]<=16):  # FC not bugged or < 0.17
                     sayw('exporting hierarchy')
                     ImportGui.export(sel,name)
+                    step_name=name
+                    if float(FreeCAD.Version()[0])==1 and float(FreeCAD.Version()[1])==0 and float(FreeCAD.Version()[2])==0: ## FC 1.0.0
+                        import step_amend
+                        found_transp_issue=step_amend.transp_rmv(step_name)
+                        if found_transp_issue:
+                            sayw(step_name+' file amended')
                 elif (stp_exp_mode == 'onelevel') or (stp_exp_mode == 'hierarchy' and fcb):
                     sayw('exporting ONE level hierarchy')
                     try:
@@ -15481,6 +15496,12 @@ def Export3DStepF():
                     __objs__.append(FreeCAD.ActiveDocument.getObject(to_export_name))
                     #import ImportGui
                     ImportGui.export(__objs__,name)
+                    step_name=name
+                    if float(FreeCAD.Version()[0])==1 and float(FreeCAD.Version()[1])==0 and float(FreeCAD.Version()[2])==0: ## FC 1.0.0
+                        import step_amend
+                        found_transp_issue=step_amend.transp_rmv(step_name)
+                        if found_transp_issue:
+                            sayw(step_name+' file amended')
                     #FreeCAD.ActiveDocument.removeObject(to_export_nam)
                     removesubtree(__objs__)
                     del __objs__
@@ -15512,6 +15533,12 @@ def Export3DStepF():
                                 # FreeCADGui.Selection.addSelection(o)
                                 __objs__.append(o)
                         ImportGui.export(__objs__,name)
+                        step_name=name
+                        if float(FreeCAD.Version()[0])==1 and float(FreeCAD.Version()[1])==0 and float(FreeCAD.Version()[2])==0: ## FC 1.0.0
+                            import step_amend
+                            found_transp_issue=step_amend.transp_rmv(step_name)
+                            if found_transp_issue:
+                                sayw(step_name+' file amended')
                         del __objs__
                     else:
                         sayw('exporting selection')
@@ -15523,6 +15550,7 @@ def Export3DStepF():
                     for sk in skl:
                         say('including sketch in grp')
                         FreeCAD.ActiveDocument.getObject(sk[1]).addObject(FreeCAD.ActiveDocument.getObject(sk[0]))
+                doc.commitTransaction()
                 # PCB_Sketch=FreeCAD.ActiveDocument.copyObject(FreeCAD.ActiveDocument.getObject(my_sk_name),False)
                 #try:
                 #    FreeCAD.ActiveDocument.getObject(selN).addObject(FreeCAD.ActiveDocument.getObject(sk_name))
