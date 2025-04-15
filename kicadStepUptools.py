@@ -501,7 +501,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "12.6.5"
+___ver___ = "12.6.6"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -15408,14 +15408,19 @@ def Export3DStepF():
                 last_3d_path=last_pcb_path
                 sayw(last_pcb_path)
             #getSaveFileName(self,"saveFlle","Result.txt",filter ="txt (*.txt *.)")
+            def_fn=sel[0].Label
             Filter=""
             prefs_ = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
-            if not(prefs_.GetBool('not_native_dlg')):
-                name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Export 3D STEP ...",
-                    make_unicode(last_3d_path), "*.step *.stp *.stpZ *.stpz")
+            if prefs_.GetBool('stpz_export_enabled'):
+                ext_='.stpZ'
             else:
-                name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Export 3D STEP ...",
-                    make_unicode(last_3d_path), "*.step *.stp *.stpZ *.stpz",options=QtWidgets.QFileDialog.DontUseNativeDialog)
+                ext_='.step'
+            if not(prefs_.GetBool('not_native_dlg')):
+                name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Export 3D STEP/stpZ ...",
+                    make_unicode(os.path.join(last_3d_path,def_fn)+ext_), "*.step *.stp *.stpZ *.stpz")
+            else:
+                name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Export 3D STEP/stpZ ...",
+                    make_unicode(os.path.join(last_3d_path,def_fn)+ext_), "*.step *.stp *.stpZ *.stpz",options=QtWidgets.QFileDialog.DontUseNativeDialog)
             #say(name)
             if name:
                 doc=FreeCAD.ActiveDocument
@@ -15553,7 +15558,8 @@ def Export3DStepF():
                                 import stepZ
                                 stepZ.export(__objs__,name)
                             except:
-                                sayerr('.stpZ not supported!')                        step_name=name
+                                sayerr('.stpZ not supported!')
+                        step_name=name
                         if float(FreeCAD.Version()[0])==1 and float(FreeCAD.Version()[1])==0 and float(FreeCAD.Version()[2])==0: ## FC 1.0.0
                             import step_amend
                             found_transp_issue=step_amend.transp_rmv(step_name)
