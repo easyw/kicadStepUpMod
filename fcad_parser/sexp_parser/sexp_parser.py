@@ -24,10 +24,14 @@ import traceback
 import bisect
 from collections import OrderedDict
 
+# import importlib; from fcad_parser import sexp_parser;import importlib; importlib.reload(sexp_parser)
+# kicad sexparser board file version log
+# https://docs.kicad.org/doxygen/pcb__io__kicad__sexpr_8h_source.html
+
 __author__ = "Zheng, Lei"
 __copyright__ = "Copyright 2016, Zheng, Lei"
 __license__ = "MIT"
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 __email__ = "realthunder.dev@gmail.com"
 __status__ = "Prototype"
 
@@ -38,6 +42,7 @@ else:
     string_types = basestring,
 
 logger = logging.getLogger(__name__)
+#logger.setLevel(logging.DEBUG)
 
 def unquote(s):
     try:
@@ -600,7 +605,11 @@ class SexpDefaultTrue(Sexp):
 
     def __init__(self,data,value=True):
         if not isinstance(data,string_types):
-            raise ValueError('invalid boolean data')
+            if not isinstance(data,list): # maui
+                raise ValueError('invalid boolean data')
+            else: # maui
+                value=data[1]
+                data=data[0]
         super(SexpDefaultTrue,self).__init__(data,value)
 
     def __nonzero__(self):
@@ -798,6 +807,7 @@ def parseSexp(sexp, quote_no_parse=None):
             term, value = [(t,v) for t,v in termtypes.groupdict().items() if v][0]
             if logger.isEnabledFor(logging.DEBUG):
                 logging.debug("%-7s %-14s %-44r %-r" % (term, value, out, stack))
+                #print("%-7s %-14s %-44r %-r" % (term, value, out, stack))
             if   term == 'l': # left bracket
                 pos = termtypes.start()
                 stack.append(out)
@@ -812,6 +822,9 @@ def parseSexp(sexp, quote_no_parse=None):
                     out.append(bisect.bisect_right(lines,termtypes.start())+1)
                 if term == 'q': # quoted string
                     # out.append(value[1:-1]) # strip quotes
+                    #value=re.sub(b"\\\\\\",b"/",value)
+                    #value=re.sub(b"\\\\",b"/",value)
+                    #print('value',value)
                     out.append(value) # do not strip quotes
                 elif term == 's': # simple string
                     if value and len(out) == 1:
