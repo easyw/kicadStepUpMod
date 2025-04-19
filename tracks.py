@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global tracks_version
-tracks_version = '2.6.9'
+tracks_version = '2.7.0'
 
 import kicad_parser
 #import kicad_parser; import importlib; importlib.reload(kicad_parser)
@@ -378,6 +378,27 @@ def addtracks(fname = None):
         # print(pcbThickness,'mypcb.pcbThickness')
         #pcbThickness = float(pcb.general.thickness)
         #pcb.setLayer(LvlTopName)
+        for lynbr in mypcb.layers: #getting layers name
+            #print('layer',lynbr)
+            #print(mypcb.layers[lynbr])
+            if 'F.Cu' in str(mypcb.layers[lynbr]):
+                Top_lvl=int(lynbr)
+            if 'B.Cu' in str(mypcb.layers[lynbr]):
+                Bot_lvl=int(lynbr)
+        for lynbr in mypcb.layers: #getting layers name
+            #print(mypcb.layers[lynbr],'layer',lynbr)
+            if int(lynbr)==Top_lvl:
+                FreeCAD.Console.PrintMessage('Top_name='+str(mypcb.layers[lynbr][0])+'\n')
+                #print('Top_name=',mypcb.layers[lynbr][0])
+                if len(mypcb.layers[lynbr])>2:
+                    FreeCAD.Console.PrintMessage('AliasTop_name='+str(mypcb.layers[lynbr][2])+'\n')
+            if int(lynbr)==Bot_lvl:
+                FreeCAD.Console.PrintMessage('Bot_nam='+str(mypcb.layers[lynbr][0])+'\n')
+                if len(mypcb.layers[lynbr])>2:
+                    FreeCAD.Console.PrintMessage('AliasBot_name='+str(mypcb.layers[lynbr][2])+'\n')
+        FreeCAD.Console.PrintMessage('Top_lvl='+str(Top_lvl)+'; Bot_lvl='+str(Bot_lvl)+'\n')
+        #stop
+
         minSizeDrill = 0.0  #0.8
         #print(pcb.colors)
         # https://www.seeedstudio.com/blog/2017/07/23/why-are-printed-circuit-boards-are-usually-green-in-colour/
