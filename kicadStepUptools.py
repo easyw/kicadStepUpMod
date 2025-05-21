@@ -501,7 +501,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "12.6.7"
+___ver___ = "12.6.8"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -2800,7 +2800,7 @@ def go_export(fPathName):
                 exportS=True
                 if 'App::Part' in sel[0].TypeId:
                     step_name=exportStep([sel[0]], fPathName)
-                    if float(FreeCAD.Version()[0])==1 and float(FreeCAD.Version()[1])==0 and float(FreeCAD.Version()[2])==0: ## FC 1.0.0
+                    if float(FreeCAD.Version()[0])==1 and float(FreeCAD.Version()[1])==0 and (float(FreeCAD.Version()[2])==0 or float(FreeCAD.Version()[2])==1): ## FC 1.0.0, 1.0.1
                         if step_name is not None:
                             sayw(step_name)
                             import step_amend
@@ -2812,7 +2812,7 @@ def go_export(fPathName):
                     #FreeCADGui.Selection.clearSelection()
                 else:
                     step_name=exportStep(objs, fPathName)
-                    if float(FreeCAD.Version()[0])==1 and float(FreeCAD.Version()[1])==0 and float(FreeCAD.Version()[2])==0: ## FC 1.0.0
+                    if float(FreeCAD.Version()[0])==1 and float(FreeCAD.Version()[1])==0 and (float(FreeCAD.Version()[2])==0 or float(FreeCAD.Version()[2])==1): ## FC 1.0.0, 1.0.1
                         if step_name is not None:
                             sayw(step_name)
                             import step_amend
@@ -15507,7 +15507,7 @@ def Export3DStepF():
                         except:
                             sayerr('.stpZ not supported!')
                     step_name=name
-                    if float(FreeCAD.Version()[0])==1 and float(FreeCAD.Version()[1])==0 and float(FreeCAD.Version()[2])==0: ## FC 1.0.0
+                    if float(FreeCAD.Version()[0])==1 and float(FreeCAD.Version()[1])==0 and (float(FreeCAD.Version()[2])==0 or float(FreeCAD.Version()[2])==1): ## FC 1.0.0, 1.0.1
                         import step_amend
                         found_transp_issue=step_amend.transp_rmv(step_name)
                         if found_transp_issue:
@@ -15545,7 +15545,7 @@ def Export3DStepF():
                         except:
                             sayerr('.stpZ not supported!')
                     step_name=name
-                    if float(FreeCAD.Version()[0])==1 and float(FreeCAD.Version()[1])==0 and float(FreeCAD.Version()[2])==0: ## FC 1.0.0
+                    if float(FreeCAD.Version()[0])==1 and float(FreeCAD.Version()[1])==0 and (float(FreeCAD.Version()[2])==0 or float(FreeCAD.Version()[2])==1): ## FC 1.0.0, 1.0.1
                         import step_amend
                         found_transp_issue=step_amend.transp_rmv(step_name)
                         if found_transp_issue:
@@ -15589,7 +15589,7 @@ def Export3DStepF():
                             except:
                                 sayerr('.stpZ not supported!')
                         step_name=name
-                        if float(FreeCAD.Version()[0])==1 and float(FreeCAD.Version()[1])==0 and float(FreeCAD.Version()[2])==0: ## FC 1.0.0
+                        if float(FreeCAD.Version()[0])==1 and float(FreeCAD.Version()[1])==0 and (float(FreeCAD.Version()[2])==0 or float(FreeCAD.Version()[2])==1): ## FC 1.0.0, 1.0.1
                             import step_amend
                             found_transp_issue=step_amend.transp_rmv(step_name)
                             if found_transp_issue:
@@ -17321,9 +17321,13 @@ def simplify_sketch():
             for g in to_discretize:
                 if 'Ellipse' in str(g) or 'BSpline' in str(g) or 'Hyperbol' in str(g) or 'Parabol' in str(g):
                     bs = g.toBSpline() # (tolerance, maxSegments, maxDegree)
-                    gds = bs.toBiArcs(precision)
-                    for gd in gds:
-                        new_edge_list.append(gd)
+                    try:
+                        gds = bs.toBiArcs(precision)
+                        for gd in gds:
+                            new_edge_list.append(gd)
+                    except:
+                        sayw('error in simplifying')
+                        pass
             if len(new_edge_list) > 0:
                 doc.addObject('Sketcher::SketchObject','sSketch')
                 ssk = doc.ActiveObject

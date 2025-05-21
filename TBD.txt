@@ -1,5 +1,8 @@
 TBD:
 
+- preview selection color in exp step FC 1dev
+- diffuse color to appearance for exporting step/wrl
+    - check hide for multiple 3d models
 - simple copy keep colors w/ FC0.22
 - kicad-embed: fp 3D step
 - implement fp_rect for hole board loading
