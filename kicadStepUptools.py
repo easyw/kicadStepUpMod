@@ -501,7 +501,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "12.6.8"
+___ver___ = "12.6.9"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -4610,15 +4610,15 @@ def Load_models(pcbThickness,modules):
             encoded=1
             say('adjusting Relative Path')
             say('step-module-replaced '+step_module)
-        elif (step_module.startswith('.')) or (step_module.startswith('".')):  #relative path
-            #step_module=last_pcb_path+"/"+step_module
-            step_module=last_pcb_path+os.sep+step_module
-            step_module=step_module.replace(u'"', u'')  # name with spaces
-            #step_module=last_pcb_path+step_module[14:]
-            encoded=1
-            sayw('adjusting Relative Path')
-            say('step-module-replaced '+step_module)
-            #stop
+        # elif (step_module.startswith('.')) or (step_module.startswith('".')):  #relative path
+        #     #step_module=last_pcb_path+"/"+step_module
+        #     step_module=last_pcb_path+os.sep+step_module
+        #     step_module=step_module.replace(u'"', u'')  # name with spaces
+        #     #step_module=last_pcb_path+step_module[14:]
+        #     encoded=1
+        #     sayw('adjusting Relative Path')
+        #     say('step-module-replaced '+step_module)
+        #     #stop
         elif (step_module.find('${KISYS3DMOD}/')!=-1):  #local ${KISYS3DMOD} 3D path
             #step_module=step_module.replace('${KIPRJMOD}', '.')
             #step_module=step_module.decode("utf-8").replace(u'${KISYS3DMOD}/', u'')
