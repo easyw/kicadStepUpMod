@@ -1,3 +1,4 @@
+import FreeCAD
 import re
 
 # from https://gist.github.com/codsane/25f0fd100b565b3fce03d4bbd7e7bf33
