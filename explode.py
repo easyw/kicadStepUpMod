@@ -7,7 +7,7 @@
 #
 # WARNING! All changes made in this file will be lost!
 
-__version__ = "v1.0.5"
+__version__ = "v1.0.6"
 
 import FreeCAD, FreeCADGui, os
 from PySide import QtCore, QtGui
@@ -321,7 +321,10 @@ def Exp_centerOnScreen ():
     Centers the window on the screen.'''
     # sayw(widg.width());sayw(widg.height())
     # sayw(widg.pos().x());sayw(widg.pos().y())
-    resolution = QtGui.QDesktopWidget().screenGeometry()
+    if hasattr(QtGui.QGuiApplication, "primaryScreen"):
+        resolution = QtGui.QGuiApplication.primaryScreen().availableGeometry()
+    else:
+        resolution = QtGui.QDesktopWidget().screenGeometry()
     xp=(resolution.width() / 2) - sizeX/2 # - (KSUWidget.frameSize().width() / 2)
     yp=(resolution.height() / 2) - sizeY/2 # - (KSUWidget.frameSize().height() / 2))
     # xp=widg.pos().x()-sizeXMax/2;yp=widg.pos().y()#+sizeY/2

@@ -501,7 +501,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "12.6.9"
+___ver___ = "12.7.0"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -22117,7 +22117,10 @@ def centerOnScreen (widg):
     Centers the window on the screen.'''
     # sayw(widg.width());sayw(widg.height())
     # sayw(widg.pos().x());sayw(widg.pos().y())
-    resolution = QtGui.QDesktopWidget().screenGeometry()
+    if hasattr(QtGui.QGuiApplication, "primaryScreen"):
+        resolution = QtGui.QGuiApplication.primaryScreen().availableGeometry()
+    else:
+        resolution = QtGui.QDesktopWidget().screenGeometry()
     xp=(resolution.width() / 2) - sizeXMax/2 # - (KSUWidget.frameSize().width() / 2)
     yp=(resolution.height() / 2) - sizeY/2 # - (KSUWidget.frameSize().height() / 2))
     # xp=widg.pos().x()-sizeXMax/2;yp=widg.pos().y()#+sizeY/2
