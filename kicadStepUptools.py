@@ -501,7 +501,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "12.7.0"
+___ver___ = "12.7.1"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -22112,19 +22112,30 @@ def push3D2pcb(s,cnt,tsp):
 ##
 
 ###############################################################################################################
-def centerOnScreen (widg):
+def centerOnScreen (widget):
     '''centerOnScreen()
     Centers the window on the screen.'''
     # sayw(widg.width());sayw(widg.height())
     # sayw(widg.pos().x());sayw(widg.pos().y())
-    if hasattr(QtGui.QGuiApplication, "primaryScreen"):
-        resolution = QtGui.QGuiApplication.primaryScreen().availableGeometry()
-    else:
-        resolution = QtGui.QDesktopWidget().screenGeometry()
-    xp=(resolution.width() / 2) - sizeXMax/2 # - (KSUWidget.frameSize().width() / 2)
-    yp=(resolution.height() / 2) - sizeY/2 # - (KSUWidget.frameSize().height() / 2))
-    # xp=widg.pos().x()-sizeXMax/2;yp=widg.pos().y()#+sizeY/2
-    widg.setGeometry(xp, yp, sizeXMax, sizeY)
+    mainWin = FreeCAD.Gui.getMainWindow()
+    #App.Console.PrintMessage(mainWin.geometry().center())
+    #print(mainWin.geometry().center())
+    xp=mainWin.geometry().center().x() - sizeX/2
+    yp=mainWin.geometry().center().y() - sizeY/2
+    centerPoint = QtCore.QPoint(xp - sizeXMax/2, yp)
+    #Qt.point(center.x, center.y - half )
+    fg = widget.frameGeometry()
+    fg.moveCenter(centerPoint)
+    widget.move(fg.topLeft())    
+    widget.setGeometry(xp, yp, sizeXMax, sizeY)
+    # if hasattr(QtGui.QGuiApplication, "primaryScreen"):
+    #     resolution = QtGui.QGuiApplication.primaryScreen().availableGeometry()
+    # else:
+    #     resolution = QtGui.QDesktopWidget().screenGeometry()
+    # xp=(resolution.width() / 2) - sizeXMax/2 # - (KSUWidget.frameSize().width() / 2)
+    # yp=(resolution.height() / 2) - sizeY/2 # - (KSUWidget.frameSize().height() / 2))
+    # # xp=widg.pos().x()-sizeXMax/2;yp=widg.pos().y()#+sizeY/2
+    # widg.setGeometry(xp, yp, sizeXMax, sizeY)
 ##
 
 def singleInstance():
