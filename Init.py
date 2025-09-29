@@ -24,5 +24,6 @@ FreeCAD.addImportType("zip of STEP/FCStd File Type (*.zip)","ZipStepImport")
 # using faithful old legacy dxf v1.4.0
 # FreeCAD.addImportType("DXF Legacy Type (*.dxf)","_DXF_Import")
 
+import FreeCAD
 
 #FreeCAD.addImportType("IDF emp File Type (*.emp)","Import_Emp") 
