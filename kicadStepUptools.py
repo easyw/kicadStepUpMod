@@ -2800,7 +2800,7 @@ def go_export(fPathName):
                 exportS=True
                 if 'App::Part' in sel[0].TypeId:
                     step_name=exportStep([sel[0]], fPathName)
-                    if float(FreeCAD.Version()[0])==1 and float(FreeCAD.Version()[1])==0 and (float(FreeCAD.Version()[2])==0 or float(FreeCAD.Version()[2])==1): ## FC 1.0.0, 1.0.1
+                    if float(FreeCAD.Version()[0])==1 and float(FreeCAD.Version()[1])==0: ## FC 1.0.x
                         if step_name is not None:
                             sayw(step_name)
                             import step_amend
@@ -2812,7 +2812,7 @@ def go_export(fPathName):
                     #FreeCADGui.Selection.clearSelection()
                 else:
                     step_name=exportStep(objs, fPathName)
-                    if float(FreeCAD.Version()[0])==1 and float(FreeCAD.Version()[1])==0 and (float(FreeCAD.Version()[2])==0 or float(FreeCAD.Version()[2])==1): ## FC 1.0.0, 1.0.1
+                    if float(FreeCAD.Version()[0])==1 and float(FreeCAD.Version()[1])==0: ## FC 1.0.x
                         if step_name is not None:
                             sayw(step_name)
                             import step_amend
@@ -4218,6 +4218,7 @@ def removesubtree(objs):
         except:
             print('exception remove tree')
             pass
+
 
 ###
 def create_compound(count,modelnm):  #create compound function when a multipart is loaded
@@ -11888,6 +11889,25 @@ def OSCD2Dg_edgestofaces(edges,algo=3,eps=0.001):
 #
 
 ###
+def get_mod_Ref(m):
+    #if hasattr(m,'property'):
+    if hasattr(m,'property'):
+        for p in m.property: #kv8 fp field
+            #print(str(p[0]),str(p[1]))
+            if 'reference' in str(p[0]).lower():
+            #    if 'reference' in str(p[1]).lower():
+                Ref = str(p[1])
+                #print (Ref)
+                #stop
+                return Ref
+    if hasattr(m,'fp_text'):
+        for p in m.fp_text: #kv7 fp field
+            #print(str(p[0]),str(p[1]))
+            if 'reference' in str(p[0]).lower():
+            #    if 'reference' in str(p[1]).lower():
+                Ref = str(p[1])
+                return Ref
+###
 def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
     global start_time, use_AppPart, force_oldGroups, min_drill_size
     global addVirtual, load_sketch, off_x, off_y, aux_orig, grid_orig
@@ -12656,9 +12676,10 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
         ## NB use always float() to guarantee number not string!!!
         warn=""
         PCB_Models = []
-        for m in mypcb.module:  #parsing modules  #check top/bottom for placing 3D models
+        for m in mypcb.module:  #parsing modules/footprints  #check top/bottom for placing 3D models
             #print(m.tstamp);print(m.fp_text[0][1])
             #stop
+
             if len(m.at)==2:
                 m_angle=0
             else:
@@ -15507,7 +15528,7 @@ def Export3DStepF():
                         except:
                             sayerr('.stpZ not supported!')
                     step_name=name
-                    if float(FreeCAD.Version()[0])==1 and float(FreeCAD.Version()[1])==0 and (float(FreeCAD.Version()[2])==0 or float(FreeCAD.Version()[2])==1): ## FC 1.0.0, 1.0.1
+                    if float(FreeCAD.Version()[0])==1 and float(FreeCAD.Version()[1])==0: ## FC 1.0.x
                         import step_amend
                         found_transp_issue=step_amend.transp_rmv(step_name)
                         if found_transp_issue:
@@ -15545,7 +15566,7 @@ def Export3DStepF():
                         except:
                             sayerr('.stpZ not supported!')
                     step_name=name
-                    if float(FreeCAD.Version()[0])==1 and float(FreeCAD.Version()[1])==0 and (float(FreeCAD.Version()[2])==0 or float(FreeCAD.Version()[2])==1): ## FC 1.0.0, 1.0.1
+                    if float(FreeCAD.Version()[0])==1 and float(FreeCAD.Version()[1])==0: ## FC 1.0.x
                         import step_amend
                         found_transp_issue=step_amend.transp_rmv(step_name)
                         if found_transp_issue:
@@ -15589,7 +15610,7 @@ def Export3DStepF():
                             except:
                                 sayerr('.stpZ not supported!')
                         step_name=name
-                        if float(FreeCAD.Version()[0])==1 and float(FreeCAD.Version()[1])==0 and (float(FreeCAD.Version()[2])==0 or float(FreeCAD.Version()[2])==1): ## FC 1.0.0, 1.0.1
+                        if float(FreeCAD.Version()[0])==1 and float(FreeCAD.Version()[1])==0: ## FC 1.0.x
                             import step_amend
                             found_transp_issue=step_amend.transp_rmv(step_name)
                             if found_transp_issue:
@@ -16095,7 +16116,7 @@ def Sync3DModel():
                                     matching_Reference=input_ref[0] #'LD1'
                                     matching_TimeStamp='Null'
                                     for m in mypcb.module:
-                                        Ref = get_mod_Ref
+                                        Ref = get_mod_Ref(m)
                                         ## try:
                                         ##     Ref = m.property[0][1] #kv8 fp reference
                                         ##     #Ref = m.fp_text[0][1]
@@ -21157,14 +21178,32 @@ def export_pcb(fname=None,sklayer=None,skname=None):
             if sklayer is None:
                 ssklayer = 'Edge'
             else:
-                ssklayer = sklayer.split('.')[0]
+                say(sklayer)
+                #ssklayer = sklayer.split('.')[0]
+                skl = sklayer.split('.')[0]
+                ln=len(sklayer.split('.'))
+                if ln>1:
+                    skldot=sklayer.split('.')[1]
+                    # say(skl)
+                    # say(skldot)
+                    try:
+                        int(skldot)
+                        ssklayer = sklayer
+                        #say('int ssk')
+                    except:
+                        ssklayer = sklayer
+                else:
+                    ssklayer=skl
+                #say(sklayer)
+                #say(ssklayer)
+                #stop
                 if 'KeepOutZone' in sklayer:
                     ssklayer = 'KeepOutZone'
                 elif 'FillZone' in sklayer:
                     ssklayer = 'FillZone'
                 elif 'MaskZone' in sklayer:
                     ssklayer = 'MaskZone'
-                print (ssklayer)
+                say(ssklayer)
             edge_pcb_exists=False
             mypcb = KicadPCB.load(fpath)
             pcb_version = mypcb.version
