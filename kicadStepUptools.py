@@ -501,7 +501,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "12.7.1"
+___ver___ = "12.7.2"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -4497,6 +4497,7 @@ def findModelPath(model_type, path_list):
             if (module_path=='not-found'):
                 model=model.replace(u'"', u'')  # strip out '"'
                 mpath_U = re.sub("\\\\", "/", mpath)
+                mpath_U = re.sub("//", "/", mpath_U)
                 # mpath_U = mpath_U.replace("\\", "/")
                 utf_path=os.path.join(make_unicode(mpath_U),make_unicode(model))
                 # sayerr('trying '+utf_path)
@@ -4816,6 +4817,8 @@ def Load_models(pcbThickness,modules):
                         #ImportGui.insert(module_path_n,FreeCAD.ActiveDocument.Name)
                         try: #tobefixed HERE
                             # support for stpZ files
+                            module_path = re.sub("\\\\", "/", module_path)
+                            module_path = re.sub("//", "/", module_path)  ## new maui new!!!
                             if module_path.lower().endswith('stpz'):
                                 import stepZ
                                 stepZ.insert(module_path,FreeCAD.ActiveDocument.Name)
