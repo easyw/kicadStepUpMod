@@ -382,7 +382,7 @@ def addfootprint(fname = None):
         fn=os.path.splitext(os.path.basename(filename))[0]
     
         if filename.endswith('kicad_mod'):
-            with open(filename , 'r') as f:
+            with open(filename , 'r', encoding="utf-8", errors="ignore") as f:
                 lines = f.readlines() # readlines creates a list of the lines
             #lines = start_f+lines+end_f
             import tempfile
