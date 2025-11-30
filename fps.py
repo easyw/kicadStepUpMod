@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global fps_version
-fps_version = '1.1.2'
+fps_version = '1.1.3'
 
 dvp=False #True
 if dvp:
