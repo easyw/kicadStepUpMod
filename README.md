@@ -29,7 +29,7 @@ Please see [KiCad Info forum](https://forum.kicad.info/search?q=stepup) or [Free
 Installing
 ----------
 
-Download and install your corresponding version of FreeCAD from [wiki Download page](http://www.freecadweb.org/wiki/Download) and either install
+Download and install your corresponding version of FreeCAD from [Download page](https://www.freecad.org/downloads) and either install
 
 - automatically using the [FreeCAD Add-on Manager](https://github.com/FreeCAD/FreeCAD-addons) (bundled in to FreeCAD under Tools Menu)
   **(*) There is a known issue in FreeCAD Addons Manager on Linux**
