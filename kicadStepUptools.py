@@ -501,7 +501,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "12.7.2"
+___ver___ = "12.7.3"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -21946,7 +21946,14 @@ def push3D2pcb(s,cnt,tsp):
                         #sayerr(z_rot)
                         if len(z_rot)==3:
                             all_rot=z_rot
-                            z_rot=float(z_rot[2])
+                            z_rot2_p=z_rot[2].rfind(")")
+                            if z_rot2_p != -1:
+                                z_rot2 = z_rot[2]
+                                z_rot2 = z_rot2[0:z_rot2_p]
+                                z_rot=float(z_rot2)
+                            else:
+                                z_rot=float(z_rot[2])
+                            #z_rot=float(z_rot[2])
                             if float(all_rot[0]) != 0:
                                 sayerr('3D model X rotation NOT supported ATM!')
                                 sayw('X rot='+all_rot[0])
