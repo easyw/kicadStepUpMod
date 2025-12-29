@@ -32,6 +32,8 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
+from utils import mk_str
+
 ksuCMD_version__='2.5.7'
 
 global invisible_objs
@@ -2815,19 +2817,6 @@ class ksuToolsColoredClone:
         # do something here...
         if FreeCADGui.Selection.getSelection():
             sel=FreeCADGui.Selection.getSelection()
-            def mk_str(input):
-                if (sys.version_info > (3, 0)):  #py3
-                    if isinstance(input, str):
-                        return input
-                    else:
-                        input =  input.encode('utf-8')
-                        return input
-                else:  #py2
-                    if type(input) == unicode:
-                        input =  input.encode('utf-8')
-                        return input
-                    else:
-                        return input
             if len(sel) != 1:
                     msg="Select one object with Shape to be colored Cloned!\n"
                     reply = QtGui.QMessageBox.information(None,"Warning", msg)
@@ -2884,19 +2873,6 @@ class ksuToolsColoredBinder:
         # do something here...
         if FreeCADGui.Selection.getSelection():
             sel=FreeCADGui.Selection.getSelection()
-            def mk_str(input):
-                if (sys.version_info > (3, 0)):  #py3
-                    if isinstance(input, str):
-                        return input
-                    else:
-                        input =  input.encode('utf-8')
-                        return input
-                else:  #py2
-                    if type(input) == unicode:
-                        input =  input.encode('utf-8')
-                        return input
-                    else:
-                        return input
             if len(sel) != 1:
                     msg="Select one object with Shape to generate a colored Binder!\n"
                     reply = QtGui.QMessageBox.information(None,"Warning", msg)
@@ -2963,19 +2939,6 @@ class ksuToolsReLinkBinder:
         # do something here...
         if FreeCADGui.Selection.getSelection():
             sel=FreeCADGui.Selection.getSelection()
-            def mk_str(input):
-                if (sys.version_info > (3, 0)):  #py3
-                    if isinstance(input, str):
-                        return input
-                    else:
-                        input =  input.encode('utf-8')
-                        return input
-                else:  #py2
-                    if type(input) == unicode:
-                        input =  input.encode('utf-8')
-                        return input
-                    else:
-                        return input
             if len(sel) != 2:
                     msg="Select the Binder and one object with Shape to ReLink the Binder!\n"
                     reply = QtGui.QMessageBox.information(None,"Warning", msg)
@@ -3019,20 +2982,6 @@ class ksuToolsUnion:
         if FreeCADGui.Selection.getSelection():
             sel=FreeCADGui.Selection.getSelection()
             doc=FreeCAD.activeDocument()
-            def mk_str(input):
-                if (sys.version_info > (3, 0)):  #py3
-                    if isinstance(input, str):
-                        return input
-                    else:
-                        input =  input.encode('utf-8')
-                        return input
-                else:  #py2
-                    if type(input) == unicode:
-                        input =  input.encode('utf-8')
-                        return input
-                    else:
-                        return input
-            ##
             doc.openTransaction('union')
             if len(sel)<1:
                     msg="Select one or two objects with Shape to be copied!\n"
@@ -3098,20 +3047,6 @@ class ksuToolsSimpleCopy:
         # do something here...
         if FreeCADGui.Selection.getSelection():
             sel=FreeCADGui.Selection.getSelection()
-            def mk_str(input):
-                if (sys.version_info > (3, 0)):  #py3
-                    if isinstance(input, str):
-                        return input
-                    else:
-                        input =  input.encode('utf-8')
-                        return input
-                else:  #py2
-                    if type(input) == unicode:
-                        input =  input.encode('utf-8')
-                        return input
-                    else:
-                        return input
-            ##
             if len(sel)<1:
                     msg="Select at least one object with Shape to be copied!\n"
                     reply = QtGui.QMessageBox.information(None,"Warning", msg)
@@ -3219,21 +3154,7 @@ class ksuToolsDeepCopy:
             FreeCAD.Console.PrintWarning("Select ONE Part Design Next object\nor one or more objects to be copied!\n")             
         
 FreeCADGui.addCommand('ksuToolsDeepCopy',ksuToolsDeepCopy())
-#####
-def mk_str_u(input):
-    if (sys.version_info > (3, 0)):  #py3
-        if isinstance(input, str):
-            return input
-        else:
-            input =  input.encode('utf-8')
-            return input
-    else:  #py2
-        if type(input) == unicode:
-            input =  input.encode('utf-8')
-            return input
-        else:
-            return input
-###
+
 make_compound = False
 
 # import FreeCAD as app,FreeCADGui as gui
@@ -3275,7 +3196,7 @@ def deep_copy_part(doc, part, compound='flat',suffix='(copy)'):
         pName= 'None'
     
     if make_compound=='compound':
-        compound = doc.addObject('Part::Compound', mk_str_u(part.Label)+suffix)
+        compound = doc.addObject('Part::Compound', mk_str(part.Label)+suffix)
         compound.Links = copied_subobjects
         if 0:
             o=copied_subobjects[0]
@@ -3286,7 +3207,7 @@ def deep_copy_part(doc, part, compound='flat',suffix='(copy)'):
                 compound.ViewObject.ShapeAppearance = oo.ViewObject.ShapeAppearance
         pName = doc.ActiveObject.Name
     elif make_compound=='part':
-        doc.addObject('App::Part',mk_str_u(part.Label)+'_')
+        doc.addObject('App::Part',mk_str(part.Label)+'_')
         #FreeCAD.Console.PrintMessage(doc.ActiveObject.Label)
         actobj=doc.ActiveObject
         for uplvlobj in actobj.InListRecursive:
@@ -3352,9 +3273,9 @@ def copy_subobject(doc, o,suffix='(copy)'):
         copy.Shape = o.Shape
         #copy.Label = 'Copy of ' + o.Label
         if suffix=='_':
-            copy.Label = mk_str_u(o.Label)+suffix
+            copy.Label = mk_str(o.Label)+suffix
         else:
-            copy.Label = mk_str_u(o.Label)+'.'+suffix
+            copy.Label = mk_str(o.Label)+'.'+suffix
         #copy.Placement = get_recursive_inverse_placement(o).inverse()
         copy.Placement = o.getGlobalPlacement()
 
@@ -3759,19 +3680,6 @@ class ksuToolsCheckSolid:
         # do something here...
         if FreeCADGui.Selection.getSelection():
             sel=FreeCADGui.Selection.getSelection()
-            def mk_str(input):
-                if (sys.version_info > (3, 0)):  #py3
-                    if isinstance(input, str):
-                        return input
-                    else:
-                        input =  input.encode('utf-8')
-                        return input
-                else:  #py2
-                    if type(input) == unicode:
-                        input =  input.encode('utf-8')
-                        return input
-                    else:
-                        return input
             def i_say(msg):
                 FreeCAD.Console.PrintMessage(msg)
                 FreeCAD.Console.PrintMessage('\n')
