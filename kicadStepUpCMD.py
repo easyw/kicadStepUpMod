@@ -32,7 +32,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-from utils import mk_str
+from utils import make_string as mk_str, make_string
 
 ksuCMD_version__='2.5.7'
 
@@ -3984,7 +3984,6 @@ class ksuOpDXF:
         
         import _DXF_Import
         import os
-        from kicadStepUptools import make_unicode, make_string
         # _DXF_Import.open('D:/Temp/t4k3-DWG.DXF')
         prefs_ = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
         last_pcb_path = prefs_.GetString("last_pcb_path")
@@ -4031,7 +4030,6 @@ class ksuOpEzDXF:
         try:
             import ezdxf
             import os
-            from kicadStepUptools import make_unicode, make_string
             # _DXF_Import.open('D:/Temp/t4k3-DWG.DXF')
             prefs_ = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
             last_pcb_path = prefs_.GetString("last_pcb_path")
@@ -4079,7 +4077,6 @@ class ksuImpDXF:
         import _DXF_Import
         from dxf_parser import _importDXF
         import os
-        from kicadStepUptools import make_unicode, make_string
         prefs_ = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
         last_pcb_path = prefs_.GetString("last_pcb_path")
         if not(prefs_.GetBool('not_native_dlg')):

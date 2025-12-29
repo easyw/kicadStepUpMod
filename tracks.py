@@ -22,7 +22,7 @@ FC_export_min_version="11670"  #11670 latest JM
 from kicad_parser import makeVect, make_gr_rect, make_gr_poly, makeThickLine
 from fcad_parser import unquote #maui
 
-from utils import crc_gen, mk_str as make_string, mk_uni as make_unicode
+from utils import crc_gen, make_string, make_unicode
 
 global use_AppPart, use_Links, use_LinkGroups
 use_AppPart=False # False

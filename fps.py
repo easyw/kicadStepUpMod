@@ -28,7 +28,7 @@ from kicad_parser import KicadPCB, make_fp_poly
 import math
 from math import radians
 
-from utils import crc_gen, mk_str as make_string, mk_uni as make_unicode
+from utils import crc_gen, make_string, make_unicode
 
 consolePrint = FreeCAD.Console.PrintMessage
 consolePrint('fp loader v'+fps_version+'\n')

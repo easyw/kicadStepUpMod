@@ -34,7 +34,7 @@ else:  #py2
 import ksu_locator
 from kicadStepUpCMD import *
 
-from utils import mk_str, mk_uni
+from utils import make_string as mk_str, make_unicode as mk_uni
 
 
 ksuWBpath = os.path.dirname(ksu_locator.__file__)

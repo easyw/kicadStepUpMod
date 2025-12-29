@@ -449,7 +449,7 @@ import tempfile, errno
 import re
 import time
 
-from utils import crc_gen, mk_str as make_string, mk_uni as make_unicode
+from utils import crc_gen, make_string, make_unicode
 
 max_recursion_limit=5000  # kSU issue#198
 sys.setrecursionlimit(max_recursion_limit)

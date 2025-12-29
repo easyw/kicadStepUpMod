@@ -25,7 +25,7 @@ global FC_export_min_version
 FC_export_min_version="11670"  #11670 latest JM
 silks_version = '1.5'
 
-from utils import crc_gen, mk_str as make_string, mk_uni as make_unicode
+from utils import crc_gen, make_string, make_unicode
 
 use_LinkGroups = False
 if 'LinkView' in dir(FreeCADGui):
