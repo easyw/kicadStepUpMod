@@ -449,6 +449,8 @@ import tempfile, errno
 import re
 import time
 
+from utils import mk_str as make_string
+from utils import mk_uni as make_unicode
 
 max_recursion_limit=5000  # kSU issue#198
 sys.setrecursionlimit(max_recursion_limit)
@@ -1786,34 +1788,6 @@ def open(filename,insert=None):
         fps.addfootprint(filename)
         # onLoadFootprint(filename)
         
-
-def make_unicode(input):
-    if (sys.version_info > (3, 0)):  #py3
-        if isinstance(input, str):
-            return input
-        else:
-            input =  input.decode('utf-8')
-            return input
-    else: #py2
-        if type(input) != unicode:
-            input =  input.decode('utf-8')
-            return input
-        else:
-            return input
-
-def make_string(input):
-    if (sys.version_info > (3, 0)):  #py3
-        if isinstance(input, str):
-            return input
-        else:
-            input =  input.encode('utf-8')
-            return input
-    else:  #py2
-        if type(input) == unicode:
-            input =  input.encode('utf-8')
-            return input
-        else:
-            return input
 
 def PLine(prm1,prm2):
     if hasattr(Part,"LineSegment"):
