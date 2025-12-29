@@ -1,34 +1,16 @@
+#-*- coding: utf-8 -*-
 import re
-import sys
 import binascii
 
 def make_string(input):
-    if (sys.version_info > (3, 0)):  #py3
-        if isinstance(input, str):
-            return input
-        else:
-            input =  input.encode('utf-8')
-            return input
-    else:  #py2
-        if type(input) == unicode:
-            input =  input.encode('utf-8')
-            return input
-        else:
-            return input
+    if isinstance(input, str):
+        return input
+    return input.encode('utf-8')
 
 def make_unicode(input):
-    if (sys.version_info > (3, 0)):  #py3
-        if isinstance(input, str):
-            return input
-        else:
-            input =  input.decode('utf-8')
-            return input
-    else: #py2
-        if type(input) != unicode:
-            input =  input.decode('utf-8')
-            return input
-        else:
-            return input
+    if isinstance(input, str):
+        return input
+    return input.decode('utf-8')
 
 def crc_gen(data):
     # Replace non-ascii characters with '_'
