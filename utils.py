@@ -1,4 +1,6 @@
+import re
 import sys
+import binascii
 
 def mk_str(input):
     if (sys.version_info > (3, 0)):  #py3
@@ -27,3 +29,8 @@ def mk_uni(input):
             return input
         else:
             return input
+
+def crc_gen(data):
+    # Replace non-ascii characters with '_'
+    content=re.sub(r'[^\x00-\x7F]+','_', data)
+    return u'_' + mk_uni(hex(binascii.crc_hqx(content.encode('utf-8'), 0))[2:])

@@ -25,6 +25,8 @@ global FC_export_min_version
 FC_export_min_version="11670"  #11670 latest JM
 silks_version = '1.5'
 
+from utils import crc_gen, mk_str as make_string, mk_uni as make_unicode
+
 use_LinkGroups = False
 if 'LinkView' in dir(FreeCADGui):
     prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
@@ -64,32 +66,6 @@ if FC_majorV > 0:
 if FC_majorV == 0 and FC_minorV > 17:
     #if FC_git_Nbr >= int(FC_export_min_version):
     use_AppPart=True
-
-def crc_gen_d(data):
-    import binascii
-    import re
-    
-    #data=u'Würfel'
-    content=re.sub(r'[^\x00-\x7F]+','_', data)
-    #make_unicode(hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:])
-    #hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:].encode('utf-8')
-    #print(data +u'_'+ hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:])
-    return u'_'+ make_unicode_d(hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:])
-##
-
-def make_unicode_d(input):
-    if (sys.version_info > (3, 0)):  #py3
-        if isinstance(input, str):
-            return input
-        else:
-            input =  input.decode('utf-8')
-            return input
-    else: #py2
-        if type(input) != unicode:
-            input =  input.decode('utf-8')
-            return input
-        else:
-            return input
 
 def find_pcb_name():
     #searching for a pcb 
@@ -135,7 +111,6 @@ if not use_dxf_internal:
     import importDXF
 else:
     from dxf_parser import _importDXF
-from kicadStepUptools import make_unicode, make_string
 
 def makeFaceDXF():
     global copper_diffuse, silks_diffuse, use_dxf_internal
@@ -170,7 +145,7 @@ def makeFaceDXF():
         if len(fname) > 0:
             #importDXF.open(fname)
             last_pcb_path=os.path.dirname(fname)
-            ftname_sfx=crc_gen_d(make_unicode_d(filename))
+            ftname_sfx=crc_gen(make_unicode(filename))
 
             pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
             pg.SetString("last_pcb_path", make_string(last_pcb_path)) # py3 .decode("utf-8")

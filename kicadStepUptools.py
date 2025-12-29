@@ -449,8 +449,7 @@ import tempfile, errno
 import re
 import time
 
-from utils import mk_str as make_string
-from utils import mk_uni as make_unicode
+from utils import crc_gen, mk_str as make_string, mk_uni as make_unicode
 
 max_recursion_limit=5000  # kSU issue#198
 sys.setrecursionlimit(max_recursion_limit)
@@ -6666,17 +6665,6 @@ def PullPCB(file_name=None):
    #    print('Cancel')
 ##
 
-def crc_gen(data):
-    import binascii
-    import re
-    
-    #data=u'Würfel'
-    content=re.sub(r'[^\x00-\x7F]+','_', data)
-    #make_unicode(hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:])
-    #hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:].encode('utf-8')
-    #print(data +u'_'+ hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:])
-    return u'_'+ make_unicode(hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:])
-##
 def check_lightDir(set_default=False):
     
     pg=FreeCAD.ParamGet("User parameter:BaseApp/Preferences/View")
