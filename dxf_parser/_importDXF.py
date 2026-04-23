@@ -87,6 +87,20 @@ else:
 _dxfReader = None
 _dxfColorMap = None
 _dxfLibrary = None
+_draft_prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Draft")
+
+
+def _get_draft_param(name, default):
+    """Return a Draft preference across FreeCAD API versions."""
+    if hasattr(Draft, "getParam"):
+        return Draft.getParam(name, default)
+    if isinstance(default, bool):
+        return _draft_prefs.GetBool(name, default)
+    if isinstance(default, int):
+        return _draft_prefs.GetInt(name, default)
+    if isinstance(default, float):
+        return _draft_prefs.GetFloat(name, default)
+    return _draft_prefs.GetString(name, default)
 
 # Save the native open function to avoid collisions
 # with the function declared here
@@ -126,7 +140,7 @@ def getDXFlibs():
 
 def prec():
     """Return the current Draft precision level."""
-    return Draft.getParam("precision", 6)
+    return _get_draft_param("precision", 6)
 
 
 def deformat(text):
@@ -3483,7 +3497,7 @@ def export(objectslist, filename, nospline=False, lwPoly=False):
             dxf = _dxfLibrary.Drawing()
             # add global variables
             if hasattr(dxf,"header"):
-                dxf.header.append("  9\n$DIMTXT\n 40\n"+str(Draft.getParam("textheight", 20))+"\n")
+                dxf.header.append("  9\n$DIMTXT\n 40\n"+str(_get_draft_param("textheight", 20.0))+"\n")
                 dxf.header.append("  9\n$INSUNITS\n 70\n4\n")
             for ob in exportLayers:
                 if ob.Label != "0":  # dxflibrary already creates it
