@@ -1,0 +1,4 @@
+# This commit applies ruff format + ruff check --fix to all Python files.
+# Use git blame --ignore-revs-file .git-blame-ignore-revs to skip it.
+# When reviewing the PR, append ?w=1 to the diff URL to hide whitespace changes.
+fa87e852980125a86d918ebaea65f0576c92455f
