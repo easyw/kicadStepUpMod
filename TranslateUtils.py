@@ -1,4 +1,3 @@
-# -*- coding: utf8 -*-
 
 # ***************************************************************************
 # *                                                                         *
@@ -36,4 +35,4 @@ def QT_TRANSLATE_NOOP(ctx, txt):
 if hasattr(FreeCAD, "Qt"):
     translate = FreeCAD.Qt.translate
 else:
-    from DraftTools import translate
+    pass
