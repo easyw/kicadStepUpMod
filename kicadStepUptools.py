@@ -66,7 +66,7 @@
 # *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA           *
 # *                                                                          *
 # ****************************************************************************
-##With kicad StepUp you’ll get an exact representation of your physical board in Native 3D PCB
+##With kicad StepUp you'll get an exact representation of your physical board in Native 3D PCB
 
 ## kicad StepUp tools
 ##done
@@ -480,13 +480,12 @@ if FreeCAD.GuiUp:
 # import OpenSCADFeatures
 import codecs  # utf-8 config parser
 
+# import configparser #utf-8
+# from codecs import open #maui to verify
 import DraftGeomUtils
 
 # from DraftGeomUtils import *
 from pivy.coin import SoDirectionalLight
-
-# import configparser #utf-8
-# from codecs import open #maui to verify
 
 pythonopen = builtin.open  # to distinguish python built-in open function from the one declared here
 
@@ -758,7 +757,6 @@ def collaps_Tree():
     FreeCADGui.Selection.clearSelection()
 
 
-
 ##--------------------------------------------------------------------------------------
 py2 = False
 try:  ## maui py3
@@ -783,19 +781,11 @@ def isConstruction(geo):
         # print(geo.Construction,'geo.Construction')
         return geo.Construction
     # print('geo.Content',geo.Content)
-    if 'geometryModeFlags="00000000000000000000000000000010"' in geo.Content:
-        # print('geometryModeFlags', True)
-        return True
-    # print('geometryModeFlags', False)
-    return False
+    return 'geometryModeFlags="00000000000000000000000000000010"' in geo.Content
 
 
-
-PY3 = sys.version_info[0] == 3  # maui @realthunder fcad_pcb py3
-if PY3:
-    string_types = (str,)
-else:
-    string_types = (basestring,)
+PY3 = sys.version_info[0] >= 3  # maui @realthunder fcad_pcb py3
+string_types = (str,) if PY3 else (basestring,)
 
 ###
 # sexp
@@ -819,7 +809,7 @@ def getFCversion():
     FC_minorV = int(float(FreeCAD.Version()[1]))
     try:
         FC_git_Nbr = int(
-            float(FreeCAD.Version()[2].strip(" (Git)").split(" ")[0])
+            float(FreeCAD.Version()[2].strip(" (Git)").split(" ")[0]),
         )  # +int(FreeCAD.Version()[2].strip(" (Git)").split(' ')[1])
     except:
         FC_git_Nbr = 0
@@ -828,9 +818,8 @@ def getFCversion():
 
 FC_majorV, FC_minorV, FC_git_Nbr = getFCversion()
 FreeCAD.Console.PrintWarning("FC Version " + str(FC_majorV) + str(FC_minorV) + "-" + str(FC_git_Nbr) + "\n")
-if FC_majorV == 0 and FC_minorV == 17:
-    if FC_git_Nbr >= int(FC_export_min_version):
-        use_AppPart = True
+if FC_majorV == 0 and FC_minorV == 17 and FC_git_Nbr >= int(FC_export_min_version):
+    use_AppPart = True
 # if FreeCAD.Version()[2] == 'Unknown':  #workaround for local building
 #    use_AppPart=True
 if FC_majorV > 0:
@@ -840,18 +829,14 @@ if FC_majorV == 0 and FC_minorV > 17:
     use_AppPart = True
 # if use_AppPart:
 #    FreeCAD.Console.PrintWarning("creating hierarchy\n")
-if int(FC_majorV) <= 0:
-    if int(FC_minorV) == 15:
-        load_sketch = False
+if int(FC_majorV) <= 0 and int(FC_minorV) == 15:
+    load_sketch = False
 
 global force_oldGroups
 force_oldGroups = False  # False
 
-try:
-    # use_Links=True #False
+with contextlib.suppress(Exception):
     FreeCAD.Console.PrintWarning("Asm3 WB present\n")
-except:
-    pass
     # FreeCAD.Console.PrintWarning('Asm3 WB not present\n')
 
 global export_board_2step
@@ -1398,7 +1383,7 @@ if 0:
 # points: [Vector, Vector, ...]
 # faces: [(pi, pi, pi), ], pi: point index
 # color: (Red, Green, Blue), values range from 0 to 1.0
-Mesh = namedtuple("Mesh", ["points", "faces", "color", "transp"])
+Mesh = namedtuple("Mesh", ["points", "faces", "color", "transp"])  # noqa: F811
 
 import contextlib
 from sys import platform as _platform
@@ -1439,10 +1424,7 @@ btn_md_sizeY = 26
 
 def close_ksu():
     # def closeEvent(self, e):
-    msg = translate(
-        "Close",
-        "<b>Do you want to quit?</b> <i>Have you saved your STEP artwork?</i><br>",
-    )
+    msg = translate("Close", "<b>Do you want to quit?</b> <i>Have you saved your STEP artwork?</i><br>")
     # confirm on exit
     QtGui.QApplication.restoreOverrideCursor()
     # self.setGeometry(25, 250, 500, 500)
@@ -1489,10 +1471,7 @@ def tabify():
                 cv = t.findChild(QtGui.QDockWidget, "Tree view")
                 if cv is None:
                     cv = [o for o in t.children() if o.objectName() == "Combo View"]
-                    if cv:
-                        cv = cv[0]
-                    else:
-                        cv = None
+                    cv = cv[0] if cv else None
     if KSUWidget and cv:
         t.findChildren(QtGui.QDockWidget)
         with contextlib.suppress(BaseException):
@@ -1832,7 +1811,6 @@ def find_name(n):
     }.get(n, 0)  # 0 is default if x not found
 
 
-
 # import ConfigParser
 # import configobj
 
@@ -1883,12 +1861,18 @@ def make_unicode(input):
     if isinstance(input, str):
         return input
     return input.decode("utf-8")
+    if type(input) != unicode:
+        return input.decode("utf-8")
+    return input
 
 
 def make_string(input):
     if isinstance(input, str):
         return input
     return input.encode("utf-8")
+    if type(input) == unicode:
+        return input.encode("utf-8")
+    return input
 
 
 def PLine(prm1, prm2):
@@ -1983,11 +1967,11 @@ def simple_cpy_plc(obj, proot):  # simple copy with incremental placement
             FreeCADGui.ActiveDocument.ActiveObject.PointColor = FreeCADGui.ActiveDocument.getObject(obj.Name).PointColor
         if hasattr(FreeCADGui.ActiveDocument.getObject(obj.Name), "DiffuseColor"):
             FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor = FreeCADGui.ActiveDocument.getObject(
-                obj.Name
+                obj.Name,
             ).DiffuseColor
         if hasattr(FreeCADGui.ActiveDocument.getObject(obj.Name), "Transparency"):
             FreeCADGui.ActiveDocument.ActiveObject.Transparency = FreeCADGui.ActiveDocument.getObject(
-                obj.Name
+                obj.Name,
             ).Transparency
         new_label = make_string(obj.Label) + "_cp"
         FreeCAD.ActiveDocument.ActiveObject.Label = new_label
@@ -2010,10 +1994,7 @@ def get_node_plc(o, obj):  # get node placement in App::Part
 def recurse_node(obj, plcm, scl):  # recursive function to make a simple copy of App::Part hierarchy
     if "App::Part" in obj.TypeId or "Body" in obj.TypeId or "App::LinkGroup" in obj.TypeId:
         # sayerr(obj.Label)
-        if "LinkGroup" in obj.TypeId:
-            group = obj.OutList
-        else:
-            group = obj.Group
+        group = obj.OutList if "LinkGroup" in obj.TypeId else obj.Group
         # for o in obj.Group:
         # sayw(str(group))
         for o in group:
@@ -2098,8 +2079,8 @@ class Ui_Dialog:
 ###
 def isWritable(path):
     try:
-        testfile = tempfile.TemporaryFile(dir=path)
-        testfile.close()
+        with tempfile.TemporaryFile(dir=path):
+            pass
         # sayw('ok')
         return True
     except:
@@ -2140,7 +2121,7 @@ def comboBox_Changed(text_combo):
             + str(float(color_rgb[10]) * 255)
             + ","
             + str(float(color_rgb[11]) * 255)
-            + ");}"
+            + ");}",
         )
     else:
         # say(str(material_index)+" here")
@@ -2152,7 +2133,7 @@ def comboBox_Changed(text_combo):
             + str(shape_col[1] * 255)
             + ","
             + str(shape_col[2] * 255)
-            + ");}"
+            + ");}",
         )
 
 
@@ -2188,10 +2169,9 @@ def assignSTEPmaterials(objects, filepath):
             # say(shape_col)
             if shape_col not in color_list:
                 # sayw(shape_col);say('not found')
-                idc = 0
                 material_index = 0
                 found_mat = False
-                for mat_diff_col in material_properties_diffuse:
+                for idc, mat_diff_col in enumerate(material_properties_diffuse):
                     # say(mat_diff_col)
                     delta_col = 0.01
                     if (
@@ -2204,7 +2184,6 @@ def assignSTEPmaterials(objects, filepath):
                         material_index = idc
                         found_mat = True
                         # stop
-                    idc += 1
                 ui.plainTextEdit.setStyleSheet(
                     "#plainTextEdit {background-color:rgb("
                     + str(shape_col[0] * 255)
@@ -2212,7 +2191,7 @@ def assignSTEPmaterials(objects, filepath):
                     + str(shape_col[1] * 255)
                     + ","
                     + str(shape_col[2] * 255)
-                    + ");}"
+                    + ");}",
                 )
                 ui.plainTextEdit_2.setStyleSheet(
                     "#plainTextEdit_2 {background-color:rgb("
@@ -2221,7 +2200,7 @@ def assignSTEPmaterials(objects, filepath):
                     + str(shape_col[1] * 255)
                     + ","
                     + str(shape_col[2] * 255)
-                    + ");}"
+                    + ");}",
                 )
                 ui.comboBox.setCurrentIndex(material_index)
                 color_list.append(shape_col)
@@ -2234,10 +2213,7 @@ def assignSTEPmaterials(objects, filepath):
                     reply = Dialog.exec_()
                     # Dialog.exec_()
                     # say(reply)
-                    if reply == 1:
-                        material = str(ui.comboBox.currentText())
-                    else:
-                        material = "as is"
+                    material = str(ui.comboBox.currentText()) if reply == 1 else "as is"
                 color_list_mat.append(material)
                 sayw(material)
         col_index = color_list.index(shape_col)
@@ -2290,7 +2266,7 @@ def exportVRMLmaterials(objects, filepath):
             else:
                 f.write(f"Shape {{ geometry IndexedFaceSet \n{{ creaseAngle {creaseAngle:.2f} coordIndex [")
             # write coordinate indexes for each face
-            f.write(",".join("%d,%d,%d,-1" % f for f in obj.faces))
+            f.write(",".join(f"{f[0]},{f[1]},{f[2]},-1" for f in obj.faces))
             f.write("]\n")  # closes coordIndex
             f.write("coord Coordinate { point [")
             # write coordinate points for each vertex
@@ -2305,10 +2281,9 @@ def exportVRMLmaterials(objects, filepath):
             # say(shape_col)
             if shape_col not in color_list:
                 # sayw(shape_col);say('not found')
-                idc = 0
                 material_index = 0
                 found_mat = False
-                for mat_diff_col in material_properties_diffuse:
+                for idc, mat_diff_col in enumerate(material_properties_diffuse):
                     # say(mat_diff_col)
                     delta_col = 0.01
                     if (
@@ -2321,7 +2296,6 @@ def exportVRMLmaterials(objects, filepath):
                         material_index = idc
                         found_mat = True
                         # stop
-                    idc += 1
                 ## pal = QtGui.QPalette()
                 ## bgc = QtGui.QColor(shape_col[0]*255,shape_col[1]*255, shape_col[2]*255)
                 ## pal.setColor(QtGui.QPalette.Base, bgc)
@@ -2333,7 +2307,7 @@ def exportVRMLmaterials(objects, filepath):
                     + str(shape_col[1] * 255)
                     + ","
                     + str(shape_col[2] * 255)
-                    + ");}"
+                    + ");}",
                 )
                 ui.plainTextEdit_2.setStyleSheet(
                     "#plainTextEdit_2 {background-color:rgb("
@@ -2342,7 +2316,7 @@ def exportVRMLmaterials(objects, filepath):
                     + str(shape_col[1] * 255)
                     + ","
                     + str(shape_col[2] * 255)
-                    + ");}"
+                    + ");}",
                 )
                 ui.comboBox.setCurrentIndex(material_index)
                 # ui.comboBox.clear()
@@ -2357,10 +2331,7 @@ def exportVRMLmaterials(objects, filepath):
                     reply = Dialog.exec_()
                     # Dialog.exec_()
                     # say(reply)
-                    if reply == 1:
-                        material = str(ui.comboBox.currentText())
-                    else:
-                        material = "as is"
+                    material = str(ui.comboBox.currentText()) if reply == 1 else "as is"
                 color_list_mat.append(material)
                 sayw(material)
             # else:
@@ -2374,7 +2345,9 @@ def exportVRMLmaterials(objects, filepath):
             # say(color_list_mat[col_index])
             if not Materials or color_list_mat[col_index] == "as is":
                 shape_transparency = obj.transp
-                f.write("appearance Appearance{{material Material{{diffuseColor {:g} {:g} {:g}\n".format(*shape_col[:-1]))
+                f.write(
+                    "appearance Appearance{{material Material{{diffuseColor {:g} {:g} {:g}\n".format(*shape_col[:-1]),
+                )
                 f.write(f"transparency {shape_transparency:g}}}}}")
                 f.write("}\n")  # closes Shape
             else:
@@ -2441,7 +2414,7 @@ def exportVRML(objects, filepath):
                 f.write(f"Shape {{ geometry IndexedFaceSet \n{{ creaseAngle {creaseAngle:.2f} coordIndex [")
             # f.write("Shape { geometry IndexedFaceSet \n{ coordIndex [")
             # write coordinate indexes for each face
-            f.write(",".join("%d,%d,%d,-1" % f for f in obj.faces))
+            f.write(",".join(f"{f[0]},{f[1]},{f[2]},-1" for f in obj.faces))
             f.write("]\n")  # closes coordIndex
             f.write("coord Coordinate { point [")
             # write coordinate points for each vertex
@@ -2482,10 +2455,7 @@ def export(componentObjs, fullfilePathName, scale=None, label=None):
 
     global exportV, applymaterials, ui, creaseAngle
 
-    if label is None:
-        exp_name = componentObjs[0].Label
-    else:
-        exp_name = label
+    exp_name = componentObjs[0].Label if label is None else label
     # removing not allowed chars
     translation_table = dict.fromkeys(map(ord, '<>:"/\\|?*,;:\\'), None)
     exp_name = exp_name.translate(translation_table)
@@ -2498,10 +2468,7 @@ def export(componentObjs, fullfilePathName, scale=None, label=None):
         save_wrz = True
         # print('stpZ',fullFilePathNameStep)
     if scale is not None:
-        if save_wrz:
-            filename = path + os.sep + exp_name + ".wrz"
-        else:
-            filename = path + os.sep + exp_name + ".wrl"
+        filename = path + os.sep + exp_name + ".wrz" if save_wrz else path + os.sep + exp_name + ".wrl"
     elif save_wrz:
         filename = path + os.sep + exp_name + "_1_1.wrz"
     else:
@@ -2613,12 +2580,11 @@ def export(componentObjs, fullfilePathName, scale=None, label=None):
         # colors less then faces
         if len(single_color) != len(shape1.Faces):
             applyDiffuse = 0
-        # copy color to all faces
+            # copy color to all faces
         # else copy singular colors for faces
         else:
             applyDiffuse = 1
-            for color in single_color:
-                color_vector.append(color)
+            color_vector.extend(single_color)
         # say("color_vector")
         # say(color_vector)
         for index in range(len(shape1.Faces)):
@@ -2628,26 +2594,10 @@ def export(componentObjs, fullfilePathName, scale=None, label=None):
             if exportV:
                 if applyDiffuse:
                     # say(color_vector[indexColor])
-                    meshes.append(
-                        shapeToMesh(
-                            singleFace,
-                            color_vector[indexColor],
-                            transparency[i],
-                            mesh_dev,
-                            scale,
-                        )
-                    )
+                    meshes.append(shapeToMesh(singleFace, color_vector[indexColor], transparency[i], mesh_dev, scale))
                 else:
                     # say(single_color[0])
-                    meshes.append(
-                        shapeToMesh(
-                            singleFace,
-                            single_color[0],
-                            transparency[i],
-                            mesh_dev,
-                            scale,
-                        )
-                    )
+                    meshes.append(shapeToMesh(singleFace, single_color[0], transparency[i], mesh_dev, scale))
             indexColor = indexColor + 1
             # meshes.append(shapeToMesh(face, Diffuse_color[i], transparency[i], scale))
         color_vector = []
@@ -2873,10 +2823,10 @@ def group_part_union():
                 ]
                 FreeCADGui.activeDocument().getObject(CopyName).Visibility = False
                 FreeCADGui.ActiveDocument.getObject(FusionName).ShapeColor = FreeCADGui.ActiveDocument.getObject(
-                    CopyName
+                    CopyName,
                 ).ShapeColor
                 FreeCADGui.ActiveDocument.getObject(FusionName).DisplayMode = FreeCADGui.ActiveDocument.getObject(
-                    CopyName
+                    CopyName,
                 ).DisplayMode
                 FreeCAD.ActiveDocument.getObject(FusionName).Label = original_label + "_fd"
                 FreeCAD.ActiveDocument.recompute()
@@ -2948,10 +2898,10 @@ def group_part_union():
             FreeCAD.activeDocument().getObject(FusionName).Shapes = objs
             FreeCADGui.activeDocument().getObject(CopyName).Visibility = False
             FreeCADGui.ActiveDocument.getObject(FusionName).ShapeColor = FreeCADGui.ActiveDocument.getObject(
-                CopyName
+                CopyName,
             ).ShapeColor
             FreeCADGui.ActiveDocument.getObject(FusionName).DisplayMode = FreeCADGui.ActiveDocument.getObject(
-                CopyName
+                CopyName,
             ).DisplayMode
             FreeCAD.ActiveDocument.getObject(FusionName).Label = original_label + "_fd"
             FreeCAD.ActiveDocument.recompute()
@@ -3090,7 +3040,7 @@ def align_colors_to_materials(objects):
             single_color = FreeCADGui.ActiveDocument.getObject(obj.Name).DiffuseColor
             if len(single_color) != len(shape1.Faces):
                 applyDiffuse = 0
-            # copy color to all faces
+                # copy color to all faces
             # else copy singular colors for faces
             else:
                 applyDiffuse = 1
@@ -3172,7 +3122,9 @@ def exportStep(objs, ffPathName):
             ## evaluate to modify reset placement
             base_shape = FreeCAD.ActiveDocument.getObject(objs[0].Name)
             if base_shape.Placement.Base != FreeCAD.Vector(
-                0, 0, 0
+                0,
+                0,
+                0,
             ) or base_shape.Placement.Rotation != FreeCAD.Rotation(0.0, 0.0, 0.0, 1.0):
                 reset_prop_shapes(
                     FreeCAD.ActiveDocument.getObject(objs[0].Name),
@@ -3476,19 +3428,7 @@ def cfg_read_all():
     yellow = [0.98, 0.98, 0.34]  # sunshine yellow
     black = [0.18, 0.18, 0.18]  # slick black
     white = [0.973, 0.973, 0.941]  # [0.98,0.92,0.84] #antique white
-    pcb_color_values = [
-        light_green,
-        green,
-        blue,
-        red,
-        purple,
-        darkgreen,
-        darkblue,
-        lightblue,
-        yellow,
-        black,
-        white,
-    ]
+    pcb_color_values = [light_green, green, blue, red, purple, darkgreen, darkblue, lightblue, yellow, black, white]
     pcb_color_pos = prefs.GetInt("pcb_color")
     pcb_color = pcb_color_values[pcb_color_pos]
     col = []
@@ -3508,26 +3448,14 @@ def cfg_read_all():
     except:
         edge_tolerance = 0.01
     # print(min_drill_size)
-    if prefs.GetBool("vrml_materials"):
-        enable_materials = 1
-    else:
-        enable_materials = 0
-    if prefs.GetBool("mode_virtual"):
-        addVirtual = 1
-    else:
-        addVirtual = 0
+    enable_materials = 1 if prefs.GetBool("vrml_materials") else 0
+    addVirtual = 1 if prefs.GetBool("mode_virtual") else 0
     fusion = prefs.GetBool("make_union")
     export_board_2step = prefs.GetBool("exp_step")
     animate_result = prefs.GetBool("turntable")
     generate_sketch = prefs.GetBool("generate_sketch")
-    if prefs.GetBool("asm3_links"):
-        links_imp_mode = "links_allowed"
-    else:
-        links_imp_mode = "links_not_allowed"
-    if prefs.GetBool("asm3_linkGroups"):
-        pass
-    else:
-        pass
+    links_imp_mode = "links_allowed" if prefs.GetBool("asm3_links") else "links_not_allowed"
+    bool(prefs.GetBool("asm3_linkGroups"))
     aux_orig = 0
     base_orig = 0
     base_point = 0
@@ -3831,7 +3759,6 @@ def reset_prop_shapes(obj, doc, App, Gui, rmv=None):
     #
 
 
-
 ###
 def reset_prop_shapes2(obj, doc, App, Gui):
 
@@ -3865,7 +3792,6 @@ def reset_prop_shapes2(obj, doc, App, Gui):
     return FreeCAD.ActiveDocument.ActiveObject
     # say(rstObj)
     #
-
 
 
 ###
@@ -3975,7 +3901,7 @@ def createScaledBBox(name, scale):
     obj = FreeCAD.ActiveDocument.addObject("Part::Feature", name + "_")
     bbox_col = bbox_default_col
     if type == "cube":
-        # makeBox(length,width,height,[pnt,dir]) – Make a box located in pnt with the dimensions (length,width,height) By default pnt=Vector(0,0,0) and dir=Vector(0,0,1)
+        # makeBox(length,width,height,[pnt,dir]) - Make a box located in pnt with the dimensions (length,width,height) By default pnt=Vector(0,0,0) and dir=Vector(0,0,1)
         obj.Shape = Part.makeBox(
             boundBoxLX,
             boundBoxLY,
@@ -4035,24 +3961,10 @@ def Display_info(blacklisted_models):
         new_pos_x = board_base_point_x
         new_pos_y = board_base_point_y
     if grid_orig == 1:
-        msg += (
-            "<br>Board Placed @ "
-            + f"{board_base_point_x:.2f}"
-            + ";"
-            + f"{board_base_point_y:.2f}"
-            + ";0.0"
-        )
+        msg += "<br>Board Placed @ " + f"{board_base_point_x:.2f}" + ";" + f"{board_base_point_y:.2f}" + ";0.0"
     else:
         msg += "<br>Board Placed @ " + f"{new_pos_x:.2f}" + ";" + f"{new_pos_y:.2f}" + ";0.0"
-    msg += (
-        "<br>kicad pcb pos: ("
-        + f"{real_board_pos_x:.2f}"
-        + ";"
-        + f"{real_board_pos_y:.2f}"
-        + ";"
-        + f"{0:.2f}"
-        + ")"
-    )
+    msg += "<br>kicad pcb pos: (" + f"{real_board_pos_x:.2f}" + ";" + f"{real_board_pos_y:.2f}" + ";" + f"{0:.2f}" + ")"
     if (bbox_all == 1) or (bbox_list == 1):
         msg += "<br>bounding box modules applied"
     if volume_minimum != 0:
@@ -4095,24 +4007,10 @@ def Display_info(blacklisted_models):
     msg += "<br>running time: " + str(running_time) + "sec"
     msg += "<br>StepUp configuration options are located in the preferences system of FreeCAD."
     if grid_orig == 1:
-        say(
-            "Board Placed @ "
-            + f"{board_base_point_x:.2f}"
-            + ";"
-            + f"{board_base_point_y:.2f}"
-            + ";0.0"
-        )
+        say("Board Placed @ " + f"{board_base_point_x:.2f}" + ";" + f"{board_base_point_y:.2f}" + ";0.0")
     else:
         say("Board Placed @ " + f"{new_pos_x:.2f}" + ";" + f"{new_pos_y:.2f}" + ";0.0")
-    say(
-        "kicad pcb pos: ("
-        + f"{real_board_pos_x:.2f}"
-        + ";"
-        + f"{real_board_pos_y:.2f}"
-        + ";"
-        + f"{0:.2f}"
-        + ")"
-    )
+    say("kicad pcb pos: (" + f"{real_board_pos_x:.2f}" + ";" + f"{real_board_pos_y:.2f}" + ";" + f"{0:.2f}" + ")")
     say(
         "pcb dimensions: ("
         + f"{pcb_bbx.XLength:.2f}"
@@ -4120,7 +4018,7 @@ def Display_info(blacklisted_models):
         + f"{pcb_bbx.YLength:.2f}"
         + ";"
         + f"{pcb_bbx.ZLength:.2f}"
-        + ")"
+        + ")",
     )
     if missingHeight:
         sayerr("MISSING pcb height from stack; forced 1.6mm value")
@@ -4141,7 +4039,11 @@ def Display_info(blacklisted_models):
         doc = FreeCAD.ActiveDocument
         for obj in doc.Objects:
             if (
-                "Board_Geoms" not in obj.Label and "Step_Models" not in obj.Label and "Step_Virtual_Models" not in obj.Label and obj.TypeId not in {"App::Line", "App::Plane", "App::Origin", "App::Part"} and "Local_CS" not in obj.Name
+                "Board_Geoms" not in obj.Label
+                and "Step_Models" not in obj.Label
+                and "Step_Virtual_Models" not in obj.Label
+                and obj.TypeId not in {"App::Line", "App::Plane", "App::Origin", "App::Part"}
+                and "Local_CS" not in obj.Name
             ):
                 if show_data:
                     say(obj.Name)
@@ -4222,9 +4124,8 @@ def checkFCbug(fcv):
         # if int(fcv[2]) >= 13509 and int(fcv[2]) < 13548: # or fcv[2] == 13516:
         import Part
 
-        if hasattr(Part, "OCC_VERSION"):
-            if Part.OCC_VERSION == "7.2.0":
-                return True
+        if hasattr(Part, "OCC_VERSION") and (Part.OCC_VERSION == "7.2.0"):
+            return True
     return False
 
 
@@ -4267,7 +4168,10 @@ def Export2MCAD(blacklisted_model_elements):
     for obj in doc.Objects:
         # do what you want to automate
         if (
-            "Board_Geoms" not in obj.Label and "Step_Models" not in obj.Label and "Step_Virtual_Models" not in obj.Label and obj.TypeId not in {"App::Line", "App::Plane", "App::Origin", "App::Part", "Sketcher::SketchObject"}
+            "Board_Geoms" not in obj.Label
+            and "Step_Models" not in obj.Label
+            and "Step_Virtual_Models" not in obj.Label
+            and obj.TypeId not in {"App::Line", "App::Plane", "App::Origin", "App::Part", "Sketcher::SketchObject"}
         ):
             FreeCADGui.Selection.addSelection(obj)
             __objs__.append(obj)
@@ -4398,7 +4302,7 @@ def Export2MCAD(blacklisted_model_elements):
             sayerr(
                 "to export STEP it is necessary to use StepUp Workbench<br>instead of the single Macro<br>(because of "
                 + str(fcv)
-                + " FC bug)"
+                + " FC bug)",
             )
             msg = (
                 """<font color='red'><b>to export STEP it is necessary to use StepUp Workbench<br>instead of the single Macro<br>(because of """
@@ -4410,10 +4314,7 @@ def Export2MCAD(blacklisted_model_elements):
                 say("including sketch in grp")
                 FreeCAD.ActiveDocument.getObject(sk[1]).addObject(FreeCAD.ActiveDocument.getObject(sk[0]))
             stop
-        if fcb:
-            cpmode = "compound"
-        else:
-            cpmode = "part"
+        cpmode = "compound" if fcb else "part"
         suffix = "_"
         to_export_name = kicadStepUpCMD.deep_copy(doc, cpmode, suffix)
         # to_export_name=FreeCAD.ActiveDocument.ActiveObject.Name
@@ -4513,10 +4414,7 @@ def Export2MCAD(blacklisted_model_elements):
     FreeCAD.setActiveDocument(doc.Name)
     FreeCAD.ActiveDocument = FreeCAD.getDocument(doc.Name)
     FreeCADGui.ActiveDocument = FreeCADGui.getDocument(doc.Name)
-    if (bbox_all == 1) or (bbox_list == 1):
-        fpath = filePath + os.sep + doc.Name + "_bbox"
-    else:
-        fpath = filePath + os.sep + doc.Name
+    fpath = filePath + os.sep + doc.Name + "_bbox" if bbox_all == 1 or bbox_list == 1 else filePath + os.sep + doc.Name
     if fusion:
         fpath = fpath + "_union"
     say(fpath + ".FCStd")
@@ -4556,24 +4454,10 @@ def Export2MCAD(blacklisted_model_elements):
         new_pos_x = board_base_point_x
         new_pos_y = board_base_point_y
     if grid_orig == 1:
-        msg += (
-            "<br>Board Placed @ "
-            + f"{board_base_point_x:.2f}"
-            + ";"
-            + f"{board_base_point_y:.2f}"
-            + ";0.0"
-        )
+        msg += "<br>Board Placed @ " + f"{board_base_point_x:.2f}" + ";" + f"{board_base_point_y:.2f}" + ";0.0"
     else:
         msg += "<br>Board Placed @ " + f"{new_pos_x:.2f}" + ";" + f"{new_pos_y:.2f}" + ";0.0"
-    msg += (
-        "<br>kicad pcb pos: ("
-        + f"{real_board_pos_x:.2f}"
-        + ";"
-        + f"{real_board_pos_y:.2f}"
-        + ";"
-        + f"{0:.2f}"
-        + ")"
-    )
+    msg += "<br>kicad pcb pos: (" + f"{real_board_pos_x:.2f}" + ";" + f"{real_board_pos_y:.2f}" + ";" + f"{0:.2f}" + ")"
     if (bbox_all == 1) or (bbox_list == 1):
         msg += "<br>bounding box modules applied"
     if volume_minimum != 0:
@@ -4599,24 +4483,10 @@ def Export2MCAD(blacklisted_model_elements):
     # msg+="<br>kicad StepUp config file in:<br><b>"+ksu_config_fname+"</b><br>location."
     msg += "<br>StepUp configuration options are located in the preferences system of FreeCAD."
     if grid_orig == 1:
-        say(
-            "Board Placed @ "
-            + f"{board_base_point_x:.2f}"
-            + ";"
-            + f"{board_base_point_y:.2f}"
-            + ";0.0"
-        )
+        say("Board Placed @ " + f"{board_base_point_x:.2f}" + ";" + f"{board_base_point_y:.2f}" + ";0.0")
     else:
         say("Board Placed @ " + f"{new_pos_x:.2f}" + ";" + f"{new_pos_y:.2f}" + ";0.0")
-    say(
-        "kicad pcb pos: ("
-        + f"{real_board_pos_x:.2f}"
-        + ";"
-        + f"{real_board_pos_y:.2f}"
-        + ";"
-        + f"{0:.2f}"
-        + ")"
-    )
+    say("kicad pcb pos: (" + f"{real_board_pos_x:.2f}" + ";" + f"{real_board_pos_y:.2f}" + ";" + f"{0:.2f}" + ")")
     say_time()
     if show_messages:
         QtGui.QApplication.restoreOverrideCursor()
@@ -4799,20 +4669,20 @@ def create_compound(count, modelnm):  # create compound function when a multipar
         # stop
         modelnm_norm = make_string(modelnm)  # to manage utf-8
         FreeCAD.ActiveDocument.addObject("Part::Feature", modelnm_norm).Shape = FreeCAD.ActiveDocument.getObject(
-            mycompound.Name
+            mycompound.Name,
         ).Shape
         mynewObj = FreeCAD.ActiveDocument.ActiveObject
         FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = FreeCADGui.ActiveDocument.getObject(
-            mycompound.Name
+            mycompound.Name,
         ).ShapeColor
         FreeCADGui.ActiveDocument.ActiveObject.LineColor = FreeCADGui.ActiveDocument.getObject(
-            mycompound.Name
+            mycompound.Name,
         ).LineColor
         FreeCADGui.ActiveDocument.ActiveObject.PointColor = FreeCADGui.ActiveDocument.getObject(
-            mycompound.Name
+            mycompound.Name,
         ).PointColor
         FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor = FreeCADGui.ActiveDocument.getObject(
-            mycompound.Name
+            mycompound.Name,
         ).DiffuseColor
         ## if use_Links: # compound2 colors to be fixed
         ##     FreeCADGui.ActiveDocument.ActiveObject.mapShapeColors(FreeCAD.ActiveDocument)
@@ -4974,20 +4844,15 @@ def restore_specular(obj_pre_list):
     for o in objs:
         if o not in obj_pre_list:
             # print(o.Label)
-            if hasattr(o, "ViewObject"):
-                if hasattr(o.ViewObject, "ShapeMaterial"):
-                    # print(o.ViewObject.ShapeMaterial.SpecularColor)
-                    if hasattr(o.ViewObject, "DiffuseColor"):
-                        d = o.ViewObject.DiffuseColor
-                        s = o.ViewObject.ShapeMaterial.SpecularColor
-                        if s[0] >= os and s[1] >= os and s[2] >= os:
-                            o.ViewObject.ShapeMaterial.SpecularColor = (
-                                ds,
-                                ds,
-                                ds,
-                            )  # (0.0, 0.0, 0.0)
-                            o.ViewObject.DiffuseColor = d
-                            restored = True
+            if (hasattr(o, "ViewObject")) and (hasattr(o.ViewObject, "ShapeMaterial")):
+                # print(o.ViewObject.ShapeMaterial.SpecularColor)
+                if hasattr(o.ViewObject, "DiffuseColor"):
+                    d = o.ViewObject.DiffuseColor
+                    s = o.ViewObject.ShapeMaterial.SpecularColor
+                    if s[0] >= os and s[1] >= os and s[2] >= os:
+                        o.ViewObject.ShapeMaterial.SpecularColor = (ds, ds, ds)  # (0.0, 0.0, 0.0)
+                        o.ViewObject.DiffuseColor = d
+                        restored = True
     if restored:
         FreeCAD.Console.PrintWarning("default specular color restored\n")
 
@@ -5230,10 +5095,9 @@ def Load_models(pcbThickness, modules):
         else:
             model_name = "no3Dmodel"
         blacklisted = 0
-        if blacklisted_model_elements != "":
-            if blacklisted_model_elements.find(model_name) != -1:
-                if model_name not in whitelisted_3Dmodels:
-                    blacklisted = 1
+        if blacklisted_model_elements != "" and blacklisted_model_elements.find(model_name) != -1:
+            if model_name not in whitelisted_3Dmodels:
+                blacklisted = 1
         ###
 
         if blacklisted == 0:
@@ -5244,15 +5108,9 @@ def Load_models(pcbThickness, modules):
                 if model_name in {"box_mcad", "cylV_mcad", "cylH_mcad"}:
                     createScaledObjs = True
                 if not createScaledObjs:
-                    path_list = [
-                        models3D_prefix,
-                        models3D_prefix2,
-                        models3D_prefix3,
-                        models3D_prefix4,
-                    ]
-                    if default_prefix3d not in path_list:
-                        if os.path.exists(default_prefix3d):
-                            path_list.insert(0, default_prefix3d)
+                    path_list = [models3D_prefix, models3D_prefix2, models3D_prefix3, models3D_prefix4]
+                    if default_prefix3d not in path_list and os.path.exists(default_prefix3d):
+                        path_list.insert(0, default_prefix3d)
                     model_type = [
                         step_module,
                         step_module_lw,
@@ -5360,7 +5218,7 @@ def Load_models(pcbThickness, modules):
                                     step_transparency = check_wrl_transparency(wrl_module_path)
                                     if step_transparency != 0:  # keeping transparency if found in step file
                                         FreeCADGui.ActiveDocument.getObject(
-                                            myStep.Name
+                                            myStep.Name,
                                         ).Transparency = step_transparency
                                 impLabel = make_string(myStep.Label)
                             # use_pypro=False
@@ -5380,13 +5238,13 @@ def Load_models(pcbThickness, modules):
                                 else:
                                     myObj.Label = "REF_" + impLabel + "_"
                                 FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = FreeCADGui.ActiveDocument.getObject(
-                                    newStep.Name
+                                    newStep.Name,
                                 ).ShapeColor
                                 FreeCADGui.ActiveDocument.ActiveObject.LineColor = FreeCADGui.ActiveDocument.getObject(
-                                    newStep.Name
+                                    newStep.Name,
                                 ).LineColor
                                 FreeCADGui.ActiveDocument.ActiveObject.PointColor = FreeCADGui.ActiveDocument.getObject(
-                                    newStep.Name
+                                    newStep.Name,
                                 ).PointColor
                                 FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor = (
                                     FreeCADGui.ActiveDocument.getObject(newStep.Name).DiffuseColor
@@ -5402,10 +5260,7 @@ def Load_models(pcbThickness, modules):
                                     myTimeStamp = myTimeStamp[-12:]
                                 myModelNbr = modules[i][12]
                                 # print (myModelNbr)#;stop
-                                if myModelNbr == 1:
-                                    myModelNbr = ""
-                                else:
-                                    myModelNbr = "[" + str(myModelNbr) + "]"
+                                myModelNbr = "" if myModelNbr == 1 else "[" + str(myModelNbr) + "]"
                                 if "*" not in myReference:
                                     newStep.Label = myReference + "_" + impLabel + "_" + myTimeStamp + myModelNbr
                                 else:
@@ -5478,7 +5333,7 @@ def Load_models(pcbThickness, modules):
                                                 "height > Min height "
                                                 + str(newobj.Shape.BoundBox.ZLength)
                                                 + " "
-                                                + newobj.Label
+                                                + newobj.Label,
                                             )
                                         if volume_minimum != 0:
                                             say("Volume > Min Volume " + str(newobj.Shape.Volume) + " " + newobj.Label)
@@ -5488,7 +5343,7 @@ def Load_models(pcbThickness, modules):
                                             "height <= Min height "
                                             + str(newobj.Shape.BoundBox.ZLength)
                                             + " "
-                                            + newobj.Label
+                                            + newobj.Label,
                                         )
                                 else:
                                     skip_status = "skip"
@@ -5496,7 +5351,7 @@ def Load_models(pcbThickness, modules):
                                         "Volume <= Min Volume "
                                         + str(newobj.Shape.BoundBox.ZLength)
                                         + " "
-                                        + newobj.Label
+                                        + newobj.Label,
                                     )
                         loaded_models_skipped.append(skip_status)
                         use_cache = 0
@@ -5538,10 +5393,7 @@ def Load_models(pcbThickness, modules):
                     # sayerr(wrl_pos);sayw(float(wrl_pos[0]));stop
                     isVirtual = modules[i][9]
                     isHidden = modules[i][13]
-                    if isHidden:
-                        md_hide = True
-                    else:
-                        md_hide = False
+                    md_hide = bool(isHidden)
 
                     # if show_debug:
                     #    sayw(wrl_rot)
@@ -5575,11 +5427,13 @@ def Load_models(pcbThickness, modules):
                                     if use_pypro:
                                         FreeCAD.ActiveDocument.addObject("App::LinkPython", o.Label).setLink(o)
                                         FreeCAD.ActiveDocument.ActiveObject.addProperty(
-                                            "App::PropertyString", "TimeStamp"
+                                            "App::PropertyString",
+                                            "TimeStamp",
                                         )
                                         # FreeCAD.ActiveDocument.ActiveObject.TimeStamp=str(modules[i][10])
                                         FreeCAD.ActiveDocument.ActiveObject.addProperty(
-                                            "App::PropertyString", "Reference"
+                                            "App::PropertyString",
+                                            "Reference",
                                         )
                                         # FreeCAD.ActiveDocument.ActiveObject.Reference=str(modules[i][11])
                                         FreeCAD.ActiveDocument.ActiveObject.ViewObject.Proxy = 0
@@ -5610,10 +5464,7 @@ def Load_models(pcbThickness, modules):
                                     myReference = str(modules[i][11]).rstrip('"').lstrip('"')
                                     myModelNbr = modules[i][12]
                                     # print (myModelNbr);stop
-                                    if myModelNbr == 1:
-                                        myModelNbr = ""
-                                    else:
-                                        myModelNbr = "[" + str(myModelNbr) + "]"
+                                    myModelNbr = "" if myModelNbr == 1 else "[" + str(myModelNbr) + "]"
                                     if "*" not in myReference:
                                         impPart.Label = loaded_model_objs[idxO].Label[
                                             loaded_model_objs[idxO].Label.find("_") + 1 : loaded_model_objs[
@@ -5694,11 +5545,7 @@ def Load_models(pcbThickness, modules):
                                         pos_y + float(wrl_pos[1]) * 25.4,
                                         0 + float(wrl_pos[2]) * 25.4,
                                     ),
-                                    FreeCAD.Rotation(
-                                        -float(wrl_rot[2]),
-                                        -float(wrl_rot[1]),
-                                        -float(wrl_rot[0]),
-                                    ),
+                                    FreeCAD.Rotation(-float(wrl_rot[2]), -float(wrl_rot[1]), -float(wrl_rot[0])),
                                 )  # rot is already rot fp -rot wrl
                                 if impPart.TypeId in {"App::Link", "App::LinkPython"}:
                                     shape = Part.getShape(o)
@@ -5707,11 +5554,7 @@ def Load_models(pcbThickness, modules):
                                 else:
                                     shape = impPart.Shape.copy()
                                 shape.Placement = impPart.Placement
-                                shape.rotate(
-                                    (pos_x, pos_y, 0),
-                                    (0, 0, 1),
-                                    rot + float(wrl_rot[2]),
-                                )
+                                shape.rotate((pos_x, pos_y, 0), (0, 0, 1), rot + float(wrl_rot[2]))
                                 impPart.Placement = shape.Placement
                                 ##TBChecked
                                 if force_transparency:
@@ -5776,22 +5619,14 @@ def Load_models(pcbThickness, modules):
                                         pos_y + float(wrl_pos[1]) * 25.4,
                                         +pcbThickness + float(wrl_pos[2]) * 25.4,
                                     ),
-                                    FreeCAD.Rotation(
-                                        -float(wrl_rot[2]),
-                                        -float(wrl_rot[1]),
-                                        -float(wrl_rot[0]),
-                                    ),
+                                    FreeCAD.Rotation(-float(wrl_rot[2]), -float(wrl_rot[1]), -float(wrl_rot[0])),
                                 )  # rot is already rot fp -rot wrl
                                 if impPart.TypeId in {"App::Link", "App::LinkPython"}:
                                     shape = Part.getShape(o)
                                 else:
                                     shape = impPart.Shape.copy()
                                 shape.Placement = impPart.Placement
-                                shape.rotate(
-                                    (pos_x, pos_y, 0),
-                                    (0, 0, 1),
-                                    180 + rot + float(wrl_rot[2]),
-                                )
+                                shape.rotate((pos_x, pos_y, 0), (0, 0, 1), 180 + rot + float(wrl_rot[2]))
                                 impPart.Placement = shape.Placement
                                 if impPart.TypeId in {"App::Link", "App::LinkPython"}:
                                     shape = Part.getShape(o)
@@ -5907,19 +5742,11 @@ def Load_models(pcbThickness, modules):
                                         pos_y + float(wrl_pos[1]) * 25.4,
                                         0 + float(wrl_pos[2]) * 25.4,
                                     ),
-                                    FreeCAD.Rotation(
-                                        -float(wrl_rot[2]),
-                                        -float(wrl_rot[1]),
-                                        -float(wrl_rot[0]),
-                                    ),
+                                    FreeCAD.Rotation(-float(wrl_rot[2]), -float(wrl_rot[1]), -float(wrl_rot[0])),
                                 )  # rot is already rot fp -rot wrl
                                 shape = impPart.Shape.copy()
                                 shape.Placement = impPart.Placement
-                                shape.rotate(
-                                    (pos_x, pos_y, 0),
-                                    (0, 0, 1),
-                                    rot + float(wrl_rot[2]),
-                                )
+                                shape.rotate((pos_x, pos_y, 0), (0, 0, 1), rot + float(wrl_rot[2]))
                                 impPart.Placement = shape.Placement
                                 if force_transparency:
                                     FreeCADGui.ActiveDocument.ActiveObject.Transparency = 100
@@ -5957,19 +5784,11 @@ def Load_models(pcbThickness, modules):
                                         pos_y + float(wrl_pos[1]) * 25.4,
                                         +pcbThickness + float(wrl_pos[2]) * 25.4,
                                     ),
-                                    FreeCAD.Rotation(
-                                        -float(wrl_rot[2]),
-                                        -float(wrl_rot[1]),
-                                        -float(wrl_rot[0]),
-                                    ),
+                                    FreeCAD.Rotation(-float(wrl_rot[2]), -float(wrl_rot[1]), -float(wrl_rot[0])),
                                 )  # rot is already rot fp -rot wrl
                                 shape = impPart.Shape.copy()
                                 shape.Placement = impPart.Placement
-                                shape.rotate(
-                                    (pos_x, pos_y, 0),
-                                    (0, 0, 1),
-                                    180 + rot + float(wrl_rot[2]),
-                                )
+                                shape.rotate((pos_x, pos_y, 0), (0, 0, 1), 180 + rot + float(wrl_rot[2]))
                                 impPart.Placement = shape.Placement
                                 shape = impPart.Shape.copy()
                                 shape.Placement = impPart.Placement
@@ -6037,7 +5856,7 @@ def Load_models(pcbThickness, modules):
         if virtualBot_nbr == 0:
             # FreeCAD.ActiveDocument.getObject("BotV").removeObjectsFromDocument()
             FreeCAD.ActiveDocument.removeObject(botV_name)
-                # FreeCAD.ActiveDocument.recompute()
+            # FreeCAD.ActiveDocument.recompute()
     if use_AppPart:
         if modelTop_nbr == 0:
             # FreeCAD.ActiveDocument.getObject("Top").removeObjectsFromDocument()
@@ -6052,7 +5871,6 @@ def Load_models(pcbThickness, modules):
     if 0:  # try
         print("TreeView Test collapsing")
         FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.Board)
-
         FreeCADGui.runCommand("ksuToolsToggleTreeView", 0)
         s = FreeCADGui.Selection.getSelection()[0]
         print(s.Label)
@@ -6151,10 +5969,7 @@ def getPads(board_elab, pcbThickness):
         [X1, Y1, ROT] = re.search(r"\(at\s+([0-9\.-]*?)\s+([0-9\.-]*?)(\s+[0-9\.-]*?|)\)", module).groups()
         X1 = float(X1)
         Y1 = float(Y1) * (-1)
-        if ROT == "":
-            ROT = 0.0
-        else:
-            ROT = float(ROT)
+        ROT = 0.0 if ROT == "" else float(ROT)
         # say('module pos & rot '+str(X1)+' '+str(Y1)+' '+str(ROT))
         #
         for pad in getPadsList(module):
@@ -6219,10 +6034,7 @@ def getPads_flat(board_elab):
         [X1, Y1, ROT] = re.search(r"\(at\s+([0-9\.-]*?)\s+([0-9\.-]*?)(\s+[0-9\.-]*?|)\)", module).groups()
         X1 = float(X1)
         Y1 = float(Y1) * (-1)
-        if ROT == "":
-            ROT = 0.0
-        else:
-            ROT = float(ROT)
+        ROT = 0.0 if ROT == "" else float(ROT)
         # say('module pos & rot '+str(X1)+' '+str(Y1)+' '+str(ROT))
         #
         for pad in getPadsList(module):
@@ -6293,10 +6105,11 @@ def Elaborate_Kicad_Board(filename):
     content = []
     # txtFile = __builtin__.open(filename,"r")
     ##txtFile = __builtin__.open(filename,"rb")
-    txtFile = codecs.open(filename, mode="rb", encoding="utf-8", errors="replace", buffering=1)  # test maui utf-8
-    content = txtFile.readlines()
+    with codecs.open(
+        filename, mode="rb", encoding="utf-8", errors="replace", buffering=1
+    ) as txtFile:  # test maui utf-8
+        content = txtFile.readlines()
     content.append(" ")
-    txtFile.close()
     data = "".join(content)
     if ignore_utf8:
         content = re.sub(r"[^\x00-\x7F]+", " ", data)  # workaround to remove utf8 extra chars
@@ -6311,9 +6124,8 @@ def Elaborate_Kicad_Board(filename):
         t1_name = home + os.sep + "test.txt"
         # f = __builtin__.open(t1_name,'w')
         # f = builtin.open(t1_name,'wb') #py2
-        f = builtin.open(t1_name, "w")  # py3
-        f.write(Kicad_Board_elaborated)  # python will convert \n to os.linesep
-        f.close()  # you can omit in most cases as the destructor will call it
+        with builtin.open(t1_name, "w") as f:  # py3
+            f.write(Kicad_Board_elaborated)  # python will convert \n to os.linesep
     # say(len(Kicad_Board_elaborated))
     # stop
     version = getPCBVersion(Kicad_Board_elaborated)
@@ -6378,9 +6190,8 @@ def Elaborate_Kicad_Board(filename):
         t2_name = home + os.sep + "testM.txt"
         # f = __builtin__.open(t2_name,'w')
         # f = builtin.open(t2_name,'wb')  #py2
-        f = builtin.open(t2_name, "w")  # p3
-        f.write(modified)  # python will convert \n to os.linesep
-        f.close()  # you can omit in most cases as the destructor will call it
+        with builtin.open(t2_name, "w") as f:  # p3
+            f.write(modified)  # python will convert \n to os.linesep
     return modified, Levels, Edge_Cuts_lvl, Top_lvl, version, pcbThickness
 
 
@@ -6420,10 +6231,7 @@ def get3DParams(mdl_name, params, rot, virtual):
         # say("rotate vrml: "+rotz)
     else:
         rotz_vrml_m = "(xyz 0 0 0"
-    if rotz == "":
-        rotz = 0.0
-    else:
-        rotz = float(rotz)
+    rotz = 0.0 if rotz == "" else float(rotz)
     rot_comb = rot - rotz  # adding vrml module z-rotation
     # re.findall(r'\(rotate\s+(.+?)\)', i)
     pos_vrml_m = re.findall(r"\(at\s\(xyz\s+(.+?)\)", params)
@@ -6476,7 +6284,7 @@ def get3DParams(mdl_name, params, rot, virtual):
         # sayw("here")
     else:
         model_name = "no3Dmodel"
-            # sayerr('no3Dmodel')
+        # sayerr('no3Dmodel')
     return model_name, rot_comb, warn, pos_vrml, rotz_vrml, scale_vrml
 
 
@@ -6809,7 +6617,6 @@ def onLoadFootprint(file_name=None):
         name = file_name
     elif not test_flag:
         # if test_flag==False:
-        Filter = ""
         ##if _platform == "darwin":
         ##    ##workaround for OSX not opening native fileopen
         ##    name=QtGui.QFileDialog.getOpenFileName(self, 'Open file',
@@ -6822,14 +6629,17 @@ def onLoadFootprint(file_name=None):
         # path = FreeCAD.ConfigGet("UserAppData")
         # path=last_file_path
         # try:
-        #    name, Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Open File", last_file_path, "*.kicad_mod")#PySide
+        #    name, _Filter = PySide.QtGui.QFileDialog.getOpenFileName(None, "Open File", last_file_path, "*.kicad_mod")#PySide
         # except Exception:
         #    FreeCAD.Console.PrintError("Error : " + str(name) + "\n")
         prefs_ = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
         # print('native_dlg',prefs_.GetBool('native_dlg'))
         if not (prefs_.GetBool("not_native_dlg")):
-            name, Filter = PySide.QtGui.QFileDialog.getOpenFileName(
-                None, "Open File...", make_unicode(last_fp_path), "*.kicad_mod"
+            name, _Filter = PySide.QtGui.QFileDialog.getOpenFileName(
+                None,
+                "Open File...",
+                make_unicode(last_fp_path),
+                "*.kicad_mod",
             )
         else:
             name, _Filter = PySide.QtGui.QFileDialog.getOpenFileName(
@@ -6907,15 +6717,13 @@ def onLoadFootprint(file_name=None):
                 zf.start()
             # zf= Timer (0.3,ZoomFitThread)
             # zf.start()
-            if disable_VBO:
-                if VBO_status:
-                    paramGetV.SetBool("UseVBO", True)
-                    sayw("enabling VBO")
-            if disable_PoM_Observer:
-                if PoMObs_status:
-                    Observer.start()
-                    #        paramGetPoM.SetBool("EnableObserver",True)
-                    sayw("enabling PoM Observer")
+            if disable_VBO and VBO_status:
+                paramGetV.SetBool("UseVBO", True)
+                sayw("enabling VBO")
+            if disable_PoM_Observer and PoMObs_status:
+                Observer.start()
+                #        paramGetPoM.SetBool("EnableObserver",True)
+                sayw("enabling PoM Observer")
         # txtFile.close()
 
 
@@ -6942,19 +6750,16 @@ def check_requirements():
     msg1 = "use ONLY FreeCAD STABLE version 0.15 or later\r\n"
     # msg1+="to generate your STEP and VRML models\r\nFC 016 dev version results are still unpredictable"
     msg1 += "to generate your STEP and VRML models\r\n"
-    if int(FC_majorV) <= 0:
-        if int(FC_minorV) < 15:
-            QtGui.QApplication.restoreOverrideCursor()
-            QtGui.QMessageBox.information(None, "Warning! ...", msg1)
+    if int(FC_majorV) <= 0 and int(FC_minorV) < 15:
+        QtGui.QApplication.restoreOverrideCursor()
+        QtGui.QMessageBox.information(None, "Warning! ...", msg1)
     msg = ""
-    if FC_majorV == 0 and FC_minorV == 17:
-        if FC_git_Nbr >= int(FC_export_min_version):
-            use_AppPart = True
+    if FC_majorV == 0 and FC_minorV == 17 and FC_git_Nbr >= int(FC_export_min_version):
+        use_AppPart = True
     if FC_majorV > 0:
         use_AppPart = True
-    if FC_majorV == 0 and FC_minorV > 17:
-        if FC_git_Nbr >= int(FC_export_min_version):
-            use_AppPart = True
+    if FC_majorV == 0 and FC_minorV > 17 and FC_git_Nbr >= int(FC_export_min_version):
+        use_AppPart = True
     if use_AppPart and not force_oldGroups:
         sayw("creating hierarchy")
     if fusion:
@@ -6986,11 +6791,10 @@ def sanitizeSketch(s_name):
                     print(g, i)
                     sayw("too short")
                     idx_to_del.append(i)
-            if "Circle" in str(g):
-                if g.Radius <= edge_tolerance:
-                    print(g, i)
-                    sayw("too short")
-                    idx_to_del.append(i)
+            if "Circle" in str(g) and g.Radius <= edge_tolerance:
+                print(g, i)
+                sayw("too short")
+                idx_to_del.append(i)
             if "Arc" in str(g):
                 # print('str(g)',str(g))
                 # stop
@@ -7064,10 +6868,7 @@ def add_constraints(s_name):
             # points.append([[point2[0],point2[1]],[geom_index],[2]])
             # points.append([[point1[0],point1[1]],[geom_index]]) #,[1]])
             # points.append([[point2[0],point2[1]],[geom_index]]) #,[2]])
-            if "Line" in type(s.Geometry[geom_index]).__name__:
-                tp = "Line"
-            else:
-                tp = "Arc"
+            tp = "Line" if "Line" in type(s.Geometry[geom_index]).__name__ else "Arc"
             geoms.append([point1[0], point1[1], point2[0], point2[1], tp])
         elif "ArcOfEllipse" in type(s.Geometry[geom_index]).__name__:
             point1 = s.getPoint(geom_index, point_indexes[1])
@@ -7247,42 +7048,22 @@ def add_missing_geo(s_name):
             p_g2_0_1 = [geo2[2], geo2[3]]
             d = distance(p_g0_0, p_g2_0_0)
             if d < edge_tolerance and d > 0:
-                sk_add_geo.append(
-                    PLine(
-                        Base.Vector(p_g0_0[0], p_g0_0[1], 0),
-                        Base.Vector(p_g2_0_0[0], p_g2_0_0[1], 0),
-                    )
-                )
+                sk_add_geo.append(PLine(Base.Vector(p_g0_0[0], p_g0_0[1], 0), Base.Vector(p_g2_0_0[0], p_g2_0_0[1], 0)))
                 # print i,1,i+1,1
             d = distance(p_g0_1, p_g2_0_0)
             if d < edge_tolerance and d > 0:
                 # s.addConstraint(Sketcher.Constraint('Coincident',i,1,j,2))
-                sk_add_geo.append(
-                    PLine(
-                        Base.Vector(p_g0_1[0], p_g0_1[1], 0),
-                        Base.Vector(p_g2_0_0[0], p_g2_0_0[1], 0),
-                    )
-                )
+                sk_add_geo.append(PLine(Base.Vector(p_g0_1[0], p_g0_1[1], 0), Base.Vector(p_g2_0_0[0], p_g2_0_0[1], 0)))
                 # print i,1,i+1,2
             d = distance(p_g0_0, p_g2_0_1)
             if d < edge_tolerance and d > 0:
                 # s.addConstraint(Sketcher.Constraint('Coincident',i,2,j,1))
-                sk_add_geo.append(
-                    PLine(
-                        Base.Vector(p_g0_0[0], p_g0_0[1], 0),
-                        Base.Vector(p_g2_0_1[0], p_g2_0_1[1], 0),
-                    )
-                )
+                sk_add_geo.append(PLine(Base.Vector(p_g0_0[0], p_g0_0[1], 0), Base.Vector(p_g2_0_1[0], p_g2_0_1[1], 0)))
                 # print i,2,i+1,1
             d = distance(p_g0_1, p_g2_0_1)
             if d < edge_tolerance and d > 0:
                 # s.addConstraint(Sketcher.Constraint('Coincident',i,2,j,2))
-                sk_add_geo.append(
-                    PLine(
-                        Base.Vector(p_g0_1[0], p_g0_1[1], 0),
-                        Base.Vector(p_g2_0_1[0], p_g2_0_1[1], 0),
-                    )
-                )
+                sk_add_geo.append(PLine(Base.Vector(p_g0_1[0], p_g0_1[1], 0), Base.Vector(p_g2_0_1[0], p_g2_0_1[1], 0)))
                 # print i,2,i+1,2
             j = j + 1
     sayerr("added Geometry")
@@ -7542,8 +7323,6 @@ def onLoadBoard(file_name=None, load_models=None, insert=None):
             # export_board_2step=True #for cmd line force exporting to STEP
             name = file_name
         elif not test_flag:
-            Filter = ""
-            # minimize main window
             # self.setWindowState(QtCore.Qt.WindowMinimized)
             # infoDialog('ciao')
             # reply = QtGui.QInputDialog.getText(None, "Hello","Enter your thoughts for the day:")
@@ -7557,7 +7336,7 @@ def onLoadBoard(file_name=None, load_models=None, insert=None):
             # self.setWindowState(QtCore.Qt.WindowActive)
             prefs_ = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
             if not (prefs_.GetBool("not_native_dlg")):
-                name, Filter = PySide.QtGui.QFileDialog.getOpenFileName(
+                name, _Filter = PySide.QtGui.QFileDialog.getOpenFileName(
                     None,
                     "Open kicad PCB File...",
                     make_unicode(last_pcb_path),
@@ -7723,10 +7502,7 @@ def onLoadBoard(file_name=None, load_models=None, insert=None):
                         )
                 if SketchLayer == "Edge.Cuts":
                     FreeCAD.ActiveDocument.getObject(board_name).Label = fname
-                if hasattr(mypcb, "general"):
-                    pcbThickness = float(mypcb.general.thickness)
-                else:
-                    pcbThickness = 1.6
+                pcbThickness = float(mypcb.general.thickness) if hasattr(mypcb, "general") else 1.6
                 ## stop  #test parser
                 check_requirements()
                 # stop
@@ -7867,12 +7643,10 @@ def onLoadBoard(file_name=None, load_models=None, insert=None):
 
                 ##FreeCAD.ActiveDocument.recompute()
                 pcb_sk = FreeCAD.ActiveDocument.getObject(newname)
-                gi = 0
-                for g in pcb_sk.Geometry:
+                for gi, g in enumerate(pcb_sk.Geometry):
                     if "BSplineCurve object" in str(g):
                         # say(str(g))
                         FreeCAD.ActiveDocument.getObject(newname).exposeInternalGeometry(gi)
-                    gi += 1
                 if use_LinkGroups and SketchLayer == "Edge.Cuts":
                     FreeCAD.ActiveDocument.getObject(boardG_name).ViewObject.dropObject(
                         FreeCAD.ActiveDocument.getObject(newname),
@@ -7914,10 +7688,9 @@ def onLoadBoard(file_name=None, load_models=None, insert=None):
                     # objs_toberemoved.append([doc.getObject(sketch_name_sfx+'001')])
                     docG = FreeCADGui.ActiveDocument
                     docG.getObject(sketch_name_sfx).Visibility = True
-            elif override_pcb:
-                if doc.getObject(sketch_name_sfx) in doc.Objects:  # if 1: #try:
-                    docG = FreeCADGui.ActiveDocument
-                    docG.getObject(sketch_name_sfx).Visibility = True
+            elif override_pcb and doc.getObject(sketch_name_sfx) in doc.Objects:  # if 1: #try:
+                docG = FreeCADGui.ActiveDocument
+                docG.getObject(sketch_name_sfx).Visibility = True
             if not pull_sketch or load_models:
                 if use_AppPart and not force_oldGroups and not use_LinkGroups:
                     # sayw("creating hierarchy")
@@ -7986,27 +7759,45 @@ def onLoadBoard(file_name=None, load_models=None, insert=None):
                     botVG.Label = botV_name
                     # doc.getObject('Top').adjustRelativeLinks(doc.getObject('Step_Models'))
                     doc.getObject(stepM_name).ViewObject.dropObject(
-                        doc.getObject(top_name), doc.getObject(top_name), "", []
+                        doc.getObject(top_name),
+                        doc.getObject(top_name),
+                        "",
+                        [],
                     )
                     # doc.getObject('TopV').adjustRelativeLinks(doc.getObject('Step_Virtual_Models'))
                     doc.getObject(stepV_name).ViewObject.dropObject(
-                        doc.getObject(topV_name), doc.getObject(topV_name), "", []
+                        doc.getObject(topV_name),
+                        doc.getObject(topV_name),
+                        "",
+                        [],
                     )
                     # doc.getObject('Bot').adjustRelativeLinks(doc.getObject('Step_Models'))
                     doc.getObject(stepM_name).ViewObject.dropObject(
-                        doc.getObject(bot_name), doc.getObject(bot_name), "", []
+                        doc.getObject(bot_name),
+                        doc.getObject(bot_name),
+                        "",
+                        [],
                     )
                     # doc.getObject('BotV').adjustRelativeLinks(doc.getObject('Step_Virtual_Models'))
                     doc.getObject(stepV_name).ViewObject.dropObject(
-                        doc.getObject(botV_name), doc.getObject(botV_name), "", []
+                        doc.getObject(botV_name),
+                        doc.getObject(botV_name),
+                        "",
+                        [],
                     )
                     # doc.getObject('Step_Models').adjustRelativeLinks(doc.getObject('Board'))
                     doc.getObject(board_name).ViewObject.dropObject(
-                        doc.getObject(stepM_name), doc.getObject(stepM_name), "", []
+                        doc.getObject(stepM_name),
+                        doc.getObject(stepM_name),
+                        "",
+                        [],
                     )
                     # doc.getObject('Step_Virtual_Models').adjustRelativeLinks(doc.getObject('Board'))
                     doc.getObject(board_name).ViewObject.dropObject(
-                        doc.getObject(stepV_name), doc.getObject(stepV_name), "", []
+                        doc.getObject(stepV_name),
+                        doc.getObject(stepV_name),
+                        "",
+                        [],
                     )
                     FreeCADGui.Selection.clearSelection()
                 else:
@@ -8038,12 +7829,11 @@ def onLoadBoard(file_name=None, load_models=None, insert=None):
 
                 prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import")
                 ImportMode_status = 0
-                if hasattr(prefs, "GetInts"):
-                    if len(prefs.GetInts()) > 0:
-                        if prefs.GetInt("ImportMode") != 0:
-                            ImportMode_status = prefs.GetInt("ImportMode")
-                            prefs.SetInt("ImportMode", 0)
-                            sayerr("STEP ImportMode NOT as 'Single document'" + "\n")
+                if hasattr(prefs, "GetInts") and len(prefs.GetInts()) > 0:
+                    if prefs.GetInt("ImportMode") != 0:
+                        ImportMode_status = prefs.GetInt("ImportMode")
+                        prefs.SetInt("ImportMode", 0)
+                        sayerr("STEP ImportMode NOT as 'Single document'" + "\n")
                 ##ReadShapeCompoundMode
                 paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
                 ReadShapeCompoundMode_status = paramGetVS.GetBool("ReadShapeCompoundMode")
@@ -8052,11 +7842,8 @@ def onLoadBoard(file_name=None, load_models=None, insert=None):
                 # FreeCAD.Console.PrintLog("ReadShapeCompoundMode status "+str(ReadShapeCompoundMode_status)+"\n")
                 # stop
                 enable_ReadShapeCompoundMode = False
-                if (
-                    (ReadShapeCompoundMode_status
-                    and allow_compound == "True")
-                    or (ReadShapeCompoundMode_status
-                    and allow_compound == "Hierarchy")
+                if (ReadShapeCompoundMode_status and allow_compound == "True") or (
+                    ReadShapeCompoundMode_status and allow_compound == "Hierarchy"
                 ):
                     paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
                     paramGetVS.SetBool("ReadShapeCompoundMode", False)
@@ -8082,15 +7869,13 @@ def onLoadBoard(file_name=None, load_models=None, insert=None):
                     paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
                     paramGetVS.SetBool("ReadShapeCompoundMode", ReadShapeCompoundMode_status)
                     sayw("enabling ReadShapeCompoundMode")
-                if disable_VBO:
-                    if VBO_status:
-                        paramGetV.SetBool("UseVBO", True)
-                        sayw("enabling VBO")
-                if disable_PoM_Observer:
-                    if PoMObs_status:
-                        Observer.start()
-                        #    paramGetPoM.SetBool("EnableObserver",True)
-                        sayw("enabling PoM Observer")
+                if disable_VBO and VBO_status:
+                    paramGetV.SetBool("UseVBO", True)
+                    sayw("enabling VBO")
+                if disable_PoM_Observer and PoMObs_status:
+                    Observer.start()
+                    #    paramGetPoM.SetBool("EnableObserver",True)
+                    sayw("enabling PoM Observer")
 
                 def find_nth(haystack, needle, n):
                     start = haystack.find(needle)
@@ -8191,36 +7976,41 @@ def onLoadBoard(file_name=None, load_models=None, insert=None):
                 if FCV_date >= "2020/06/27":
                     STEP_UseAppPart_available = True  # new STEP import export mode available
                     say("STEP UseAppPart available")
-            if hasattr(prefs, "GetBools"):
-                if (
-                    ("UseAppPart" in prefs.GetBools() or "UseLinkGroup" in prefs.GetBools())
-                    and STEP_UseAppPart_available
-                ) or len(prefs.GetBools()) == 0:
-                    if (
-                        (not prefs.GetBool("UseAppPart") and "UseLinkGroup" not in prefs.GetBools())
-                        or prefs.GetBool("UseLegacyImporter")
-                        or not prefs.GetBool("UseBaseName")
-                        or prefs.GetBool("ExportLegacy")
-                        or ReadShapeCompoundMode_status
-                        or prefs.GetBool("UseLinkGroup")
-                    ):  #  or ImportMode_status != 0:
-                        msg = "Please set your preferences for STEP Import Export as in the displayed image\n"
-                        msg += "(you can disable this warning on StepUp preferences)\n"
-                        if "help_warning_enabled" in prefsKSU.GetBools():
-                            if prefsKSU.GetBool("help_warning_enabled"):
-                                StepPrefsDlg = QtGui.QDialog()
-                                ui = Ui_STEP_Preferences()
-                                ui.setupUi(StepPrefsDlg)
-                                reply = StepPrefsDlg.exec_()
-                                sayw(msg)
-                                # QtGui.QApplication.restoreOverrideCursor()
-                                # reply = QtGui.QMessageBox.information(None,"Info ...",msg)
-                        else:  # first time new settings parameter
-                            StepPrefsDlg = QtGui.QDialog()
-                            ui = Ui_STEP_Preferences()
-                            ui.setupUi(StepPrefsDlg)
-                            reply = StepPrefsDlg.exec_()
-                            sayw(msg)
+            if (
+                hasattr(prefs, "GetBools")
+                and (
+                    (
+                        ("UseAppPart" in prefs.GetBools() or "UseLinkGroup" in prefs.GetBools())
+                        and STEP_UseAppPart_available
+                    )
+                    or len(prefs.GetBools()) == 0
+                )
+                and (
+                    (not prefs.GetBool("UseAppPart") and "UseLinkGroup" not in prefs.GetBools())
+                    or prefs.GetBool("UseLegacyImporter")
+                    or not prefs.GetBool("UseBaseName")
+                    or prefs.GetBool("ExportLegacy")
+                    or ReadShapeCompoundMode_status
+                    or prefs.GetBool("UseLinkGroup")
+                )
+            ):  #  or ImportMode_status != 0:
+                msg = "Please set your preferences for STEP Import Export as in the displayed image\n"
+                msg += "(you can disable this warning on StepUp preferences)\n"
+                if "help_warning_enabled" in prefsKSU.GetBools():
+                    if prefsKSU.GetBool("help_warning_enabled"):
+                        StepPrefsDlg = QtGui.QDialog()
+                        ui = Ui_STEP_Preferences()
+                        ui.setupUi(StepPrefsDlg)
+                        reply = StepPrefsDlg.exec_()
+                        sayw(msg)
+                        # QtGui.QApplication.restoreOverrideCursor()
+                        # reply = QtGui.QMessageBox.information(None,"Info ...",msg)
+                else:  # first time new settings parameter
+                    StepPrefsDlg = QtGui.QDialog()
+                    ui = Ui_STEP_Preferences()
+                    ui.setupUi(StepPrefsDlg)
+                    reply = StepPrefsDlg.exec_()
+                    sayw(msg)
             # TB reviewed
             # if 'LinkView' in dir(FreeCADGui):
             #    FreeCADGui.Selection.clearSelection()
@@ -8272,10 +8062,9 @@ def onLoadBoard(file_name=None, load_models=None, insert=None):
 def routineR_XYZ(axe, alpha):
     global resetP
     say("routine Rotate XYZ")
-    if 0:
-        if "Assembly2Workbench" not in FreeCADGui.activeWorkbench().name():
-            if "PartWorkbench" not in FreeCADGui.activeWorkbench().name():
-                FreeCADGui.activateWorkbench("PartWorkbench")
+    if False:
+        if "PartWorkbench" not in FreeCADGui.activeWorkbench().name():
+            FreeCADGui.activateWorkbench("PartWorkbench")
     # FreeCADGui.SendMsgToActiveView("ViewFit")
     ##FreeCADGui.activeDocument().activeView().viewTop()
     doc = FreeCAD.ActiveDocument
@@ -8308,33 +8097,21 @@ def routineR_XYZ(axe, alpha):
         if axe == "x":
             # shape.rotate((0,0,0),(1,0,0),90)
             shape.rotate(
-                (
-                    oripl_X + boundBoxLX / 2,
-                    oripl_Y + boundBoxLY / 2,
-                    oripl_Z + boundBoxLZ / 2,
-                ),
+                (oripl_X + boundBoxLX / 2, oripl_Y + boundBoxLY / 2, oripl_Z + boundBoxLZ / 2),
                 (1, 0, 0),
                 int(angle),
             )
         if axe == "y":
             # shape.rotate((0,0,0),(0,1,0),90)
             shape.rotate(
-                (
-                    oripl_X + boundBoxLX / 2,
-                    oripl_Y + boundBoxLY / 2,
-                    oripl_Z + boundBoxLZ / 2,
-                ),
+                (oripl_X + boundBoxLX / 2, oripl_Y + boundBoxLY / 2, oripl_Z + boundBoxLZ / 2),
                 (0, 1, 0),
                 int(angle),
             )
         if axe == "z":
             # shape.rotate((0,0,0),(0,0,1),90)
             shape.rotate(
-                (
-                    oripl_X + boundBoxLX / 2,
-                    oripl_Y + boundBoxLY / 2,
-                    oripl_Z + boundBoxLZ / 2,
-                ),
+                (oripl_X + boundBoxLX / 2, oripl_Y + boundBoxLY / 2, oripl_Z + boundBoxLZ / 2),
                 (0, 0, 1),
                 int(angle),
             )
@@ -8359,10 +8136,9 @@ def routineR_XYZ(axe, alpha):
 def routineT_XYZ(axe, v):
     global resetP
     say("routine Translate XYZ")
-    if 0:
-        if "Assembly2Workbench" not in FreeCADGui.activeWorkbench().name():
-            if "PartWorkbench" not in FreeCADGui.activeWorkbench().name():
-                FreeCADGui.activateWorkbench("PartWorkbench")
+    if False:
+        if "PartWorkbench" not in FreeCADGui.activeWorkbench().name():
+            FreeCADGui.activateWorkbench("PartWorkbench")
     # FreeCADGui.SendMsgToActiveView("ViewFit")
     ##FreeCADGui.activeDocument().activeView().viewTop()
     doc = FreeCAD.ActiveDocument
@@ -8410,11 +8186,9 @@ def routineT_XYZ(axe, v):
 def routineResetPlacement(keepWB=None):
 
     objs = []
-    if 0:
-        if "Assembly2Workbench" not in FreeCADGui.activeWorkbench().name():
-            if "PartWorkbench" not in FreeCADGui.activeWorkbench().name():
-                if keepWB is None:
-                    FreeCADGui.activateWorkbench("PartWorkbench")
+    if False:
+        if "PartWorkbench" not in FreeCADGui.activeWorkbench().name() and keepWB is None:
+            FreeCADGui.activateWorkbench("PartWorkbench")
     # FreeCADGui.SendMsgToActiveView("ViewFit")
     ##FreeCADGui.activeDocument().activeView().viewTop()
     selEx = FreeCADGui.Selection.getSelectionEx()
@@ -8447,7 +8221,7 @@ def routineResetPlacement(keepWB=None):
             else:  # workaround for issue in resetting pacement for STEP 'merge' importing
                 say("routine reset Placement refining")
                 FreeCAD.ActiveDocument.addObject("Part::Refine", "Refined").Source = FreeCAD.ActiveDocument.getObject(
-                    objs[0].Name
+                    objs[0].Name,
                 )
                 RefName = FreeCAD.ActiveDocument.ActiveObject.Name
                 FreeCAD.ActiveDocument.recompute()
@@ -8464,19 +8238,19 @@ def routineResetPlacement(keepWB=None):
         if hasattr(FreeCADGui.ActiveDocument.getObject(objs[0].Name), "ShapeColor"):
             say("has shapecolor")
             FreeCADGui.ActiveDocument.getObject(CpyName).ShapeColor = FreeCADGui.ActiveDocument.getObject(
-                objs[0].Name
+                objs[0].Name,
             ).ShapeColor
             FreeCADGui.ActiveDocument.getObject(CpyName).LineColor = FreeCADGui.ActiveDocument.getObject(
-                objs[0].Name
+                objs[0].Name,
             ).LineColor
             FreeCADGui.ActiveDocument.getObject(CpyName).PointColor = FreeCADGui.ActiveDocument.getObject(
-                objs[0].Name
+                objs[0].Name,
             ).PointColor
             FreeCADGui.ActiveDocument.getObject(CpyName).DiffuseColor = FreeCADGui.ActiveDocument.getObject(
-                objs[0].Name
+                objs[0].Name,
             ).DiffuseColor
         FreeCADGui.ActiveDocument.ActiveObject.Transparency = FreeCADGui.ActiveDocument.getObject(
-            objs[0].Name
+            objs[0].Name,
         ).Transparency
 
         new_label = objs[0].Label
@@ -8602,10 +8376,9 @@ def routineScaleVRML():
 def routineScaleVRML_1():
     global rot_wrl, zfit
     say("routine Scale to VRML 1/2.54")
-    if 0:
-        if "Assembly2Workbench" not in FreeCADGui.activeWorkbench().name():
-            if "PartWorkbench" not in FreeCADGui.activeWorkbench().name():
-                FreeCADGui.activateWorkbench("PartWorkbench")
+    if False:
+        if "PartWorkbench" not in FreeCADGui.activeWorkbench().name():
+            FreeCADGui.activateWorkbench("PartWorkbench")
     # FreeCADGui.SendMsgToActiveView("ViewFit")
     ##FreeCADGui.activeDocument().activeView().viewTop()
     selEx = FreeCADGui.Selection.getSelectionEx()
@@ -8675,10 +8448,9 @@ def routineC_XYZ(axe):
     say("routine center position")
     # if self.checkBox_1.isChecked():
     #    routineResetPlacement()
-    if 0:
-        if "Assembly2Workbench" not in FreeCADGui.activeWorkbench().name():
-            if "PartWorkbench" not in FreeCADGui.activeWorkbench().name():
-                FreeCADGui.activateWorkbench("PartWorkbench")
+    if False:
+        if "PartWorkbench" not in FreeCADGui.activeWorkbench().name():
+            FreeCADGui.activateWorkbench("PartWorkbench")
     # FreeCADGui.SendMsgToActiveView("ViewFit")
     ##FreeCADGui.activeDocument().activeView().viewTop()
     doc = FreeCAD.ActiveDocument
@@ -8752,10 +8524,9 @@ def routineP_XYZ(axe):
     global resetP
     say("routine put on axe")
     # routineResetPlacement()
-    if 0:
-        if "Assembly2Workbench" not in FreeCADGui.activeWorkbench().name():
-            if "PartWorkbench" not in FreeCADGui.activeWorkbench().name():
-                FreeCADGui.activateWorkbench("PartWorkbench")
+    if False:
+        if "PartWorkbench" not in FreeCADGui.activeWorkbench().name():
+            FreeCADGui.activateWorkbench("PartWorkbench")
     # FreeCADGui.SendMsgToActiveView("ViewFit")
     ##FreeCADGui.activeDocument().activeView().viewTop()
     doc = FreeCAD.ActiveDocument
@@ -8885,10 +8656,9 @@ def say_info(msg):
 def get_position():
     global min_val, exportS
     say("routine get base position")
-    if 0:
-        if "Assembly2Workbench" not in FreeCADGui.activeWorkbench().name():
-            if "PartWorkbench" not in FreeCADGui.activeWorkbench().name():
-                FreeCADGui.activateWorkbench("PartWorkbench")
+    if False:
+        if "PartWorkbench" not in FreeCADGui.activeWorkbench().name():
+            FreeCADGui.activateWorkbench("PartWorkbench")
     # FreeCADGui.SendMsgToActiveView("ViewFit")
     ##FreeCADGui.activeDocument().activeView().viewTop()
     # say("hereXYZ !")
@@ -8926,20 +8696,20 @@ def get_position():
     elif exportS:
         say(translate("Say", "Select ONE single part object !"))
     return None
-            ##QtGui.QMessageBox.information(None,"Info ...","Select ONE single part object !\r\n"+"\r\n")
-            # QtGui.QApplication.restoreOverrideCursor()
-            # msg="""Select <b>ONE single part</b> object !<br>
-            # suggestion for multi-part:<br>&nbsp;&nbsp;<b>Part Boolean Union (recommended)</b><br><i>or<br>&nbsp;&nbsp;Part Make compound (alternative choice)</i>"""
-            # spc="""<font color='white'>*******************************************************************************</font><br>
-            # """
-            # msg1="Error in selection"
-            # QtGui.QApplication.restoreOverrideCursor()
-            ##RotateXYZGuiClass().setGeometry(25, 250, 500, 500)
-            # diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
-            #                        msg1,
-            #                        msg)
-            # diag.setWindowModality(QtCore.Qt.ApplicationModal)
-            # diag.exec_()
+    ##QtGui.QMessageBox.information(None,"Info ...","Select ONE single part object !\r\n"+"\r\n")
+    # QtGui.QApplication.restoreOverrideCursor()
+    # msg="""Select <b>ONE single part</b> object !<br>
+    # suggestion for multi-part:<br>&nbsp;&nbsp;<b>Part Boolean Union (recommended)</b><br><i>or<br>&nbsp;&nbsp;Part Make compound (alternative choice)</i>"""
+    # spc="""<font color='white'>*******************************************************************************</font><br>
+    # """
+    # msg1="Error in selection"
+    # QtGui.QApplication.restoreOverrideCursor()
+    ##RotateXYZGuiClass().setGeometry(25, 250, 500, 500)
+    # diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Critical,
+    #                        msg1,
+    #                        msg)
+    # diag.setWindowModality(QtCore.Qt.ApplicationModal)
+    # diag.exec_()
 
 
 ###  end get position
@@ -8948,10 +8718,9 @@ def get_position():
 def routineM_XYZ(axe, v):
     global resetP
     say("routine Move to point XYZ")
-    if 0:
-        if "Assembly2Workbench" not in FreeCADGui.activeWorkbench().name():
-            if "PartWorkbench" not in FreeCADGui.activeWorkbench().name():
-                FreeCADGui.activateWorkbench("PartWorkbench")
+    if False:
+        if "PartWorkbench" not in FreeCADGui.activeWorkbench().name():
+            FreeCADGui.activateWorkbench("PartWorkbench")
     # FreeCADGui.SendMsgToActiveView("ViewFit")
     ##FreeCADGui.activeDocument().activeView().viewTop()
     doc = FreeCAD.ActiveDocument
@@ -9059,12 +8828,11 @@ def routineCollisions():
         ):
             # print obj.TypeId
             # object_list.append(obj)
-            if obj.Name not in object_names_list:
-                if hasattr(obj, "Placement"):
-                    object_list.append(obj)
-                    n_objs = n_objs + 1
-                    # object_names_list.append(obj.Name)
-                    # n_objs=n_objs+1
+            if obj.Name not in object_names_list and hasattr(obj, "Placement"):
+                object_list.append(obj)
+                n_objs = n_objs + 1
+                # object_names_list.append(obj.Name)
+                # n_objs=n_objs+1
         elif "App::Part" in obj.TypeId or "Compound" in obj.TypeId or "Body" in obj.TypeId:
             # adding any single part of the group
             # say('recursing AppPart or Compound')
@@ -9107,11 +8875,7 @@ def routineCollisions():
                     # print object_a.InListRecursive
                     # print object_b.InListRecursive
                     ## copy objects and apply absolute placement to each one, then check collisions
-                    FreeCAD.Placement(
-                        FreeCAD.Vector(0, 0, 0),
-                        FreeCAD.Rotation(0, 0, 0),
-                        FreeCAD.Vector(0, 0, 0),
-                    )
+                    FreeCAD.Placement(FreeCAD.Vector(0, 0, 0), FreeCAD.Rotation(0, 0, 0), FreeCAD.Vector(0, 0, 0))
                     s = shape_a
                     # say('resetting props #2')
                     r = []
@@ -9139,7 +8903,7 @@ def routineCollisions():
                         for i in range(lrl):
                             if hasattr(object_a.InListRecursive[i], "Placement"):
                                 acpy.Placement = acpy.Placement.multiply(
-                                    object_a.InListRecursive[lrl - 1 - i].Placement
+                                    object_a.InListRecursive[lrl - 1 - i].Placement,
                                 )
                     # acpy.Placement=acpy.Placement.multiply(pa_Original)
                     # Part.show(acpy)
@@ -9166,7 +8930,7 @@ def routineCollisions():
                         for i in range(lrl):
                             if hasattr(object_b.InListRecursive[i], "Placement"):
                                 bcpy.Placement = bcpy.Placement.multiply(
-                                    object_b.InListRecursive[lrl - 1 - i].Placement
+                                    object_b.InListRecursive[lrl - 1 - i].Placement,
                                 )
                     # Part.show(bcpy)
                     common = acpy.common(bcpy)
@@ -9297,22 +9061,16 @@ def create_axis():
     FreeCAD.ActiveDocument.getObject("AxisConeZ").Radius2 = "0 mm"
     FreeCAD.ActiveDocument.getObject("AxisConeZ").Radius2 = "0.1 mm"
     FreeCAD.ActiveDocument.getObject("AxisConeZ").Placement = FreeCAD.Placement(
-        FreeCAD.Vector(0, 0, 9), FreeCAD.Rotation(FreeCAD.Vector(0, 0, 1), 0)
+        FreeCAD.Vector(0, 0, 9),
+        FreeCAD.Rotation(FreeCAD.Vector(0, 0, 1), 0),
     )
     FreeCAD.ActiveDocument.getObject("AxisConeZ").Height = "5 mm"
     FreeCAD.ActiveDocument.getObject("AxisBoxZ").Placement = FreeCAD.Placement(
-        FreeCAD.Vector(-0.1, -0.05, 0), FreeCAD.Rotation(FreeCAD.Vector(0, 0, 1), 0)
+        FreeCAD.Vector(-0.1, -0.05, 0),
+        FreeCAD.Rotation(FreeCAD.Vector(0, 0, 1), 0),
     )
-    FreeCADGui.ActiveDocument.getObject("AxisConeZ").ShapeColor = (
-        0.0000,
-        0.0000,
-        1.0000,
-    )
-    FreeCADGui.ActiveDocument.getObject("AxisBoxZ").ShapeColor = (
-        0.0000,
-        0.0000,
-        1.0000,
-    )
+    FreeCADGui.ActiveDocument.getObject("AxisConeZ").ShapeColor = (0.0000, 0.0000, 1.0000)
+    FreeCADGui.ActiveDocument.getObject("AxisBoxZ").ShapeColor = (0.0000, 0.0000, 1.0000)
     FreeCAD.activeDocument().addObject("Part::MultiFuse", "FusionAxisZ")
     FreeCAD.activeDocument().FusionAxisZ.Shapes = [
         FreeCAD.activeDocument().AxisBoxZ,
@@ -9349,22 +9107,16 @@ def create_axis():
     FreeCAD.ActiveDocument.getObject("AxisConeY").Radius2 = "0 mm"
     FreeCAD.ActiveDocument.getObject("AxisConeY").Radius2 = "0.1 mm"
     FreeCAD.ActiveDocument.getObject("AxisConeY").Placement = FreeCAD.Placement(
-        FreeCAD.Vector(0, 0, 9), FreeCAD.Rotation(FreeCAD.Vector(0, 0, 1), 0)
+        FreeCAD.Vector(0, 0, 9),
+        FreeCAD.Rotation(FreeCAD.Vector(0, 0, 1), 0),
     )
     FreeCAD.ActiveDocument.getObject("AxisConeY").Height = "5 mm"
     FreeCAD.ActiveDocument.getObject("AxisBoxY").Placement = FreeCAD.Placement(
-        FreeCAD.Vector(-0.1, -0.05, 0), FreeCAD.Rotation(FreeCAD.Vector(0, 0, 1), 0)
+        FreeCAD.Vector(-0.1, -0.05, 0),
+        FreeCAD.Rotation(FreeCAD.Vector(0, 0, 1), 0),
     )
-    FreeCADGui.ActiveDocument.getObject("AxisConeY").ShapeColor = (
-        0.0000,
-        1.0000,
-        0.0000,
-    )
-    FreeCADGui.ActiveDocument.getObject("AxisBoxY").ShapeColor = (
-        0.0000,
-        1.0000,
-        0.0000,
-    )
+    FreeCADGui.ActiveDocument.getObject("AxisConeY").ShapeColor = (0.0000, 1.0000, 0.0000)
+    FreeCADGui.ActiveDocument.getObject("AxisBoxY").ShapeColor = (0.0000, 1.0000, 0.0000)
     FreeCAD.activeDocument().addObject("Part::MultiFuse", "FusionAxisY")
     FreeCAD.activeDocument().FusionAxisY.Shapes = [
         FreeCAD.activeDocument().AxisBoxY,
@@ -9387,7 +9139,8 @@ def create_axis():
     FreeCAD.ActiveDocument.removeObject("AxisConeY")
     FreeCAD.ActiveDocument.recompute()
     FreeCAD.ActiveDocument.ActiveObject.Placement = FreeCAD.Placement(
-        FreeCAD.Vector(0, 0, 0.05), FreeCAD.Rotation(FreeCAD.Vector(1, 0, 0), -90)
+        FreeCAD.Vector(0, 0, 0.05),
+        FreeCAD.Rotation(FreeCAD.Vector(1, 0, 0), -90),
     )
 
     # X axis
@@ -9404,22 +9157,16 @@ def create_axis():
     FreeCAD.ActiveDocument.getObject("AxisConeX").Radius2 = "0 mm"
     FreeCAD.ActiveDocument.getObject("AxisConeX").Radius2 = "0.1 mm"
     FreeCAD.ActiveDocument.getObject("AxisConeX").Placement = FreeCAD.Placement(
-        FreeCAD.Vector(0, 0, 9), FreeCAD.Rotation(FreeCAD.Vector(0, 0, 1), 0)
+        FreeCAD.Vector(0, 0, 9),
+        FreeCAD.Rotation(FreeCAD.Vector(0, 0, 1), 0),
     )
     FreeCAD.ActiveDocument.getObject("AxisConeX").Height = "5 mm"
     FreeCAD.ActiveDocument.getObject("AxisBoxX").Placement = FreeCAD.Placement(
-        FreeCAD.Vector(-0.1, -0.05, 0), FreeCAD.Rotation(FreeCAD.Vector(0, 0, 1), 0)
+        FreeCAD.Vector(-0.1, -0.05, 0),
+        FreeCAD.Rotation(FreeCAD.Vector(0, 0, 1), 0),
     )
-    FreeCADGui.ActiveDocument.getObject("AxisConeX").ShapeColor = (
-        1.0000,
-        0.0000,
-        0.0000,
-    )
-    FreeCADGui.ActiveDocument.getObject("AxisBoxX").ShapeColor = (
-        1.0000,
-        0.0000,
-        0.0000,
-    )
+    FreeCADGui.ActiveDocument.getObject("AxisConeX").ShapeColor = (1.0000, 0.0000, 0.0000)
+    FreeCADGui.ActiveDocument.getObject("AxisBoxX").ShapeColor = (1.0000, 0.0000, 0.0000)
     FreeCAD.activeDocument().addObject("Part::MultiFuse", "FusionAxisX")
     FreeCAD.activeDocument().FusionAxisX.Shapes = [
         FreeCAD.activeDocument().AxisBoxX,
@@ -9441,14 +9188,14 @@ def create_axis():
     FreeCAD.ActiveDocument.removeObject("AxisBoxX")
     FreeCAD.ActiveDocument.removeObject("AxisConeX")
     FreeCAD.ActiveDocument.getObject("FusionAxisX1").Placement = FreeCAD.Placement(
-        FreeCAD.Vector(0, -0.05, 0), FreeCAD.Rotation(FreeCAD.Vector(0, 1, 0), 90)
+        FreeCAD.Vector(0, -0.05, 0),
+        FreeCAD.Rotation(FreeCAD.Vector(0, 1, 0), 90),
     )
 
     FreeCAD.ActiveDocument.recompute()
-    if disable_PoM_Observer:
-        if PoMObs_status:
-            Observer.start()
-            sayw("enabling PoM Observer")
+    if disable_PoM_Observer and PoMObs_status:
+        Observer.start()
+        sayw("enabling PoM Observer")
 
 
 ###
@@ -9518,13 +9265,7 @@ def rotateObj(mainObj, rot):
 ###
 def rotateObjs(listObjs, rot):
     # listObjs.rotate(FreeCAD.Vector(rot[0], rot[1], 0), FreeCAD.Vector(0, 0, 1), rot[2])
-    Draft.rotate(
-        listObjs,
-        rot[2],
-        FreeCAD.Vector(rot[0], rot[1], 0.0),
-        axis=FreeCAD.Vector(0.0, 0.0, 1.0),
-        copy=False,
-    )
+    Draft.rotate(listObjs, rot[2], FreeCAD.Vector(rot[0], rot[1], 0.0), axis=FreeCAD.Vector(0.0, 0.0, 1.0), copy=False)
 
 
 ###
@@ -9548,11 +9289,7 @@ def arcMidPoint(prev_vertex, vertex, angle):
     angle = radians(angle / 2)
     basic_angle = atan2(y2 - y1, x2 - x1) - pi / 2
     shift = (1 - cos(angle)) * hypot(y2 - y1, x2 - x1) / 2 / sin(angle)
-    return [
-        (x2 + x1) / 2 + shift * cos(basic_angle),
-        (y2 + y1) / 2 + shift * sin(basic_angle),
-    ]
-
+    return [(x2 + x1) / 2 + shift * cos(basic_angle), (y2 + y1) / 2 + shift * sin(basic_angle)]
 
 
 ###
@@ -9632,7 +9369,6 @@ def arcRadius(x1, y1, x2, y2, angle):
     # p1_M - distance between point p1 and M
     p1_M = sqrt((x1 - Mx) ** 2 + (y1 - My) ** 2)
     return float(f"{abs(p1_M / sin(radians(angle / 2.0))):4.9f}")  # radius of searching circle - line C_p1
-
 
 
 def arcAngles2(edge, angle):  # (xs, ys, xe, ye, cx, cy, angle):
@@ -9781,10 +9517,7 @@ def getCircle(layer, content, oType):
 
         radius = sqrt((xs - x1) ** 2 + (ys - y1) ** 2)
 
-        if i[5] == "":
-            width = 0.01
-        else:
-            width = float(i[5])
+        width = 0.01 if i[5] == "" else float(i[5])
 
         data.append([xs, ys, radius, width])
     #
@@ -9812,10 +9545,7 @@ def getCircleF(layer, content, oType, m=[0, 0]):
 
         radius = sqrt((xs - x1) ** 2 + (ys - y1) ** 2)
 
-        if i[5] == "":
-            width = 0.01
-        else:
-            width = float(i[5])
+        width = 0.01 if i[5] == "" else float(i[5])
         if m[0] != 0:
             xs += m[0]
         if m[1] != 0:
@@ -9865,10 +9595,7 @@ def getArc(layer, content, oType):
         x1 = float(i[2])
         y1 = float(i[3])
         curve = float(i[4])
-        if i[6].strip() != "":
-            width = float(i[6])
-        else:
-            width = 0
+        width = float(i[6]) if i[6].strip() != "" else 0
         if abs(curve) == 360:
             [x2, y2] = [xs, ys]
         else:
@@ -9889,10 +9616,7 @@ def getArc(layer, content, oType):
             ym = float(i[3])
             x1 = float(i[4])
             y1 = float(i[5])
-            if i[6].strip() != "":
-                width = float(i[6])
-            else:
-                width = 0
+            width = float(i[6]) if i[6].strip() != "" else 0
             data.append([xs, ys * (-1), xm, ym * (-1), x1, y1 * (-1), width])
     return data
 
@@ -9913,10 +9637,7 @@ def getArcF(layer, content, oType, m=[0, 0]):
         x1 = float(i[2])
         y1 = float(i[3])
         curve = float(i[4])
-        if i[6].strip() != "":
-            width = float(i[6])
-        else:
-            width = 0
+        width = float(i[6]) if i[6].strip() != "" else 0
 
         [x2, y2] = rotPoint2([x1, y1], [xs, ys], curve)
         y1 *= -1
@@ -10013,10 +9734,7 @@ def getwrlData(source):
     #    #say("rotz temp:"+temp[2])
     #    ##rotz=temp[2]
     #    #say("rotate vrml: "+rotz)
-    if zrot_vrml == "":
-        zrot_vrml = 0.0
-    else:
-        zrot_vrml = float(zrot_vrml)
+    zrot_vrml = 0.0 if zrot_vrml == "" else float(zrot_vrml)
     # say(rot_wrl);
     return wrl_pos, scale_vrml, rot_wrl
 
@@ -10038,11 +9756,7 @@ def getwrlRot(source):
         # say("rotz temp:"+temp[2])
         rotz = temp[2]
         # say("rotate vrml: "+rotz)
-    if rotz == "":
-        rotz = 0.0
-    else:
-        rotz = float(rotz)
-    return rotz  # adding vrml module z-rotation
+    return 0.0 if rotz == "" else float(rotz)
 
 
 ###
@@ -10078,13 +9792,11 @@ def getPadsList(content):
                     0
                 ]  # pad shape - circle/rec/oval/trapezoid/roundrect
                 pRoundG = re.search(r"\(roundrect_rratio\s+([0-9\.-]+?)\)", j)
-                if pRoundG is not None:
-                    pRound = pRoundG.groups(0)[0]
-                else:
-                    pRound = None
+                pRound = pRoundG.groups(0)[0] if pRoundG is not None else None
                 # pCircleG = re.search(r'\(gr_circle+.+?\)\)', j, re.MULTILINE|re.DOTALL)   #re.search(r'\(gr_circle\s.+(?=\)\)$)', j)  #(?<=^startstr).+(?=stopstr$)
                 pCircleG = re.search(
-                    r"(\(gr_circle)\s+(.+?)\)\)", j
+                    r"(\(gr_circle)\s+(.+?)\)\)",
+                    j,
                 )  # , re.MULTILINE|re.DOTALL)   #re.search(r'\(gr_circle\s.+(?=\)\)$)', j)  #(?<=^startstr).+(?=stopstr$)
                 # print(pCircleG);print(j);stop
                 if pCircleG is not None:
@@ -10105,10 +9817,7 @@ def getPadsList(content):
                     sayerr("NO LAYERS on PAD")  # test utf-8 test pads
                 # print(layers)
                 # stop
-                data = re.search(
-                    r"\(drill(\s+oval\s+|\s+)(.*?)(\s+[-0-9\.]*?|)(\s+\(offset\s+(.*?)\s+(.*?)\)|)\)",
-                    j,
-                )
+                data = re.search(r"\(drill(\s+oval\s+|\s+)(.*?)(\s+[-0-9\.]*?|)(\s+\(offset\s+(.*?)\s+(.*?)\)|)\)", j)
                 data_off = re.search(r"\(offset\s+([0-9\.-]+?)\s+([0-9\.-]+?)\)", j)
                 pnts = re.search(r"\(gr_poly\s\(pts(.*?)\)\s\(width", j, re.MULTILINE | re.DOTALL)
                 # pnts_nt = re.search(r'\(fp_poly\s\(pts(.*?)\)\s\(width', j, re.MULTILINE|re.DOTALL)
@@ -10140,15 +9849,9 @@ def getPadsList(content):
                         [xOF, yOF] = [0.0, 0.0]
                     else:
                         data_off = data_off.groups()
-                        if not data_off[0] or data_off[0].strip() == "":
-                            xOF = 0.0
-                        else:
-                            xOF = float(data_off[0])
+                        xOF = 0.0 if not data_off[0] or data_off[0].strip() == "" else float(data_off[0])
 
-                        if not data_off[1] or data_off[1].strip() == "":
-                            yOF = 0.0
-                        else:
-                            yOF = float(data_off[1])
+                        yOF = 0.0 if not data_off[1] or data_off[1].strip() == "" else float(data_off[1])
                 else:
                     data = data.groups()
                     hType = data[0]
@@ -10162,15 +9865,9 @@ def getPadsList(content):
                         drill_y = float(data[2])  # / 2.0
                     # drill_y=drill_x
 
-                    if not data[4] or data[4].strip() == "":
-                        xOF = 0.0
-                    else:
-                        xOF = float(data[4])
+                    xOF = 0.0 if not data[4] or data[4].strip() == "" else float(data[4])
 
-                    if not data[5] or data[5].strip() == "":
-                        yOF = 0.0
-                    else:
-                        yOF = float(data[5])
+                    yOF = 0.0 if not data[5] or data[5].strip() == "" else float(data[5])
                 ##
                 # say(data)
                 pads.append(
@@ -10192,7 +9889,7 @@ def getPadsList(content):
                         "anchor": anchor,
                         "rratio": pRound,
                         "geomC": pCircleG,
-                    }
+                    },
                 )
 
     # say(pads)
@@ -10310,7 +10007,7 @@ def createArc_OLD(p1, p2, curve, width=0.02, cap="round"):
                 FreeCAD.Base.Vector(xT_1, yT_1, 0),
                 FreeCAD.Base.Vector(xT_3, yT_3, 0),
                 FreeCAD.Base.Vector(xT_2, yT_2, 0),
-            )
+            ),
         )
         ## inner arc
         [xT_6, yT_6] = arcMidPoint([xT_4, yT_4], [xT_5, yT_5], curve)
@@ -10319,22 +10016,12 @@ def createArc_OLD(p1, p2, curve, width=0.02, cap="round"):
                 FreeCAD.Base.Vector(xT_4, yT_4, 0),
                 FreeCAD.Base.Vector(xT_6, yT_6, 0),
                 FreeCAD.Base.Vector(xT_5, yT_5, 0),
-            )
+            ),
         )
         ##
         if cap == "flat":
-            wir.append(
-                PLine(
-                    FreeCAD.Base.Vector(xT_1, yT_1, 0),
-                    FreeCAD.Base.Vector(xT_4, yT_4, 0),
-                )
-            )
-            wir.append(
-                PLine(
-                    FreeCAD.Base.Vector(xT_2, yT_2, 0),
-                    FreeCAD.Base.Vector(xT_5, yT_5, 0),
-                )
-            )
+            wir.append(PLine(FreeCAD.Base.Vector(xT_1, yT_1, 0), FreeCAD.Base.Vector(xT_4, yT_4, 0)))
+            wir.append(PLine(FreeCAD.Base.Vector(xT_2, yT_2, 0), FreeCAD.Base.Vector(xT_5, yT_5, 0)))
         else:
             # wir.append(PLine(FreeCAD.Base.Vector(xT_1, yT_1, 0), FreeCAD.Base.Vector(xT_4, yT_4, 0)))
             # wir.append(PLine(FreeCAD.Base.Vector(xT_2, yT_2, 0), FreeCAD.Base.Vector(xT_5, yT_5, 0)))
@@ -10378,7 +10065,7 @@ def createArc_OLD(p1, p2, curve, width=0.02, cap="round"):
                     FreeCAD.Base.Vector(xT_1, yT_1, 0),
                     FreeCAD.Base.Vector(xT_7, yT_7, 0),
                     FreeCAD.Base.Vector(xT_4, yT_4, 0),
-                )
+                ),
             )
 
             # end
@@ -10409,7 +10096,7 @@ def createArc_OLD(p1, p2, curve, width=0.02, cap="round"):
                     FreeCAD.Base.Vector(xT_2, yT_2, 0),
                     FreeCAD.Base.Vector(xT_8, yT_8, 0),
                     FreeCAD.Base.Vector(xT_5, yT_5, 0),
-                )
+                ),
             )
 
         ####
@@ -10450,8 +10137,8 @@ def createArc(p1, p2, curve, width=0.02, cap="round"):
                     FreeCAD.Base.Vector(xT_1, yT_1, 0),
                     FreeCAD.Base.Vector(xT_3, yT_3, 0),
                     FreeCAD.Base.Vector(xT_2, yT_2, 0),
-                )
-            )
+                ),
+            ),
         )
         # wir.append(Part.Arc(FreeCAD.Base.Vector(xT_1, yT_1, 0), FreeCAD.Base.Vector(xT_3, yT_3, 0), FreeCAD.Base.Vector(xT_2, yT_2, 0)))
         ## inner arc
@@ -10462,28 +10149,14 @@ def createArc(p1, p2, curve, width=0.02, cap="round"):
                     FreeCAD.Base.Vector(xT_4, yT_4, 0),
                     FreeCAD.Base.Vector(xT_6, yT_6, 0),
                     FreeCAD.Base.Vector(xT_5, yT_5, 0),
-                )
-            )
+                ),
+            ),
         )
         # wir.append(Part.Arc(FreeCAD.Base.Vector(xT_4, yT_4, 0), FreeCAD.Base.Vector(xT_6, yT_6, 0), FreeCAD.Base.Vector(xT_5, yT_5, 0)))
         ##
         if cap == "flat":
-            edges.append(
-                Part.Edge(
-                    PLine(
-                        FreeCAD.Base.Vector(xT_1, yT_1, 0),
-                        FreeCAD.Base.Vector(xT_4, yT_4, 0),
-                    )
-                )
-            )
-            edges.append(
-                Part.Edge(
-                    PLine(
-                        FreeCAD.Base.Vector(xT_2, yT_2, 0),
-                        FreeCAD.Base.Vector(xT_5, yT_5, 0),
-                    )
-                )
-            )
+            edges.append(Part.Edge(PLine(FreeCAD.Base.Vector(xT_1, yT_1, 0), FreeCAD.Base.Vector(xT_4, yT_4, 0))))
+            edges.append(Part.Edge(PLine(FreeCAD.Base.Vector(xT_2, yT_2, 0), FreeCAD.Base.Vector(xT_5, yT_5, 0))))
             # wir.append(PLine(FreeCAD.Base.Vector(xT_1, yT_1, 0), FreeCAD.Base.Vector(xT_4, yT_4, 0)))
             # wir.append(PLine(FreeCAD.Base.Vector(xT_2, yT_2, 0), FreeCAD.Base.Vector(xT_5, yT_5, 0)))
         else:
@@ -10530,8 +10203,8 @@ def createArc(p1, p2, curve, width=0.02, cap="round"):
                         FreeCAD.Base.Vector(xT_1, yT_1, 0),
                         FreeCAD.Base.Vector(xT_7, yT_7, 0),
                         FreeCAD.Base.Vector(xT_4, yT_4, 0),
-                    )
-                )
+                    ),
+                ),
             )
             # wir.append(Part.Arc(FreeCAD.Base.Vector(xT_1, yT_1, 0), FreeCAD.Base.Vector(xT_7, yT_7, 0), FreeCAD.Base.Vector(xT_4, yT_4, 0)))
 
@@ -10564,8 +10237,8 @@ def createArc(p1, p2, curve, width=0.02, cap="round"):
                         FreeCAD.Base.Vector(xT_2, yT_2, 0),
                         FreeCAD.Base.Vector(xT_8, yT_8, 0),
                         FreeCAD.Base.Vector(xT_5, yT_5, 0),
-                    )
-                )
+                    ),
+                ),
             )
             # wir.append(Part.Arc(FreeCAD.Base.Vector(xT_2, yT_2, 0), FreeCAD.Base.Vector(xT_8, yT_8, 0), FreeCAD.Base.Vector(xT_5, yT_5, 0)))
 
@@ -10620,10 +10293,7 @@ def createLine(x1, y1, x2, y2, width=0.01):
     length = sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
 
     # angle of inclination
-    if x1 > x2:
-        iang = degrees(atan2(y1 - y2, x1 - x2)) - 90
-    else:
-        iang = degrees(atan2(y2 - y1, x2 - x1)) - 90
+    iang = degrees(atan2(y1 - y2, x1 - x2)) - 90 if x1 > x2 else degrees(atan2(y2 - y1, x2 - x1)) - 90
     if x1 > x2:
         iang += 180
 
@@ -10649,8 +10319,8 @@ def createLine(x1, y1, x2, y2, width=0.01):
                 FreeCAD.Base.Vector(p1[0], p1[1], 0),
                 FreeCAD.Base.Vector(p2[0], p2[1], 0),
                 FreeCAD.Base.Vector(p3[0], p3[1], 0),
-            )
-        )
+            ),
+        ),
     )
     # wir.append(Part.Arc(FreeCAD.Base.Vector(p1[0], p1[1], 0), FreeCAD.Base.Vector(p2[0], p2[1], 0), FreeCAD.Base.Vector(p3[0], p3[1], 0)))
 
@@ -10663,8 +10333,8 @@ def createLine(x1, y1, x2, y2, width=0.01):
                 FreeCAD.Base.Vector(p1[0], p1[1], 0),
                 FreeCAD.Base.Vector(p2[0], p2[1], 0),
                 FreeCAD.Base.Vector(p3[0], p3[1], 0),
-            )
-        )
+            ),
+        ),
     )
     # wir.append(Part.Arc(FreeCAD.Base.Vector(p1[0], p1[1], 0), FreeCAD.Base.Vector(p2[0], p2[1], 0), FreeCAD.Base.Vector(p3[0], p3[1], 0)))
     sortedEdges = Part.__sortEdges__(edges)
@@ -10702,10 +10372,7 @@ def addPadLong2(x, y, dx, dy, perc, typ, z_off, type=None, ratio=None):
     if typ == 0:  # %
         if perc > 100.0:
             perc == 100.0
-        if dx > dy:
-            e = dy * perc / 100.0
-        else:
-            e = dx * perc / 100.0
+        e = dy * perc / 100.0 if dx > dy else dx * perc / 100.0
     else:  # mm
         e = perc
     if ratio is not None:
@@ -10722,12 +10389,7 @@ def addPadLong2(x, y, dx, dy, perc, typ, z_off, type=None, ratio=None):
     p8 = [x - dx, y - dy + e, z_off]
     points = []
     if p1 != p2:
-        points.append(
-            PLine(
-                FreeCAD.Base.Vector(p1[0], p1[1], z_off),
-                FreeCAD.Base.Vector(p2[0], p2[1], z_off),
-            )
-        )
+        points.append(PLine(FreeCAD.Base.Vector(p1[0], p1[1], z_off), FreeCAD.Base.Vector(p2[0], p2[1], z_off)))
     if p2 != p3:
         p9 = arcMidPoint(p2, p3, curve)
         points.append(
@@ -10735,15 +10397,10 @@ def addPadLong2(x, y, dx, dy, perc, typ, z_off, type=None, ratio=None):
                 FreeCAD.Base.Vector(p2[0], p2[1], z_off),
                 FreeCAD.Base.Vector(p9[0], p9[1], z_off),
                 FreeCAD.Base.Vector(p3[0], p3[1], z_off),
-            )
+            ),
         )
     if p3 != p4:
-        points.append(
-            PLine(
-                FreeCAD.Base.Vector(p3[0], p3[1], z_off),
-                FreeCAD.Base.Vector(p4[0], p4[1], z_off),
-            )
-        )
+        points.append(PLine(FreeCAD.Base.Vector(p3[0], p3[1], z_off), FreeCAD.Base.Vector(p4[0], p4[1], z_off)))
     if p4 != p5:
         p10 = arcMidPoint(p4, p5, curve)
         points.append(
@@ -10751,15 +10408,10 @@ def addPadLong2(x, y, dx, dy, perc, typ, z_off, type=None, ratio=None):
                 FreeCAD.Base.Vector(p4[0], p4[1], z_off),
                 FreeCAD.Base.Vector(p10[0], p10[1], z_off),
                 FreeCAD.Base.Vector(p5[0], p5[1], z_off),
-            )
+            ),
         )
     if p5 != p6:
-        points.append(
-            PLine(
-                FreeCAD.Base.Vector(p5[0], p5[1], z_off),
-                FreeCAD.Base.Vector(p6[0], p6[1], z_off),
-            )
-        )
+        points.append(PLine(FreeCAD.Base.Vector(p5[0], p5[1], z_off), FreeCAD.Base.Vector(p6[0], p6[1], z_off)))
     if p6 != p7:
         p11 = arcMidPoint(p6, p7, curve)
         points.append(
@@ -10767,15 +10419,10 @@ def addPadLong2(x, y, dx, dy, perc, typ, z_off, type=None, ratio=None):
                 FreeCAD.Base.Vector(p6[0], p6[1], z_off),
                 FreeCAD.Base.Vector(p11[0], p11[1], z_off),
                 FreeCAD.Base.Vector(p7[0], p7[1], z_off),
-            )
+            ),
         )
     if p7 != p8:
-        points.append(
-            PLine(
-                FreeCAD.Base.Vector(p7[0], p7[1], z_off),
-                FreeCAD.Base.Vector(p8[0], p8[1], z_off),
-            )
-        )
+        points.append(PLine(FreeCAD.Base.Vector(p7[0], p7[1], z_off), FreeCAD.Base.Vector(p8[0], p8[1], z_off)))
     if p8 != p1:
         p12 = arcMidPoint(p8, p1, curve)
         points.append(
@@ -10783,7 +10430,7 @@ def addPadLong2(x, y, dx, dy, perc, typ, z_off, type=None, ratio=None):
                 FreeCAD.Base.Vector(p8[0], p8[1], z_off),
                 FreeCAD.Base.Vector(p12[0], p12[1], z_off),
                 FreeCAD.Base.Vector(p1[0], p1[1], z_off),
-            )
+            ),
         )
 
     if dx == dy and type not in {"rect", "roundrect"}:  # "circle"
@@ -10822,10 +10469,7 @@ def addPadLong(x, y, dx, dy, perc, typ, z_off):
     if typ == 0:  # %
         if perc > 100.0:
             perc == 100.0
-        if dx > dy:
-            e = dy * perc / 100.0
-        else:
-            e = dx * perc / 100.0
+        e = dy * perc / 100.0 if dx > dy else dx * perc / 100.0
     else:  # mm
         e = perc
     p1 = [x - dx + e, y - dy, z_off]
@@ -10838,12 +10482,7 @@ def addPadLong(x, y, dx, dy, perc, typ, z_off):
     p8 = [x - dx, y - dy + e, z_off]
     points = []
     if p1 != p2:
-        points.append(
-            PLine(
-                FreeCAD.Base.Vector(p1[0], p1[1], z_off),
-                FreeCAD.Base.Vector(p2[0], p2[1], z_off),
-            )
-        )
+        points.append(PLine(FreeCAD.Base.Vector(p1[0], p1[1], z_off), FreeCAD.Base.Vector(p2[0], p2[1], z_off)))
     if p2 != p3:
         p9 = arcMidPoint(p2, p3, curve)
         points.append(
@@ -10851,15 +10490,10 @@ def addPadLong(x, y, dx, dy, perc, typ, z_off):
                 FreeCAD.Base.Vector(p2[0], p2[1], z_off),
                 FreeCAD.Base.Vector(p9[0], p9[1], z_off),
                 FreeCAD.Base.Vector(p3[0], p3[1], z_off),
-            )
+            ),
         )
     if p3 != p4:
-        points.append(
-            PLine(
-                FreeCAD.Base.Vector(p3[0], p3[1], z_off),
-                FreeCAD.Base.Vector(p4[0], p4[1], z_off),
-            )
-        )
+        points.append(PLine(FreeCAD.Base.Vector(p3[0], p3[1], z_off), FreeCAD.Base.Vector(p4[0], p4[1], z_off)))
     if p4 != p5:
         p10 = arcMidPoint(p4, p5, curve)
         points.append(
@@ -10867,15 +10501,10 @@ def addPadLong(x, y, dx, dy, perc, typ, z_off):
                 FreeCAD.Base.Vector(p4[0], p4[1], z_off),
                 FreeCAD.Base.Vector(p10[0], p10[1], z_off),
                 FreeCAD.Base.Vector(p5[0], p5[1], z_off),
-            )
+            ),
         )
     if p5 != p6:
-        points.append(
-            PLine(
-                FreeCAD.Base.Vector(p5[0], p5[1], z_off),
-                FreeCAD.Base.Vector(p6[0], p6[1], z_off),
-            )
-        )
+        points.append(PLine(FreeCAD.Base.Vector(p5[0], p5[1], z_off), FreeCAD.Base.Vector(p6[0], p6[1], z_off)))
     if p6 != p7:
         p11 = arcMidPoint(p6, p7, curve)
         points.append(
@@ -10883,15 +10512,10 @@ def addPadLong(x, y, dx, dy, perc, typ, z_off):
                 FreeCAD.Base.Vector(p6[0], p6[1], z_off),
                 FreeCAD.Base.Vector(p11[0], p11[1], z_off),
                 FreeCAD.Base.Vector(p7[0], p7[1], z_off),
-            )
+            ),
         )
     if p7 != p8:
-        points.append(
-            PLine(
-                FreeCAD.Base.Vector(p7[0], p7[1], z_off),
-                FreeCAD.Base.Vector(p8[0], p8[1], z_off),
-            )
-        )
+        points.append(PLine(FreeCAD.Base.Vector(p7[0], p7[1], z_off), FreeCAD.Base.Vector(p8[0], p8[1], z_off)))
     if p8 != p1:
         p12 = arcMidPoint(p8, p1, curve)
         points.append(
@@ -10899,7 +10523,7 @@ def addPadLong(x, y, dx, dy, perc, typ, z_off):
                 FreeCAD.Base.Vector(p8[0], p8[1], z_off),
                 FreeCAD.Base.Vector(p12[0], p12[1], z_off),
                 FreeCAD.Base.Vector(p1[0], p1[1], z_off),
-            )
+            ),
         )
 
     if dx == dy:  # "circle"
@@ -10943,10 +10567,7 @@ def createPad2(x, y, sx, sy, dcx, dcy, dx, dy, type, layer):
     else:
         perc = 0
         tp = 0
-    if layer == "top":
-        z_offset = 0
-    else:
-        z_offset = -1.6
+    z_offset = 0 if layer == "top" else -1.6
     # say(str(x)+"x "+str(y)+"y "+str(sx)+"sx "+str(sy)+"sy ")
     # say(str(dcx)+"dcx "+str(dcy)+"dcy "+str(dx)+"dx "+str(dy)+"dy ")
     mypad = addPadLong2(x, y, sx, sy, perc, tp, z_offset)
@@ -11062,20 +10683,12 @@ def createPad(x, y, sx, sy, dcx, dcy, dx, dy, type, layer):
         FreeCADGui.activeDocument().Extrude_pad.Visibility = False
         FreeCADGui.activeDocument().Extrude_d.Visibility = False
         # FreeCADGui.ActiveDocument.getObject(cut_name).ShapeColor=FreeCADGui.ActiveDocument.Extrude.ShapeColor
-        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (
-            0.81,
-            0.71,
-            0.23,
-        )  # (0.85,0.53,0.10)
+        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.81, 0.71, 0.23)  # (0.85,0.53,0.10)
         FreeCADGui.ActiveDocument.ActiveObject.DisplayMode = FreeCADGui.ActiveDocument.Extrude_pad.DisplayMode
         FreeCAD.ActiveDocument.recompute()
         pad_d_name = "TH_Pad"
         FreeCAD.ActiveDocument.addObject("Part::Feature", pad_d_name).Shape = FreeCAD.ActiveDocument.ActiveObject.Shape
-        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (
-            0.81,
-            0.71,
-            0.23,
-        )  # (0.85,0.53,0.10)
+        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.81, 0.71, 0.23)  # (0.85,0.53,0.10)
         myObj = FreeCAD.ActiveDocument.getObject(pad_d_name)
         if remove == 1:
             FreeCAD.ActiveDocument.removeObject(cut_name)
@@ -11089,11 +10702,7 @@ def createPad(x, y, sx, sy, dcx, dcy, dx, dy, type, layer):
         pad_d_name = "smdPad"
         FreeCAD.ActiveDocument.addObject("Part::Feature", pad_d_name).Shape = FreeCAD.ActiveDocument.ActiveObject.Shape
         myObj = FreeCAD.ActiveDocument.getObject(pad_d_name)
-        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (
-            0.81,
-            0.71,
-            0.23,
-        )  # (0.85,0.53,0.10)
+        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.81, 0.71, 0.23)  # (0.85,0.53,0.10)
         FreeCAD.ActiveDocument.removeObject(extrude_pad_name)
         FreeCAD.ActiveDocument.removeObject(pad_name)
         FreeCAD.ActiveDocument.recompute()
@@ -11163,7 +10772,7 @@ def createPad3(x, y, sx, sy, dcx, dcy, dx, dy, type, layer, ratio=None):
 
 
 ###
-def createPad(x, y, sx, sy, dcx, dcy, dx, dy, type, layer):
+def createPad(x, y, sx, sy, dcx, dcy, dx, dy, type, layer):  # noqa: F811
     ##pad pos x,y; pad size x,y; drillcenter x,y; drill size x,y
     z_offset = 0
     remove = 1
@@ -11223,20 +10832,12 @@ def createPad(x, y, sx, sy, dcx, dcy, dx, dy, type, layer):
         FreeCADGui.activeDocument().Extrude_pad.Visibility = False
         FreeCADGui.activeDocument().Extrude_d.Visibility = False
         # FreeCADGui.ActiveDocument.getObject(cut_name).ShapeColor=FreeCADGui.ActiveDocument.Extrude.ShapeColor
-        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (
-            0.81,
-            0.71,
-            0.23,
-        )  # (0.85,0.53,0.10)
+        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.81, 0.71, 0.23)  # (0.85,0.53,0.10)
         FreeCADGui.ActiveDocument.ActiveObject.DisplayMode = FreeCADGui.ActiveDocument.Extrude_pad.DisplayMode
         FreeCAD.ActiveDocument.recompute()
         pad_d_name = "TH_Pad"
         FreeCAD.ActiveDocument.addObject("Part::Feature", pad_d_name).Shape = FreeCAD.ActiveDocument.ActiveObject.Shape
-        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (
-            0.81,
-            0.71,
-            0.23,
-        )  # (0.85,0.53,0.10)
+        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.81, 0.71, 0.23)  # (0.85,0.53,0.10)
         myObj = FreeCAD.ActiveDocument.getObject(pad_d_name)
         if remove == 1:
             FreeCAD.ActiveDocument.removeObject(cut_name)
@@ -11250,11 +10851,7 @@ def createPad(x, y, sx, sy, dcx, dcy, dx, dy, type, layer):
         pad_d_name = "smdPad"
         FreeCAD.ActiveDocument.addObject("Part::Feature", pad_d_name).Shape = FreeCAD.ActiveDocument.ActiveObject.Shape
         myObj = FreeCAD.ActiveDocument.getObject(pad_d_name)
-        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (
-            0.81,
-            0.71,
-            0.23,
-        )  # (0.85,0.53,0.10)
+        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.81, 0.71, 0.23)  # (0.85,0.53,0.10)
         FreeCAD.ActiveDocument.removeObject(extrude_pad_name)
         FreeCAD.ActiveDocument.removeObject(pad_name)
         FreeCAD.ActiveDocument.recompute()
@@ -11287,7 +10884,7 @@ def createHole(x, y, dx, dy, type):
 
     hole_name = "hole"
     FreeCAD.ActiveDocument.addObject("Part::Feature", hole_name).Shape = FreeCAD.ActiveDocument.getObject(
-        extrude_hole_name
+        extrude_hole_name,
     ).Shape
     FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.67, 1.00, 0.50)
     FreeCADGui.ActiveDocument.ActiveObject.Transparency = 70
@@ -11343,7 +10940,6 @@ def createHole3(x, y, dx, dy, type, height):
     return Part.makeCompound(holeModel)
     # say("hereHole")
     # FreeCAD.ActiveDocument.recompute()
-
 
 
 ###
@@ -11407,7 +11003,6 @@ def createTHPlate(x, y, dx, dy, type):
     return Part.makeCompound(THPModel)
     # say("hereHole")
     # FreeCAD.ActiveDocument.recompute()
-
 
 
 ###
@@ -11622,10 +11217,7 @@ def routineDrawFootPrint(content, name):
         QtGui.QMessageBox.information(None, "info", msg)
         # stop
     # say(footprint_name+" wrl rotation:"+str(rot_wrl))
-    if FreeCAD.activeDocument():
-        doc = FreeCAD.activeDocument()
-    else:
-        doc = FreeCAD.newDocument()
+    doc = FreeCAD.activeDocument() if FreeCAD.activeDocument() else FreeCAD.newDocument()
     # doc.UndoMode = 1
     # doc.openTransaction()
     doc.openTransaction("opening_kicad_footprint")
@@ -11845,15 +11437,7 @@ def routineDrawFootPrint(content, name):
     BCrtYd = []
     BFab = []
 
-    layer_names = [
-        "F.SilkS",
-        "F.CrtYd",
-        "F.Fab",
-        "Edge.Cuts",
-        "B.SilkS",
-        "B.CrtYd",
-        "B.Fab",
-    ]
+    layer_names = ["F.SilkS", "F.CrtYd", "F.Fab", "Edge.Cuts", "B.SilkS", "B.CrtYd", "B.Fab"]
     layers_name_list = [FrontSilk, FCrtYd, FFab, EdgeCuts, BotSilk, BCrtYd, BFab]
 
     fp_list, width = getPolyList(content)
@@ -12069,11 +11653,7 @@ def routineDrawFootPrint(content, name):
         TopPads.fixedPosition = True
         # fp_group.addObject(TopPads)
         # FreeCAD.ActiveDocument.removeObject(TopPadsBase.Name)
-        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (
-            0.81,
-            0.71,
-            0.23,
-        )  # (0.85,0.53,0.10)
+        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.81, 0.71, 0.23)  # (0.85,0.53,0.10)
         FreeCADGui.ActiveDocument.ActiveObject.Transparency = 60
     if len(BotPadList) > 0:
         # BotPads = Part.makeCompound(BotPadList)
@@ -12087,11 +11667,7 @@ def routineDrawFootPrint(content, name):
         BotPads.fixedPosition = True
         FreeCAD.ActiveDocument.ActiveObject.Label = "BotPads"
         BotPads_name = FreeCAD.ActiveDocument.ActiveObject.Name
-        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (
-            0.81,
-            0.71,
-            0.23,
-        )  # (0.85,0.53,0.10)
+        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.81, 0.71, 0.23)  # (0.85,0.53,0.10)
         FreeCADGui.ActiveDocument.ActiveObject.Transparency = 60
     if len(TopNetTieList) > 0:
         TopNetTie = FreeCAD.ActiveDocument.addObject("Part::FeaturePython", "TopNetTie")
@@ -12101,11 +11677,7 @@ def routineDrawFootPrint(content, name):
         TopNetTie.Shape = Part.makeCompound(TopNetTieList)  # TopPadsBase.Shape.copy()
         TopNetTie.ViewObject.Proxy = 0
         TopNetTie.fixedPosition = True
-        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (
-            0.81,
-            0.71,
-            0.23,
-        )  # (0.85,0.53,0.10)
+        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.81, 0.71, 0.23)  # (0.85,0.53,0.10)
         FreeCADGui.ActiveDocument.ActiveObject.Transparency = 60
     if len(BotNetTieList) > 0:
         BotNetTie = FreeCAD.ActiveDocument.addObject("Part::FeaturePython", "BotNetTie")
@@ -12117,11 +11689,7 @@ def routineDrawFootPrint(content, name):
         BotNetTie.fixedPosition = True
         FreeCAD.ActiveDocument.ActiveObject.Label = "BotNetTie"
         BotNetTie_name = FreeCAD.ActiveDocument.ActiveObject.Name
-        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (
-            0.81,
-            0.71,
-            0.23,
-        )  # (0.85,0.53,0.10)
+        FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.81, 0.71, 0.23)  # (0.85,0.53,0.10)
         FreeCADGui.ActiveDocument.ActiveObject.Transparency = 60
     if len(HoleList) > 0:
         Holes = Part.makeCompound(HoleList)
@@ -12273,11 +11841,7 @@ def routineDrawFootPrint(content, name):
                 cut_base = cut_base.cut(holes.Shape)
                 Part.show(cut_base)
                 FreeCAD.ActiveDocument.ActiveObject.Label = "TopPads"
-                FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (
-                    0.664,
-                    0.664,
-                    0.496,
-                )
+                FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.664, 0.664, 0.496)
                 FreeCADGui.ActiveDocument.ActiveObject.Transparency = 80
                 # say("cut")
                 Pads_top = FreeCAD.ActiveDocument.ActiveObject
@@ -12292,11 +11856,7 @@ def routineDrawFootPrint(content, name):
                 cut_base = cut_base.cut(holes.Shape)
                 Part.show(cut_base)
                 FreeCAD.ActiveDocument.ActiveObject.Label = "BotPads"
-                FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (
-                    0.664,
-                    0.664,
-                    0.496,
-                )
+                FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.664, 0.664, 0.496)
                 FreeCADGui.ActiveDocument.ActiveObject.Transparency = 80
                 # say("cut")
                 Pads_bot = FreeCAD.ActiveDocument.ActiveObject
@@ -12312,11 +11872,7 @@ def routineDrawFootPrint(content, name):
                 cut_base = cut_base.cut(holes.Shape)
                 Part.show(cut_base)
                 FreeCAD.ActiveDocument.ActiveObject.Label = "TopNetTie"
-                FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (
-                    0.664,
-                    0.664,
-                    0.496,
-                )
+                FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.664, 0.664, 0.496)
                 FreeCADGui.ActiveDocument.ActiveObject.Transparency = 80
                 # say("cut")
                 NetTie_top = FreeCAD.ActiveDocument.ActiveObject
@@ -12331,11 +11887,7 @@ def routineDrawFootPrint(content, name):
                 cut_base = cut_base.cut(holes.Shape)
                 Part.show(cut_base)
                 FreeCAD.ActiveDocument.ActiveObject.Label = "BotNetTie"
-                FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (
-                    0.664,
-                    0.664,
-                    0.496,
-                )
+                FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = (0.664, 0.664, 0.496)
                 FreeCADGui.ActiveDocument.ActiveObject.Transparency = 80
                 # say("cut")
                 NetTie_bot = FreeCAD.ActiveDocument.ActiveObject
@@ -12465,7 +12017,7 @@ def routineDrawIDF(doc, filename):
                     float(emnrecords[1]) * emn_unit,
                     float(emnrecords[2]) * emn_unit,
                     float(emnrecords[3]),
-                ]
+                ],
             )
         if (
             current_section == ".DRILLED_HOLES"
@@ -12473,11 +12025,7 @@ def routineDrawIDF(doc, filename):
             and float(emnrecords[0]) * emn_unit > ignore_hole_size
         ):
             drills.append(
-                [
-                    float(emnrecords[0]) * emn_unit,
-                    float(emnrecords[1]) * emn_unit,
-                    float(emnrecords[2]) * emn_unit,
-                ]
+                [float(emnrecords[0]) * emn_unit, float(emnrecords[1]) * emn_unit, float(emnrecords[2]) * emn_unit],
             )
         if current_section == ".PLACEMENT" and section_counter > 1 and fmod(section_counter, 2) == 0:
             place_item = []
@@ -12684,8 +12232,6 @@ def findWires(edges):
     return result[1]
 
 
-
-
 def distance(p0, p1):
     return sqrt((p0[0] - p1[0]) ** 2 + (p0[1] - p1[1]) ** 2)
 
@@ -12738,16 +12284,19 @@ class OSCD2Dg_Overlappingfaces:
         for bigfacei, smallfacei in itertools.combinations(range(len(self.sortedfaces)), 2):
             try:
                 overlap = OSCD2Dg_Overlappingfaces.dofacesoverlapproximity(
-                    self.sortedfaces[bigfacei], self.sortedfaces[smallfacei]
+                    self.sortedfaces[bigfacei],
+                    self.sortedfaces[smallfacei],
                 )
             except (NotImplementedError, Part.OCCError):
                 try:
                     overlap = OSCD2Dg_Overlappingfaces.dofacesoverlapboolean(
-                        self.sortedfaces[bigfacei], self.sortedfaces[smallfacei]
+                        self.sortedfaces[bigfacei],
+                        self.sortedfaces[smallfacei],
                     )
                 except Part.OCCError:
                     overlap = OSCD2Dg_Overlappingfaces.dofacesoverlapallverts(
-                        self.sortedfaces[bigfacei], self.sortedfaces[smallfacei]
+                        self.sortedfaces[bigfacei],
+                        self.sortedfaces[smallfacei],
                     )
             if overlap:
                 # isinsidelist.append((bigfacei,smallfacei))
@@ -12762,7 +12311,7 @@ class OSCD2Dg_Overlappingfaces:
             return curdepth + 1
         # print dict1[faceidx],[(finddepth(dict1,childface,curdepth)) for childface in dict1[faceidx]]
         return max(
-            [(OSCD2Dg_Overlappingfaces.finddepth(dict1, childface, curdepth + 1)) for childface in dict1[faceidx]]
+            [(OSCD2Dg_Overlappingfaces.finddepth(dict1, childface, curdepth + 1)) for childface in dict1[faceidx]],
         )
 
     def findrootdepth(self):
@@ -12788,7 +12337,6 @@ class OSCD2Dg_Overlappingfaces:
         dchildren = []
         for child in isinsidedict.get(parent, []):
             direct = True
-
             py2 = False
             if py2:
                 for key, value in isinsidedict.iteritems():
@@ -12822,9 +12370,8 @@ class OSCD2Dg_Overlappingfaces:
             printtreechild(isinsidedict, facenum, rootitem)
 
     def makefeatures(self, doc):
-
         def addshape(faceindex):
-            obj = doc.addObject("Part::Feature", "facefromedges_%d" % faceindex)
+            obj = doc.addObject("Part::Feature", f"facefromedges_{faceindex}")
             obj.Shape = self.sortedfaces[faceindex]
             obj.ViewObject.hide()
             return obj
@@ -12836,7 +12383,7 @@ class OSCD2Dg_Overlappingfaces:
             else:
                 subdict = isinsidedict.copy()
                 del subdict[faceindex]
-                obj = doc.addObject("Part::Cut", "facesfromedges_%d" % faceindex)
+                obj = doc.addObject("Part::Cut", f"facesfromedges_{faceindex}")
                 obj.Base = addshape(faceindex)  # we only do subtraction
                 if len(directchildren) == 1:
                     obj.Tool = addfeature(directchildren[0], subdict)
@@ -12919,55 +12466,36 @@ def OSCD2Dg_superWireReverse(debuglist, closed=False):
     edge_added = False
     for i in range(len(debuglist)):
         curr = debuglist[i]
-        if i == 0:
-            if closed:
-                prev = debuglist[-1]
-            else:
-                prev = None
-        else:
-            prev = debuglist[i - 1]
-            # print "prev=",prev
-        if i == (len(debuglist) - 1):
-            if closed:
-                nexte = debuglist[0]
-            else:
-                nexte = None
-        else:
-            nexte = debuglist[i + 1]
+        prev = (debuglist[-1] if closed else None) if i == 0 else debuglist[i - 1]
+        # print "prev=",prev
+        nexte = (debuglist[0] if closed else None) if i == len(debuglist) - 1 else debuglist[i + 1]
         # print i,prev,curr,nexte
         # print "here loop"
         if prev:
             if curr[0].Vertexes[-1 * (not curr[1])].Point == prev[0].Vertexes[-1 * prev[1]].Point:
                 p1 = curr[0].Vertexes[-1 * (not curr[1])].Point
             else:
-                p1 = median(
-                    curr[0].Vertexes[-1 * (not curr[1])].Point,
-                    prev[0].Vertexes[-1 * prev[1]].Point,
-                )
+                p1 = median(curr[0].Vertexes[-1 * (not curr[1])].Point, prev[0].Vertexes[-1 * prev[1]].Point)
         else:
             p1 = curr[0].Vertexes[-1 * (not curr[1])].Point
         if nexte:
             if curr[0].Vertexes[-1 * curr[1]].Point == nexte[0].Vertexes[-1 * (not nexte[1])].Point:
                 p2 = nexte[0].Vertexes[-1 * (not nexte[1])].Point
             else:
-                p2 = median(
-                    curr[0].Vertexes[-1 * (curr[1])].Point,
-                    nexte[0].Vertexes[-1 * (not nexte[1])].Point,
-                )
+                p2 = median(curr[0].Vertexes[-1 * (curr[1])].Point, nexte[0].Vertexes[-1 * (not nexte[1])].Point)
         else:
             p2 = curr[0].Vertexes[-1 * (curr[1])].Point
         # print "here 8"
         # print "curr[0].Curve ",curr[0].Curve
         if hasattr(Part, "LineSegment"):
-            if isinstance(curr[0].Curve, Part.Line) or isinstance(curr[0].Curve, Part.LineSegment):
+            if isinstance(curr[0].Curve, (Part.Line, Part.LineSegment)):
                 # print "line",p1,p2
                 newedges.append(Part.LineSegment(p1, p2).toShape())
                 edge_added = True
-        elif hasattr(Part, "Line"):
-            if isinstance(curr[0].Curve, Part.Line):
-                # print "line",p1,p2
-                newedges.append(Part.Line(p1, p2).toShape())
-                edge_added = True
+        elif hasattr(Part, "Line") and isinstance(curr[0].Curve, Part.Line):
+            # print "line",p1,p2
+            newedges.append(Part.Line(p1, p2).toShape())
+            edge_added = True
         if isinstance(curr[0].Curve, Part.Circle):
             p3 = findMidpoint(curr[0])
             # print "arc",p1,p3,p2
@@ -13193,8 +12721,6 @@ def OSCD2Dg_edgestofaces(edges, algo=3, eps=0.001):
     return None
 
 
-
-
 ###
 def get_mod_Ref(m):
     # if hasattr(m,'property'):
@@ -13255,10 +12781,7 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
     edges = []
     PCBs = []
     # print (mypcb.general) #maui errorchecking
-    if hasattr(mypcb, "general"):
-        totalHeight = float(mypcb.general.thickness)
-    else:
-        totalHeight = 1.6
+    totalHeight = float(mypcb.general.thickness) if hasattr(mypcb, "general") else 1.6
     missingHeight = False
     if totalHeight == 0:
         totalHeight = 1.6
@@ -13313,10 +12836,7 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
         # print(lyr)
 
     for ln in mypcb.gr_line:
-        if hasattr(ln, "layer"):
-            k_test = ln.layer
-        else:
-            k_test = ln.layers
+        k_test = ln.layer if hasattr(ln, "layer") else ln.layers
         # if hasattr(ln, 'layer'):
         if lyr in k_test:  # ln.layer:
             # say(ln.layer)
@@ -13324,10 +12844,7 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
         # elif lyr in ln.layers:
         #    edg_segms+=1
     for ar in mypcb.gr_arc:
-        if hasattr(ar, "layer"):
-            k_test = ar.layer
-        else:
-            k_test = ar.layers
+        k_test = ar.layer if hasattr(ar, "layer") else ar.layers
         if lyr in k_test:
             # say(ln.layer)
             edg_segms += 1
@@ -13335,10 +12852,7 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
         # print(lp)
         # print(lp.layer)
         # print(lp.pts)
-        if hasattr(lp, "layer"):
-            k_test = lp.layer
-        else:
-            k_test = lp.layers
+        k_test = lp.layer if hasattr(lp, "layer") else lp.layers
         if lyr in k_test:
             # sayerr(lp.layer)
             try:
@@ -13351,20 +12865,14 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
         # stop
         # edg_segms+=1
     for bs in mypcb.gr_curve:
-        if hasattr(bs, "layer"):
-            k_test = bs.layer
-        else:
-            k_test = bs.layers
+        k_test = bs.layer if hasattr(bs, "layer") else bs.layers
         if lyr in k_test:
             # sayerr(bs.layer)
             for p in bs.pts.xy:
                 edg_segms += 1
             # edg_segms+=1
     for r in mypcb.gr_rect:
-        if hasattr(r, "layer"):
-            k_test = r.layer
-        else:
-            k_test = r.layers
+        k_test = r.layer if hasattr(r, "layer") else r.layers
         if lyr in k_test:
             # sayerr(bs.layer)
             edg_segms += 4
@@ -13412,14 +12920,13 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
             if float(lynbr) == Top_lvl:
                 LvlTopName = mypcb.layers[f"{str(lynbr)}"][0]
             if float(lynbr) == Edge_Cuts_lvl:
-                mypcb.layers[f"{str(lynbr)}"][0]
+                (mypcb.layers[f"{str(lynbr)}"][0])
     else:
         LvlTopName = "F.Cu"
     #    #    sayerr(lyr[0])
     #    #    sayerr('top')
-    if hasattr(mypcb, "general"):
-        if hasattr(mypcb.general, "area"):
-            say("board area " + str(mypcb.general.area))
+    if hasattr(mypcb, "general") and hasattr(mypcb.general, "area"):
+        say("board area " + str(mypcb.general.area))
     # sayerr('aux_axis_origin' + str(mypcb.setup.aux_axis_origin))
     # stop
     origin = None
@@ -13506,12 +13013,7 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
             simu_distance((l.start[0], -l.start[1], 0), ((l.end[0], -l.end[1], 0))) > edge_tolerance
         ):  # non coincident points
             # if (Base.Vector(l.start[0],-l.start[1],0)) != (Base.Vector(l.end[0],-l.end[1],0)): #non coincident points
-            line1 = Part.Edge(
-                PLine(
-                    Base.Vector(l.start[0], -l.start[1], 0),
-                    Base.Vector(l.end[0], -l.end[1], 0),
-                )
-            )
+            line1 = Part.Edge(PLine(Base.Vector(l.start[0], -l.start[1], 0), Base.Vector(l.end[0], -l.end[1], 0)))
             if add_ply:
                 ply_lines.append(line1)
             if load_sketch:
@@ -13521,16 +13023,11 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                         PLine(
                             Base.Vector(l.start[0] - off_x, -l.start[1] - off_y, 0),
                             Base.Vector(l.end[0] - off_x, -l.end[1] - off_y, 0),
-                        )
+                        ),
                     )
                 else:
                     # FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0],-l.start[1],0), Base.Vector(l.end[0],-l.end[1],0)))
-                    PCB_Geo.append(
-                        PLine(
-                            Base.Vector(l.start[0], -l.start[1], 0),
-                            Base.Vector(l.end[0], -l.end[1], 0),
-                        )
-                    )
+                    PCB_Geo.append(PLine(Base.Vector(l.start[0], -l.start[1], 0), Base.Vector(l.end[0], -l.end[1], 0)))
             edges.append(line1)
             PCB.append(["Line", l.start[0], -l.start[1], l.end[0], -l.end[1]])
             if show_border:
@@ -13538,10 +13035,7 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
 
     for l in mypcb.gr_line:  # pcb lines
         # if l.layer != 'Edge.Cuts':
-        if hasattr(l, "layer"):
-            k_test = l.layer
-        else:
-            k_test = l.layers
+        k_test = l.layer if hasattr(l, "layer") else l.layers
         if lyr not in k_test:
             continue
         # edges.append(Part.makeLine(makeVect(l.start),makeVect(l.end)))
@@ -13551,112 +13045,69 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
 
     for r in mypcb.gr_rect:  # pcb lines from rect
         # if l.layer != 'Edge.Cuts':
-        if hasattr(r, "layer"):
-            k_test = r.layer
-        else:
-            k_test = r.layers
+        k_test = r.layer if hasattr(r, "layer") else r.layers
         if lyr not in k_test:
             continue
         # segms = [r.start[0],r.start[1]][r.end[0],r.start[1]]
-        line1 = Part.Edge(
-            PLine(
-                Base.Vector(r.start[0], -r.start[1], 0),
-                Base.Vector(r.end[0], -r.start[1], 0),
-            )
-        )
+        line1 = Part.Edge(PLine(Base.Vector(r.start[0], -r.start[1], 0), Base.Vector(r.end[0], -r.start[1], 0)))
         if load_sketch:
             if aux_orig == 1 or grid_orig == 1:
                 PCB_Geo.append(
                     PLine(
                         Base.Vector(r.start[0] - off_x, -r.start[1] - off_y, 0),
                         Base.Vector(r.end[0] - off_x, -r.start[1] - off_y, 0),
-                    )
+                    ),
                 )
             else:
-                PCB_Geo.append(
-                    PLine(
-                        Base.Vector(r.start[0], -r.start[1], 0),
-                        Base.Vector(r.end[0], -r.start[1], 0),
-                    )
-                )
+                PCB_Geo.append(PLine(Base.Vector(r.start[0], -r.start[1], 0), Base.Vector(r.end[0], -r.start[1], 0)))
         edges.append(line1)
         PCB.append(["Line", r.end[0], -r.start[1], r.end[0], -r.end[1]])
         if show_border:
             Part.show(line1)
         # segms = [r.end[0],r.start[1]][r.end[0],r.end[1]]
-        line1 = Part.Edge(
-            PLine(
-                Base.Vector(r.end[0], -r.start[1], 0),
-                Base.Vector(r.end[0], -r.end[1], 0),
-            )
-        )
+        line1 = Part.Edge(PLine(Base.Vector(r.end[0], -r.start[1], 0), Base.Vector(r.end[0], -r.end[1], 0)))
         if load_sketch:
             if aux_orig == 1 or grid_orig == 1:
                 PCB_Geo.append(
                     PLine(
                         Base.Vector(r.end[0] - off_x, -r.start[1] - off_y, 0),
                         Base.Vector(r.end[0] - off_x, -r.end[1] - off_y, 0),
-                    )
+                    ),
                 )
             else:
-                PCB_Geo.append(
-                    PLine(
-                        Base.Vector(r.end[0], -r.start[1], 0),
-                        Base.Vector(r.end[0], -r.end[1], 0),
-                    )
-                )
+                PCB_Geo.append(PLine(Base.Vector(r.end[0], -r.start[1], 0), Base.Vector(r.end[0], -r.end[1], 0)))
         edges.append(line1)
         PCB.append(["Line", r.end[0], -r.start[1], r.end[0], -r.end[1]])
         if show_border:
             Part.show(line1)
         # segms = [r.end[0],r.end[1]][r.start[0],r.end[1]]
-        line1 = Part.Edge(
-            PLine(
-                Base.Vector(r.end[0], -r.end[1], 0),
-                Base.Vector(r.start[0], -r.end[1], 0),
-            )
-        )
+        line1 = Part.Edge(PLine(Base.Vector(r.end[0], -r.end[1], 0), Base.Vector(r.start[0], -r.end[1], 0)))
         if load_sketch:
             if aux_orig == 1 or grid_orig == 1:
                 PCB_Geo.append(
                     PLine(
                         Base.Vector(r.end[0] - off_x, -r.end[1] - off_y, 0),
                         Base.Vector(r.start[0] - off_x, -r.end[1] - off_y, 0),
-                    )
+                    ),
                 )
             else:
-                PCB_Geo.append(
-                    PLine(
-                        Base.Vector(r.end[0], -r.end[1], 0),
-                        Base.Vector(r.start[0], -r.end[1], 0),
-                    )
-                )
+                PCB_Geo.append(PLine(Base.Vector(r.end[0], -r.end[1], 0), Base.Vector(r.start[0], -r.end[1], 0)))
         edges.append(line1)
         PCB.append(["Line", r.end[0], -r.end[1], r.start[0], -r.end[1]])
         if show_border:
             Part.show(line1)
         # segms = [r.start[0],r.end[1]][r.start[0],r.start[1]]
-        line1 = Part.Edge(
-            PLine(
-                Base.Vector(r.start[0], -r.end[1], 0),
-                Base.Vector(r.start[0], -r.start[1], 0),
-            )
-        )
+        line1 = Part.Edge(PLine(Base.Vector(r.start[0], -r.end[1], 0), Base.Vector(r.start[0], -r.start[1], 0)))
         if load_sketch:
             if aux_orig == 1 or grid_orig == 1:
                 PCB_Geo.append(
                     PLine(
                         Base.Vector(r.start[0] - off_x, -r.end[1] - off_y, 0),
                         Base.Vector(r.start[0] - off_x, -r.start[1] - off_y, 0),
-                    )
+                    ),
                 )
             else:
-                PCB_Geo.append(
-                    PLine(
-                        Base.Vector(r.start[0], -r.end[1], 0),
-                        Base.Vector(r.start[0], -r.start[1], 0),
-                    )
-                )
+                PCB_Geo.append(PLine(Base.Vector(r.start[0], -r.end[1], 0), Base.Vector(r.start[0], -r.start[1], 0)))
         edges.append(line1)
         PCB.append(["Line", r.start[0], -r.end[1], r.start[0], -r.start[1]])
         if show_border:
@@ -13690,16 +13141,15 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                 continue
         elif not hasattr(zn, "keepout"):
             continue
-        ind = 0
         l = len(zn.polygon.pts.xy)
         z_lines = []
-        for p in zn.polygon.pts.xy:
+        for ind, p in enumerate(zn.polygon.pts.xy):
             if ind == 0:
                 line1 = Part.Edge(
                     PLine(
                         Base.Vector(zn.polygon.pts.xy[l - 1][0], -zn.polygon.pts.xy[l - 1][1], 0),
                         Base.Vector(zn.polygon.pts.xy[0][0], -zn.polygon.pts.xy[0][1], 0),
-                    )
+                    ),
                 )
                 edges.append(line1)
                 if load_sketch:
@@ -13712,12 +13162,8 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                                     -zn.polygon.pts.xy[l - 1][1] - off_y,
                                     0,
                                 ),
-                                Base.Vector(
-                                    zn.polygon.pts.xy[0][0] - off_x,
-                                    -zn.polygon.pts.xy[0][1] - off_y,
-                                    0,
-                                ),
-                            )
+                                Base.Vector(zn.polygon.pts.xy[0][0] - off_x, -zn.polygon.pts.xy[0][1] - off_y, 0),
+                            ),
                         )
                         line2 = Part.Edge(
                             PLine(
@@ -13726,46 +13172,30 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                                     -zn.polygon.pts.xy[l - 1][1] - off_y,
                                     0,
                                 ),
-                                Base.Vector(
-                                    zn.polygon.pts.xy[0][0] - off_x,
-                                    -zn.polygon.pts.xy[0][1] - off_y,
-                                    0,
-                                ),
-                            )
+                                Base.Vector(zn.polygon.pts.xy[0][0] - off_x, -zn.polygon.pts.xy[0][1] - off_y, 0),
+                            ),
                         )
                     else:
                         # FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0],-l.start[1],0), Base.Vector(l.end[0],-l.end[1],0)))
                         PCB_Geo.append(
                             PLine(
-                                Base.Vector(
-                                    zn.polygon.pts.xy[l - 1][0],
-                                    -zn.polygon.pts.xy[l - 1][1],
-                                    0,
-                                ),
+                                Base.Vector(zn.polygon.pts.xy[l - 1][0], -zn.polygon.pts.xy[l - 1][1], 0),
                                 Base.Vector(zn.polygon.pts.xy[0][0], -zn.polygon.pts.xy[0][1], 0),
-                            )
+                            ),
                         )
                         line2 = Part.Edge(
                             PLine(
-                                Base.Vector(
-                                    zn.polygon.pts.xy[l - 1][0],
-                                    -zn.polygon.pts.xy[l - 1][1],
-                                    0,
-                                ),
+                                Base.Vector(zn.polygon.pts.xy[l - 1][0], -zn.polygon.pts.xy[l - 1][1], 0),
                                 Base.Vector(zn.polygon.pts.xy[0][0], -zn.polygon.pts.xy[0][1], 0),
-                            )
+                            ),
                         )
                 z_lines.append(line2)
             else:
                 line1 = Part.Edge(
                     PLine(
-                        Base.Vector(
-                            zn.polygon.pts.xy[ind - 1][0],
-                            -zn.polygon.pts.xy[ind - 1][1],
-                            0,
-                        ),
+                        Base.Vector(zn.polygon.pts.xy[ind - 1][0], -zn.polygon.pts.xy[ind - 1][1], 0),
                         Base.Vector(zn.polygon.pts.xy[ind][0], -zn.polygon.pts.xy[ind][1], 0),
-                    )
+                    ),
                 )
                 edges.append(line1)
                 if load_sketch:
@@ -13778,12 +13208,8 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                                     -zn.polygon.pts.xy[ind - 1][1] - off_y,
                                     0,
                                 ),
-                                Base.Vector(
-                                    zn.polygon.pts.xy[ind][0] - off_x,
-                                    -zn.polygon.pts.xy[ind][1] - off_y,
-                                    0,
-                                ),
-                            )
+                                Base.Vector(zn.polygon.pts.xy[ind][0] - off_x, -zn.polygon.pts.xy[ind][1] - off_y, 0),
+                            ),
                         )
                         line2 = Part.Edge(
                             PLine(
@@ -13792,45 +13218,24 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                                     -zn.polygon.pts.xy[ind - 1][1] - off_y,
                                     0,
                                 ),
-                                Base.Vector(
-                                    zn.polygon.pts.xy[ind][0] - off_x,
-                                    -zn.polygon.pts.xy[ind][1] - off_y,
-                                    0,
-                                ),
-                            )
+                                Base.Vector(zn.polygon.pts.xy[ind][0] - off_x, -zn.polygon.pts.xy[ind][1] - off_y, 0),
+                            ),
                         )
                     else:
                         # FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0],-l.start[1],0), Base.Vector(l.end[0],-l.end[1],0)))
                         PCB_Geo.append(
                             PLine(
-                                Base.Vector(
-                                    zn.polygon.pts.xy[ind - 1][0],
-                                    -zn.polygon.pts.xy[ind - 1][1],
-                                    0,
-                                ),
-                                Base.Vector(
-                                    zn.polygon.pts.xy[ind][0],
-                                    -zn.polygon.pts.xy[ind][1],
-                                    0,
-                                ),
-                            )
+                                Base.Vector(zn.polygon.pts.xy[ind - 1][0], -zn.polygon.pts.xy[ind - 1][1], 0),
+                                Base.Vector(zn.polygon.pts.xy[ind][0], -zn.polygon.pts.xy[ind][1], 0),
+                            ),
                         )
                         line2 = Part.Edge(
                             PLine(
-                                Base.Vector(
-                                    zn.polygon.pts.xy[ind - 1][0],
-                                    -zn.polygon.pts.xy[ind - 1][1],
-                                    0,
-                                ),
-                                Base.Vector(
-                                    zn.polygon.pts.xy[ind][0],
-                                    -zn.polygon.pts.xy[ind][1],
-                                    0,
-                                ),
-                            )
+                                Base.Vector(zn.polygon.pts.xy[ind - 1][0], -zn.polygon.pts.xy[ind - 1][1], 0),
+                                Base.Vector(zn.polygon.pts.xy[ind][0], -zn.polygon.pts.xy[ind][1], 0),
+                            ),
                         )
                 z_lines.append(line2)
-            ind += 1
         Draft.makeSketch(z_lines)
         ndsk = FreeCAD.ActiveDocument.ActiveObject
         ndsk.Label = sk_label + "_" + str(k_index)
@@ -13847,13 +13252,7 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
         try:
             if hasattr(a, "mid"):
                 [xm, ym] = a.mid
-                arc1 = Part.Edge(
-                    Part.Arc(
-                        Base.Vector(xs, -ys, 0),
-                        Base.Vector(xm, -ym, 0),
-                        Base.Vector(x1, -y1, 0),
-                    )
-                )
+                arc1 = Part.Edge(Part.Arc(Base.Vector(xs, -ys, 0), Base.Vector(xm, -ym, 0), Base.Vector(x1, -y1, 0)))
                 curve = arc1.Curve.AngleXU / pi * 180
                 # curve = arc1.AngleXU/pi*180
                 # print(curve)
@@ -13871,7 +13270,7 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                         Base.Vector(x2, -y2, 0),
                         mid_point(Base.Vector(x2, -y2, 0), Base.Vector(x1, -y1, 0), curve),
                         Base.Vector(x1, -y1, 0),
-                    )
+                    ),
                 )
             # if curve>0:
             #     arc = Part.makeCircle(r,center,Vector(0,0,1),a-angle,a)
@@ -13907,7 +13306,7 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                                 kicad_parser.makeVect([a.start[0] - off_x, a.start[1] + off_y]),
                                 kicad_parser.makeVect([a.mid[0] - off_x, a.mid[1] + off_y]),
                                 kicad_parser.makeVect([a.end[0] - off_x, a.end[1] + off_y]),
-                            )
+                            ),
                         )
                         # print('a.start=',a.start,'a.mid=',a.mid,'a.end=',a.end, 'off_x=',off_x, 'off_y=',off_y)
                         # Part.show(Part.ArcOfCircle(kicad_parser.makeVect([a.start[0]-off_x,a.start[1]+off_y]),
@@ -13928,14 +13327,10 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                     else:
                         PCB_Geo.append(
                             Part.ArcOfCircle(
-                                Part.Circle(
-                                    FreeCAD.Vector(cx - off_x, cy - off_y, 0),
-                                    FreeCAD.Vector(0, 0, 1),
-                                    r,
-                                ),
+                                Part.Circle(FreeCAD.Vector(cx - off_x, cy - off_y, 0), FreeCAD.Vector(0, 0, 1), r),
                                 sa,
                                 ea,
-                            )
+                            ),
                         )
                 elif hasattr(a, "mid"):
                     PCB_Geo.append(
@@ -13943,28 +13338,19 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                             kicad_parser.makeVect(a.start),
                             kicad_parser.makeVect(a.mid),
                             kicad_parser.makeVect(a.end),
-                        )
+                        ),
                     )
-                    if pa != "":
-                        if pa.end != a.start:
-                            # PCB_Geo.append(PLine(kicad_parser.makeVect(pa.end),PLine(kicad_parser.makeVect(a.start)),0))
-                            # line1=Part.Edge(PLine(kicad_parser.makeVect(pa.end),PLine(kicad_parser.makeVect(a.start))))
-                            ln = _ln(0, 0, 0, 0)  # class _ln
-                            ln.start = [pa.end[0], pa.end[1]]
-                            ln.end = [a.start[0], a.start[1]]
-                            make_gr_line_obj(ln, add_ply=True)
+                    if pa != "" and pa.end != a.start:
+                        # PCB_Geo.append(PLine(kicad_parser.makeVect(pa.end),PLine(kicad_parser.makeVect(a.start)),0))
+                        # line1=Part.Edge(PLine(kicad_parser.makeVect(pa.end),PLine(kicad_parser.makeVect(a.start))))
+                        ln = _ln(0, 0, 0, 0)  # class _ln
+                        ln.start = [pa.end[0], pa.end[1]]
+                        ln.end = [a.start[0], a.start[1]]
+                        make_gr_line_obj(ln, add_ply=True)
                 else:
                     # FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx,cy,0),FreeCAD.Vector(0,0,1),r),sa,ea),False)
                     PCB_Geo.append(
-                        Part.ArcOfCircle(
-                            Part.Circle(
-                                FreeCAD.Vector(cx, cy, 0),
-                                FreeCAD.Vector(0, 0, 1),
-                                r,
-                            ),
-                            sa,
-                            ea,
-                        )
+                        Part.ArcOfCircle(Part.Circle(FreeCAD.Vector(cx, cy, 0), FreeCAD.Vector(0, 0, 1), r), sa, ea),
                     )
             # mp=mid_point(Base.Vector(x2,-y2,0),Base.Vector(x1,-y1,0),curve)
             # msg1= "App.ActiveDocument.PCB_SketchN.addGeometry(Part.Arc(Base.Vector({0},-{1},0),{4},Base.Vector({2},-{3},0)))".format(x2,y2,x1,y1,mp)
@@ -13983,10 +13369,7 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
 
     # k_index = 0
     for lp in mypcb.gr_poly:  # pcb polylines
-        if hasattr(lp, "layer"):
-            k_test = lp.layer
-        else:
-            k_test = lp.layers
+        k_test = lp.layer if hasattr(lp, "layer") else lp.layers
         if lyr not in k_test:
             # if lp.layer != 'Edge.Cuts':
             continue
@@ -14000,7 +13383,7 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                         PLine(
                             Base.Vector(lp.pts.xy[l - 1][0], -lp.pts.xy[l - 1][1], 0),
                             Base.Vector(lp.pts.xy[0][0], -lp.pts.xy[0][1], 0),
-                        )
+                        ),
                     )
                     edges.append(line1)
                     if load_sketch:
@@ -14008,32 +13391,16 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                             # FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0]-off_x,-l.start[1]-off_y,0), Base.Vector(l.end[0]-off_x,-l.end[1]-off_y,0)))
                             PCB_Geo.append(
                                 PLine(
-                                    Base.Vector(
-                                        lp.pts.xy[l - 1][0] - off_x,
-                                        -lp.pts.xy[l - 1][1] - off_y,
-                                        0,
-                                    ),
-                                    Base.Vector(
-                                        lp.pts.xy[0][0] - off_x,
-                                        -lp.pts.xy[0][1] - off_y,
-                                        0,
-                                    ),
-                                )
+                                    Base.Vector(lp.pts.xy[l - 1][0] - off_x, -lp.pts.xy[l - 1][1] - off_y, 0),
+                                    Base.Vector(lp.pts.xy[0][0] - off_x, -lp.pts.xy[0][1] - off_y, 0),
+                                ),
                             )
                             if k_test != "Edge.Cuts":
                                 line2 = Part.Edge(
                                     PLine(
-                                        Base.Vector(
-                                            lp.pts.xy[l - 1][0] - off_x,
-                                            -lp.pts.xy[l - 1][1] - off_y,
-                                            0,
-                                        ),
-                                        Base.Vector(
-                                            lp.pts.xy[0][0] - off_x,
-                                            -lp.pts.xy[0][1] - off_y,
-                                            0,
-                                        ),
-                                    )
+                                        Base.Vector(lp.pts.xy[l - 1][0] - off_x, -lp.pts.xy[l - 1][1] - off_y, 0),
+                                        Base.Vector(lp.pts.xy[0][0] - off_x, -lp.pts.xy[0][1] - off_y, 0),
+                                    ),
                                 )
                         else:
                             # FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0],-l.start[1],0), Base.Vector(l.end[0],-l.end[1],0)))
@@ -14041,14 +13408,14 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                                 PLine(
                                     Base.Vector(lp.pts.xy[l - 1][0], -lp.pts.xy[l - 1][1], 0),
                                     Base.Vector(lp.pts.xy[0][0], -lp.pts.xy[0][1], 0),
-                                )
+                                ),
                             )
                             if k_test != "Edge.Cuts":
                                 line2 = Part.Edge(
                                     PLine(
                                         Base.Vector(lp.pts.xy[l - 1][0], -lp.pts.xy[l - 1][1], 0),
                                         Base.Vector(lp.pts.xy[0][0], -lp.pts.xy[0][1], 0),
-                                    )
+                                    ),
                                 )
                     if k_test != "Edge.Cuts":
                         ply_lines.append(line2)
@@ -14057,7 +13424,7 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                         PLine(
                             Base.Vector(lp.pts.xy[ind - 1][0], -lp.pts.xy[ind - 1][1], 0),
                             Base.Vector(lp.pts.xy[ind][0], -lp.pts.xy[ind][1], 0),
-                        )
+                        ),
                     )
                     edges.append(line1)
                     if load_sketch:
@@ -14065,32 +13432,16 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                             # FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0]-off_x,-l.start[1]-off_y,0), Base.Vector(l.end[0]-off_x,-l.end[1]-off_y,0)))
                             PCB_Geo.append(
                                 PLine(
-                                    Base.Vector(
-                                        lp.pts.xy[ind - 1][0] - off_x,
-                                        -lp.pts.xy[ind - 1][1] - off_y,
-                                        0,
-                                    ),
-                                    Base.Vector(
-                                        lp.pts.xy[ind][0] - off_x,
-                                        -lp.pts.xy[ind][1] - off_y,
-                                        0,
-                                    ),
-                                )
+                                    Base.Vector(lp.pts.xy[ind - 1][0] - off_x, -lp.pts.xy[ind - 1][1] - off_y, 0),
+                                    Base.Vector(lp.pts.xy[ind][0] - off_x, -lp.pts.xy[ind][1] - off_y, 0),
+                                ),
                             )
                             if k_test != "Edge.Cuts":
                                 line2 = Part.Edge(
                                     PLine(
-                                        Base.Vector(
-                                            lp.pts.xy[ind - 1][0] - off_x,
-                                            -lp.pts.xy[ind - 1][1] - off_y,
-                                            0,
-                                        ),
-                                        Base.Vector(
-                                            lp.pts.xy[ind][0] - off_x,
-                                            -lp.pts.xy[ind][1] - off_y,
-                                            0,
-                                        ),
-                                    )
+                                        Base.Vector(lp.pts.xy[ind - 1][0] - off_x, -lp.pts.xy[ind - 1][1] - off_y, 0),
+                                        Base.Vector(lp.pts.xy[ind][0] - off_x, -lp.pts.xy[ind][1] - off_y, 0),
+                                    ),
                                 )
                         else:
                             # FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(PLine(Base.Vector(l.start[0],-l.start[1],0), Base.Vector(l.end[0],-l.end[1],0)))
@@ -14098,18 +13449,14 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                                 PLine(
                                     Base.Vector(lp.pts.xy[ind - 1][0], -lp.pts.xy[ind - 1][1], 0),
                                     Base.Vector(lp.pts.xy[ind][0], -lp.pts.xy[ind][1], 0),
-                                )
+                                ),
                             )
                             if k_test != "Edge.Cuts":
                                 line2 = Part.Edge(
                                     PLine(
-                                        Base.Vector(
-                                            lp.pts.xy[ind - 1][0],
-                                            -lp.pts.xy[ind - 1][1],
-                                            0,
-                                        ),
+                                        Base.Vector(lp.pts.xy[ind - 1][0], -lp.pts.xy[ind - 1][1], 0),
                                         Base.Vector(lp.pts.xy[ind][0], -lp.pts.xy[ind][1], 0),
-                                    )
+                                    ),
                                 )
                     if k_test != "Edge.Cuts":
                         ply_lines.append(line2)
@@ -14141,10 +13488,7 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
     # bsplines
     for bs in mypcb.gr_curve:
         # if bs.layer != 'Edge.Cuts':
-        if hasattr(bs, "layer"):
-            k_test = bs.layer
-        else:
-            k_test = bs.layers
+        k_test = bs.layer if hasattr(bs, "layer") else bs.layers
         if lyr not in k_test:
             continue
         ind = 0
@@ -14194,10 +13538,7 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
     pa = ""
     for a in mypcb.gr_arc:  # pcb arcs
         # if a.layer != 'Edge.Cuts':
-        if hasattr(a, "layer"):
-            k_test = a.layer
-        else:
-            k_test = a.layers
+        k_test = a.layer if hasattr(a, "layer") else a.layers
         if lyr not in k_test:
             continue
         # for gr_arc, 'start' is actual the center, and 'end' is the start
@@ -14208,10 +13549,7 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
     ## NB use always float() to guarantee number not string!!!
     for c in mypcb.gr_circle:  # pcb circles
         # if c.layer != 'Edge.Cuts':
-        if hasattr(c, "layer"):
-            k_test = c.layer
-        else:
-            k_test = c.layers
+        k_test = c.layer if hasattr(c, "layer") else c.layers
         if lyr not in k_test:
             continue
         [xs, ys] = c.center
@@ -14226,13 +13564,7 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
             if load_sketch:
                 if aux_orig == 1 or grid_orig == 1:
                     # FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(Part.Circle(Base.Vector(xs-off_x, ys-off_y,0), Base.Vector(0, 0, 1), r))
-                    PCB_Geo.append(
-                        Part.Circle(
-                            Base.Vector(xs - off_x, ys - off_y, 0),
-                            Base.Vector(0, 0, 1),
-                            r,
-                        )
-                    )
+                    PCB_Geo.append(Part.Circle(Base.Vector(xs - off_x, ys - off_y, 0), Base.Vector(0, 0, 1), r))
                 else:
                     # FreeCAD.ActiveDocument.PCB_Sketch_draft.addGeometry(Part.Circle(Base.Vector(xs, ys,0), Base.Vector(0, 0, 1), r))
                     PCB_Geo.append(Part.Circle(Base.Vector(xs, ys, 0), Base.Vector(0, 0, 1), r))
@@ -14280,7 +13612,7 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
             d.setText(
                 """<b>Warning:</b> High number of entities to join (> """
                 + str(max_edges_admitted)
-                + """)<br><b>Constraints will not be applied to PCB Sketch</b>"""
+                + """)<br><b>Constraints will not be applied to PCB Sketch</b>""",
             )
             d.setInformativeText("This might take a long time or even freeze your computer. Are you sure?")
             d.setStandardButtons(QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel)
@@ -14316,10 +13648,7 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
             # print(m.tstamp);print(m.fp_text[0][1])
             # stop
 
-            if len(m.at) == 2:
-                m_angle = 0
-            else:
-                m_angle = m.at[2]
+            m_angle = 0 if len(m.at) == 2 else m.at[2]
             [m.at[0], -m.at[1]]  # y reversed
             # say(m.layer);stop
             # HoleList = getPads(board_elab,pcbThickness)
@@ -14427,16 +13756,15 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                             "box_mcad" not in model_name
                             and "cylV_mcad" not in model_name
                             and "cylH_mcad" not in model_name
-                        ):
-                            if error_scale_module:
-                                sayw("wrong scale!!! for " + model_name + " Set scale to (1 1 1)")
-                                msg = """<b>Error in '.kicad_pcb' model footprint</b><br>"""
-                                msg += "<br>reset values of<br><b>" + model_name + "</b><br> to:<br>"
-                                msg += "(scale (xyz 1 1 1))<br>"
-                                # warn+=("reset values of scale to (xyz 1 1 1)")
-                                warn = "reset values of scale to (xyz 1 1 1)"
-                                ##reply = QtGui.QMessageBox.information(None,"info", msg)
-                                # stop
+                        ) and error_scale_module:
+                            sayw("wrong scale!!! for " + model_name + " Set scale to (1 1 1)")
+                            msg = """<b>Error in '.kicad_pcb' model footprint</b><br>"""
+                            msg += "<br>reset values of<br><b>" + model_name + "</b><br> to:<br>"
+                            msg += "(scale (xyz 1 1 1))<br>"
+                            # warn+=("reset values of scale to (xyz 1 1 1)")
+                            warn = "reset values of scale to (xyz 1 1 1)"
+                            ##reply = QtGui.QMessageBox.information(None,"info", msg)
+                            # stop
                         # model_name=model_name[1:]
                         # say(model_name)
                         # sayw("here")
@@ -14454,11 +13782,7 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                         # sayerr(md.at.xyz)
                         if conv_offs != 1:  # pcb version >= 20171114 (offset wrl in mm)
                             if hasattr(md, "at"):
-                                ofs = [
-                                    md.at.xyz[0] / conv_offs,
-                                    md.at.xyz[1] / conv_offs,
-                                    md.at.xyz[2] / conv_offs,
-                                ]
+                                ofs = [md.at.xyz[0] / conv_offs, md.at.xyz[1] / conv_offs, md.at.xyz[2] / conv_offs]
                             if hasattr(md, "offset"):
                                 ofs = [
                                     md.offset.xyz[0] / conv_offs,
@@ -14573,7 +13897,12 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                                 # sayw('holes solid '+str(holes_solid))
                                 if holes_solid:
                                     obj = createHole3(
-                                        x1, y1, rx, ry, "oval", totalHeight
+                                        x1,
+                                        y1,
+                                        rx,
+                                        ry,
+                                        "oval",
+                                        totalHeight,
                                     )  # need to be separated instructions
                                 else:
                                     obj = createHole4(x1, y1, rx, ry, "oval")  # need to be separated instructions
@@ -14602,7 +13931,12 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                                 [x1, y1] = rotPoint2([xs, ys], [m.at[0], -m.at[1]], m_angle)
                                 if holes_solid:
                                     obj = createHole3(
-                                        x1, y1, rx, ry, "oval", totalHeight
+                                        x1,
+                                        y1,
+                                        rx,
+                                        ry,
+                                        "oval",
+                                        totalHeight,
                                     )  # need to be separated instructions
                                 else:
                                     obj = createHole4(x1, y1, rx, ry, "oval")  # need to be separated instructions
@@ -14644,7 +13978,7 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                                 PLine(
                                     Base.Vector(lp.pts.xy[l - 1][0], -lp.pts.xy[l - 1][1], 0),
                                     Base.Vector(lp.pts.xy[0][0], -lp.pts.xy[0][1], 0),
-                                )
+                                ),
                             )
                             edges.append(line1)
                         else:
@@ -14652,7 +13986,7 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                                 PLine(
                                     Base.Vector(lp.pts.xy[ind - 1][0], -lp.pts.xy[ind - 1][1], 0),
                                     Base.Vector(lp.pts.xy[ind][0], -lp.pts.xy[ind][1], 0),
-                                )
+                                ),
                             )
                             edges.append(line1)
                         ind += 1
@@ -14669,10 +14003,7 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                         [x2, y2] = rotPoint2([x2, y2], [m.at[0], -m.at[1]], m_angle)
                         if aux_orig == 1 or grid_orig == 1:
                             FpEdges_Geo.append(
-                                PLine(
-                                    Base.Vector(x1 - off_x, y1 - off_y, 0),
-                                    Base.Vector(x2 - off_x, y2 - off_y, 0),
-                                )
+                                PLine(Base.Vector(x1 - off_x, y1 - off_y, 0), Base.Vector(x2 - off_x, y2 - off_y, 0)),
                             )
                         else:
                             FpEdges_Geo.append(PLine(Base.Vector(x1, y1, 0), Base.Vector(x2, y2, 0)))
@@ -14696,7 +14027,12 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                             ry = radius
                             if holes_solid:
                                 obj = createHole3(
-                                    x1, y1, rx, ry, "oval", totalHeight
+                                    x1,
+                                    y1,
+                                    rx,
+                                    ry,
+                                    "oval",
+                                    totalHeight,
                                 )  # need to be separated instructions
                             else:
                                 obj = createHole4(x1, y1, rx, ry, "oval")  # need to be separated instructions
@@ -14721,10 +14057,7 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                     EdgeCuts.append(line1)
                     if aux_orig == 1 or grid_orig == 1:
                         FpEdges_Geo.append(
-                            PLine(
-                                Base.Vector(x1 - off_x, y1 - off_y, 0),
-                                Base.Vector(x2 - off_x, y2 - off_y, 0),
-                            )
+                            PLine(Base.Vector(x1 - off_x, y1 - off_y, 0), Base.Vector(x2 - off_x, y2 - off_y, 0)),
                         )
                     else:
                         FpEdges_Geo.append(PLine(Base.Vector(x1, y1, 0), Base.Vector(x2, y2, 0)))
@@ -14757,11 +14090,7 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                 EdgeCuts.append(circle2)
                 if aux_orig == 1 or grid_orig == 1:
                     FpEdges_Geo.append(
-                        Part.Circle(
-                            Base.Vector(xc - off_x, yc - off_y, 0),
-                            Base.Vector(0, 0, 1),
-                            radius,
-                        )
+                        Part.Circle(Base.Vector(xc - off_x, yc - off_y, 0), Base.Vector(0, 0, 1), radius),
                     )
                 else:
                     FpEdges_Geo.append(Part.Circle(Base.Vector(xc, yc, 0), Base.Vector(0, 0, 1), radius))
@@ -14787,7 +14116,7 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                             kicad_parser.makeVect(ma.start),
                             kicad_parser.makeVect(ma.mid),
                             kicad_parser.makeVect(ma.end),
-                        ).toShape()
+                        ).toShape(),
                     )
                     arc1.rotate(Vector(), Vector(0, 0, 1), m_angle)
                     if aux_orig == 1 or grid_orig == 1:
@@ -14823,7 +14152,7 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                             Base.Vector(x2, y2, 0),
                             mid_point(Base.Vector(x2, y2, 0), Base.Vector(x1, y1, 0), curve),
                             Base.Vector(x1, y1, 0),
-                        )
+                        ),
                     )
                     edges.append(arc1)
                     EdgeCuts.append(arc1)
@@ -14836,26 +14165,16 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                     if aux_orig == 1 or grid_orig == 1:
                         FpEdges_Geo.append(
                             Part.ArcOfCircle(
-                                Part.Circle(
-                                    FreeCAD.Vector(cx - off_x, cy - off_y, 0),
-                                    FreeCAD.Vector(0, 0, 1),
-                                    r,
-                                ),
+                                Part.Circle(FreeCAD.Vector(cx - off_x, cy - off_y, 0), FreeCAD.Vector(0, 0, 1), r),
                                 sa,
                                 ea,
-                            )
+                            ),
                         )
                     else:
                         FpEdges_Geo.append(
                             Part.ArcOfCircle(
-                                Part.Circle(
-                                    FreeCAD.Vector(cx, cy, 0),
-                                    FreeCAD.Vector(0, 0, 1),
-                                    r,
-                                ),
-                                sa,
-                                ea,
-                            )
+                                Part.Circle(FreeCAD.Vector(cx, cy, 0), FreeCAD.Vector(0, 0, 1), r), sa, ea
+                            ),
                         )
                 if show_border:
                     Part.show(arc1)
@@ -14895,17 +14214,16 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                     say("start adding constraints to pcb sketch")
                     get_time()
                     t0 = running_time
-                    if hasattr(
-                        FreeCAD.ActiveDocument.getObject(PCB2Sketch.Name),
-                        "autoconstraint",
-                    ):
+                    if hasattr(FreeCAD.ActiveDocument.getObject(PCB2Sketch.Name), "autoconstraint"):
                         if addConstraints == "full":
                             FreeCAD.ActiveDocument.getObject("PCB_Sketch_draft").autoconstraint(
-                                edge_tolerance * 5, 0.01
+                                edge_tolerance * 5,
+                                0.01,
                             )
                             if use_PCB_Sketch_E:
                                 FreeCAD.ActiveDocument.getObject("PCB_Sketch_draft_E").autoconstraint(
-                                    edge_tolerance * 5, 0.01
+                                    edge_tolerance * 5,
+                                    0.01,
                                 )
                         else:
                             add_constraints("PCB_Sketch_draft")
@@ -15127,7 +14445,7 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                                     "non coincident edges:\n"
                                     + str(nextCoordinate)
                                     + ";"
-                                    + str(edge.Vertexes[-1].Point)
+                                    + str(edge.Vertexes[-1].Point),
                                 )
                             nextCoordinate = edge.Vertexes[0].Point
                             newEdges.append(edges.pop(j))
@@ -15138,10 +14456,7 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                             # if edges[j].Vertexes[0].Point != nextCoordinate:
                             if distance(edge.Vertexes[0].Point, nextCoordinate) > edge_tolerance_warning:
                                 sayerr(
-                                    "non coincident edges:\n"
-                                    + str(nextCoordinate)
-                                    + ";"
-                                    + str(edge.Vertexes[0].Point)
+                                    "non coincident edges:\n" + str(nextCoordinate) + ";" + str(edge.Vertexes[0].Point),
                                 )
                             nextCoordinate = edge.Vertexes[-1].Point
                             newEdges.append(edges.pop(j))
@@ -15186,7 +14501,7 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                         + str(nextCoordinate.x)
                         + "mm, y="
                         + str(nextCoordinate.y)
-                        + "mm ***"
+                        + "mm ***",
                     )
                     say("pcb edge not closed")
                     QtGui.QApplication.restoreOverrideCursor()
@@ -15637,9 +14952,7 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
             # cut_base=cut_base.extrude(Base.Vector(0,0,-pcbThickness))
             # Part.show(cut_base)
             if simplifyComSolid:
-                faces = []
-                for f in pcb_board.Shape.Faces:
-                    faces.append(f)
+                faces = list(pcb_board.Shape.Faces)
                 try:
                     _ = Part.Shell(faces)
                     _ = Part.Solid(_)
@@ -15731,7 +15044,10 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                     except:
                         pass
                     doc.getObject(board_name).ViewObject.dropObject(
-                        doc.getObject(boardG_name), doc.getObject(boardG_name), "", []
+                        doc.getObject(boardG_name),
+                        doc.getObject(boardG_name),
+                        "",
+                        [],
                     )
                 else:
                     try:
@@ -15753,7 +15069,10 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                 # doc.getObject('Pcb').adjustRelativeLinks(doc.getObject('Board_Geoms'))
                 # doc.getObject('Board_Geoms').ViewObject.dropObject(doc.getObject('Pcb'),None,'',[])
                 doc.getObject(boardG_name).ViewObject.dropObject(
-                    doc.getObject(pcb_name), doc.getObject(pcb_name), "", []
+                    doc.getObject(pcb_name),
+                    doc.getObject(pcb_name),
+                    "",
+                    [],
                 )
                 FreeCADGui.Selection.clearSelection()
                 # FreeCADGui.activeView().setActiveObject('Board_Geoms', doc.Board_Geoms)
@@ -15773,7 +15092,7 @@ def DrawPCB(mypcb, lyr=None, rmv_container=None, keep_sketch=None):
                 + f"{pcb_bbx.YLength:.2f}"
                 + ";"
                 + f"{pcb_bbx.ZLength:.2f}"
-                + ")"
+                + ")",
             )
     say_time()
     if k_index == 1:
@@ -15860,9 +15179,8 @@ if len(args) >= 3:
                 doc = FreeCAD.ActiveDocument
                 if doc is not None:
                     for o in doc.Objects:
-                        if hasattr(o, "Label"):
-                            if o.Label.endswith("_fp"):
-                                fp_loaded = True
+                        if hasattr(o, "Label") and o.Label.endswith("_fp"):
+                            fp_loaded = True
                 # say("opening "+ fullfilePath)
                 # cfgParsWrite(configFilePath)
                 # cfg_update_all()
@@ -15914,12 +15232,8 @@ if len(args) >= 3:
 
 class Ui_DockWidget:
     def link(self, linkStr):
-        # QtGui.QDesktopServices.openUrl(QtCore.QUrl(linkStr))
-        try:
+        with contextlib.suppress(Exception):
             QtGui.QDesktopServices.openUrl(QtCore.QUrl(linkStr))  # workaround Qt5 waiting for PySide
-        except:
-            # QtGui.QDesktopServices.openUrl(QtCore.QUrl(linkStr.fromLocalFile()))
-            pass
 
     # class Ui_DockWidget(object):
     def setupUi(self, DockWidget):
@@ -15945,11 +15259,7 @@ class Ui_DockWidget:
         self.dock_left.setStyleSheet("min-width: 20px;min-height: 20px; ")
         self.dock_left.setText("")
         icon1 = QtGui.QIcon()
-        icon1.addPixmap(
-            QtGui.QPixmap("icons-new/dock_left.png"),
-            QtGui.QIcon.Normal,
-            QtGui.QIcon.Off,
-        )
+        icon1.addPixmap(QtGui.QPixmap("icons-new/dock_left.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.dock_left.setIcon(icon1)
         self.dock_left.setIconSize(QtCore.QSize(24, 24))
         self.dock_left.setObjectName("dock_left")
@@ -15979,11 +15289,7 @@ class Ui_DockWidget:
         self.dock_right.setStyleSheet("min-width: 20px;min-height: 20px; ")
         self.dock_right.setText("")
         icon4 = QtGui.QIcon()
-        icon4.addPixmap(
-            QtGui.QPixmap("icons-new/dock_right.png"),
-            QtGui.QIcon.Normal,
-            QtGui.QIcon.Off,
-        )
+        icon4.addPixmap(QtGui.QPixmap("icons-new/dock_right.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.dock_right.setIcon(icon4)
         self.dock_right.setIconSize(QtCore.QSize(24, 24))
         self.dock_right.setObjectName("dock_right")
@@ -16214,11 +15520,7 @@ class Ui_DockWidget:
         self.pushPCB.setStyleSheet("min-width: 20px;min-height: 20px; ")
         self.pushPCB.setText("")
         icon20 = QtGui.QIcon()
-        icon20.addPixmap(
-            QtGui.QPixmap("icons-new/Sketcher_Rectangle.png"),
-            QtGui.QIcon.Normal,
-            QtGui.QIcon.Off,
-        )
+        icon20.addPixmap(QtGui.QPixmap("icons-new/Sketcher_Rectangle.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.pushPCB.setIcon(icon20)
         self.pushPCB.setObjectName("pushPCB")
         self.gridLayout_8.addWidget(self.pushPCB, 3, 3, 1, 1)
@@ -16238,11 +15540,7 @@ class Ui_DockWidget:
         self.LoadBoard.setStyleSheet("min-width: 20px;min-height: 20px; ")
         self.LoadBoard.setText("")
         icon22 = QtGui.QIcon()
-        icon22.addPixmap(
-            QtGui.QPixmap("icons-new/importBoard.png"),
-            QtGui.QIcon.Normal,
-            QtGui.QIcon.Off,
-        )
+        icon22.addPixmap(QtGui.QPixmap("icons-new/importBoard.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.LoadBoard.setIcon(icon22)
         self.LoadBoard.setObjectName("LoadBoard")
         self.gridLayout_8.addWidget(self.LoadBoard, 2, 0, 1, 1)
@@ -16252,11 +15550,7 @@ class Ui_DockWidget:
         self.ScaleVRML.setStyleSheet("min-width: 20px;min-height: 20px; ")
         self.ScaleVRML.setText("")
         icon23 = QtGui.QIcon()
-        icon23.addPixmap(
-            QtGui.QPixmap("icons-new/export3DModel.png"),
-            QtGui.QIcon.Normal,
-            QtGui.QIcon.Off,
-        )
+        icon23.addPixmap(QtGui.QPixmap("icons-new/export3DModel.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.ScaleVRML.setIcon(icon23)
         self.ScaleVRML.setObjectName("ScaleVRML")
         self.gridLayout_8.addWidget(self.ScaleVRML, 1, 0, 1, 1)
@@ -16274,11 +15568,7 @@ class Ui_DockWidget:
         self.cb_materials.setMaximumSize(QtCore.QSize(64, 128))
         self.cb_materials.setText("")
         icon25 = QtGui.QIcon()
-        icon25.addPixmap(
-            QtGui.QPixmap("icons-new/materials.png"),
-            QtGui.QIcon.Normal,
-            QtGui.QIcon.Off,
-        )
+        icon25.addPixmap(QtGui.QPixmap("icons-new/materials.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.cb_materials.setIcon(icon25)
         self.cb_materials.setObjectName("cb_materials")
         self.gridLayout_8.addWidget(self.cb_materials, 1, 1, 1, 1)
@@ -16297,11 +15587,7 @@ class Ui_DockWidget:
         self.cb_expStep.setMaximumSize(QtCore.QSize(128, 64))
         self.cb_expStep.setText("")
         icon27 = QtGui.QIcon()
-        icon27.addPixmap(
-            QtGui.QPixmap("icons-new/exportPart.png"),
-            QtGui.QIcon.Normal,
-            QtGui.QIcon.Off,
-        )
+        icon27.addPixmap(QtGui.QPixmap("icons-new/exportPart.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.cb_expStep.setIcon(icon27)
         self.cb_expStep.setObjectName("cb_expStep")
         self.gridLayout_8.addWidget(self.cb_expStep, 2, 3, 1, 1)
@@ -16321,11 +15607,7 @@ class Ui_DockWidget:
         self.import3D.setStyleSheet("min-width: 20px;min-height: 20px; ")
         self.import3D.setText("")
         icon29 = QtGui.QIcon()
-        icon29.addPixmap(
-            QtGui.QPixmap("icons-new/add_block.png"),
-            QtGui.QIcon.Normal,
-            QtGui.QIcon.Off,
-        )
+        icon29.addPixmap(QtGui.QPixmap("icons-new/add_block.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.import3D.setIcon(icon29)
         self.import3D.setObjectName("import3D")
         self.gridLayout_8.addWidget(self.import3D, 0, 1, 1, 1)
@@ -16335,11 +15617,7 @@ class Ui_DockWidget:
         self.checkCollisions.setStyleSheet("min-width: 20px;min-height: 20px; ")
         self.checkCollisions.setText("")
         icon30 = QtGui.QIcon()
-        icon30.addPixmap(
-            QtGui.QPixmap("icons-new/collisions.png"),
-            QtGui.QIcon.Normal,
-            QtGui.QIcon.Off,
-        )
+        icon30.addPixmap(QtGui.QPixmap("icons-new/collisions.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.checkCollisions.setIcon(icon30)
         self.checkCollisions.setObjectName("checkCollisions")
         self.gridLayout_8.addWidget(self.checkCollisions, 3, 1, 1, 1)
@@ -16349,11 +15627,7 @@ class Ui_DockWidget:
         self.export3DStep.setStyleSheet("min-width: 20px;min-height: 20px; ")
         self.export3DStep.setText("")
         icon31 = QtGui.QIcon()
-        icon31.addPixmap(
-            QtGui.QPixmap("icons-new/export3DStep.png"),
-            QtGui.QIcon.Normal,
-            QtGui.QIcon.Off,
-        )
+        icon31.addPixmap(QtGui.QPixmap("icons-new/export3DStep.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.export3DStep.setIcon(icon31)
         self.export3DStep.setObjectName("export3DStep")
         self.gridLayout_8.addWidget(self.export3DStep, 3, 0, 1, 1)
@@ -16571,7 +15845,7 @@ class Ui_DockWidget:
         self.makeUnion.clicked.connect(group_part_union)
         self.makeCompound.clicked.connect(group_part)
         self.config_ini_Lbl.linkActivated.connect(self.link)
-        ("<a href='" + ini_file_full_path + "' target='_blank'>" + ini_file_full_path_bold + "</a>")
+        "<a href='" + ini_file_full_path + "' target='_blank'>" + ini_file_full_path_bold + "</a>"
         # self.config_ini_Lbl.setText(local_link)
         self.config_ini_Lbl.setText("")
         self.config_ini_Lbl.setToolTip(translate("Ui_DockWidget", "ksu config ini file\nlocation"))
@@ -17109,7 +16383,7 @@ class Ui_DockWidget:
     #                 testing=False
     #                 if not testing:
     #                     Filter=""
-    #                     name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Push Sketch PCB Edge to KiCad board ...",
+    #                     name, _Filter = PySide.QtGui.QFileDialog.getSaveFileName(None, "Push Sketch PCB Edge to KiCad board ...",
     #                         last_3d_path, "*.kicad_pcb")
     #                 else:
     #                     name='d:/Temp/e2.kicad_pcb'
@@ -17169,7 +16443,6 @@ class Ui_DockWidget:
             # paramGet = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/MainWindow")
             # if 'dark' in paramGet.GetString("StyleSheet").lower(): #we are using a StyleSheet
             font_color = """<font color=ghostwhite>"""
-
             font_color = """<font color=""" + FreeCADGui.getMainWindow().palette().text().color().name() + """>"""
             # FreeCADGui.getMainWindow().palette().background().color()
             sayw("kicad StepUp version " + str(___ver___))
@@ -17316,14 +16589,8 @@ def Export3DStepF():
                 sayw(last_pcb_path)
             # getSaveFileName(self,"saveFlle","Result.txt",filter ="txt (*.txt *.)")
             def_fn = sel[0].Label
-            Filter = ""
-            prefs_ = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
-            if prefs_.GetBool("stpz_export_enabled"):
-                ext_ = ".stpZ"
-            else:
-                ext_ = ".step"
             if not (prefs_.GetBool("not_native_dlg")):
-                name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(
+                name, _Filter = PySide.QtGui.QFileDialog.getSaveFileName(
                     None,
                     "Export 3D STEP/stpZ ...",
                     make_unicode(os.path.join(last_3d_path, def_fn) + ext_),
@@ -17411,7 +16678,7 @@ def Export3DStepF():
                         sayerr(
                             "to export STEP it is necessary to use StepUp Workbench<br>instead of the single Macro<br>(because of "
                             + str(fcv)
-                            + " FC bug)"
+                            + " FC bug)",
                         )
                         msg = (
                             """<font color='red'><b>to export STEP it is necessary to use StepUp Workbench<br>instead of the single Macro<br>(because of """
@@ -17423,10 +16690,7 @@ def Export3DStepF():
                             say("including sketch in grp")
                             FreeCAD.ActiveDocument.getObject(sk[1]).addObject(FreeCAD.ActiveDocument.getObject(sk[0]))
                         stop
-                    if fcb:
-                        cpmode = "compound"
-                    else:
-                        cpmode = "part"
+                    cpmode = "compound" if fcb else "part"
                     suffix = "_"
                     to_export_name = kicadStepUpCMD.deep_copy(doc, cpmode, suffix)
                     # to_export_name=FreeCAD.ActiveDocument.ActiveObject.Name
@@ -17541,10 +16805,9 @@ def Import3DModelF():
     if len(last_3d_path) == 0:
         last_3d_path = last_pcb_path
         sayw(last_pcb_path)
-    Filter = ""
     prefs_ = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
     if not (prefs_.GetBool("not_native_dlg")):
-        name, Filter = PySide.QtGui.QFileDialog.getOpenFileName(
+        name, _Filter = PySide.QtGui.QFileDialog.getOpenFileName(
             None,
             "Import 3D File...",
             make_unicode(last_3d_path),
@@ -17707,7 +16970,7 @@ class Ui_LayerSelection:
             translate(
                 "Ui_LayerSelection",
                 '<html><head/><body><p>replace PCB in current document</p><p><span style=" font-weight:600; color:#aa0000;">N.B.</span> Sketch constrains will be deleted!</p></body></html>',
-            )
+            ),
         )
         self.radioBtn_replace_pcb.setText(translate("Ui_LayerSelection", "replace PCB and Sketch in current document"))
         self.radioBtn_replace_pcb.setObjectName("radioBtn_replace_pcb")
@@ -17717,7 +16980,7 @@ class Ui_LayerSelection:
             translate(
                 "Ui_LayerSelection",
                 '<html><head/><body><p>keep Sketch in current document</p><p><span style=" font-weight:600; color:#aa0000;">N.B.</span> this option will keep Sketch &amp; constrains but replace the PCB</p><p>This could lead to a unsynced Sketch feature</p></body></html>',
-            )
+            ),
         )
         self.radioBtn_keep_sketch.setText(translate("Ui_LayerSelection", "replace PCB and keep Sketch in curr. doc"))
         self.radioBtn_keep_sketch.setObjectName("radioBtn_keep_sketch")
@@ -17827,10 +17090,7 @@ def PushPCB():
     global last_3d_path, start_time, load_sketch, last_pcb_path, edge_width
     # say("export3DSTEP")
     if not load_sketch:
-        msg = translate(
-            "PushPCB",
-            "<b>Edge editing NOT supported on FC0.15!</b><br>please upgrade your FC release",
-        )
+        msg = translate("PushPCB", "<b>Edge editing NOT supported on FC0.15!</b><br>please upgrade your FC release")
         say_warning(msg)
         msg = translate("PushPCB", "Edge editing NOT supported on FC0.15!")
         sayerr(msg)
@@ -17917,10 +17177,9 @@ def PushPCB():
                     #    pass
                     testing = False
                     if not testing:
-                        Filter = ""
                         prefs_ = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
                         if not (prefs_.GetBool("not_native_dlg")):
-                            name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(
+                            name, _Filter = PySide.QtGui.QFileDialog.getSaveFileName(
                                 None,
                                 "Push Sketch PCB Edge to KiCad board ...",
                                 make_unicode(last_pcb_path),
@@ -17956,10 +17215,7 @@ def PushPCB():
 
                             ksuWBpath = os.path.dirname(ksu_locator.__file__)
                             ksuWB_demo_path = os.path.join(ksuWBpath, "demo")
-                            copyfile(
-                                os.path.join(ksuWB_demo_path, "empty-kv5.kicad_pcb"),
-                                name,
-                            )
+                            copyfile(os.path.join(ksuWB_demo_path, "empty-kv5.kicad_pcb"), name)
                             start_time = current_milli_time()
                             export_pcb(name, SketchLayer, skname)
                             # msg="""Save to <b>an EXISTING KiCad pcb file</b> to update your Edge!"""
@@ -18011,10 +17267,9 @@ def Sync3DModel():
                 # getSaveFileName(self,"saveFlle","Result.txt",filter ="txt (*.txt *.)")
                 testing = False
                 if not testing:
-                    Filter = ""
                     prefs_ = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
                     if not (prefs_.GetBool("not_native_dlg")):
-                        fname, Filter = PySide.QtGui.QFileDialog.getOpenFileName(
+                        fname, _Filter = PySide.QtGui.QFileDialog.getOpenFileName(
                             None,
                             "Load KiCad PCB board data...",
                             make_unicode(last_pcb_path),
@@ -18040,10 +17295,7 @@ def Sync3DModel():
                         # fpath=filePath+os.sep+doc.Label+'.kicad_pcb'
                         # sayerr('to '+fpath)
                         # print fname
-                        if fname is None:
-                            fpath = original_filename
-                        else:
-                            fpath = fname
+                        fpath = original_filename if fname is None else fname
                         sayerr("Loading from " + fpath)
                         # stop
                         if len(fpath) > 0:
@@ -18129,7 +17381,7 @@ def Sync3DModel():
                                                 else:
                                                     mmodel = ""
                                                 if ((len(ts) != 8) and (len(ts) != 12)) or sel[0].Label.rfind(
-                                                    "_"
+                                                    "_",
                                                 ) == -1:
                                                     msg = "TimeStamp not found!\nAdding & Syncing Ref & TimeStamp"
                                                     sayw(msg)
@@ -18269,10 +17521,9 @@ def PushMoved():
             # getSaveFileName(self,"saveFlle","Result.txt",filter ="txt (*.txt *.)")
             testing = False  # True
             if not testing:
-                Filter = ""
                 prefs_ = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
                 if not (prefs_.GetBool("not_native_dlg")):
-                    fname, Filter = PySide.QtGui.QFileDialog.getSaveFileName(
+                    fname, _Filter = PySide.QtGui.QFileDialog.getSaveFileName(
                         None,
                         "Push 3D PCB position(s) to KiCad board ...",
                         make_unicode(last_pcb_path),
@@ -18298,10 +17549,7 @@ def PushMoved():
                     # fpath=filePath+os.sep+doc.Label+'.kicad_pcb'
                     # sayerr('to '+fpath)
                     # print fname
-                    if fname is None:
-                        fpath = original_filename
-                    else:
-                        fpath = fname
+                    fpath = original_filename if fname is None else fname
                     sayerr("saving to " + fpath)
                     # stop
                     if len(fpath) > 0:
@@ -18506,15 +17754,12 @@ def getModelsData(mypcb):
         if float(lynbr) == Top_lvl:
             LvlTopName = mypcb.layers[f"{str(lynbr)}"][0]
         if float(lynbr) == Edge_Cuts_lvl:
-            mypcb.layers[f"{str(lynbr)}"][0]
+            (mypcb.layers[f"{str(lynbr)}"][0])
 
     for m in mypcb.module:  # parsing modules  #check top/bottom for placing 3D models
         # print(m.tstamp);print(m.fp_text[0][1])
         # stop
-        if len(m.at) == 2:
-            m_angle = 0
-        else:
-            m_angle = m.at[2]
+        m_angle = 0 if len(m.at) == 2 else m.at[2]
         [m.at[0], -m.at[1]]  # y reversed
         virtual = 0
         if hasattr(m, "attr"):
@@ -18593,11 +17838,7 @@ def getModelsData(mypcb):
                     # sayerr(md.at.xyz)
                     if conv_offs != 1:  # pcb version >= 20171114 (offset wrl in mm)
                         if hasattr(md, "at"):
-                            ofs = [
-                                md.at.xyz[0] / conv_offs,
-                                md.at.xyz[1] / conv_offs,
-                                md.at.xyz[2] / conv_offs,
-                            ]
+                            ofs = [md.at.xyz[0] / conv_offs, md.at.xyz[1] / conv_offs, md.at.xyz[2] / conv_offs]
                         if hasattr(md, "offset"):
                             ofs = [
                                 md.offset.xyz[0] / conv_offs,
@@ -18686,10 +17927,9 @@ def PullMoved():
             # getSaveFileName(self,"saveFlle","Result.txt",filter ="txt (*.txt *.)")
             testing = False  # True
             if not testing:
-                Filter = ""
                 prefs_ = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
                 if not (prefs_.GetBool("not_native_dlg")):
-                    fname, Filter = PySide.QtGui.QFileDialog.getOpenFileName(
+                    fname, _Filter = PySide.QtGui.QFileDialog.getOpenFileName(
                         None,
                         "Pull 3D model position(s) from pcbnew File...",
                         make_unicode(last_pcb_path),
@@ -18715,10 +17955,7 @@ def PullMoved():
                     # fpath=filePath+os.sep+doc.Label+'.kicad_pcb'
                     # sayerr('to '+fpath)
                     # print fname
-                    if fname is None:
-                        fpath = original_filename
-                    else:
-                        fpath = fname
+                    fpath = original_filename if fname is None else fname
                     sayerr("loading from " + fpath)
                     # stop
                     if len(fpath) > 0:
@@ -18775,10 +18012,7 @@ def PullMoved():
                                     oft = [0.0, 0.0]
                         elif grid_orig == 1:
                             if hasattr(mypcb, "setup"):
-                                if hasattr(mypcb.setup, "grid_origin"):
-                                    oft = mypcb.setup.grid_origin
-                                else:
-                                    oft = [0.0, 0.0]
+                                oft = mypcb.setup.grid_origin if hasattr(mypcb.setup, "grid_origin") else [0.0, 0.0]
                             else:
                                 oft = [0.0, 0.0]
                                 # oft=getGridOrigin(data)
@@ -18944,19 +18178,11 @@ def PushFootprint():
                             # print(centers)
                             for i, c in enumerate(centers):
                                 FreeCAD.ActiveDocument.getObject(skd_name).addGeometry(
-                                    Part.Circle(
-                                        FreeCAD.Vector(c[0], c[1]),
-                                        FreeCAD.Vector(0, 0, 1),
-                                        rads[i],
-                                    )
+                                    Part.Circle(FreeCAD.Vector(c[0], c[1]), FreeCAD.Vector(0, 0, 1), rads[i]),
                                 )
                                 if "Pads_NPTH" not in FreeCAD.ActiveDocument.getObject(skd_name).Label:
                                     FreeCAD.ActiveDocument.getObject(skd_name).addGeometry(
-                                        Part.Circle(
-                                            FreeCAD.Vector(c[0], c[1]),
-                                            FreeCAD.Vector(0, 0, 1),
-                                            rads[i] * 1.4,
-                                        )
+                                        Part.Circle(FreeCAD.Vector(c[0], c[1]), FreeCAD.Vector(0, 0, 1), rads[i] * 1.4),
                                     )  # annular = 40% of radius
                             FreeCAD.ActiveDocument.recompute()
                             FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.getObject(skd_name))
@@ -18987,31 +18213,29 @@ def PushFootprint():
                                 sk_to_convert.append(o)
                         ## checking Pads_Poly for ArcOfCircle to be discretized
                         to_discretize = False
-                        if "NetTie_Poly" in o.Label:
-                            if hasattr(o, "Geometry"):
-                                for g in o.Geometry:
-                                    if "ArcOfCircle" in str(g) and not isConstruction(g):
-                                        FreeCAD.Console.PrintWarning("need to discretize Arcs\n")
-                                        to_discretize = True
-                                if to_discretize:
-                                    sk_to_discr.append(o)
-                                    FreeCADGui.Selection.removeSelection(o)
-                                else:
-                                    # print(o.Label,'sk added')
-                                    sk_to_convert.append(o)
+                        if "NetTie_Poly" in o.Label and hasattr(o, "Geometry"):
+                            for g in o.Geometry:
+                                if "ArcOfCircle" in str(g) and not isConstruction(g):
+                                    FreeCAD.Console.PrintWarning("need to discretize Arcs\n")
+                                    to_discretize = True
+                            if to_discretize:
+                                sk_to_discr.append(o)
+                                FreeCADGui.Selection.removeSelection(o)
+                            else:
+                                # print(o.Label,'sk added')
+                                sk_to_convert.append(o)
                         to_discretize = False
-                        if "Pads_Poly" in o.Label:
-                            if hasattr(o, "Geometry"):
-                                for g in o.Geometry:
-                                    if "ArcOfCircle" in str(g) and not isConstruction(g):
-                                        FreeCAD.Console.PrintWarning("need to discretize Arcs\n")
-                                        to_discretize = True
-                                if to_discretize:
-                                    sk_to_discr.append(o)
-                                    FreeCADGui.Selection.removeSelection(o)
-                                else:
-                                    # print(o.Label,'sk added')
-                                    sk_to_convert.append(o)
+                        if "Pads_Poly" in o.Label and hasattr(o, "Geometry"):
+                            for g in o.Geometry:
+                                if "ArcOfCircle" in str(g) and not isConstruction(g):
+                                    FreeCAD.Console.PrintWarning("need to discretize Arcs\n")
+                                    to_discretize = True
+                            if to_discretize:
+                                sk_to_discr.append(o)
+                                FreeCADGui.Selection.removeSelection(o)
+                            else:
+                                # print(o.Label,'sk added')
+                                sk_to_convert.append(o)
                 else:
                     for o in sel:
                         to_discretize = False
@@ -19045,19 +18269,11 @@ def PushFootprint():
                             # FreeCAD.ActiveDocument.getObject(skd_name).MapMode = "Deactivated"
                             for i, c in enumerate(centers):
                                 FreeCAD.ActiveDocument.getObject(skd_name).addGeometry(
-                                    Part.Circle(
-                                        FreeCAD.Vector(c[0], c[1]),
-                                        FreeCAD.Vector(0, 0, 1),
-                                        rads[i],
-                                    )
+                                    Part.Circle(FreeCAD.Vector(c[0], c[1]), FreeCAD.Vector(0, 0, 1), rads[i]),
                                 )
                                 if "NPTH_Drills" not in o.Label:
                                     FreeCAD.ActiveDocument.getObject(skd_name).addGeometry(
-                                        Part.Circle(
-                                            FreeCAD.Vector(c[0], c[1]),
-                                            FreeCAD.Vector(0, 0, 1),
-                                            rads[i] * 1.4,
-                                        )
+                                        Part.Circle(FreeCAD.Vector(c[0], c[1]), FreeCAD.Vector(0, 0, 1), rads[i] * 1.4),
                                     )  # annular = 40% of radius # +annular))
                             FreeCAD.ActiveDocument.recompute()
                         elif "NetTie_Poly" in o.Label:
@@ -19103,8 +18319,7 @@ def PushFootprint():
                     # sk_d=Draft.makeSketch(wn)
                     edgs = []
                     for s in wn:
-                        for e in s.Edges:
-                            edgs.append(e)
+                        edgs.extend(s.Edges)
                     # wns = Part.Wire(Part.__sortEdges__(edgs))
                     # Part.show(wnc[0])
                     # print (wns);print(wnc[0])
@@ -19186,7 +18401,6 @@ def PushFootprint():
                         try:
                             ### Begin command Part_CompJoinFeatures
                             say("importing BOPTools")
-
                             # from PartGui import BOPTools
                             import BOPTools
                             import BOPTools.JoinFeatures
@@ -19248,10 +18462,9 @@ def PushFootprint():
                     FreeCADGui.Selection.removeSelection(s)
                 # stop
                 if not testing:
-                    Filter = ""
                     prefs_ = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
                     if not (prefs_.GetBool("not_native_dlg")):
-                        name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(
+                        name, _Filter = PySide.QtGui.QFileDialog.getSaveFileName(
                             None,
                             "Push Footprint to KiCad module ...",
                             make_unicode(last_fp_path),
@@ -19363,9 +18576,8 @@ def simplify_sketch_old():
             for obj in doc.Objects:
                 if (
                     obj.TypeId in {"Part::Feature", "Sketcher::SketchObject", "Part::Part2DObjectPython"}
-                ):
-                    if obj.Name not in obj_list_prev:
-                        obj_list_after.append(obj.Name)
+                ) and obj.Name not in obj_list_prev:
+                    obj_list_after.append(obj.Name)
             # print obj_list_after #, obj_list_prev
             sk_to_conv = []
             for obj in doc.Objects:
@@ -19420,14 +18632,24 @@ def simplify_sketch():
         if hasattr(sel[0], "GeometryFacadeList"):
             Gm = sel[0].GeometryFacadeList
             for g in Gm:
-                if "BSplineCurve object" in str(g.Geometry) or "Ellipse" in str(g.Geometry) or "Parabola" in str(g.Geometry) or "Hyperbola" in str(g.Geometry):
+                if (
+                    "BSplineCurve object" in str(g.Geometry)
+                    or "Ellipse" in str(g.Geometry)
+                    or "Parabola" in str(g.Geometry)
+                    or "Hyperbola" in str(g.Geometry)
+                ):
                     to_discretize.append(g.Geometry)
                 elif not isConstruction(g):  # g.Construction: # adding only non construction geo
                     new_edge_list.append(g.Geometry)
         else:
             Gm = sel[0].Geometry
             for g in Gm:
-                if "BSplineCurve object" in str(g) or "Ellipse" in str(g) or "Parabola" in str(g) or "Hyperbola" in str(g):
+                if (
+                    "BSplineCurve object" in str(g)
+                    or "Ellipse" in str(g)
+                    or "Parabola" in str(g)
+                    or "Hyperbola" in str(g)
+                ):
                     to_discretize.append(g)
                 elif not isConstruction(g):  # g.Construction: # adding only non construction geo
                     new_edge_list.append(g)
@@ -19451,8 +18673,7 @@ def simplify_sketch():
                     bs = g.toBSpline()  # (tolerance, maxSegments, maxDegree)
                     try:
                         gds = bs.toBiArcs(precision)
-                        for gd in gds:
-                            new_edge_list.append(gd)
+                        new_edge_list.extend(gds)
                     except:
                         sayw("error in simplifying")
             if len(new_edge_list) > 0:
@@ -19565,8 +18786,7 @@ def normalize_bsplines():
                     # bs = g.approximateBSpline(edge_tolerance,maxSegments,maxDegree) # (tolerance, maxSegments, maxDegree)
                     bs = g.toBSpline()  # (tolerance, maxSegments, maxDegree)
                     bs = bs.toBiArcs(precision)
-                    for b in bs:
-                        kGeo.append(b)
+                    kGeo.extend(bs)
                     found_to_simplify = True
                     # print(bs)
                     # stop
@@ -19662,10 +18882,7 @@ def export_footprint(fname=None, flabel=None):
         sk_name = None
         NetTie_present = False
         fp_name = "fc_footprint"
-        if flabel == "" or flabel is None:
-            fp_name = FreeCAD.ActiveDocument.Name
-        else:
-            fp_name = flabel
+        fp_name = FreeCAD.ActiveDocument.Name if flabel == "" or flabel is None else flabel
         # print(fp_name, 'fp_name1')
 
         for s in sel:
@@ -19709,9 +18926,8 @@ def export_footprint(fname=None, flabel=None):
             for obj in doc.Objects:
                 if (
                     obj.TypeId in {"Part::Feature", "Sketcher::SketchObject", "Part::Part2DObjectPython"}
-                ):
-                    if obj.Name not in obj_list_prev:
-                        obj_list_after.append(obj.Name)
+                ) and obj.Name not in obj_list_prev:
+                    obj_list_after.append(obj.Name)
             # print obj_list_after #, obj_list_prev
             sk_to_conv = []
             for obj in doc.Objects:
@@ -19894,60 +19110,42 @@ def export_footprint(fname=None, flabel=None):
             if "CrtYd" in lyr:
                 if len(lyr_splt) >= 3:
                     tk = lyr.split("_")[len(lyr_splt) - 1]
-                    if tk != "":
-                        edge_thick = float(tk)
-                    else:
-                        edge_thick = tk_d
+                    edge_thick = float(tk) if tk != "" else tk_d
                     lyr = "F.CrtYd"
                 else:
                     lyr = "skip"
             elif "Silks" in lyr:
                 if len(lyr_splt) >= 3:
                     tk = lyr.split("_")[len(lyr_splt) - 1]
-                    if tk != "":
-                        edge_thick = float(tk)
-                    else:
-                        edge_thick = tk_d
+                    edge_thick = float(tk) if tk != "" else tk_d
                     lyr = "F.SilkS"
                 else:
                     lyr = "skip"
             elif "Fab" in lyr:
                 if len(lyr_splt) >= 3:
                     tk = lyr.split("_")[len(lyr_splt) - 1]
-                    if tk != "":
-                        edge_thick = float(tk)
-                    else:
-                        edge_thick = tk_d
+                    edge_thick = float(tk) if tk != "" else tk_d
                     lyr = "F.Fab"
                 else:
                     lyr = "skip"
             elif "Dwgs" in lyr:
                 if len(lyr_splt) >= 2:
                     tk = lyr.split("_")[len(lyr_splt) - 1]
-                    if tk != "":
-                        edge_thick = float(tk)
-                    else:
-                        edge_thick = tk_d
+                    edge_thick = float(tk) if tk != "" else tk_d
                     lyr = "Dwgs.User"
                 else:
                     lyr = "skip"
             elif "Cmts" in lyr:
                 if len(lyr_splt) >= 2:
                     tk = lyr.split("_")[len(lyr_splt) - 1]
-                    if tk != "":
-                        edge_thick = float(tk)
-                    else:
-                        edge_thick = tk_d
+                    edge_thick = float(tk) if tk != "" else tk_d
                     lyr = "Cmts.User"
                 else:
                     lyr = "skip"
             elif "Cuts" in lyr:
                 if len(lyr_splt) >= 3:
                     tk = lyr.split("_")[len(lyr_splt) - 1]
-                    if tk != "":
-                        edge_thick = float(tk)
-                    else:
-                        edge_thick = tk_d
+                    edge_thick = float(tk) if tk != "" else tk_d
                     lyr = "Edge.Cuts"
                 else:
                     lyr = "skip"
@@ -20003,10 +19201,7 @@ def export_footprint(fname=None, flabel=None):
                 # edge_thick=float(lyr.split('_')[2])
                 if len(lyr_splt) >= 3:
                     tk = lyr.split("_")[len(lyr_splt) - 1]
-                    if tk != "":
-                        edge_thick = float(tk)
-                    else:
-                        edge_thick = tk_d
+                    edge_thick = float(tk) if tk != "" else tk_d
                 # print (lyr)
                 sk = FreeCAD.ActiveDocument.getObjectsByLabel(lyr)[0]
                 if hasattr(sk, "GeometryFacadeList"):
@@ -20022,7 +19217,7 @@ def export_footprint(fname=None, flabel=None):
                                         sk_ge.Edges[0].Curve.Center.x,
                                         sk_ge.Edges[0].Curve.Center.y,
                                         sk.Label,
-                                    ]
+                                    ],
                                 )
                 else:
                     Gm = sk.Geometry
@@ -20037,7 +19232,7 @@ def export_footprint(fname=None, flabel=None):
                                         sk_ge.Edges[0].Curve.Center.x,
                                         sk_ge.Edges[0].Curve.Center.y,
                                         sk.Label,
-                                    ]
+                                    ],
                                 )
                 # lyr=u'Pads_Geom'
                 pgeom.append(border)
@@ -21268,10 +20463,7 @@ def createFpPad(pad, offset, tp, _drills=None):
         if tp == "PadsAll":
             tp = "TH"
             ptp = "thru_hole"
-        if tp == "TH":
-            ptp = "thru_hole"
-        else:
-            ptp = "np_thru_hole"
+        ptp = "thru_hole" if tp == "TH" else "np_thru_hole"
         # sayw (pad)
         found_drill = False
         if pad[0] == "circle":
@@ -21312,12 +20504,7 @@ def createFpPad(pad, offset, tp, _drills=None):
                     if abs(d[0] - cx) > edge_tolerance or abs(d[1] - cy) > edge_tolerance:
                         # if d[0] != cx or d[1] != cy:
                         drill_str = (
-                            drill_str
-                            + " (offset "
-                            + f"{cx - d[0]:.3f}"
-                            + " "
-                            + f"{cy - d[1]:.3f}"
-                            + "))"
+                            drill_str + " (offset " + f"{cx - d[0]:.3f}" + " " + f"{cy - d[1]:.3f}" + "))"
                         )  # +")"
                         cx = d[0]
                         cy = d[1]
@@ -21360,10 +20547,7 @@ def createFpPad(pad, offset, tp, _drills=None):
                     ptp = "smd"
                     pad_layers = " (layers F.Cu F.Paste F.Mask))"
                 drill_str = ""  # "(drill 0)"
-            if sx == sy:
-                pshp = "circle"
-            else:
-                pshp = "oval"
+            pshp = "circle" if sx == sy else "oval"
             # pdl ="  (pad "+str(pad_nbr)+" "+ptp+" "+pshp+" (at "+str(cx)+" "+str(cy)+") (size "+str(sx)+" "+str(sy)+") "+drill_str+pad_layers
             pdl = (
                 "  (pad "
@@ -21428,8 +20612,8 @@ def createFpPad(pad, offset, tp, _drills=None):
             else:
                 sy = abs(pad[0][2] - pad[0][4])
                 py = (pad[0][2] + pad[0][4]) / -2
-            # print pad[0];print pad[1]
-            # stop
+                # print pad[0];print pad[1]
+                # stop
             found_drill = False
             if len(_drills) > 0:
                 for d in _drills:
@@ -21446,7 +20630,7 @@ def createFpPad(pad, offset, tp, _drills=None):
                             + ":"
                             + str(sx)
                             + ","
-                            + str(sy)
+                            + str(sy),
                         )
                         found_drill = True
                         break
@@ -21459,12 +20643,7 @@ def createFpPad(pad, offset, tp, _drills=None):
                         drill_str = "(drill " + f"{d[2]:.3f}"  # +")"
                     if abs(d[0] - px) > edge_tolerance or abs(d[1] - py) > edge_tolerance:
                         drill_str = (
-                            drill_str
-                            + " (offset "
-                            + f"{px - d[0]:.3f}"
-                            + " "
-                            + f"{py - d[1]:.3f}"
-                            + "))"
+                            drill_str + " (offset " + f"{px - d[0]:.3f}" + " " + f"{py - d[1]:.3f}" + "))"
                         )  # +")"
                         px = d[0]
                         py = d[1]
@@ -21480,9 +20659,7 @@ def createFpPad(pad, offset, tp, _drills=None):
                             drill_str = "(drill " + f"{sx:.3f}" + ")"
                             ptype = "circle"
                         else:
-                            drill_str = (
-                                "(drill oval " + f"{sx:.3f}" + " " + f"{sy:.3f}" + ")"
-                            )  # "(drill 0)"
+                            drill_str = "(drill oval " + f"{sx:.3f}" + " " + f"{sy:.3f}" + ")"  # "(drill 0)"
                             ptype = "oval"
                     else:
                         # print('pad[-1] Rect',pad[-1])
@@ -21509,9 +20686,7 @@ def createFpPad(pad, offset, tp, _drills=None):
                     drill_str = "(drill " + f"{sx:.3f}" + ")"
                     ptype = "circle"
                 else:
-                    drill_str = (
-                        "(drill oval " + f"{sx:.3f}" + " " + f"{sy:.3f}" + ")"
-                    )  # "(drill 0)"
+                    drill_str = "(drill oval " + f"{sx:.3f}" + " " + f"{sy:.3f}" + ")"  # "(drill 0)"
                     ptype = "oval"
             else:
                 # print('pad[-1] Rect 2',pad[-1])
@@ -21617,7 +20792,7 @@ def createFpPad(pad, offset, tp, _drills=None):
                             + ":"
                             + str(sx)
                             + ","
-                            + str(sy)
+                            + str(sy),
                         )
                         # if d[0] > cx-sx/2 and d[0] < cx+sx/2 and d[1] > cy-sy/2 and d[1] < cy+sy/2:
                         #    sayw('drill in pad found!')
@@ -21632,12 +20807,7 @@ def createFpPad(pad, offset, tp, _drills=None):
                         drill_str = "(drill " + f"{d[2]:.3f}"  # +")"
                     if abs(d[0] - px) > edge_tolerance or abs(d[1] - py) > edge_tolerance:
                         drill_str = (
-                            drill_str
-                            + " (offset "
-                            + f"{px - d[0]:.3f}"
-                            + " "
-                            + f"{py - d[1]:.3f}"
-                            + "))"
+                            drill_str + " (offset " + f"{px - d[0]:.3f}" + " " + f"{py - d[1]:.3f}" + "))"
                         )  # +")"
                         px = d[0]
                         py = d[1]
@@ -21649,9 +20819,7 @@ def createFpPad(pad, offset, tp, _drills=None):
                     if sx == sy:
                         drill_str = "(drill " + f"{sx:.3f}" + ")"
                     else:
-                        drill_str = (
-                            "(drill oval " + f"{sx:.3f}" + " " + f"{sy:.3f}" + ")"
-                        )  # "(drill 0)"
+                        drill_str = "(drill oval " + f"{sx:.3f}" + " " + f"{sy:.3f}" + ")"  # "(drill 0)"
                     # drill_str="(drill oval "+str(d[2])+" "+str(d[3]) #"(drill 0)"
                 else:
                     pattern = "_In+([0-9]*?).Cu"
@@ -21682,9 +20850,7 @@ def createFpPad(pad, offset, tp, _drills=None):
                 if sx == sy:
                     drill_str = "(drill " + f"{sx:.3f}" + ")"
                 else:
-                    drill_str = (
-                        "(drill oval " + f"{sx:.3f}" + " " + f"{sy:.3f}" + ")"
-                    )  # "(drill 0)"
+                    drill_str = "(drill oval " + f"{sx:.3f}" + " " + f"{sy:.3f}" + ")"  # "(drill 0)"
                 # drill_str="(drill oval "+str(d[2])+" "+str(d[3]) #"(drill 0)"
             else:
                 pattern = "_In+([0-9]*?).Cu"
@@ -21825,7 +20991,7 @@ def createFpPad(pad, offset, tp, _drills=None):
                             + ":"
                             + str(sx)
                             + ","
-                            + str(sy)
+                            + str(sy),
                         )
                         # if d[0] > cx-sx/2 and d[0] < cx+sx/2 and d[1] > cy-sy/2 and d[1] < cy+sy/2:
                         #    sayw('drill in pad found!')
@@ -21835,19 +21001,12 @@ def createFpPad(pad, offset, tp, _drills=None):
                 ### OFFSET
                 if found_drill:
                     if d[2] != d[3]:
-                        drill_str = (
-                            "(drill oval " + f"{abs(d[2]):.3f}" + " " + f"{abs(d[3]):.3f}"
-                        )  # +")"
+                        drill_str = "(drill oval " + f"{abs(d[2]):.3f}" + " " + f"{abs(d[3]):.3f}"  # +")"
                     else:
                         drill_str = "(drill " + f"{abs(d[2]):.3f}"  # +")"
                     if abs(d[0] - px) > edge_tolerance or abs(-d[1] - py) > edge_tolerance:
                         drill_str = (
-                            drill_str
-                            + " (offset "
-                            + f"{px - d[0]:.3f}"
-                            + " "
-                            + f"{-py - d[1]:.3f}"
-                            + "))"
+                            drill_str + " (offset " + f"{px - d[0]:.3f}" + " " + f"{-py - d[1]:.3f}" + "))"
                         )  # +")"
                         px = d[0]
                         py = d[1]
@@ -22813,7 +21972,7 @@ def getBoardOutline():
                                     sk_ge.Edges[0].Vertexes[1].Point.x,
                                     sk_ge.Edges[0].Vertexes[1].Point.y,
                                     j.Label,
-                                ]
+                                ],
                             )
                             # outline.append([
                             #     'line',
@@ -22832,7 +21991,7 @@ def getBoardOutline():
                                     sk_ge.Edges[0].Curve.Center.x,
                                     sk_ge.Edges[0].Curve.Center.y,
                                     j.Label,
-                                ]
+                                ],
                             )
                             # outline.append([
                             #     'circle',
@@ -22864,7 +22023,7 @@ def getBoardOutline():
                                     sk_ge.Edges[0].Vertexes[1].Point,
                                     sk_ge.Edges[0].Orientation,
                                     j.Label,
-                                ]
+                                ],
                             )
                             ##j.Geometry[k].Center.x,
                             ##j.Geometry[k].Center.y,
@@ -22907,14 +22066,16 @@ def getBoardOutline():
                             elif bs.Degree > maxDegree:
                                 # degree too high. We need to approximate the curve
                                 bs = bs.approximateBSpline(
-                                    edge_tolerance, maxSegments, maxDegree
+                                    edge_tolerance,
+                                    maxSegments,
+                                    maxDegree,
                                 )  # (tolerance, maxSegments, maxDegree)
                                 # Generate to a list of bezier curves
                             bezier_list.extend(
-                                bs.toBezier()
+                                bs.toBezier(),
                             )  # Generate to a list of bezier curves, these are of 4 poles
                             for bc in bezier_list:
-                                print("%s (degree : %d / nb poles : %d)" % (bc, bc.Degree, bc.NbPoles))
+                                print(f"{bc} (degree : {bc.Degree} / nb poles : {bc.NbPoles})")
                                 # poles = bc.getPoles()
                                 # spline=Part.BSplineCurve()
                                 # spline.buildFromPoles(poles, False, 3)
@@ -22932,7 +22093,7 @@ def getBoardOutline():
                                         bc.getPole(4).x,
                                         bc.getPole(4).y,
                                         j.Label,
-                                    ]
+                                    ],
                                 )
                                 # print(outline)
                         # elif (use_discretize) and (accept_spline) and ('Parabola' in type(j.Geometry[k]).__name__ or 'Hyperbola' in type(j.Geometry[k]).__name__\
@@ -22970,7 +22131,7 @@ def getBoardOutline():
                                         v2x,
                                         v2y,
                                         j.Label,
-                                    ]
+                                    ],
                                 )
                                 # print(v1x,v1y,v2x,v2y,i)
                         # elif (not use_discretize) and (accept_spline) and ('Parabola' in type(j.Geometry[k]).__name__ or 'Hyperbola' in type(j.Gm[k]).__name__\
@@ -23021,7 +22182,7 @@ def getBoardOutline():
                                         g.EndPoint,
                                         "Forward",
                                         j.Label,
-                                    ]
+                                    ],
                                 )
 
                         # elif (accept_spline) and ('Parabola' in type(j.Geometry[k]).__name__ or 'Hyperbola' in type(j.Geometry[k]).__name__):
@@ -23074,11 +22235,8 @@ def getBoardOutline():
                                 str_geom = "ArcOfParabola"
                             elif "ArcOfHyperbola" in str_geom:
                                 str_geom = "ArcOfHyperbola"
-                            if str_geom not in not_supported:
-                                if "Vector" not in str_geom:
-                                    not_supported = (
-                                        not_supported + str_geom.strip("<").strip(">").strip(" object") + "; "
-                                    )
+                            if str_geom not in not_supported and "Vector" not in str_geom:
+                                not_supported = not_supported + str_geom.strip("<").strip(">").strip(" object") + "; "
                             # continue
                     ##break
                 except Exception as e:
@@ -23094,7 +22252,7 @@ def getBoardOutline():
                         + str(exc_tb.tb_lineno)
                         + "\nerror value: "
                         + str(e.args[0])
-                        + "\n"
+                        + "\n",
                     )
     # print (to_discretize)
     # stop
@@ -23119,15 +22277,10 @@ def createEdge(edg, ofs, sklayer=None, pcb_ver=None):
     #    if y < self.minY:
     #        self.minY = y
 
-    if sklayer is None:
-        layer = "Edge.Cuts"
-    else:
-        layer = sklayer
+    layer = "Edge.Cuts" if sklayer is None else sklayer
     if edg[0] == "line":
         if pcb_ver is None or pcb_ver < 20211014:
-            k_edg = (
-                f"  (gr_line (start {edg[1] + ofs[0]:.6f} {-edg[2] + ofs[1]:.6f}) (end {edg[3] + ofs[0]:.6f} {-edg[4] + ofs[1]:.6f}) (angle 90) (layer {layer}) (width {edge_width}))"
-            )
+            k_edg = f"  (gr_line (start {edg[1] + ofs[0]:.6f} {-edg[2] + ofs[1]:.6f}) (end {edg[3] + ofs[0]:.6f} {-edg[4] + ofs[1]:.6f}) (angle 90) (layer {layer}) (width {edge_width}))"
             # k_edg +=os.linesep
             # .format('{0:.10f}').format(edg[1] + abs(0), '{0:.10f}').format(edg[2] + abs(0), '{0:.10f}').format(edg[3] + abs(0), '{0:.10f}').format(edg[4] + abs(0), 'Edge.Cuts', edge_width)
         else:
@@ -23222,9 +22375,9 @@ def createEdge(edg, ofs, sklayer=None, pcb_ver=None):
             # Part.show(Part.Edge(Part.Arc(FreeCAD.Base.Vector(x1, y1, 0), FreeCAD.Base.Vector(mp[0],mp[1], 0), FreeCAD.Base.Vector(x2, y2, 0))))
             # print(mp[0],mp[1])
             k_edg = f"  (gr_arc (start {x2 + ofs[0]:.6f} {y2 + ofs[1]:.6f}) (mid {mp[0] + ofs[0]:.6f} {mp[1] + ofs[1]:.6f}) (end {x1 + ofs[0]:.6f} {y1 + ofs[1]:.6f}) (layer {layer}) (width {edge_width}))"
-                # .format(xs+ofs[0], ys+ofs[1], mp[0]+ofs[0], mp[1]+ofs[1], x1+ofs[0], y1+ofs[1], edge_width, layer)
-                # print(k_edg)
-                # stop
+            # .format(xs+ofs[0], ys+ofs[1], mp[0]+ofs[0], mp[1]+ofs[1], x1+ofs[0], y1+ofs[1], edge_width, layer)
+            # print(k_edg)
+            # stop
     #    self.addArc(edg[1:], 'Edge.Cuts', 0.01)
     elif edg[0] == "spline":
         k_edg = f"  (gr_curve (pts (xy {edg[1] + ofs[0]:.6f} {-edg[2] + ofs[1]:.6f}) (xy {edg[3] + ofs[0]:.6f} {-edg[4] + ofs[1]:.6f}) (xy {edg[5] + ofs[0]:.6f} {-edg[6] + ofs[1]:.6f}) (xy {edg[7] + ofs[0]:.6f} {-edg[8] + ofs[1]:.6f})) (layer {layer}) (width {edge_width}))"
@@ -23510,10 +22663,7 @@ def remove_basic_geom(c_name, to_disc):
         # else:
         # print str(s.Geometry[i]), ';;'
         if str(s.Geometry[i]) not in to_disc_str:
-            if hasattr(s, "GeometryFacadeList"):
-                Gm = s.GeometryFacadeList
-            else:
-                Gm = s.Geometry
+            Gm = s.GeometryFacadeList if hasattr(s, "GeometryFacadeList") else s.Geometry
             # if hasattr(Gm[i],'Construction'):
             #    if not Gm[i].Construction:
             if isConstruction(Gm[i]):
@@ -23549,10 +22699,7 @@ def split_basic_geom(c_name, to_disc):
         # else:
         # print str(s.Geometry[i]), ';;'
         if str(s.Geometry[i]) not in to_disc_str:
-            if hasattr(s, "GeometryFacadeList"):
-                Gm = s.GeometryFacadeList
-            else:
-                Gm = s.Geometry
+            Gm = s.GeometryFacadeList if hasattr(s, "GeometryFacadeList") else s.Geometry
             # if hasattr(Gm[i],'Construction'):
             #    if not Gm[i].Construction:
             if isConstruction(Gm[i]):
@@ -23576,10 +22723,7 @@ def check_geom(sk_name, ofs=None):
     outline = []
     for k in range(len(j.Geometry)):
         # print(type(j.Geometry[k]).__name__)
-        if hasattr(j, "GeometryFacadeList"):
-            Gm = j.GeometryFacadeList
-        else:
-            Gm = j.Geometry
+        Gm = j.GeometryFacadeList if hasattr(j, "GeometryFacadeList") else j.Geometry
         # if hasattr(Gm[k],'Construction'):
         if isConstruction(Gm[k]):
             sayw("construnction skipped")
@@ -23600,7 +22744,7 @@ def check_geom(sk_name, ofs=None):
                     sk_ge.Edges[0].Vertexes[1].Point.x + ofs[0],
                     sk_ge.Edges[0].Vertexes[1].Point.y + ofs[1],
                     j.Label,
-                ]
+                ],
             )
             # outline.append([
             #     'line',
@@ -23619,7 +22763,7 @@ def check_geom(sk_name, ofs=None):
                     sk_ge.Edges[0].Curve.Center.x + ofs[0],
                     sk_ge.Edges[0].Curve.Center.y + ofs[1],
                     j.Label,
-                ]
+                ],
             )
             # outline.append([
             #    'circle',
@@ -23661,7 +22805,7 @@ def check_geom(sk_name, ofs=None):
                     sk_ge.Edges[0].Vertexes[1].Point,
                     sk_ge.Edges[0].Orientation,
                     j.Label,
-                ]
+                ],
             )
             ## maxRadius=3500
             ## sayerr(j.Geometry[k].Radius)
@@ -23868,10 +23012,7 @@ def export_pcb(fname=None, sklayer=None, skname=None):
     # sayerr('to '+fpath)
 
     # print fname
-    if fname is None:
-        fpath = original_filename
-    else:
-        fpath = fname
+    fpath = original_filename if fname is None else fname
 
     sayerr("saving to " + fpath)
     # stop
@@ -24023,12 +23164,11 @@ def export_pcb(fname=None, sklayer=None, skname=None):
                 edge_pcb_exists = True
                 sayw("found " + ssklayer + " element(s)")
             # stop
-            if ssklayer == "Edge":
-                if hasattr(mypcb, "setup"):
-                    if hasattr(mypcb.setup, "edge_width"):  # maui edge width
-                        edge_width = mypcb.setup.edge_width
-                    elif hasattr(mypcb.setup, "edge_cuts_line_width"):  # maui edge cuts new width k 5.99
-                        edge_width = mypcb.setup.edge_cuts_line_width
+            if ssklayer == "Edge" and hasattr(mypcb, "setup"):
+                if hasattr(mypcb.setup, "edge_width"):  # maui edge width
+                    edge_width = mypcb.setup.edge_width
+                elif hasattr(mypcb.setup, "edge_cuts_line_width"):  # maui edge cuts new width k 5.99
+                    edge_width = mypcb.setup.edge_cuts_line_width
                 # else:
                 #    edge_width=0.16
             oft = None
@@ -24188,10 +23328,10 @@ def export_pcb(fname=None, sklayer=None, skname=None):
                     # print(newcontent)
                 else:
                     sayerr(
-                        "to push a new release of Edge to a kicad board with an existing Edge\nyou need to load the board with StepUp first"
+                        "to push a new release of Edge to a kicad board with an existing Edge\nyou need to load the board with StepUp first",
                     )
                     say_error(
-                        """<b>to push a new release of Edge to a kicad board<br><font color=red>with an existing Edge</font><br>you need to load the board with StepUp first<br><br>"""
+                        """<b>to push a new release of Edge to a kicad board<br><font color=red>with an existing Edge</font><br>you need to load the board with StepUp first<br><br>""",
                     )
                     stop
             else:
@@ -24262,9 +23402,7 @@ def export_pcb(fname=None, sklayer=None, skname=None):
                     # stop
                     obj_list_after = []
                     for obj in doc.Objects:
-                        if (
-                            obj.TypeId in {"Part::Feature", "Sketcher::SketchObject", "Part::Part2DObjectPython"}
-                        ):
+                        if obj.TypeId in {"Part::Feature", "Sketcher::SketchObject", "Part::Part2DObjectPython"}:
                             if obj.Name not in obj_list_prev:
                                 obj_list_after.append(obj.Name)
                     # print obj_list_after #, obj_list_prev
@@ -24648,22 +23786,8 @@ def push3D2pcb(s, cnt, tsp):
         # if len(re.findall('\s\(tstamp(\s'+s.TimeStamp+'.+?)\)',data, re.MULTILINE|re.DOTALL))>0:
         # if len(re.findall('\s\(tstamp(\s'+tsp+'.+?)\)',data, re.MULTILINE|re.DOTALL))>0:
         if (
-            len(
-                re.findall(
-                    r"\s\(tstamp(\s.*" + tsp.lower() + r"+\))",
-                    data,
-                    re.MULTILINE | re.DOTALL,
-                )
-            )
-            > 0
-            or len(
-                re.findall(
-                    r"\s\(tstamp(\s.*" + tsp.upper() + r"+\))",
-                    data,
-                    re.MULTILINE | re.DOTALL,
-                )
-            )
-            > 0
+            len(re.findall(r"\s\(tstamp(\s.*" + tsp.lower() + r"+\))", data, re.MULTILINE | re.DOTALL)) > 0
+            or len(re.findall(r"\s\(tstamp(\s.*" + tsp.upper() + r"+\))", data, re.MULTILINE | re.DOTALL)) > 0
         ):  # kv6 puts tstamp in lower case
             # if len(re.findall('\s\(tstamp(\s'+tsp+'.+?)\)',data, re.MULTILINE|re.DOTALL))>0:
             tstamp_found = True
@@ -24671,31 +23795,16 @@ def push3D2pcb(s, cnt, tsp):
             # print (old_pos)
             # new_pos=old_pos.split('(at')[0]+'(at 1.23 5.67 890'
         elif (
-            len(
-                re.findall(
-                    r"\s*\(uuid(\s.*" + tsp.lower() + r'"*\))',
-                    data,
-                    re.MULTILINE | re.DOTALL,
-                )
-            )
-            > 0
-            or len(
-                re.findall(
-                    r"\s*\(uuid(\s.*" + tsp.upper() + r'"*\))',
-                    data,
-                    re.MULTILINE | re.DOTALL,
-                )
-            )
-            > 0
+            len(re.findall(r"\s*\(uuid(\s.*" + tsp.lower() + '"*\\))', data, re.MULTILINE | re.DOTALL)) > 0
+            or len(re.findall(r"\s*\(uuid(\s.*" + tsp.upper() + '"*\\))', data, re.MULTILINE | re.DOTALL)) > 0
         ):  # kv6 puts tstamp in lower case kv8 new mode '"'
             #'\s\(uuid(\s.*'+tsp.lower()+'+\))',data,  re.MULTILINE|re.DOTALL))>0 or \
             #'\s\(uuid(\s.*'+tsp.upper()+'+\))',data,  re.MULTILINE|re.DOTALL))>0:  #kv6 puts tstamp in lower case
             tstamp_found = True
     else:
         for i, ln in enumerate(cnt):
-            if "(tstamp " in ln or "(uuid" in ln:
-                if tsp.lower() in ln or tsp.upper() in ln:
-                    tstamp_found = True
+            if ("(tstamp " in ln or "(uuid" in ln) and (tsp.lower() in ln or tsp.upper() in ln):
+                tstamp_found = True
 
     if tstamp_found:
         oft = None
@@ -24730,10 +23839,9 @@ def push3D2pcb(s, cnt, tsp):
         for i, ln in enumerate(cnt):
             # if '(tstamp '+s.TimeStamp in ln:
             # if '(tstamp '+tsp in ln:
-            if "(tstamp " in ln or "(uuid" in ln:
-                if tsp in ln:
-                    idxF = i
-                    # print(ln)
+            if ("(tstamp " in ln or "(uuid" in ln) and tsp in ln:
+                idxF = i
+                # print(ln)
         FLayer = 1.0
         if idxF >= 0:
             print(s.Label)
@@ -24747,10 +23855,7 @@ def push3D2pcb(s, cnt, tsp):
                     bbpa = -bbpa
                 # new_angle=bbpa+z_rot
             else:
-                bbpa = round(
-                    FreeCAD.ActiveDocument.getObject(s.Name).Placement.Rotation.toEuler()[0],
-                    1,
-                )
+                bbpa = round(FreeCAD.ActiveDocument.getObject(s.Name).Placement.Rotation.toEuler()[0], 1)
                 # new_angle=bbpa+z_rot
             # say (content[idxF+1])
             # if 'Front' not in cnt[idxF]:
@@ -24762,10 +23867,7 @@ def push3D2pcb(s, cnt, tsp):
                 mod_old_angle = (mod_old_values[2].split(")"))[0]
                 mod_old_angle = mod_old_angle.replace(" ", "")
                 # print (mod_old_angle)
-                if len(mod_old_angle) > 0:
-                    mod_old_angle = float(f"{float(mod_old_angle):.3f}")
-                else:
-                    mod_old_angle = 0
+                mod_old_angle = float(f"{float(mod_old_angle):.3f}") if len(mod_old_angle) > 0 else 0
             # say ('module old angle '+str(mod_old_angle))
             nbr_spaces = len(cnt[idxF + 1]) - len(cnt[idxF + 1].lstrip())
             # new_pos="{0:.3f}".format(bbpx+off_x)+" "+"{0:.3f}".format(-1*(bbpy+off_y))+\
@@ -24794,10 +23896,7 @@ def push3D2pcb(s, cnt, tsp):
                         ln_r = cnt[idxF + ik + 1]
                         #      (offset (xyz -1.27 0 0)) mm
                         #      (at (xyz -1.27/25.4 0 0)) decimils
-                        if "at" in ln_r:
-                            k = 25.40
-                        else:
-                            k = 1.0
+                        k = 25.4 if "at" in ln_r else 1.0
                         ido = ln_r.find("xyz")
                         ofs = ln_r[ido + 3 :]  # lstrip('xyz')
                         ido = ofs.find("))")
@@ -25236,20 +24335,17 @@ if singleInstance():
                 cv = t.findChild(QtGui.QDockWidget, "Tree view")
                 if cv is None:
                     cv = [o for o in t.children() if o.objectName() == "Combo View"]
-                    if cv:
-                        cv = cv[0]
-                    else:
-                        cv = None
+                    cv = cv[0] if cv else None
     # say( "Combo View" + str(cv))
     ## print( "KSUWidget" + str(wf))
     cv.setFeatures(
         QtGui.QDockWidget.DockWidgetMovable
         | QtGui.QDockWidget.DockWidgetFloatable
-        | QtGui.QDockWidget.DockWidgetClosable
+        | QtGui.QDockWidget.DockWidgetClosable,
     )
     # KSUWidget.setFeatures( QtGui.QDockWidget.DockWidgetMovable | QtGui.QDockWidget.DockWidgetFloatable|QtGui.QDockWidget.DockWidgetClosable )
     KSUWidget.setFeatures(
-        QtGui.QDockWidget.DockWidgetMovable | QtGui.QDockWidget.DockWidgetFloatable
+        QtGui.QDockWidget.DockWidgetMovable | QtGui.QDockWidget.DockWidgetFloatable,
     )  # |QtGui.QDockWidget.DockWidgetClosable )
 
     ksu_in_tab = False

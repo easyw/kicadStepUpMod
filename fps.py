@@ -45,7 +45,7 @@ def getFCversion():
     FC_minorV = int(float(FreeCAD.Version()[1]))
     try:
         FC_git_Nbr = int(
-            float(FreeCAD.Version()[2].strip(" (Git)").split(" ")[0])
+            float(FreeCAD.Version()[2].strip(" (Git)").split(" ")[0]),
         )  # +int(FreeCAD.Version()[2].strip(" (Git)").split(' ')[1])
     except:
         FC_git_Nbr = 0
@@ -112,8 +112,6 @@ def makeAnno(name, bp, txt, afs):
     return anno
 
 
-
-
 def crc_gen_t(data):
     import binascii
     import re
@@ -133,6 +131,9 @@ def make_unicode_t(input):
     if isinstance(input, str):
         return input
     return input.decode("utf-8")
+    if type(input) != unicode:
+        return input.decode("utf-8")
+    return input
 
 
 def mkColor(*color):
@@ -193,13 +194,9 @@ def extrude_holes(holes, w):
     FreeCADGui.ActiveDocument.getObject(holes.Name).Visibility = False
 
 
-
-
 def cut_fuzzy(base, tool, ftol):
 
     Part.show(base.Shape.cut(tool.Shape, ftol))
-
-
 
 
 def cut_out_tracks(pcbsk, tracks, tname_sfx):
@@ -259,7 +256,7 @@ def cut_out_tracks(pcbsk, tracks, tname_sfx):
         FreeCAD.ActiveDocument.getObject("Board_Geoms" + tname_sfx).addObject(extrude)
     # simple copy
     FreeCAD.ActiveDocument.addObject("Part::Feature", tracks.Label + "_").Shape = FreeCAD.ActiveDocument.getObject(
-        Common_Top.Name
+        Common_Top.Name,
     ).Shape
     new_label = tracks.Label + "_cut"
     FreeCADGui.ActiveDocument.ActiveObject.ShapeColor = FreeCADGui.ActiveDocument.getObject(Common_Top.Name).ShapeColor
@@ -267,10 +264,10 @@ def cut_out_tracks(pcbsk, tracks, tname_sfx):
     FreeCADGui.ActiveDocument.ActiveObject.LineColor = FreeCADGui.ActiveDocument.getObject(Common_Top.Name).LineColor
     FreeCADGui.ActiveDocument.ActiveObject.PointColor = FreeCADGui.ActiveDocument.getObject(Common_Top.Name).PointColor
     FreeCADGui.ActiveDocument.ActiveObject.DiffuseColor = FreeCADGui.ActiveDocument.getObject(
-        Common_Top.Name
+        Common_Top.Name,
     ).DiffuseColor
     FreeCADGui.ActiveDocument.ActiveObject.Transparency = FreeCADGui.ActiveDocument.getObject(
-        Common_Top.Name
+        Common_Top.Name,
     ).Transparency
     FreeCAD.ActiveDocument.ActiveObject.Label = new_label
     tracks_ct_Name = FreeCAD.ActiveDocument.ActiveObject.Name
@@ -309,7 +306,7 @@ def simple_cpy(obj, lbl):
 #    removesubtree(FreeCADGui.Selection.getSelection())
 #
 
-from fcad_parser import KicadPCB
+from fcad_parser import KicadPCB  # noqa: F811
 from kicadStepUptools import make_string, make_unicode, removesubtree
 
 start_f = """(kicad_pcb (version 20211014) (generator pcbnew)
@@ -362,7 +359,6 @@ def addfootprint(fname=None):
     global start_time, last_pcb_path, min_drill_size
     global tracks_version
     global start_f, end_f, deltaz
-
     FreeCAD.Console.PrintMessage("kicad_parser_version " + kicad_parser.__kicad_parser_version__ + "\n")  # maui
 
     # cfg_read_all() it doesn't work through different files
@@ -370,7 +366,6 @@ def addfootprint(fname=None):
 
     FreeCAD.Console.PrintMessage("footprints version: " + fps_version + "\n")
 
-    Filter = ""
     pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
     if fname is None:
         last_pcb_path = pg.GetString("last_pcb_path")
@@ -379,8 +374,11 @@ def addfootprint(fname=None):
         prefs_ = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
         # print('native_dlg',prefs_.GetBool('native_dlg'))
         if not (prefs_.GetBool("not_native_dlg")):
-            fname, Filter = PySide.QtGui.QFileDialog.getOpenFileName(
-                None, "Open File...", make_unicode(last_pcb_path), "*.kicad_mod"
+            fname, _Filter = PySide.QtGui.QFileDialog.getOpenFileName(
+                None,
+                "Open File...",
+                make_unicode(last_pcb_path),
+                "*.kicad_mod",
             )
         else:
             fname, _Filter = PySide.QtGui.QFileDialog.getOpenFileName(
@@ -390,7 +388,7 @@ def addfootprint(fname=None):
                 "*.kicad_mod",
                 options=QtWidgets.QFileDialog.DontUseNativeDialog,
             )
-        path, _name = os.path.split(fname)
+        _path, _name = os.path.split(fname)
     # filename=os.path.splitext(name)[0]
     filename = fname
     # importDXF.open(os.path.join(dirname,filename))
@@ -420,10 +418,6 @@ def addfootprint(fname=None):
         # print(pcb_color_pos)
         pcb_transparency = 80
         pcb_col = assign_col[pcb_color_pos]
-        if pcb_color_pos == 9:
-            pass
-        else:
-            pass
         pads_color = (0.81, 0.71, 0.23)  # (0.85,0.53,0.10)
         pads_transparency = 60
         nettie_color = (1.0, 0.33, 0.0)
@@ -442,8 +436,7 @@ def addfootprint(fname=None):
             # lines = start_f+lines+end_f
             import tempfile
 
-            tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".kicad_pcb")
-            with tmp as f:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".kicad_pcb") as f:
                 # with open(tmp.name, 'w') as f:
                 for l in start_f:
                     f.write(l.encode(encoding="UTF-8"))
@@ -623,7 +616,10 @@ def addfootprint(fname=None):
         consolePrint("making Top Pads\n")
         pcb.setLayer(0)  #'F.Cu')
         topP = pcb.makePads(
-            shape_type="wire", thickness=deltaz, holes=False, fit_arcs=True
+            shape_type="wire",
+            thickness=deltaz,
+            holes=False,
+            fit_arcs=True,
         )  # solid',thickness=deltaz,holes=True,fit_arcs=True)
         topPf = None
         topPe = None
@@ -900,11 +896,7 @@ def addfootprint(fname=None):
                         pcb_XL,
                         pcb_YL,
                         pcb_ZL,
-                        FreeCAD.Vector(
-                            centerX - pcb_XL / 2,
-                            centerY - pcb_YL / 2,
-                            -(pcb_ZL + deltaz),
-                        ),
+                        FreeCAD.Vector(centerX - pcb_XL / 2, centerY - pcb_YL / 2, -(pcb_ZL + deltaz)),
                         FreeCAD.Vector(0, 0, 1),
                     ).cut(holesT.Shape)
                     removesubtree([holesT])
@@ -913,11 +905,7 @@ def addfootprint(fname=None):
                         pcb_XL,
                         pcb_YL,
                         pcb_ZL,
-                        FreeCAD.Vector(
-                            centerX - pcb_XL / 2,
-                            centerY - pcb_YL / 2,
-                            -(pcb_ZL + deltaz),
-                        ),
+                        FreeCAD.Vector(centerX - pcb_XL / 2, centerY - pcb_YL / 2, -(pcb_ZL + deltaz)),
                         FreeCAD.Vector(0, 0, 1),
                     )
                 pcb.ViewObject.Transparency = pcb_transparency

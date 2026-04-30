@@ -48,11 +48,7 @@ def sel2edges():
                 return 0
             return 1
 
-        if placement_tol(
-            FreeCADGui.ActiveDocument.activeView().getViewDirection(),
-            FreeCAD.Vector(1.0, 0.0, 0.0),
-            tol,
-        ):
+        if placement_tol(FreeCADGui.ActiveDocument.activeView().getViewDirection(), FreeCAD.Vector(1.0, 0.0, 0.0), tol):
             print("left")
             # sv = Draft.makeShape2DView(cmp, FreeCAD.Vector(-1.0, 0.0, 0.0))
             sv = Draft.make_shape2dview(cmp, FreeCAD.Vector(-1.0, -0.0, -0.0))

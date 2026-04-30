@@ -9,6 +9,8 @@
 # *  Kicad STEPUP (TM) is a TradeMark and cannot be freely usable            *
 # *                                                                          *
 
+import FreeCAD
+
 # two options for IDF added by Milos Koutny (12-Feb-2010)
 # FreeCAD.addImportType("Kicad pcb board/mod File Type (*.kicad_pcb *.emn *.kicad_mod)","kicadStepUptools")
 # ___ver___ = "6.0.4.5"

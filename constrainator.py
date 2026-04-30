@@ -22,8 +22,6 @@ def sk_distance(p0, p1):
     return sqrt((p0[0] - p1[0]) ** 2 + (p0[1] - p1[1]) ** 2)
 
 
-
-
 def sanitizeSkBsp(s_name, dist_tolerance):
     # s_name = 'Sketch001'
     s = FreeCAD.ActiveDocument.getObject(s_name)
@@ -39,80 +37,79 @@ def sanitizeSkBsp(s_name, dist_tolerance):
                 if "BSplineCurve object" in str(g):
                     j = i + 1
                     for bg in s.Geometry[(i + 1) :]:
-                        if "BSplineCurve object" in str(bg):
-                            if j not in idx_to_del:
-                                if len(g.getPoles()) == len(bg.getPoles()):
-                                    # print('equal pole nbrs')
-                                    eqp = True
+                        if "BSplineCurve object" in str(bg) and j not in idx_to_del:
+                            if len(g.getPoles()) == len(bg.getPoles()):
+                                # print('equal pole nbrs')
+                                eqp = True
+                                if sk_distance(g.StartPoint, bg.StartPoint) > dist_tolerance:
+                                    if sk_distance(g.StartPoint, bg.EndPoint) > dist_tolerance:
+                                        eqp = False
+                                if sk_distance(g.EndPoint, bg.EndPoint) > dist_tolerance:
+                                    if sk_distance(g.EndPoint, bg.StartPoint) > dist_tolerance:
+                                        eqp = False
+                                if eqp:
                                     if sk_distance(g.StartPoint, bg.StartPoint) > dist_tolerance:
-                                        if sk_distance(g.StartPoint, bg.EndPoint) > dist_tolerance:
-                                            eqp = False
-                                    if sk_distance(g.EndPoint, bg.EndPoint) > dist_tolerance:
-                                        if sk_distance(g.EndPoint, bg.StartPoint) > dist_tolerance:
-                                            eqp = False
-                                    if eqp:
-                                        if sk_distance(g.StartPoint, bg.StartPoint) > dist_tolerance:
-                                            inverted = True
+                                        inverted = True
+                                    else:
+                                        inverted = False
+                                    print("identical splines, inverted=", inverted)
+                                    # print(g.getPoles())
+                                    # print(bg.getPoles())
+                                    if j not in idx_to_del:
+                                        print("len ", len(bg.getPoles()))
+                                        if not inverted:
+                                            for k, kn in enumerate(bg.getPoles()):
+                                                # a = float(kn); b = float(g.KnotSequence[k])
+                                                # print(k)
+                                                a = kn
+                                                b = g.getPole(k + 1)
+                                                # print(kn,g.getPole(k+1))
+                                                # print('dif ',(float(kn)-float(g.KnotSequence[k])))
+                                                # print('abs ',abs(float(kn)-float(g.KnotSequence[k])))
+                                                # print(a,b)
+                                                # print(a[0],a[1],a[2])
+                                                # print(b[0],b[1],b[2])
+                                                # print('dif ',abs(a[0]-b[0]),abs(a[1]-b[1]),abs(a[2]-b[2]))
+                                                # print('abs ',abs(a-b))
+                                                # if abs(float(kn)-float(g.KnotSequence[k])) > dist_tolerance:
+                                                if (
+                                                    abs(a[0] - b[0]) > dist_tolerance
+                                                    or abs(a[1] - b[1]) > dist_tolerance
+                                                    or abs(a[2] - b[2]) > dist_tolerance
+                                                ):
+                                                    print("node NOT coincident")
+                                                    # print(a,b)
+                                                    eqp = False
+                                                    break  # break the for loop
+                                                # print('next--')
                                         else:
-                                            inverted = False
-                                        print("identical splines, inverted=", inverted)
-                                        # print(g.getPoles())
-                                        # print(bg.getPoles())
-                                        if j not in idx_to_del:
-                                            print("len ", len(bg.getPoles()))
-                                            if not inverted:
-                                                for k, kn in enumerate(bg.getPoles()):
-                                                    # a = float(kn); b = float(g.KnotSequence[k])
-                                                    # print(k)
-                                                    a = kn
-                                                    b = g.getPole(k + 1)
-                                                    # print(kn,g.getPole(k+1))
-                                                    # print('dif ',(float(kn)-float(g.KnotSequence[k])))
-                                                    # print('abs ',abs(float(kn)-float(g.KnotSequence[k])))
+                                            l = len(bg.getPoles())
+                                            for k, kn in enumerate(bg.getPoles()):
+                                                # a = float(kn); b = float(g.KnotSequence[k])
+                                                # print(k)
+                                                a = kn
+                                                b = g.getPole(l - k)
+                                                # print(kn,g.getPole(l-k))
+                                                # print('dif ',(float(kn)-float(g.KnotSequence[k])))
+                                                # print('abs ',abs(float(kn)-float(g.KnotSequence[k])))
+                                                # print(a,b)
+                                                # print(a[0],a[1],a[2])
+                                                # print(b[0],b[1],b[2])
+                                                # print('dif ',abs(a[0]-b[0]),abs(a[1]-b[1]),abs(a[2]-b[2]))
+                                                # print('abs ',abs(a-b))
+                                                # if abs(float(kn)-float(g.KnotSequence[k])) > dist_tolerance:
+                                                if (
+                                                    abs(a[0] - b[0]) > dist_tolerance
+                                                    or abs(a[1] - b[1]) > dist_tolerance
+                                                    or abs(a[2] - b[2]) > dist_tolerance
+                                                ):
+                                                    print("node NOT coincident")
                                                     # print(a,b)
-                                                    # print(a[0],a[1],a[2])
-                                                    # print(b[0],b[1],b[2])
-                                                    # print('dif ',abs(a[0]-b[0]),abs(a[1]-b[1]),abs(a[2]-b[2]))
-                                                    # print('abs ',abs(a-b))
-                                                    # if abs(float(kn)-float(g.KnotSequence[k])) > dist_tolerance:
-                                                    if (
-                                                        abs(a[0] - b[0]) > dist_tolerance
-                                                        or abs(a[1] - b[1]) > dist_tolerance
-                                                        or abs(a[2] - b[2]) > dist_tolerance
-                                                    ):
-                                                        print("node NOT coincident")
-                                                        # print(a,b)
-                                                        eqp = False
-                                                        break  # break the for loop
-                                                    # print('next--')
-                                            else:
-                                                l = len(bg.getPoles())
-                                                for k, kn in enumerate(bg.getPoles()):
-                                                    # a = float(kn); b = float(g.KnotSequence[k])
-                                                    # print(k)
-                                                    a = kn
-                                                    b = g.getPole(l - k)
-                                                    # print(kn,g.getPole(l-k))
-                                                    # print('dif ',(float(kn)-float(g.KnotSequence[k])))
-                                                    # print('abs ',abs(float(kn)-float(g.KnotSequence[k])))
-                                                    # print(a,b)
-                                                    # print(a[0],a[1],a[2])
-                                                    # print(b[0],b[1],b[2])
-                                                    # print('dif ',abs(a[0]-b[0]),abs(a[1]-b[1]),abs(a[2]-b[2]))
-                                                    # print('abs ',abs(a-b))
-                                                    # if abs(float(kn)-float(g.KnotSequence[k])) > dist_tolerance:
-                                                    if (
-                                                        abs(a[0] - b[0]) > dist_tolerance
-                                                        or abs(a[1] - b[1]) > dist_tolerance
-                                                        or abs(a[2] - b[2]) > dist_tolerance
-                                                    ):
-                                                        print("node NOT coincident")
-                                                        # print(a,b)
-                                                        eqp = False
-                                                        break  # break the for loop
-                                                    # print('next--')
-                                            if eqp:
-                                                idx_to_del.append(j)
+                                                    eqp = False
+                                                    break  # break the for loop
+                                                # print('next--')
+                                        if eqp:
+                                            idx_to_del.append(j)
                         j += 1
         j = 0
         # print(idx_to_del)
@@ -157,11 +154,10 @@ def sanitizeSk(s_name, edg_tol):
                     print(g, i)
                     FreeCAD.Console.PrintWarning("too short\n")
                     idx_to_del.append(i)
-            if "Circle" in str(g):
-                if g.Radius <= edg_tol:
-                    print(g, i)
-                    FreeCAD.Console.PrintWarning("too short\n")
-                    idx_to_del.append(i)
+            if "Circle" in str(g) and g.Radius <= edg_tol:
+                print(g, i)
+                FreeCAD.Console.PrintWarning("too short\n")
+                idx_to_del.append(i)
             if "Arc" in str(g):
                 # print('str(g)',str(g))
                 # stop
@@ -191,7 +187,7 @@ def add_constraints(s_name, edge_tolerance, add_Constraints):
 
     FreeCAD.Console.PrintMessage("Constrainator version " + __ksuConstrainator_version__ + "\n")
     FreeCAD.Console.PrintMessage(
-        "adding " + add_Constraints + " constraints with " + str(edge_tolerance) + "mm tolerance\n"
+        "adding " + add_Constraints + " constraints with " + str(edge_tolerance) + "mm tolerance\n",
     )
     if hasattr(Part, "LineSegment"):
         g_geom_points = {
@@ -244,10 +240,7 @@ def add_constraints(s_name, edge_tolerance, add_Constraints):
                 # points.append([[point2[0],point2[1]],[geom_index],[2]])
                 # points.append([[point1[0],point1[1]],[geom_index]]) #,[1]])
                 # points.append([[point2[0],point2[1]],[geom_index]]) #,[2]])
-                if "Line" in type(s.Geometry[geom_index]).__name__:
-                    tp = "Line"
-                else:
-                    tp = "Arc"
+                tp = "Line" if "Line" in type(s.Geometry[geom_index]).__name__ else "Arc"
                 geoms.append([point1[0], point1[1], point2[0], point2[1], tp])
             elif (
                 "ArcOfEllipse" in type(s.Geometry[geom_index]).__name__
@@ -398,8 +391,7 @@ def add_constraints(s_name, edge_tolerance, add_Constraints):
 
         s.Constraints = []
         # sayw(old_sk_constraints)
-        for oc in old_sk_constraints:
-            sk_constraints.append(oc)
+        sk_constraints.extend(old_sk_constraints)
         # say(sk_constraints)
         s.addConstraint(sk_constraints)
         FreeCAD.ActiveDocument.recompute()

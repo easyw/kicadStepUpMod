@@ -1,4 +1,3 @@
-
 ## https://www.freecadweb.org/wiki/Placement
 # App.ActiveDocument.Cylinder.Placement=App.Placement(App.Vector(0,0,0), App.Rotation(10,20,30), App.Vector(0,0,0))
 # App.Rotation(10,20,30) = Euler Angle
@@ -127,9 +126,8 @@ def gui_addSelection(obj):
 
 def decimals(f, n):
     v = str(round(f, n))
-    if "." in v:
-        if len(v[v.find(".") :]) > n + 1:
-            v = v[: len(v) - 1]
+    if "." in v and (len(v[v.find(".") :]) > n + 1):
+        v = v[: len(v) - 1]
     return float(v)
 
 
@@ -157,11 +155,10 @@ def roundMatrix(mtx):
         n_dec = 4
         rv = str(round(v, n_dec))
         l = len(rv)
-        if "." in rv:
-            if len(rv[rv.find(".") :]) > n_dec:
-                # print (rv);print (rv.find('.'))
-                rv = rv[: l - 1]
-                # print (rv)
+        if "." in rv and (len(rv[rv.find(".") :]) > n_dec):
+            # print (rv);print (rv.find('.'))
+            rv = rv[: l - 1]
+            # print (rv)
         rv = rv.replace("-0.0", "0.0")
         # rv = truncate(v, 3)
         # rv = trunc(v,3)
@@ -216,11 +213,10 @@ def roundVal(v, n_dec=None):
     v = float(v)
     rv = str(round(v, n_dec + 1))
     l = len(rv)
-    if "." in rv:
-        if len(rv[rv.find(".") :]) > n_dec + 1:
-            # print (rv);print (rv.find('.'))
-            rv = rv[: l - 1]
-            # print (rv)
+    if "." in rv and (len(rv[rv.find(".") :]) > n_dec + 1):
+        # print (rv);print (rv.find('.'))
+        rv = rv[: l - 1]
+        # print (rv)
     rv = rv.replace("-0.0", "0.0")
     # rv = truncate(v, 3)
     # rv = trunc(v,3)
@@ -270,10 +266,7 @@ def expPos(doc=None):  ## export positions
     sketch_content = []
     sketch_content_header = []
     # if doc is not None:
-    if len(doc.FileName) == 0:
-        docFn = "File Not Saved"
-    else:
-        docFn = doc.FileName
+    docFn = "File Not Saved" if len(doc.FileName) == 0 else doc.FileName
     line = "title: " + doc.Name
     full_content.append(line + "\n")
     line = "FileN: " + docFn
@@ -288,7 +281,9 @@ def expPos(doc=None):  ## export positions
     for o in doc.Objects:
         # print(o.Name,o.Label,o.TypeId)
         if (
-            (hasattr(o, "Shape") or o.TypeId == "App::Link") and hasattr(o, "Placement") and o.TypeId not in {"App::Line", "App::Plane"}
+            (hasattr(o, "Shape") or o.TypeId == "App::Link")
+            and hasattr(o, "Placement")
+            and o.TypeId not in {"App::Line", "App::Plane"}
         ):
             if "Sketch" not in o.Label and "Pcb" not in o.Label:
                 # print(o.Placement.Rotation.Q[3])
@@ -389,11 +384,10 @@ def expPos(doc=None):  ## export positions
     else:
         home = lastPath
     if not testing:
-        Filter = ""
         prefs_ = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
         # print('native_dlg',prefs_.GetBool('native_dlg'))
         if not (prefs_.GetBool("not_native_dlg")):
-            name, Filter = PySide.QtGui.QFileDialog.getSaveFileName(
+            name, _Filter = PySide.QtGui.QFileDialog.getSaveFileName(
                 None,
                 "Write 3D models & footprint positions to a Report file ...",
                 home,
@@ -420,9 +414,8 @@ def expPos(doc=None):  ## export positions
     # say(name)
     if name:
         # if os.path.exists(name):
-        f = open(name, "w")
-        f.write("".join(full_content))
-        f.close
+        with open(name, "w") as f:
+            f.write("".join(full_content))
 
 
 ##
@@ -435,10 +428,7 @@ def cmpPos(doc=None):  ## compare exported positions with the selected doc
     sketch_content = []
     sketch_content_header = []
     # if doc is not None:
-    if len(doc.FileName) == 0:
-        docFn = "File Not Saved"
-    else:
-        docFn = doc.FileName
+    docFn = "File Not Saved" if len(doc.FileName) == 0 else doc.FileName
     line = "title: " + doc.Name
     full_content.append(line + "\n")
     line = "FileN: " + docFn
@@ -453,7 +443,9 @@ def cmpPos(doc=None):  ## compare exported positions with the selected doc
     for o in doc.Objects:
         # print(o.Name,o.Label,o.TypeId)
         if (
-            (hasattr(o, "Shape") or o.TypeId == "App::Link") and hasattr(o, "Placement") and o.TypeId not in {"App::Line", "App::Plane"}
+            (hasattr(o, "Shape") or o.TypeId == "App::Link")
+            and hasattr(o, "Placement")
+            and o.TypeId not in {"App::Line", "App::Plane"}
         ):
             if "Sketch" not in o.Label and "Pcb" not in o.Label:
                 # oPlacement = 'Placement [Pos=('+"{0:.3f}".format(o.Placement.Base.x)+','+"{0:.3f}".format(o.Placement.Base.y)+','+"{0:.3f}".format(o.Placement.Base.z)+\
@@ -474,22 +466,21 @@ def cmpPos(doc=None):  ## compare exported positions with the selected doc
             line = "Sketch geometry -------------------"
             sketch_content_header.append(line + "\n")
             # print('Sketch geometry -------------------')
-            if hasattr(o, "Geometry"):
-                if hasattr(o, "Geometry"):
-                    if hasattr(o, "GeometryFacadeList"):
-                        Gm = o.GeometryFacadeList
-                        for e in Gm:
-                            if not e.Construction:
-                                line = str(roundEdge(e.Geometry))
-                                sketch_content.append(line + "\n")
-                                # print (e)
-                    else:
-                        Gm = o.Geometry
-                        for e in Gm:
-                            if not e.Construction:
-                                line = str(roundEdge(e))
-                                sketch_content.append(line + "\n")
-                                # print (e)
+            if hasattr(o, "Geometry") and hasattr(o, "Geometry"):
+                if hasattr(o, "GeometryFacadeList"):
+                    Gm = o.GeometryFacadeList
+                    for e in Gm:
+                        if not e.Construction:
+                            line = str(roundEdge(e.Geometry))
+                            sketch_content.append(line + "\n")
+                            # print (e)
+                else:
+                    Gm = o.Geometry
+                    for e in Gm:
+                        if not e.Construction:
+                            line = str(roundEdge(e))
+                            sketch_content.append(line + "\n")
+                            # print (e)
             sketch_content.sort()
             sketch_content[:0] = sketch_content_header
             # sketch_content_header.extend(sketch_content)
@@ -529,11 +520,9 @@ def cmpPos(doc=None):  ## compare exported positions with the selected doc
     # home = expanduser("~")
     # home = r'C:\Cad\Progetti_K\board-revision\SolidWorks-2018-09-03_fede'
     if not testing:
-        Filter = ""
-        prefs_ = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
         # print('native_dlg',prefs_.GetBool('native_dlg'))
         if not (prefs_.GetBool("not_native_dlg")):
-            name, Filter = PySide.QtGui.QFileDialog.getOpenFileName(
+            name, _Filter = PySide.QtGui.QFileDialog.getOpenFileName(
                 None,
                 "Open 3D models & footprint positions Report file\nto compare positions with the Active Document...",
                 home,
@@ -592,13 +581,9 @@ def cmpPos(doc=None):  ## compare exported positions with the selected doc
                         p2 = points[points.rfind("(") + 1 : -1].split(",")
                         sk_sub.append(
                             PLine(
-                                Base.Vector(
-                                    round(float(p1[0]), 3),
-                                    round(float(p1[1]), 3),
-                                    round(float(p1[2]), 3),
-                                ),
+                                Base.Vector(round(float(p1[0]), 3), round(float(p1[1]), 3), round(float(p1[2]), 3)),
                                 Base.Vector(float(p2[0]), float(p2[1]), float(p2[2])),
-                            )
+                            ),
                         )
                     elif line.startswith("-ArcOfCircle"):
                         data = line.replace("-ArcOfCircle (Radius : ", "").replace("))\n", "")
@@ -621,7 +606,7 @@ def cmpPos(doc=None):  ## compare exported positions with the selected doc
                                 ),
                                 round(float(par[0]), 5),
                                 round(float(par[1]), 5),
-                            )
+                            ),
                         )
                     elif line.startswith("-Circle"):
                         data = line.replace("-Circle (Radius : ", "").replace("))\n", "")
@@ -639,72 +624,70 @@ def cmpPos(doc=None):  ## compare exported positions with the selected doc
                                 ),
                                 FreeCAD.Vector(float(dir[0]), float(dir[1]), float(dir[2])),
                                 round(float(radius), 3),
-                            )
+                            ),
                         )
-            elif line.startswith("+"):
-                if (
-                    not line.startswith("+++")
-                    and not line.startswith("+title")
-                    and not line.startswith("+FileN")
-                    and not line.startswith("+date ")
-                ):
-                    # print(i,'\t\t'+line)
-                    # print('Ln '+str(i)+(8-(len(str(i))))*' '),(line),
-                    diff_content.append("Ln " + str(i) + (8 - len(str(i))) * " " + line)
-                    diff_list.append(line[1:])
-                    if line.startswith("+<Line"):
-                        points = line.replace("+<Line segment (", "").replace(") >", "")
-                        p1 = points[: points.find(")")].split(",")
-                        p2 = points[points.rfind("(") + 1 : -1].split(",")
-                        sk_add.append(
-                            PLine(
-                                Base.Vector(float(p1[0]), float(p1[1]), float(p1[2])),
-                                Base.Vector(float(p2[0]), float(p2[1]), float(p2[2])),
-                            )
-                        )
-                    #    sk_add.append(line.replace('+<Line segment ','').replace(' >',''))
-                    elif line.startswith("+ArcOfCircle"):
-                        data = line.replace("+ArcOfCircle (Radius : ", "").replace("))\n", "")
-                        data = data.split(":")
-                        radius = data[0].split(",")[0]
-                        pos = data[1][data[1].find("(") + 1 : data[1].find(")")].split(",")
-                        dir = data[2][data[2].find("(") + 1 : data[2].rfind(")")].split(",")
-                        par = data[3][data[3].find("(") + 1 :].split(",")
-                        # print (radius,pos,dir,par);stop
-                        sk_add.append(
-                            Part.ArcOfCircle(
-                                Part.Circle(
-                                    FreeCAD.Vector(float(pos[0]), float(pos[1]), float(pos[2])),
-                                    FreeCAD.Vector(float(dir[0]), float(dir[1]), float(dir[2])),
-                                    float(radius),
-                                ),
-                                float(par[0]),
-                                float(par[1]),
-                            )
-                        )
-                    elif line.startswith("+Circle"):
-                        data = line.replace("+Circle (Radius : ", "").replace("))\n", "")
-                        data = data.split(":")
-                        radius = data[0].split(",")[0]
-                        pos = data[1][data[1].find("(") + 1 : data[1].find(")")].split(",")
-                        dir = data[2][data[2].find("(") + 1 :].split(",")
-                        print(radius, pos, dir)
-                        sk_add.append(
+            elif line.startswith("+") and (
+                not line.startswith("+++")
+                and not line.startswith("+title")
+                and not line.startswith("+FileN")
+                and not line.startswith("+date ")
+            ):
+                # print(i,'\t\t'+line)
+                # print('Ln '+str(i)+(8-(len(str(i))))*' '),(line),
+                diff_content.append("Ln " + str(i) + (8 - len(str(i))) * " " + line)
+                diff_list.append(line[1:])
+                if line.startswith("+<Line"):
+                    points = line.replace("+<Line segment (", "").replace(") >", "")
+                    p1 = points[: points.find(")")].split(",")
+                    p2 = points[points.rfind("(") + 1 : -1].split(",")
+                    sk_add.append(
+                        PLine(
+                            Base.Vector(float(p1[0]), float(p1[1]), float(p1[2])),
+                            Base.Vector(float(p2[0]), float(p2[1]), float(p2[2])),
+                        ),
+                    )
+                #    sk_add.append(line.replace('+<Line segment ','').replace(' >',''))
+                elif line.startswith("+ArcOfCircle"):
+                    data = line.replace("+ArcOfCircle (Radius : ", "").replace("))\n", "")
+                    data = data.split(":")
+                    radius = data[0].split(",")[0]
+                    pos = data[1][data[1].find("(") + 1 : data[1].find(")")].split(",")
+                    dir = data[2][data[2].find("(") + 1 : data[2].rfind(")")].split(",")
+                    par = data[3][data[3].find("(") + 1 :].split(",")
+                    # print (radius,pos,dir,par);stop
+                    sk_add.append(
+                        Part.ArcOfCircle(
                             Part.Circle(
                                 FreeCAD.Vector(float(pos[0]), float(pos[1]), float(pos[2])),
                                 FreeCAD.Vector(float(dir[0]), float(dir[1]), float(dir[2])),
                                 float(radius),
-                            )
-                        )
+                            ),
+                            float(par[0]),
+                            float(par[1]),
+                        ),
+                    )
+                elif line.startswith("+Circle"):
+                    data = line.replace("+Circle (Radius : ", "").replace("))\n", "")
+                    data = data.split(":")
+                    radius = data[0].split(",")[0]
+                    pos = data[1][data[1].find("(") + 1 : data[1].find(")")].split(",")
+                    dir = data[2][data[2].find("(") + 1 :].split(",")
+                    print(radius, pos, dir)
+                    sk_add.append(
+                        Part.Circle(
+                            FreeCAD.Vector(float(pos[0]), float(pos[1]), float(pos[2])),
+                            FreeCAD.Vector(float(dir[0]), float(dir[1]), float(dir[2])),
+                            float(radius),
+                        ),
+                    )
         # for d in (diff_content):
         #    print (d)
         # for d in (diff_list):
         #    print(d)
         # diff_content = a_content + b_content
         try:
-            f = open(home + r"\list_diff.lst", "w")
-            f.write("".join(diff_content))
-            f.close
+            with open(home + r"\list_diff.lst", "w") as f:
+                f.write("".join(diff_content))
         except:
             FreeCAD.Console.PrintError("Error in write permission for 'list_diff.lst' report file.\n")
         FreeCADGui.Selection.clearSelection()
@@ -753,7 +736,7 @@ def cmpPos(doc=None):  ## compare exported positions with the selected doc
             if len(pcbN) > 0:
                 FreeCADGui.ActiveDocument.getObject(pcbN).Transparency = old_pcb_tval
         generateSketch = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui").GetBool(
-            "generate_sketch"
+            "generate_sketch",
         )
         if generate_sketch and generateSketch:
             if len(sk_add) > 0:
@@ -761,16 +744,8 @@ def cmpPos(doc=None):  ## compare exported positions with the selected doc
                 if FreeCAD.activeDocument().getObject("Sketch_Addition") is not None:
                     FreeCAD.activeDocument().removeObject("Sketch_Addition")
                 Sketch_Addition = FreeCAD.activeDocument().addObject("Sketcher::SketchObject", "Sketch_Addition")
-                FreeCADGui.activeDocument().getObject("Sketch_Addition").LineColor = (
-                    0.000,
-                    0.000,
-                    1.000,
-                )
-                FreeCADGui.activeDocument().getObject("Sketch_Addition").PointColor = (
-                    0.000,
-                    0.000,
-                    1.000,
-                )
+                FreeCADGui.activeDocument().getObject("Sketch_Addition").LineColor = (0.000, 0.000, 1.000)
+                FreeCADGui.activeDocument().getObject("Sketch_Addition").PointColor = (0.000, 0.000, 1.000)
                 Sketch_Addition.Geometry = sk_add
             if len(sk_sub) > 0:
                 # print(sk_sub)

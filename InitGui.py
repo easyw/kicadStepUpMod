@@ -42,6 +42,7 @@ FreeCADGui.updateLocale()
 global main_ksu_Icon
 main_ksu_Icon = os.path.join(ksuWB_icons_path, "kicad-StepUp-tools-WB.svg")
 
+
 from PySide import QtGui
 
 import hlp
@@ -66,7 +67,6 @@ help_t = header_txt + hlp.help_txt
 
 class kSU_MainPrefPage:
     def selectDirectory(self):
-
         selected_directory = QtGui.QFileDialog.getExistingDirectory()
         # Use the selected directory...
         print("selected_directory:", selected_directory)
@@ -161,7 +161,6 @@ class KiCadStepUpWB(Workbench):
         return "Gui::PythonWorkbench"
 
     def Initialize(self):
-
         global pref_page
         pref_page = True  # False #True #
         import FreeCADGui
@@ -381,7 +380,7 @@ class KiCadStepUpWB(Workbench):
             <br>set \'checkUpdates\' to \'False\' to avoid this checking
             <br>in \"Tools\", \"Edit Parameters\",<br>\"Preferences\"->\"Mod\"->\"kicadStepUp\"
             """
-            QtGui.QApplication.restoreOverrideCursor()
+            QtGui.QApplication.restoreOverrideCursor()  # noqa: F823
             QtGui.QMessageBox.information(None, "Warning", msg)
         else:
             upd = pg.GetBool("checkUpdates")
@@ -392,11 +391,17 @@ class KiCadStepUpWB(Workbench):
                 if isinstance(input, str):
                     return input
                 return input.encode("utf-8")
+                if type(input) == unicode:
+                    return input.encode("utf-8")
+                return input
 
             def mk_uni(input):
                 if isinstance(input, str):
                     return input
                 return input.decode("utf-8")
+                if type(input) != unicode:
+                    return input.decode("utf-8")
+                return input
 
             ##
             FreeCAD.Console.PrintError("Creating first time ksu preferences\n")
@@ -467,30 +472,25 @@ class KiCadStepUpWB(Workbench):
 
                 for line in ini_content:
                     line = line.strip()  # removes all whitespace at the start and end, including spaces, tabs, newlines and carriage returns
-                    if len(line) > 0:
-                        if line[0] != ";" and line[0] != "[":
-                            if "=" in line:
-                                data = line.split("=", 1)
-                                # sayw(len(data))
-                                if len(data) == 1:
-                                    name = mk_uni(data[0].strip())
-                                    key_value = ""  # None
-                                else:
-                                    name = mk_uni(data[0].strip())
-                                    key_value = mk_uni(data[1].strip())
-                                # sayerr(len(ini_vars))
-                                # sayw(str(find_name(name))+' -> '+name+' -> '+key_value)
-                                ini_vars[find_nm(name)] = key_value
+                    if len(line) > 0 and line[0] != ";" and line[0] != "[" and "=" in line:
+                        data = line.split("=", 1)
+                        # sayw(len(data))
+                        if len(data) == 1:
+                            name = mk_uni(data[0].strip())
+                            key_value = ""  # None
+                        else:
+                            name = mk_uni(data[0].strip())
+                            key_value = mk_uni(data[1].strip())
+                        # sayerr(len(ini_vars))
+                        # sayw(str(find_name(name))+' -> '+name+' -> '+key_value)
+                        ini_vars[find_nm(name)] = key_value
                 # print(ini_vars)
                 models3D_prefix = ini_vars[1]
                 models3D_prefix2 = ini_vars[2]
                 FreeCAD.Console.PrintMessage("3D models prefix=" + mk_str(models3D_prefix) + "\n")
                 FreeCAD.Console.PrintMessage("3D models prefix2=" + mk_str(models3D_prefix2) + "\n")
                 prefs.SetString("prefix3d_1", mk_str(models3D_prefix.replace("\\", "/").rstrip("/")))
-                prefs.SetString(
-                    "prefix3d_2",
-                    mk_str(models3D_prefix2.replace("\\", "/").rstrip("/")),
-                )
+                prefs.SetString("prefix3d_2", mk_str(models3D_prefix2.replace("\\", "/").rstrip("/")))
                 # stop
             ##
             FreeCAD.Console.PrintError("new 'preferences Page' added to configure StepUp!!!\n")

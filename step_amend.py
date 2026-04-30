@@ -13,6 +13,7 @@
 
 # import FreeCAD
 # import FreeCADGui
+
 # support both gz and zipfile archives
 # Catia seems to use gz, Inventor zipfile
 # improved import, open and export
@@ -75,11 +76,7 @@ def transp_rmv(filename):
                 for line in figz:
                     if b"SURFACE_STYLE_TRANSPARENT(1.);" in line:
                         # print(line)
-                        line = re.sub(
-                            rb"SURFACE_STYLE_TRANSPARENT\(1.\)",
-                            b"SURFACE_STYLE_TRANSPARENT(0.)",
-                            line,
-                        )
+                        line = re.sub(rb"SURFACE_STYLE_TRANSPARENT\(1.\)", b"SURFACE_STYLE_TRANSPARENT(0.)", line)
                         found_transp_issue = True
                         # print(line)
                     fogz.write(line)
@@ -99,11 +96,7 @@ def transp_rmv(filename):
             for line in fi:
                 if b"SURFACE_STYLE_TRANSPARENT(1.);" in line:
                     # print(line)
-                    line = re.sub(
-                        rb"SURFACE_STYLE_TRANSPARENT\(1.\)",
-                        b"SURFACE_STYLE_TRANSPARENT(0.)",
-                        line,
-                    )
+                    line = re.sub(rb"SURFACE_STYLE_TRANSPARENT\(1.\)", b"SURFACE_STYLE_TRANSPARENT(0.)", line)
                     found_transp_issue = True
                     # print(line)
                 fo.write(line)

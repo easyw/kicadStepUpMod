@@ -1,5 +1,3 @@
-from PySide import QtCore
-
 # msg_box = QtGui.QMessageBox()
 # msg_box.setWindowTitle("Warning")
 # msg_box.setText("This will remove ALL Suffix \'.stp\', \'.step\' from selection objects.\nDo you want to continue?")
@@ -17,14 +15,10 @@ from PySide import QtCore
 # msg_box.setDefaultButton(QtGui.QMessageBox.Cancel)
 #
 # ret = msg_box.exec_()
+
+from PySide import QtCore
 from PySide.QtCore import SIGNAL
-from PySide.QtGui import (
-    QDialog,
-    QFormLayout,
-    QLabel,
-    QLineEdit,
-    QPushButton,
-)
+from PySide.QtGui import QDialog, QFormLayout, QLabel, QLineEdit, QPushButton
 
 if 0:
 
@@ -36,7 +30,7 @@ if 0:
             # QtGui.QIcon(QtGui.QMessageBox.Critical))
             self.txt = QLabel()
             self.txt.setText(
-                "This will remove ALL Suffix from selection objects.  .\nDo you want to continue?\n\n'suffix'"
+                "This will remove ALL Suffix from selection objects.  .\nDo you want to continue?\n\n'suffix'",
             )
             self.le = QLineEdit()
             self.le.setObjectName("suffix_filter")
@@ -101,7 +95,7 @@ if 1:
 
             self.txt = QLabel()
             self.txt.setText(
-                "This will remove ALL Suffix from selection objects.  \nDo you want to continue?\n\n'suffix'"
+                "This will remove ALL Suffix from selection objects.  \nDo you want to continue?\n\n'suffix'",
             )
             self.le = QLineEdit()
             self.le.setObjectName("suffix_filter")

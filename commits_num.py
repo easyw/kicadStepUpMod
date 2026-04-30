@@ -51,6 +51,8 @@ def commitCount(u, r):
 
 def latestCommitInfo(u, r):
     """Get info about the latest commit of a GitHub repo"""
+    import requests
+
     response = requests.get(f"https://api.github.com/repos/{u}/{r}/commits?per_page=1")
     commit = response.json()[0]
     commit["number"] = re.search(r"\d+$", response.links["last"]["url"]).group()

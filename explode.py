@@ -1,4 +1,3 @@
-
 # Form implementation generated from reading ui file 'C:\Cad\Progetti_K\3D-FreeCad-tools\explode.ui'
 #
 # Created: Fri Sep 21 14:09:48 2018
@@ -55,9 +54,8 @@ def get_top_level(obj):
             if len(ap.InListRecursive) < lvl:
                 top = ap
                 lvl = len(ap.InListRecursive)
-    if top is None:
-        if "App::Part" in obj.TypeId or "App::LinkGroup" in obj.TypeId:
-            top = obj
+    if top is None and ("App::Part" in obj.TypeId or "App::LinkGroup" in obj.TypeId):
+        top = obj
     return top
 
 
@@ -266,15 +264,14 @@ def explode_pcb(pos):
                             docG.getObject(o.Name).Transparency = 50
                         else:
                             docG.getObject(o.Name).Transparency = 0
-                elif "topSilk" in o.Label or "botSilk" in o.Label:
-                    if hasattr(o, "Shape"):
-                        if pos != 0:
-                            docG.getObject(o.Name).Transparency = 30
-                        else:
-                            docG.getObject(o.Name).Transparency = 0
+                elif ("topSilk" in o.Label or "botSilk" in o.Label) and hasattr(o, "Shape"):
+                    if pos != 0:
+                        docG.getObject(o.Name).Transparency = 30
+                    else:
+                        docG.getObject(o.Name).Transparency = 0
             return tlo
     return None
-        # return None
+    # return None
 
 
 def SlideValueChange():
@@ -354,7 +351,7 @@ def Exp_putOnTopRightCorner():
     resolution = QtGui.QDesktopWidget().screenGeometry()
     margin = 80
     xp = (resolution.width()) - sizeX - margin / 5  # - (KSUWidget.frameSize().width() / 2)
-    ((resolution.height()) - sizeY - margin)  # - (KSUWidget.frameSize().height() / 2))
+    # yp = (resolution.height()) - sizeY - margin  # - (KSUWidget.frameSize().height() / 2))
     # xp=widg.pos().x()-sizeXMax/2;yp=widg.pos().y()#+sizeY/2
     explode_dwg.setGeometry(xp, margin, sizeX, sizeY)
     # self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
@@ -373,7 +370,7 @@ def runExplodeGui():
         explode_dwg.setObjectName("ksuExplode")
         explode_dwg.raise_()
         explode_dwg.setFeatures(
-            QtGui.QDockWidget.DockWidgetMovable | QtGui.QDockWidget.DockWidgetFloatable
+            QtGui.QDockWidget.DockWidgetMovable | QtGui.QDockWidget.DockWidgetFloatable,
         )  # | QtGui.QDockWidget.DockWidgetClosable )
 
         # RHDockWidget.destroyed.connect(onDestroy)

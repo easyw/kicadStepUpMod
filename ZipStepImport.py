@@ -32,12 +32,9 @@ import zipfile
 
 import FreeCAD
 
-___ZipVersion___ = "1.0.5"
+from TranslateUtils import translate
 
-try:
-    pass  # py2
-except:
-    pass  # py3
+___ZipVersion___ = "1.0.5"
 
 
 if open.__module__ in ["__builtin__", "io"]:

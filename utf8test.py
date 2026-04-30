@@ -10,7 +10,6 @@ def check_type(input):
         print("string")
         return
     print("not string")
-    return
 
 
 def make_string(input):

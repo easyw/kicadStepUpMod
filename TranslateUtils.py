@@ -1,4 +1,3 @@
-
 # ***************************************************************************
 # *                                                                         *
 # *   Copyright (c) 2017 Yorik van Havre <yorik@uncreated.net>              *
@@ -35,4 +34,6 @@ def QT_TRANSLATE_NOOP(ctx, txt):
 if hasattr(FreeCAD, "Qt"):
     translate = FreeCAD.Qt.translate
 else:
-    pass
+
+    def translate(_context, text):
+        return text

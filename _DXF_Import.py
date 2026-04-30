@@ -30,12 +30,9 @@ import os
 
 import FreeCAD
 
-___DXFVersion___ = "1.4.0"
+from TranslateUtils import translate
 
-try:
-    pass  # py2
-except:
-    pass  # py3
+___DXFVersion___ = "1.4.0"
 
 
 if open.__module__ in ["__builtin__", "io"]:
@@ -83,6 +80,7 @@ def read(filename):
     from dxf_parser import _importDXF
 
     global _dxfLibrary, _dxfColorMap, _dxfReader
+
     from dxf_parser import _dxfColorMap, _dxfLibrary, _dxfReader
 
     # _importDXF.processdxf(FreeCAD.ActiveDocument, filename, getShapes=True, reComputeFlag=True)
