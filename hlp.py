@@ -1,20 +1,20 @@
-# -*- coding: utf-8 -*-
 # ****************************************************************************
 
 
 global ksuWBpath
-import ksu_locator, os
+import os
+
+import ksu_locator
 
 ksuWBpath = os.path.dirname(ksu_locator.__file__)
 
 # font_color = "<font color=black>"
 
-import FreeCAD, FreeCADGui
+import FreeCADGui
 
 # paramGet = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/MainWindow")
 # if 'dark' in paramGet.GetString("StyleSheet").lower(): #we are using a StyleSheet
 # font_color = "<font color=ghostwhite>"
-from PySide import QtGui
 from TranslateUtils import translate
 
 font_color = "<font color=" + FreeCADGui.getMainWindow().palette().text().color().name() + ">"

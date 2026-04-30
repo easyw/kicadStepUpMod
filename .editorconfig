@@ -1,0 +1,18 @@
+root = true
+
+[*]
+indent_style = space
+indent_size = 4
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.{md,yml,yaml}]
+indent_size = 2
+
+[*.{svg,png,jpg,pdf,gif}]
+insert_final_newline = false
+
+[*.{ts,qm}]
+insert_final_newline = false

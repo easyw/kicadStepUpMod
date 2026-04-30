@@ -18,8 +18,19 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
-# Python executable
+# Python
 *.pyc
+__pycache__/
+
+# Tooling caches
+.ruff_cache/
+.pre-commit/
+.uv/
+
+# Editor
+*.swp
+*.swo
+*~
 
 # =========================
 # Operating System Files

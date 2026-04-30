@@ -1,60 +1,68 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
-#****************************************************************************
+# ****************************************************************************
 
 # maui full integration of fcad_pcb from @realthunder commit 121 #maui
 ## from __future__ import (absolute_import, division,
 ##         print_function, unicode_literals)
-#from builtins import *
+# from builtins import *
 # from future.utils import iteritems
 
 # from __future__ import (absolute_import, division,
 #         print_function, unicode_literals)
-#from builtins import *
+# from builtins import *
 
-from collections import defaultdict
-from math import sqrt, atan2, degrees, sin, cos, radians, pi, hypot
 import traceback
+from collections import defaultdict
+from math import degrees
+
+import DraftGeomUtils
+import DraftVecUtils
 import FreeCAD
 import FreeCADGui
 import Part
-from FreeCAD import Console,Vector,Placement,Rotation
-import DraftGeomUtils,DraftVecUtils
+from FreeCAD import Placement, Rotation, Vector
 
 try:
     import CAM
 except:
     import Path
+
     CAM = Path
 
-import sys, os
-sys.path.append(os.path.dirname(os.path.realpath(__file__)))
-#from . import KicadPCB,SexpList
-# maui
-import fcad_parser
-from fcad_parser import KicadPCB,SexpList,SexpParser,parseSexp
-#from .fcad_parser import KicadPCB,SexpList
-#from .kicad_parser import unquote
-from fcad_parser import unquote #maui
+import os
+import sys
 
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+# from . import KicadPCB,SexpList
+# maui
+# from .fcad_parser import KicadPCB,SexpList
+# from .kicad_parser import unquote
+import contextlib
+
+from fcad_parser import (
+    KicadPCB,
+    SexpList,
+    parseSexp,
+    unquote,  # maui
+)
 
 # from kicadStepUptools import KicadPCB,SexpList
-__kicad_parser_version__ = '2.3.6'
+__kicad_parser_version__ = "2.3.6"
 # https://github.com/realthunder/fcad_pcb/issues/20#issuecomment-586042341
-# FreeCAD.Console.PrintLog('kicad_parser_version '+__kicad_parser_version__+'\n') # maui 
+# FreeCAD.Console.PrintLog('kicad_parser_version '+__kicad_parser_version__+'\n') # maui
 # print('kicad_parser_version '+__kicad_parser_version__)
 # maui
 
-PY3 = sys.version_info[0] == 3
-if PY3:
-    string_types = str,
-else:
-    string_types = basestring,
+PY3 = sys.version_info[0] >= 3
+string_types = (str,) if PY3 else (basestring,)
+
 
 def _disableElementMapping(_):
     pass
 
-disableTopoNaming = getattr(Part, 'disableElementMapping', _disableElementMapping)
+
+disableTopoNaming = getattr(Part, "disableElementMapping", _disableElementMapping)
+
 
 def addObject(doc, tp, name):
     obj = doc.addObject(tp, name)
@@ -66,99 +74,103 @@ def addObject(doc, tp, name):
         pass
     return obj
 
+
 def updateGui():
-    try:
+    with contextlib.suppress(Exception):
         FreeCADGui.updateGui()
-    except Exception:
-        pass
+
 
 class FCADLogger:
     def __init__(self, tag):
         self.tag = tag
-        self.levels = { 'error':0, 'warning':1, 'info':2,
-                'log':3, 'trace':4 }
+        self.levels = {"error": 0, "warning": 1, "info": 2, "log": 3, "trace": 4}
 
-    def _isEnabledFor(self,level):
+    def _isEnabledFor(self, level):
         return FreeCAD.getLogLevel(self.tag) >= level
 
-    def isEnabledFor(self,level):
+    def isEnabledFor(self, level):
         return self._isEnabledFor(self.levels[level])
 
-    def trace(self,msg):
+    def trace(self, msg):
         if self._isEnabledFor(4):
-            FreeCAD.Console.PrintLog(msg+'\n')
+            FreeCAD.Console.PrintLog(msg + "\n")
             updateGui()
 
-    def log(self,msg):
+    def log(self, msg):
         if self._isEnabledFor(3):
-            FreeCAD.Console.PrintLog(msg+'\n')
+            FreeCAD.Console.PrintLog(msg + "\n")
             updateGui()
 
-    def info(self,msg):
+    def info(self, msg):
         if self._isEnabledFor(2):
-            FreeCAD.Console.PrintMessage(msg+'\n')
+            FreeCAD.Console.PrintMessage(msg + "\n")
             updateGui()
 
-    def warning(self,msg):
+    def warning(self, msg):
         if self._isEnabledFor(1):
-            FreeCAD.Console.PrintWarning(msg+'\n')
+            FreeCAD.Console.PrintWarning(msg + "\n")
             updateGui()
 
-    def error(self,msg):
+    def error(self, msg):
         if self._isEnabledFor(0):
-            FreeCAD.Console.PrintError(msg+'\n')
+            FreeCAD.Console.PrintError(msg + "\n")
             updateGui()
 
-logger = FCADLogger('fcad_pcb')
+
+logger = FCADLogger("fcad_pcb")
+
 
 def getActiveDoc():
     if FreeCAD.ActiveDocument is None:
-        return FreeCAD.newDocument('kicad_fcad')
+        return FreeCAD.newDocument("kicad_fcad")
     return FreeCAD.ActiveDocument
 
+
 def fitView():
-    try:
+    with contextlib.suppress(Exception):
         FreeCADGui.ActiveDocument.ActiveView.fitAll()
-    except Exception:
-        pass
+
 
 def isZero(f):
-    return round(f,DraftGeomUtils.precision())==0
+    return round(f, DraftGeomUtils.precision()) == 0
+
 
 def makeColor(*color):
-    if len(color)==1:
-        if isinstance(color[0],string_types):
-            color = int(color[0],0)
-        else:
-            color = color[0]
-        r = float((color>>24)&0xFF)
-        g = float((color>>16)&0xFF)
-        b = float((color>>8)&0xFF)
+    if len(color) == 1:
+        color = int(color[0], 0) if isinstance(color[0], string_types) else color[0]
+        r = float((color >> 24) & 0xFF)
+        g = float((color >> 16) & 0xFF)
+        b = float((color >> 8) & 0xFF)
     else:
-        r,g,b = color
-    return (r/255.0,g/255.0,b/255.0)
+        r, g, b = color
+    return (r / 255.0, g / 255.0, b / 255.0)
+
 
 def makeVect(l):
-    return Vector(l[0],-l[1],0)
+    return Vector(l[0], -l[1], 0)
+
 
 def getAt(sexp):
-    at = getattr(sexp, 'at', None)
+    at = getattr(sexp, "at", None)
     if not at:
-        return Vector(0,0,0),0
+        return Vector(0, 0, 0), 0
     v = makeVect(at)
-    return (v,0) if len(at)==2 else (v,at[2])
+    return (v, 0) if len(at) == 2 else (v, at[2])
 
-def product(v1,v2):
-    return Vector(v1.x*v2.x,v1.y*v2.y,v1.z*v2.z)
 
-def make_rect(size,params=None):
+def product(v1, v2):
+    return Vector(v1.x * v2.x, v1.y * v2.y, v1.z * v2.z)
+
+
+def make_rect(size, params=None):
     _ = params
-    return Part.makePolygon([product(size,Vector(*v))
-        for v in ((-0.5,-0.5),(0.5,-0.5),(0.5,0.5),(-0.5,0.5),(-0.5,-0.5))])
+    return Part.makePolygon(
+        [product(size, Vector(*v)) for v in ((-0.5, -0.5), (0.5, -0.5), (0.5, 0.5), (-0.5, 0.5), (-0.5, -0.5))],
+    )
 
-def make_trapezoid(size,params):
-    pts = [product(size,Vector(*v)) \
-            for v in ((-0.5,0.5),(-0.5,-0.5),(0.5,-0.5),(0.5,0.5))]
+
+def make_trapezoid(size, params):
+    pts = [product(size, Vector(*v)) for v in ((-0.5, 0.5), (-0.5, -0.5), (0.5, -0.5), (0.5, 0.5))]
     try:
         delta = params.rect_delta[0]
         if delta:
@@ -172,152 +184,157 @@ def make_trapezoid(size,params):
             length = size[0]
         if delta <= -length:
             collapse = 1
-            delta = -length;
+            delta = -length
         elif delta >= length:
             collapse = -1
             delta = length
         else:
             collapse = 0
-        pts[0][idx] += delta*0.5
-        pts[1][idx] -= delta*0.5
-        pts[2][idx] += delta*0.5
-        pts[3][idx] -= delta*0.5
+        pts[0][idx] += delta * 0.5
+        pts[1][idx] -= delta * 0.5
+        pts[2][idx] += delta * 0.5
+        pts[3][idx] -= delta * 0.5
         if collapse:
             del pts[collapse]
     except Exception:
-        logger.warning('trapezoid pad has no rect_delta')
+        logger.warning("trapezoid pad has no rect_delta")
 
     pts.append(pts[0])
     return Part.makePolygon(pts)
 
-def make_circle(size,params=None):
-    _ = params
-    return Part.Wire(Part.makeCircle(size.x*0.5))
 
-def make_oval(size,params=None):
+def make_circle(size, params=None):
+    _ = params
+    return Part.Wire(Part.makeCircle(size.x * 0.5))
+
+
+def make_oval(size, params=None):
     _ = params
     if size.x == size.y:
         return make_circle(size)
     if size.x < size.y:
-        r = size.x*0.5
+        r = size.x * 0.5
         size.y -= size.x
-        s  = ((0,0.5),(-0.5,0.5),(-0.5,-0.5),(0,-0.5),(0.5,-0.5),(0.5,0.5))
-        a = (0,180,180,360)
+        s = ((0, 0.5), (-0.5, 0.5), (-0.5, -0.5), (0, -0.5), (0.5, -0.5), (0.5, 0.5))
+        a = (0, 180, 180, 360)
     else:
-        r = size.y*0.5
+        r = size.y * 0.5
         size.x -= size.y
-        s = ((-0.5,0),(-0.5,-0.5),(0.5,-0.5),(0.5,0),(0.5,0.5),(-0.5,0.5))
-        a = (90,270,-90,-270)
-    pts = [product(size,Vector(*v)) for v in s]
-    return Part.Wire([
-            Part.makeCircle(r,pts[0],Vector(0,0,1),a[0],a[1]),
-            Part.makeLine(pts[1],pts[2]),
-            Part.makeCircle(r,pts[3],Vector(0,0,1),a[2],a[3]),
-            Part.makeLine(pts[4],pts[5])])
+        s = ((-0.5, 0), (-0.5, -0.5), (0.5, -0.5), (0.5, 0), (0.5, 0.5), (-0.5, 0.5))
+        a = (90, 270, -90, -270)
+    pts = [product(size, Vector(*v)) for v in s]
+    return Part.Wire(
+        [
+            Part.makeCircle(r, pts[0], Vector(0, 0, 1), a[0], a[1]),
+            Part.makeLine(pts[1], pts[2]),
+            Part.makeCircle(r, pts[3], Vector(0, 0, 1), a[2], a[3]),
+            Part.makeLine(pts[4], pts[5]),
+        ],
+    )
 
-def make_roundrect(size,params):
+
+def make_roundrect(size, params):
     rratio = 0.25
     try:
         rratio = params.roundrect_rratio
         if rratio > 0.5:
             return make_oval(size)
     except Exception:
-        logger.warning('round rect pad has no rratio')
+        logger.warning("round rect pad has no rratio")
 
     length = min(size.x, size.y)
-    r = length*rratio
-    n = Vector(0,0,1)
-    sx = size.x*0.5
-    sy = size.y*0.5
+    r = length * rratio
+    n = Vector(0, 0, 1)
+    sx = size.x * 0.5
+    sy = size.y * 0.5
 
-    rounds = [(r,False)]*4
+    rounds = [(r, False)] * 4
 
-    if 'chamfer_ratio' in params and 'chamfer' in params:
+    if "chamfer_ratio" in params and "chamfer" in params:
         ratio = params.chamfer_ratio
         if ratio < 0.0:
             ratio = 0.0
         elif ratio > 0.5:
             ratio = 0.5
-        for i,corner in enumerate(('top_right',
-                                    'top_left',
-                                    'bottom_left',
-                                    'bottom_right')):
+        for i, corner in enumerate(("top_right", "top_left", "bottom_left", "bottom_right")):
             if corner in params.chamfer:
-                rounds[i] = (ratio*length,True)
+                rounds[i] = (ratio * length, True)
 
     edges = []
 
-    r,chamfer = rounds[0]
-    pstart = Vector(sx,sy-r)
+    r, chamfer = rounds[0]
+    pstart = Vector(sx, sy - r)
     pt = pstart
-    pnext = Vector(sx-r,sy)
+    pnext = Vector(sx - r, sy)
 
     if r:
         if not chamfer:
-            edges.append(Part.makeCircle(r,Vector(sx-r,sy-r),n,0,90))
+            edges.append(Part.makeCircle(r, Vector(sx - r, sy - r), n, 0, 90))
         else:
             edges.append(Part.makeLine(pt, pnext))
 
-    r,chamfer = rounds[1]
+    r, chamfer = rounds[1]
     pt = pnext
-    pnext = Vector(r-sx,sy)
+    pnext = Vector(r - sx, sy)
     if pt != pnext:
-        edges.append(Part.makeLine(pt,pnext))
+        edges.append(Part.makeLine(pt, pnext))
         pt = pnext
-    pnext = Vector(-sx,sy-r)
+    pnext = Vector(-sx, sy - r)
 
     if r:
         if not chamfer:
-            edges.append(Part.makeCircle(r,Vector(r-sx,sy-r),n,90,180))
+            edges.append(Part.makeCircle(r, Vector(r - sx, sy - r), n, 90, 180))
         else:
-            edges.append(Part.makeLine(pt,pnext))
+            edges.append(Part.makeLine(pt, pnext))
 
-    r,chamfer = rounds[2]
+    r, chamfer = rounds[2]
     pt = pnext
-    pnext = Vector(-sx,r-sy)
+    pnext = Vector(-sx, r - sy)
     if pt != pnext:
-        edges.append(Part.makeLine(pt,pnext))
+        edges.append(Part.makeLine(pt, pnext))
         pt = pnext
-    pnext = Vector(r-sx,-sy)
+    pnext = Vector(r - sx, -sy)
 
     if r:
         if not chamfer:
-            edges.append(Part.makeCircle(r,Vector(r-sx,r-sy),n,180,270))
+            edges.append(Part.makeCircle(r, Vector(r - sx, r - sy), n, 180, 270))
         else:
-            edges.append(Part.makeLine(pt,pnext))
+            edges.append(Part.makeLine(pt, pnext))
 
-    r,chamfer = rounds[3]
+    r, chamfer = rounds[3]
     pt = pnext
-    pnext = Vector(sx-r,-sy)
+    pnext = Vector(sx - r, -sy)
     if pt != pnext:
-        edges.append(Part.makeLine(pt,pnext))
+        edges.append(Part.makeLine(pt, pnext))
         pt = pnext
-    pnext = Vector(sx,r-sy)
+    pnext = Vector(sx, r - sy)
 
     if r:
         if not chamfer:
-            edges.append(Part.makeCircle(r,Vector(sx-r,r-sy),n,270,360))
+            edges.append(Part.makeCircle(r, Vector(sx - r, r - sy), n, 270, 360))
         else:
-            edges.append(Part.makeLine(pt,pnext))
+            edges.append(Part.makeLine(pt, pnext))
 
     pt = pnext
     if pt != pstart:
-        edges.append(Part.makeLine(pt,pstart))
+        edges.append(Part.makeLine(pt, pstart))
 
     return Part.Wire(edges)
 
-#maui
+
+# maui
 def make_gr_poly(params):
-    if hasattr(params.pts,"xy"):  #try:
+    if hasattr(params.pts, "xy"):  # try:
         points = SexpList(params.pts.xy)
         # close the polygon
         points._append(params.pts.xy._get(0))
         # KiCAD polygon runs in clockwise, but FreeCAD wants CCW, so must reverse.
         return Part.makePolygon([makeVect(p) for p in reversed(points)])
-    else: # hasattr(params.pts,"arc")  #except:
-        arcs = SexpList(params.pts.arc)
-        return Part.makeCompound([make_gr_arc(arc) for arc in (arcs)])
-        
+    # hasattr(params.pts,"arc")  #except:
+    arcs = SexpList(params.pts.arc)
+    return Part.makeCompound([make_gr_arc(arc) for arc in (arcs)])
+
+
 # maui
 def make_fp_poly(params):
     points = SexpList(params.pts.xy)
@@ -325,38 +342,49 @@ def make_fp_poly(params):
     points._append(params.pts.xy._get(0))
     # KiCAD polygon runs in clockwise, but FreeCAD wants CCW, so must reverse.
     return Part.makePolygon([makeVect(p) for p in reversed(points)])
+
+
 # maui
 
+
 def make_gr_line(params):
-    return Part.makeLine(makeVect(params.start),makeVect(params.end))
+    return Part.makeLine(makeVect(params.start), makeVect(params.end))
+
 
 def make_gr_arc(params):
-    if hasattr(params, 'angle'):
-        return  makeArc(makeVect(params.start),makeVect(params.end),params.angle)
-    return Part.ArcOfCircle(makeVect(params.start),
-                            makeVect(params.mid),
-                            makeVect(params.end)).toShape()
+    if hasattr(params, "angle"):
+        return makeArc(makeVect(params.start), makeVect(params.end), params.angle)
+    return Part.ArcOfCircle(makeVect(params.start), makeVect(params.mid), makeVect(params.end)).toShape()
+
 
 def make_gr_curve(params):
     return makeCurve([makeVect(p) for p in SexpList(params.pts.xy)])
+
 
 def make_gr_circle(params, width=0):
     center = makeVect(params.center)
     end = makeVect(params.end)
     r = center.distanceToPoint(end)
-    if not width or r <= width*0.5:
-        return Part.makeCircle(r+width*0.5, center)
-    return Part.makeCompound([Part.Wire(Part.makeCircle(r+width*0.5,center)),
-                              Part.Wire(Part.makeCircle(r-width*0.5,center,Vector(0,0,-1)))])
+    if not width or r <= width * 0.5:
+        return Part.makeCircle(r + width * 0.5, center)
+    return Part.makeCompound(
+        [
+            Part.Wire(Part.makeCircle(r + width * 0.5, center)),
+            Part.Wire(Part.makeCircle(r - width * 0.5, center, Vector(0, 0, -1))),
+        ],
+    )
+
+
 # maui
 def make_gr_circle_outl(params, width=0):
     center = makeVect(params.center)
     end = makeVect(params.end)
     r = center.distanceToPoint(end)
-    if not width or r <= width*0.5:
-        return Part.makeCircle(r+width*0.5, center)
-    return [Part.makeCircle(r+width*0.5, center), Part.makeCircle(r-width*0.5,center)]
-    
+    if not width or r <= width * 0.5:
+        return Part.makeCircle(r + width * 0.5, center)
+    return [Part.makeCircle(r + width * 0.5, center), Part.makeCircle(r - width * 0.5, center)]
+
+
 # def make_gr_circle_outl(params, width=0):
 #     center = makeVect(params.center)
 #     end = makeVect(params.end)
@@ -370,72 +398,78 @@ def make_gr_circle_outl(params, width=0):
 #     #                          Part.Wire(Part.makeCircle(r-width*0.5,center,Vector(0,0,-1)))])
 # maui
 
+
 def make_gr_rect(params):
     start = makeVect(params.start)
     end = makeVect(params.end)
     return Part.makePolygon([start, Vector(start.x, end.y), end, Vector(end.x, start.y), start])
 
+
 def makePrimitve(key, params):
     for param in SexpList(params):
         try:
-            width = getattr(param,'width',0)
-            if width and key == 'gr_circle':
+            width = getattr(param, "width", 0)
+            if width and key == "gr_circle":
                 return make_gr_circle(param, width), 0
-            else:
-                make_shape = globals()['make_{}'.format(key)]
-                #if key == 'gr_poly':
-                #    Part.show(Part.Face(make_fp_poly(params)))
-                return make_shape(param), width
+            make_shape = globals()[f"make_{key}"]
+            # if key == 'gr_poly':
+            #    Part.show(Part.Face(make_fp_poly(params)))
+            return make_shape(param), width
         except KeyError:
-            logger.warning('Unknown primitive {} in custom pad'.format(key))
+            logger.warning(f"Unknown primitive {key} in custom pad")
             return None, None
-    #try:
+    return None
+    # try:
     #    width = getattr(params,'width',0)
     #    if width and key == 'gr_circle':
     #        return make_gr_circle(params, width), 0
     #    else:
     #        make_shape = globals()['make_{}'.format(key)]
     #        return make_shape(params), width
-    #except KeyError:
+    # except KeyError:
     #    logger.warning('Unknown primitive {} in custom pad'.format(key))
     #    return None, None
 
-def makeThickLine(p1,p2,width):
+
+def makeThickLine(p1, p2, width):
     length = p1.distanceToPoint(p2)
-    line = make_oval(Vector(length+2*width,2*width))
+    line = make_oval(Vector(length + 2 * width, 2 * width))
     p = p2.sub(p1)
     a = -degrees(DraftVecUtils.angle(p))
-    line.translate(Vector(length*0.5))
-    line.rotate(Vector(),Vector(0,0,1),a)
+    line.translate(Vector(length * 0.5))
+    line.rotate(Vector(), Vector(0, 0, 1), a)
     line.translate(p1)
     return line
 
-def makeArc(center,start,angle):
+
+def makeArc(center, start, angle):
     p = start.sub(center)
     r = p.Length
     a = -degrees(DraftVecUtils.angle(p))
     # NOTE: KiCAD pcb geometry runs in clockwise, while FreeCAD is CCW. So the
     # resulting arc below is the reverse of what's specified in kicad_pcb
-    if angle>0:
-        arc = Part.makeCircle(r,center,Vector(0,0,1),a-angle,a)
-        arc.reverse();
+    if angle > 0:
+        arc = Part.makeCircle(r, center, Vector(0, 0, 1), a - angle, a)
+        arc.reverse()
     else:
-        arc = Part.makeCircle(r,center,Vector(0,0,1),a,a-angle)
+        arc = Part.makeCircle(r, center, Vector(0, 0, 1), a, a - angle)
     return arc
+
 
 def makeCurve(poles):
     return Part.BSplineCurve(poles).toShape()
+
 
 def findWires(edges):
     try:
         return [Part.Wire(e) for e in Part.sortEdges(edges)]
     except AttributeError:
-        msg = 'Missing Part.sortEdges.'\
-            'You need newer FreeCAD (0.17 git 799c43d2)'
-        logger.error(msg)
+        msg = "Missing Part.sortEdges.You need newer FreeCAD (0.17 git 799c43d2)"
+        logger.exception(msg)
         raise AttributeError(msg)
 
-def getFaceCompound(shape,wire=False):
+
+def getFaceCompound(shape, wire=False):
     objs = []
     for f in shape.Faces:
         selected = True
@@ -450,70 +484,73 @@ def getFaceCompound(shape,wire=False):
         ## TODO: FreeCAD curve.normalAt is not implemented
         ################################################################
         # for e in f.Edges:
-            # if isinstance(e.Curve,(Part.LineSegment,Part.Line)): continue
-            # if not isZero(e.normalAt(Vector()).dot(Vector(0,0,1))):
-                # selected = False
-                # break
+        # if isinstance(e.Curve,(Part.LineSegment,Part.Line)): continue
+        # if not isZero(e.normalAt(Vector()).dot(Vector(0,0,1))):
+        # selected = False
+        # break
         # if not selected: continue
 
         if not wire:
             objs.append(f)
             continue
-        for w in f.Wires:
-            objs.append(w)
+        objs.extend(f.Wires)
     if not objs:
-        raise ValueError('null shape')
+        raise ValueError("null shape")
     return Part.makeCompound(objs)
 
 
 def unpack(obj):
     if not obj:
-        raise ValueError('null shape')
+        raise ValueError("null shape")
 
-    if isinstance(obj,(list,tuple)) and len(obj)==1:
+    if isinstance(obj, (list, tuple)) and len(obj) == 1:
         return obj[0]
     return obj
 
 
-def getKicadPath(env=''):
-    confpath = ''
+def getKicadPath(env=""):
+    confpath = ""
     if env:
-        confpath = os.path.expanduser(os.environ.get(env,''))
+        confpath = os.path.expanduser(os.environ.get(env, ""))
         if not os.path.isdir(confpath):
-            confpath=''
+            confpath = ""
     if not confpath:
-        if sys.platform == 'darwin':
-            confpath = os.path.expanduser('~/Library/Preferences/kicad')
-        elif sys.platform == 'win32':
-            confpath = os.path.join(
-                    os.path.abspath(os.environ['APPDATA']),'kicad')
+        if sys.platform == "darwin":
+            confpath = os.path.expanduser("~/Library/Preferences/kicad")
+        elif sys.platform == "win32":
+            confpath = os.path.join(os.path.abspath(os.environ["APPDATA"]), "kicad")
         else:
-            confpath=os.path.expanduser('~/.config/kicad')
+            confpath = os.path.expanduser("~/.config/kicad")
 
     import re
-    kicad_common = os.path.join(confpath,'kicad_common')
+
+    kicad_common = os.path.join(confpath, "kicad_common")
     if not os.path.isfile(kicad_common):
         kicad_common += ".json"
         if not os.path.isfile(kicad_common):
-            logger.warning('cannot find kicad_common')
+            logger.warning("cannot find kicad_common")
             return None
-    with open(kicad_common,'r', encoding='utf-8') as f:
+    with open(kicad_common, encoding="utf-8") as f:
         content = f.read()
-    match = re.search(r'^\s*"*KISYS3DMOD"*\s*[:=]\s*([^\r\n]+)',content,re.MULTILINE)
+    match = re.search(r'^\s*"*KISYS3DMOD"*\s*[:=]\s*([^\r\n]+)', content, re.MULTILINE)
     if not match:
-        logger.warning('no KISYS3DMOD found')
+        logger.warning("no KISYS3DMOD found")
         return None
 
     return match.group(1).rstrip(' "')
 
+
 _model_cache = {}
+
 
 def clearModelCache():
     _model_cache = {}
 
+
 def recomputeObj(obj):
     obj.recompute()
     obj.purgeTouched()
+
 
 def loadModel(filename):
     mtime = None
@@ -521,44 +558,45 @@ def loadModel(filename):
         mtime = os.path.getmtime(filename)
         obj = _model_cache[filename]
         if obj[2] == mtime:
-            logger.info('model cache hit');
+            logger.info("model cache hit")
             return obj
-        else:
-            logger.info('model reload due to time stamp change');
+        logger.info("model reload due to time stamp change")
     except KeyError:
         pass
     except OSError:
-        return
+        return None
 
     import ImportGui
+
     doc = getActiveDoc()
     if not os.path.isfile(filename):
-        return
+        return None
     count = len(doc.Objects)
     dobjs = []
     try:
-        ImportGui.insert(filename,doc.Name)
+        ImportGui.insert(filename, doc.Name)
         dobjs = doc.Objects[count:]
-        obj = addObject(doc,'Part::Compound','tmp')
+        obj = addObject(doc, "Part::Compound", "tmp")
         obj.Links = dobjs
         recomputeObj(obj)
-        dobjs = [obj]+dobjs
-        obj = (obj.Shape.copy(),obj.ViewObject.DiffuseColor,mtime)
+        dobjs = [obj, *dobjs]
+        obj = (obj.Shape.copy(), obj.ViewObject.DiffuseColor, mtime)
         _model_cache[filename] = obj
         return obj
-    except Exception as ex:
-        logger.error('failed to load model: {}'.format(ex))
+    except Exception:
+        logger.exception("failed to load model")
     finally:
         for o in dobjs:
             doc.removeObject(o.Name)
 
+
 class KicadFcad:
-    def __init__(self,filename=None,debug=False,**kwds):
+    def __init__(self, filename=None, debug=False, **kwds):
 
         #############################################################
         # Beginning of user customizable parameters during construction
-        self.prefix = ''
-        self.indent = '  '
+        self.prefix = ""
+        self.indent = "  "
         self.make_sketch = False
         self.sketch_use_draft = False
         self.sketch_radius_precision = -1
@@ -571,7 +609,7 @@ class KicadFcad:
         self.merge_vias = not debug
         self.merge_tracks = not debug
         self.zone_merge_holes = not debug
-        self.merge_pads = not debug # False # maui to evaluate for better pad results
+        self.merge_pads = not debug  # False # maui to evaluate for better pad results
         self.arc_fit_accuracy = 0.0005
         self.layer_thickness = 0.01
         self.copper_thickness = 0.05
@@ -588,38 +626,38 @@ class KicadFcad:
 
         self.add_feature = True
         self.part_path = None
-        self.path_env = 'KICAD_CONFIG_HOME'
+        self.path_env = "KICAD_CONFIG_HOME"
         self.hole_size_offset = 0.0001
         self.pad_inflate = 0
         self.zone_inflate = 0
         self.nets = []
         if filename is None:
-            filename = '/home/thunder/pwr.kicad_pcb'
+            filename = "/home/thunder/pwr.kicad_pcb"
         if not os.path.isfile(filename):
-            raise ValueError("file not found");
+            raise ValueError("file not found")
         self.filename = filename
         self.colors = {
-                'board':makeColor("0x3A6629"),
-                'pad':{0:makeColor(219,188,126)}, # maui pads color
-                'zone':{0:makeColor(0,80,0)},
-                'track':{0:makeColor(0,120,0)},
-                'copper':{0:makeColor(200,117,51)},
-                'F.Cu':{0:makeColor(200,117,51)}, # maui start color
-                'B.Cu':{0:makeColor(200,117,51)},
-                'F.SilkS':{0:makeColor(0,0,255)},
-                'B.SilkS':{0:makeColor(0,0,255)},
-                'F.CrtYd':{0:makeColor(255,170,255)},
-                'B.CrtYd':{0:makeColor(255,170,255)},
-                'F.Fab':{0:makeColor(0,255,0)},
-                'B.Fab':{0:makeColor(0,255,0)},
-                'F.Adhes':{0:makeColor(0,127,255)},
-                'B.Adhes':{0:makeColor(127,0,255)},
-                'Edge.Cuts':{0:makeColor(255,0,0)},
-                'Margin':{0:makeColor(255,170,170)},
-                'holes':{0:makeColor(170,255,127)},
-                'NetTie':{0:makeColor(255,114,12)}, 
-                'Dwgs.User':{0:makeColor(188,188,188)}, # maui end color
-                'Cmts.User':{0:makeColor(0,170,255)}, # maui end color
+            "board": makeColor("0x3A6629"),
+            "pad": {0: makeColor(219, 188, 126)},  # maui pads color
+            "zone": {0: makeColor(0, 80, 0)},
+            "track": {0: makeColor(0, 120, 0)},
+            "copper": {0: makeColor(200, 117, 51)},
+            "F.Cu": {0: makeColor(200, 117, 51)},  # maui start color
+            "B.Cu": {0: makeColor(200, 117, 51)},
+            "F.SilkS": {0: makeColor(0, 0, 255)},
+            "B.SilkS": {0: makeColor(0, 0, 255)},
+            "F.CrtYd": {0: makeColor(255, 170, 255)},
+            "B.CrtYd": {0: makeColor(255, 170, 255)},
+            "F.Fab": {0: makeColor(0, 255, 0)},
+            "B.Fab": {0: makeColor(0, 255, 0)},
+            "F.Adhes": {0: makeColor(0, 127, 255)},
+            "B.Adhes": {0: makeColor(127, 0, 255)},
+            "Edge.Cuts": {0: makeColor(255, 0, 0)},
+            "Margin": {0: makeColor(255, 170, 170)},
+            "holes": {0: makeColor(170, 255, 127)},
+            "NetTie": {0: makeColor(255, 114, 12)},
+            "Dwgs.User": {0: makeColor(188, 188, 188)},  # maui end color
+            "Cmts.User": {0: makeColor(0, 170, 255)},  # maui end color
         }
         self.layer_type = 0
         self.layer_match = None
@@ -627,20 +665,21 @@ class KicadFcad:
         #############################################################
 
         # checking user overridden parameters
-        for key,value in kwds.items():
-            if not hasattr(self,key):
-                raise ValueError('unknown parameter "{}"'.format(key))
-            setattr(self,key,value)
+        for key, value in kwds.items():
+            if not hasattr(self, key):
+                raise ValueError(f'unknown parameter "{key}"')
+            setattr(self, key, value)
 
         if not self.part_path:
             self.part_path = getKicadPath(self.path_env)
         self.pcb = KicadPCB.load(self.filename, self.quote_no_parse)
-        #print(str(self.pcb))
-        if self.pcb._key == 'footprint':
-            self.pcb._key = 'module'
-        if self.pcb._key == 'module':
+        # print(str(self.pcb))
+        if self.pcb._key == "footprint":
+            self.pcb._key = "module"
+        if self.pcb._key == "module":
             # this is a kicad_mod file, make it look like a kicad_pcb
-            pcb = KicadPCB(parseSexp('''
+            pcb = KicadPCB(
+                parseSexp("""
                     (kicad_pcb
                         (general
                             (thickness 1.6)  # maui
@@ -672,21 +711,20 @@ class KicadFcad:
                             (48 B.Fab user)
                             (49 F.Fab user)
                         )
-                    )'''))
+                    )"""),
+            )
             self.module = self.pcb
             pcb.module._append(self.pcb)
-            #print(str(self.pcb))
+            # print(str(self.pcb))
             self.pcb = pcb
         else:
             self.module = None
 
         if not self.board_thickness:
-            try:
+            with contextlib.suppress(Exception):
                 self.board_thickness = self.pcb.general.thickness
-            except Exception:
-                pass
             if not self.board_thickness:
-                self.board_thickness = 1.6 # maui
+                self.board_thickness = 1.6  # maui
 
         self._dielectric_layers = []
         self._stackup_map = {}
@@ -694,10 +732,10 @@ class KicadFcad:
 
         # stores layer name as read from the file, may contain quotes depending
         # on kicad version
-        self.layer_name = ''
+        self.layer_name = ""
 
         # stores layer name without quote
-        self.layer = ''
+        self.layer = ""
 
         self.setLayer(self.layer_type)
 
@@ -705,49 +743,48 @@ class KicadFcad:
             self.via_skip_hole = True
 
         self._nets = set()
-        self.net_names = dict()
-        if 'net' in self.pcb:
+        self.net_names = {}
+        if "net" in self.pcb:
             for n in self.pcb.net:
                 self.net_names[n[0]] = n[1]
             self.setNetFilter(*self.nets)
 
-    def findLayer(self,layer, deftype=None):
+    def findLayer(self, layer, deftype=None):
         try:
             layer = int(layer)
         except:
             for layer_type in self.pcb.layers:
                 name = self.pcb.layers[layer_type][0]
-                if name==layer or unquote(name)==layer:
-                    return (int(layer_type),name)
+                if name == layer or unquote(name) == layer:
+                    return (int(layer_type), name)
             if deftype is not None:
                 return deftype, layer
-            raise KeyError('layer {} not found'.format(layer))
+            raise KeyError(f"layer {layer} not found")
         else:
             if str(layer) not in self.pcb.layers:
                 if deftype is not None:
                     return deftype, str(layer)
-                raise KeyError('layer {} not found'.format(layer))
+                raise KeyError(f"layer {layer} not found")
             return (layer, self.pcb.layers[str(layer)][0])
 
-    def setLayer(self,layer):
+    def setLayer(self, layer):
         self.layer_type, self.layer_name = self.findLayer(layer)
         self.layer = unquote(self.layer_name)
         if self.layer_type <= 31:
-            self.layer_match = '*.Cu'
+            self.layer_match = "*.Cu"
         else:
-            self.layer_match = '*.{}'.format(self.layer.split('.')[-1])
+            self.layer_match = "*.{}".format(self.layer.split(".")[-1])
 
     def _copperLayers(self):
-        coppers = [ (int(t),unquote(self.pcb.layers[t][0])) \
-                        for t in self.pcb.layers if int(t)<=31]
-        coppers.sort(key=lambda x : x[0])
+        coppers = [(int(t), unquote(self.pcb.layers[t][0])) for t in self.pcb.layers if int(t) <= 31]
+        coppers.sort(key=lambda x: x[0])
         return coppers
 
     def _initStackUp(self):
         if self.stackup is None:
-            self._log('{}','kicad version='+str(self.pcb.version),level='info') # maui 
+            self._log("{}", "kicad version=" + str(self.pcb.version), level="info")  # maui
             self.stackup = []
-            stackup = getattr(getattr(self.pcb, 'setup', None), 'stackup', None)
+            stackup = getattr(getattr(self.pcb, "setup", None), "stackup", None)
             if stackup:
                 try:
                     # If no stackup given by user, extract stack info from setup
@@ -755,8 +792,11 @@ class KicadFcad:
                     last_copper = 0.0
                     for layer in stackup.layer:
                         layer_type, _ = self.findLayer(layer[0], 99)
-                        t = getattr(layer, 'thickness',
-                                self.copper_thickness if layer_type<=32 else self.layer_thickness)
+                        t = getattr(
+                            layer,
+                            "thickness",
+                            self.copper_thickness if layer_type <= 32 else self.layer_thickness,
+                        )
                         if layer_type <= 31:
                             last_copper = offset
                         # Some layer (e.g. dielectric) may have more than one
@@ -782,22 +822,22 @@ class KicadFcad:
                     # Right now, makeBoard() always assume it is at z = 0.
                     for entry in self.stackup:
                         entry[1] -= last_copper
-                except Exception as e:# maui logging error and keeping kv5 compatibility
+                except Exception:  # maui logging error and keeping kv5 compatibility
                     # raise
-                    # self._log('Failed parsing stackup info: {}', str(e), level='warning') # maui 
-                    # traceback.print_exc() # maui 
-                    error_message = traceback.format_exc() #maui
-                    self._log('{}',error_message,level='error') # maui 
-                    pass  # maui keeping kv5 compatibility
+                    # self._log('Failed parsing stackup info: {}', str(e), level='warning') # maui
+                    # traceback.print_exc() # maui
+                    error_message = traceback.format_exc()  # maui
+                    self._log("{}", error_message, level="error")  # maui
+                    # maui keeping kv5 compatibility
             else:
-                self._log('{}','kicad v5 stack missing',level='warning') # maui end
+                self._log("{}", "kicad v5 stack missing", level="warning")  # maui end
         board_thickness = 0.0
         accumulate = None
         for item in self.stackup:
             layer, name = self.findLayer(item[0], 99)
             self._stackup_map[unquote(name)] = item
             thickness = item[2]
-            if layer <= 31: # is copper layer
+            if layer <= 31:  # is copper layer
                 if accumulate is not None:
                     # counting intermediate layer(s) thickness
                     board_thickness += accumulate
@@ -811,10 +851,9 @@ class KicadFcad:
         # only respect stackup if all copper layers are specified
         coppers = self._copperLayers()
         if self.stackup:
-            for _,name in coppers:
+            for _, name in coppers:
                 if unquote(name) not in self._stackup_map:
-                    self._log('stackup info ignored because copper layer {} is not found',
-                              name, level='warning')
+                    self._log("stackup info ignored because copper layer {} is not found", name, level="warning")
                     self.stackup = []
                     self._stackup_map = {}
                     break
@@ -826,9 +865,9 @@ class KicadFcad:
             name = coppers[0][1]
             self._stackup_map[name] = [name, 0, self.copper_thickness]
         else:
-            step = (self.board_thickness + self.copper_thickness) / (len(coppers)-1)
+            step = (self.board_thickness + self.copper_thickness) / (len(coppers) - 1)
             offset = self.board_thickness
-            for _,name in coppers:
+            for _, name in coppers:
                 self._stackup_map[name] = [name, offset, self.copper_thickness]
                 offset -= step
 
@@ -843,7 +882,7 @@ class KicadFcad:
 
     def layerOffsets(self, thickness=None):
         coppers = self._copperLayers()
-        offsets = dict()
+        offsets = {}
         if not thickness:
             for _, name in coppers:
                 offsets[name] = self._stackup_map[name][1]
@@ -852,16 +891,16 @@ class KicadFcad:
         if len(coppers) == 1:
             offsets[coppers[0][1]] = 0
             return offsets
-        step = thickness / (len(coppers)-1)
+        step = thickness / (len(coppers) - 1)
         offset = 0.0
-        for _,name in coppers:
+        for _, name in coppers:
             offsets[name] = offset
             offset += step
         return offsets
 
-    def setNetFilter(self,*nets):
+    def setNetFilter(self, *nets):
         self._nets.clear()
-        ndict = dict()
+        ndict = {}
         nset = set()
         for n in self.pcb.net:
             ndict[n[1]] = n[0]
@@ -879,95 +918,95 @@ class KicadFcad:
                     continue
             except Exception:
                 pass
-            logger.error('net {} not found'.format(n))
+            logger.error(f"net {n} not found")
 
-    def getNet(self,p):
+    def getNet(self, p):
         n = p.net
-        return n if not isinstance(n,list) else n[0]
+        return n if not isinstance(n, list) else n[0]
 
-    def filterNets(self,p):
+    def filterNets(self, p):
         try:
             return self._nets and self.getNet(p) not in self._nets
         except Exception:
             return bool(self._nets)
 
-    def filterLayer(self,p):
+    def filterLayer(self, p):
         layers = []
-        l = getattr(p, 'layers', [])
-        if unquote(l) == 'F&B.Cu':  # maui
-            layers.append('F.Cu')
-            layers.append('B.Cu')
+        l = getattr(p, "layers", [])
+        if unquote(l) == "F&B.Cu":  # maui
+            layers.append("F.Cu")
+            layers.append("B.Cu")
         else:
             layers = [unquote(s) for s in l]
-        if hasattr(p, 'layer'):
+        if hasattr(p, "layer"):
             layers.append(unquote(p.layer))
         if not layers:
-            self._log('no layers specified', level='warning')
+            self._log("no layers specified", level="warning")
             return True
-        if self.layer not in layers \
-                and self.layer_match not in layers \
-                and '*' not in layers:
-            self._log('skip layer {}, {}, {}',
-                    self.layer, self.layer_match, layers, level='trace')
+        if self.layer not in layers and self.layer_match not in layers and "*" not in layers:
+            self._log("skip layer {}, {}, {}", self.layer, self.layer_match, layers, level="trace")
             return True
+        return None
 
-    def netName(self,p):
+    def netName(self, p):
         try:
             return unquote(self.net_names[self.getNet(p)])
         except Exception:
-            return 'net?'
+            return "net?"
 
-    def _log(self,msg,*arg,**kargs):
-        level = 'info'
-        if kargs:
-            if 'level' in kargs:
-                level = kargs['level']
+    def _log(self, msg, *arg, **kargs):
+        level = "info"
+        if kargs and "level" in kargs:
+            level = kargs["level"]
         if logger.isEnabledFor(level):
-            getattr(logger,level)('{}{}'.format(self.prefix,msg.format(*arg)))
+            getattr(logger, level)(f"{self.prefix}{msg.format(*arg)}")
 
-
-    def _pushLog(self,msg=None,*arg,**kargs):
+    def _pushLog(self, msg=None, *arg, **kargs):
         if msg:
-            self._log(msg,*arg,**kargs)
-        if 'prefix' in kargs:
-            prefix = kargs['prefix']
+            self._log(msg, *arg, **kargs)
+        if "prefix" in kargs:
+            prefix = kargs["prefix"]
             if prefix is not None:
                 self.prefix = prefix
         self.prefix += self.indent
 
-
-    def _popLog(self,msg=None,*arg,**kargs):
-        self.prefix = self.prefix[:-len(self.indent)]
+    def _popLog(self, msg=None, *arg, **kargs):
+        self.prefix = self.prefix[: -len(self.indent)]
         if msg:
-            self._log(msg,*arg,**kargs)
+            self._log(msg, *arg, **kargs)
 
-    def _makeLabel(self,obj,label):
+    def _makeLabel(self, obj, label):
         if self.layer:
-            obj.Label = '{}#{}'.format(obj.Name,self.layer)
+            obj.Label = f"{obj.Name}#{self.layer}"
         if label is not None:
-            obj.Label += '#{}'.format(label)
+            obj.Label += f"#{label}"
 
-    def _makeObject(self,otype,name,
-            label=None,links=None,shape=None):
+    def _makeObject(self, otype, name, label=None, links=None, shape=None):
         doc = getActiveDoc()
-        obj = addObject(doc,otype,name)
-        self._makeLabel(obj,label)
+        obj = addObject(doc, otype, name)
+        self._makeLabel(obj, label)
         if links is not None:
-            setattr(obj,links,shape)
-            for s in shape if isinstance(shape,(list,tuple)) else (shape,):
-                if hasattr(s,'ViewObject'):
+            setattr(obj, links, shape)
+            for s in shape if isinstance(shape, (list, tuple)) else (shape,):
+                if hasattr(s, "ViewObject"):
                     s.ViewObject.Visibility = False
-            if hasattr(obj,'recompute'):
+            if hasattr(obj, "recompute"):
                 recomputeObj(obj)
         return obj
 
-    def _makeSketch(self,objs,name,label=None):
+    def _makeSketch(self, objs, name, label=None):
         if self.sketch_use_draft:
             import Draft
+
             getActiveDoc()
-            nobj = Draft.makeSketch(objs,name=name,autoconstraints=True,
-                delete=True,radiusPrecision=self.sketch_radius_precision)
-            self._makeLabel(nobj,label)
+            nobj = Draft.makeSketch(
+                objs,
+                name=name,
+                autoconstraints=True,
+                delete=True,
+                radiusPrecision=self.sketch_radius_precision,
+            )
+            self._makeLabel(nobj, label)
             return nobj
 
         from Sketcher import Constraint
@@ -977,8 +1016,8 @@ class KicadFcad:
 
         doc = getActiveDoc()
 
-        nobj = addObject(doc,"Sketcher::SketchObject", '{}_sketch'.format(name))
-        self._makeLabel(nobj,label)
+        nobj = addObject(doc, "Sketcher::SketchObject", f"{name}_sketch")
+        self._makeLabel(nobj, label)
         nobj.ViewObject.Autoconstraints = False
 
         radiuses = {}
@@ -986,79 +1025,68 @@ class KicadFcad:
 
         def addRadiusConstraint(edge):
             try:
-                if self.sketch_radius_precision<0:
+                if self.sketch_radius_precision < 0:
                     return
-                if self.sketch_radius_precision==0:
-                    constraints.append(Constraint('Radius',
-                            nobj.GeometryCount-1, edge.Curve.Radius))
+                if self.sketch_radius_precision == 0:
+                    constraints.append(Constraint("Radius", nobj.GeometryCount - 1, edge.Curve.Radius))
                     return
-                r = round(edge.Curve.Radius,self.sketch_radius_precision)
-                constraints.append(Constraint('Equal',
-                    radiuses[r], nobj.GeometryCount-1))
+                r = round(edge.Curve.Radius, self.sketch_radius_precision)
+                constraints.append(Constraint("Equal", radiuses[r], nobj.GeometryCount - 1))
             except KeyError:
-                radiuses[r] = nobj.GeometryCount-1
-                constraints.append(Constraint('Radius',nobj.GeometryCount-1,r))
+                radiuses[r] = nobj.GeometryCount - 1
+                constraints.append(Constraint("Radius", nobj.GeometryCount - 1, r))
             except AttributeError:
                 pass
 
-        for obj in objs if isinstance(objs,(list,tuple)) else (objs,):
-            if isinstance(obj,Part.Shape):
-                shape = obj
-            else:
-                shape = obj.Shape
+        for obj in objs if isinstance(objs, (list, tuple)) else (objs,):
+            shape = obj if isinstance(obj, Part.Shape) else obj.Shape
             norm = DraftGeomUtils.getNormal(shape)
             if not self.sketch_constraint:
                 for wire in shape.Wires:
                     for edge in wire.OrderedEdges:
-                        nobj.addGeometry(DraftGeomUtils.orientEdge(
-                            edge,norm,make_arc=True))
+                        nobj.addGeometry(DraftGeomUtils.orientEdge(edge, norm, make_arc=True))
                 continue
 
             for wire in shape.Wires:
                 last_count = nobj.GeometryCount
                 edges = wire.OrderedEdges
                 for edge in edges:
-                    nobj.addGeometry(DraftGeomUtils.orientEdge(
-                        edge,norm,make_arc=True))
+                    nobj.addGeometry(DraftGeomUtils.orientEdge(edge, norm, make_arc=True))
 
                     addRadiusConstraint(edge)
 
-                for i,g in enumerate(nobj.Geometry[last_count:]):
+                for i, g in enumerate(nobj.Geometry[last_count:]):
                     if edges[i].Closed:
                         continue
-                    seg = last_count+i
+                    seg = last_count + i
                     if self.sketch_align_constraint:
-                        if DraftGeomUtils.isAligned(g,"x"):
-                            constraints.append(Constraint("Vertical",seg))
-                        elif DraftGeomUtils.isAligned(g,"y"):
-                            constraints.append(Constraint("Horizontal",seg))
+                        if DraftGeomUtils.isAligned(g, "x"):
+                            constraints.append(Constraint("Vertical", seg))
+                        elif DraftGeomUtils.isAligned(g, "y"):
+                            constraints.append(Constraint("Horizontal", seg))
 
-                    if seg == nobj.GeometryCount-1:
+                    if seg == nobj.GeometryCount - 1:
                         if not wire.isClosed():
                             break
                         g2 = nobj.Geometry[last_count]
                         seg2 = last_count
                     else:
-                        seg2 = seg+1
+                        seg2 = seg + 1
                         g2 = nobj.Geometry[seg2]
 
                     end1 = g.value(g.LastParameter)
                     start2 = g2.value(g2.FirstParameter)
-                    if DraftVecUtils.equals(end1,start2) :
-                        constraints.append(Constraint(
-                            "Coincident",seg,EndPoint,seg2,StartPoint))
+                    if DraftVecUtils.equals(end1, start2):
+                        constraints.append(Constraint("Coincident", seg, EndPoint, seg2, StartPoint))
                         continue
                     end2 = g2.value(g2.LastParameter)
                     start1 = g.value(g.FirstParameter)
-                    if DraftVecUtils.equals(end2,start1):
-                        constraints.append(Constraint(
-                            "Coincident",seg,StartPoint,seg2,EndPoint))
-                    elif DraftVecUtils.equals(start1,start2):
-                        constraints.append(Constraint(
-                            "Coincident",seg,StartPoint,seg2,StartPoint))
-                    elif DraftVecUtils.equals(end1,end2):
-                        constraints.append(Constraint(
-                            "Coincident",seg,EndPoint,seg2,EndPoint))
+                    if DraftVecUtils.equals(end2, start1):
+                        constraints.append(Constraint("Coincident", seg, StartPoint, seg2, EndPoint))
+                    elif DraftVecUtils.equals(start1, start2):
+                        constraints.append(Constraint("Coincident", seg, StartPoint, seg2, StartPoint))
+                    elif DraftVecUtils.equals(end1, end2):
+                        constraints.append(Constraint("Coincident", seg, EndPoint, seg2, EndPoint))
 
             if obj.isDerivedFrom("Part::Feature"):
                 objs = [obj]
@@ -1071,28 +1099,23 @@ class KicadFcad:
         recomputeObj(nobj)
         return nobj
 
-    def _makeCompound(self,obj,name,label=None,fit_arcs=False,
-            fuse=False,add_feature=False,force=False):
+    def _makeCompound(self, obj, name, label=None, fit_arcs=False, fuse=False, add_feature=False, force=False):
 
         obj = unpack(obj)
-        if not isinstance(obj,(list,tuple)):
-            if not force and (
-               not fuse or obj.TypeId=='Path::FeatureArea'):
+        if not isinstance(obj, (list, tuple)):
+            if not force and (not fuse or obj.TypeId == "Path::FeatureArea"):
                 return obj
             obj = [obj]
 
         if fuse:
-            return self._makeArea(obj,name,label=label,fit_arcs=fit_arcs)
+            return self._makeArea(obj, name, label=label, fit_arcs=fit_arcs)
 
         if add_feature or self.add_feature:
-            return self._makeObject('Part::Compound',
-                    '{}_combo'.format(name),label,'Links',obj)
+            return self._makeObject("Part::Compound", f"{name}_combo", label, "Links", obj)
 
         return Part.makeCompound(obj)
 
-
-    def _makeArea(self,obj,name,offset=0,op=0,fill=None,label=None,
-                force=False,fit_arcs=False,reorient=False):
+    def _makeArea(self, obj, name, offset=0, op=0, fill=None, label=None, force=False, fit_arcs=False, reorient=False):
         if fill is None:
             fill = 2
         elif fill:
@@ -1100,21 +1123,21 @@ class KicadFcad:
         else:
             fill = 0
 
-        if not isinstance(obj,(list,tuple)):
+        if not isinstance(obj, (list, tuple)):
             obj = (obj,)
 
         if self.add_feature and name:
-
-            if not force and obj[0].TypeId == 'Path::FeatureArea' and (
-                obj[0].Operation == op or len(obj[0].Sources)==1) and \
-                obj[0].Fill == fill:
-
+            if (
+                not force
+                and obj[0].TypeId == "Path::FeatureArea"
+                and (obj[0].Operation == op or len(obj[0].Sources) == 1)
+                and obj[0].Fill == fill
+            ):
                 ret = obj[0]
                 if len(obj) > 1:
                     ret.Sources = list(ret.Sources) + list(obj[1:])
             else:
-                ret = self._makeObject('Path::FeatureArea',
-                                        '{}_area'.format(name),label)
+                ret = self._makeObject("Path::FeatureArea", f"{name}_area", label)
                 ret.Accuracy = self.arc_fit_accuracy
                 ret.Sources = obj
                 ret.Operation = op
@@ -1129,30 +1152,31 @@ class KicadFcad:
 
             recomputeObj(ret)
         else:
-            try: # maui CAM.Area is missing from F1.0 ahead
-                ret = CAM.Area(Fill=fill,
-                                FitArcs=fit_arcs,
-                                Coplanar=0,
-                                Reorient=reorient,
-                                Accuracy=self.arc_fit_accuracy,
-                                Offset=offset)
+            try:  # maui CAM.Area is missing from F1.0 ahead
+                ret = CAM.Area(
+                    Fill=fill,
+                    FitArcs=fit_arcs,
+                    Coplanar=0,
+                    Reorient=reorient,
+                    Accuracy=self.arc_fit_accuracy,
+                    Offset=offset,
+                )
                 ret.setPlane(self.work_plane)
                 for o in obj:
-                    ret.add(o,op=op)
+                    ret.add(o, op=op)
                 ret = ret.getShape()
-            except: # maui emulating CAM.Area functions
-                objn=[]
-                name='nm'
+            except:  # maui emulating CAM.Area functions
+                objn = []
+                name = "nm"
                 for o in obj:
                     print(o)
                     Part.show(o)
                     # f = Part.Face(o)
                     # Part.show(f)
-                    ao=FreeCAD.ActiveDocument.ActiveObject
+                    ao = FreeCAD.ActiveDocument.ActiveObject
                     recomputeObj(ao)
                     objn.append(ao)
-                ret = self._makeObject('Path::FeatureArea',
-                                        '{}_area'.format(name),label)
+                ret = self._makeObject("Path::FeatureArea", f"{name}_area", label)
                 ret.Accuracy = self.arc_fit_accuracy
                 print(objn)
                 ret.Sources = objn
@@ -1166,100 +1190,89 @@ class KicadFcad:
                 for o in objn:
                     o.ViewObject.Visibility = False
                 recomputeObj(ret)
-                #retf=Part.Face(ret.Shape.Wires)
+                # retf=Part.Face(ret.Shape.Wires)
                 # retf=ret.Shape.Wires
-                to_del=[]
-                for o in objn:
-                    to_del.append(o)
-                #to_del.append(ret)
+                to_del = list(objn)
+                # to_del.append(ret)
                 for o in to_del:
-                    #print(o)
+                    # print(o)
                     FreeCAD.ActiveDocument.removeObject(o.Name)
-                ret1=ret.Shape
+                ret1 = ret.Shape
                 FreeCAD.ActiveDocument.removeObject(ret.Name)
-                ret=ret1
+                ret = ret1
         return ret
 
-
-    def _makeWires(self,obj,name,offset=0,fill=False,label=None, fit_arcs=False):
+    def _makeWires(self, obj, name, offset=0, fill=False, label=None, fit_arcs=False):
 
         if self.add_feature and name:
             if self.make_sketch:
-                obj = self._makeSketch(obj,name,label)
-            elif isinstance(obj,Part.Shape):
-                obj = self._makeObject('Part::Feature', '{}_wire'.format(name),
-                        label,'Shape',obj)
-            elif isinstance(obj,(list,tuple)):
+                obj = self._makeSketch(obj, name, label)
+            elif isinstance(obj, Part.Shape):
+                obj = self._makeObject("Part::Feature", f"{name}_wire", label, "Shape", obj)
+            elif isinstance(obj, (list, tuple)):
                 objs = []
                 comp = []
                 for o in obj:
-                    if isinstance(o,Part.Shape):
+                    if isinstance(o, Part.Shape):
                         comp.append(o)
                     else:
                         objs.append(o)
                 if comp:
                     comp = Part.makeCompound(comp)
-                    objs.append(self._makeObject('Part::Feature',
-                            '{}_wire'.format(name),label,'Shape',comp))
+                    objs.append(self._makeObject("Part::Feature", f"{name}_wire", label, "Shape", comp))
                 obj = objs
 
         if fill or offset:
-            return self._makeArea(obj,name,offset=offset,fill=fill,
-                    fit_arcs=fit_arcs,label=label)
-        else:
-            return self._makeCompound(obj,name,label=label)
+            return self._makeArea(obj, name, offset=offset, fill=fill, fit_arcs=fit_arcs, label=label)
+        return self._makeCompound(obj, name, label=label)
 
+    def _makeSolid(self, obj, name, height, label=None, fit_arcs=True):
 
-    def _makeSolid(self,obj,name,height,label=None,fit_arcs=True):
-
-        obj = self._makeCompound(obj,name,label=label,
-                                    fuse=True,fit_arcs=fit_arcs)
+        obj = self._makeCompound(obj, name, label=label, fuse=True, fit_arcs=fit_arcs)
 
         if not self.add_feature:
-            return obj.extrude(Vector(0,0,height))
+            return obj.extrude(Vector(0, 0, height))
 
-        nobj = self._makeObject('Part::Extrusion',
-                                    '{}_solid'.format(name),label)
+        nobj = self._makeObject("Part::Extrusion", f"{name}_solid", label)
         nobj.Base = obj
-        nobj.Dir = Vector(0,0,height)
+        nobj.Dir = Vector(0, 0, height)
         obj.ViewObject.Visibility = False
         recomputeObj(nobj)
         return nobj
 
-
-    def _makeFuse(self,objs,name,label=None,force=False):
+    def _makeFuse(self, objs, name, label=None, force=False):
         obj = unpack(objs)
-        if not isinstance(obj,(list,tuple)):
+        if not isinstance(obj, (list, tuple)):
             if not force:
                 return obj
             obj = [obj]
 
-        name = '{}_fuse'.format(name)
+        name = f"{name}_fuse"
 
         if self.add_feature:
-            self._log('making fuse {}...',name)
-            obj =  self._makeObject('Part::MultiFuse',name,label,'Shapes',obj)
-            self._log('fuse done')
+            self._log("making fuse {}...", name)
+            obj = self._makeObject("Part::MultiFuse", name, label, "Shapes", obj)
+            self._log("fuse done")
             return obj
 
         solids = []
         for o in obj:
-            solids += o.Solids;
+            solids += o.Solids
 
         if solids:
-            self._log('making fuse {}...',name)
+            self._log("making fuse {}...", name)
             obj = solids[0].multiFuse(solids[1:])
-            self._log('fuse done')
+            self._log("fuse done")
             return obj
+        return None
 
-
-    def _makeCut(self,base,tool,name,label=None):
-        base = self._makeFuse(base,name,label=label)
-        tool = self._makeFuse(tool,'drill',label=label)
-        name = '{}_drilled'.format(name)
-        self._log('making cut {}...',name)
+    def _makeCut(self, base, tool, name, label=None):
+        base = self._makeFuse(base, name, label=label)
+        tool = self._makeFuse(tool, "drill", label=label)
+        name = f"{name}_drilled"
+        self._log("making cut {}...", name)
         if self.add_feature:
-            cut = self._makeObject('Part::Cut',name,label=label)
+            cut = self._makeObject("Part::Cut", name, label=label)
             cut.Base = base
             cut.Tool = tool
             base.ViewObject.Visibility = False
@@ -1268,20 +1281,19 @@ class KicadFcad:
             cut.ViewObject.ShapeColor = base.ViewObject.ShapeColor
         else:
             cut = base.cut(tool)
-            #cut = base.cut(tool,0.00006) # maui fuzzy cut ,0.01) # maui
-            #print('cutting test?')
-        self._log('cut done')
+            # cut = base.cut(tool,0.00006) # maui fuzzy cut ,0.01) # maui
+            # print('cutting test?')
+        self._log("cut done")
         return cut
 
-
-    def _place(self,obj,pos,angle=None):
-        if not obj.isDerivedFrom('App::DocumentObject'):
+    def _place(self, obj, pos, angle=None):
+        if not obj.isDerivedFrom("App::DocumentObject"):
             if angle:
-                obj.rotate(Vector(),Vector(0,0,1),angle)
+                obj.rotate(Vector(), Vector(0, 0, 1), angle)
             obj.translate(pos)
         else:
-            r = Rotation(Vector(0,0,1),angle) if angle else Rotation()
-            obj.Placement = Placement(pos,r)
+            r = Rotation(Vector(0, 0, 1), angle) if angle else Rotation()
+            obj.Placement = Placement(pos, r)
             obj.purgeTouched()
 
     def _makeEdgeCuts(self, sexp, ctx, wires, non_closed, at=None, layers=None):
@@ -1290,7 +1302,7 @@ class KicadFcad:
             layers = [44]
         for l in layers:
             try:
-                _,layer = self.findLayer(l)
+                _, layer = self.findLayer(l)
             except Exception:
                 continue
             self._makeShape(sexp, ctx, wires, non_closed, layer, at)
@@ -1303,16 +1315,16 @@ class KicadFcad:
         else:
             angle = None
 
-        for tp in 'line','arc','circle','curve','poly','rect':
-            name = ctx + '_' + tp
+        for tp in "line", "arc", "circle", "curve", "poly", "rect":
+            name = ctx + "_" + tp
             primitives = getattr(sexp, name, None)
             if not primitives:
-                continue;
+                continue
             primitives = SexpList(primitives)
-            self._log('making {} {}s',len(primitives), tp)
-            try: # maui
-                make_shape = globals()['make_gr_{}'.format(tp)]
-                if tp == 'poly': # maui
+            self._log("making {} {}s", len(primitives), tp)
+            try:  # maui
+                make_shape = globals()[f"make_gr_{tp}"]
+                if tp == "poly":  # maui
                     for l in primitives:
                         if not layer:
                             if self.filterNets(l) or self.filterLayer(l):
@@ -1321,15 +1333,15 @@ class KicadFcad:
                             continue
                         shape = make_fp_poly(l)
                         if angle:
-                            shape.rotate(Vector(),Vector(0,0,1),angle)
+                            shape.rotate(Vector(), Vector(0, 0, 1), angle)
                         if at:
                             shape.translate(at)
-                        #Part.show(shape)
+                        # Part.show(shape)
                         ws = shape.Wires
                         for w_ in ws:
                             wires.append(w_)
-                        #s = Part.Face(shape.Wires[0])
-                        #Part.show(s)
+                        # s = Part.Face(shape.Wires[0])
+                        # Part.show(s)
                 else:
                     for l in primitives:
                         if not layer:
@@ -1339,16 +1351,16 @@ class KicadFcad:
                             continue
                         shape = make_shape(l)
                         if angle:
-                            shape.rotate(Vector(),Vector(0,0,1),angle)
+                            shape.rotate(Vector(), Vector(0, 0, 1), angle)
                         if at:
                             shape.translate(at)
-                        edges += [[getattr(l,'width',1e-7), e] for e in shape.Edges]
-            except Exception as e:# maui logging error
+                        edges += [[getattr(l, "width", 1e-7), e] for e in shape.Edges]
+            except Exception:  # maui logging error
                 # raise
-                # traceback.print_exc() # maui 
-                error_message = traceback.format_exc() #maui
-                self._log('{}',error_message,level='error') # maui 
-                pass  # maui logging error
+                # traceback.print_exc() # maui
+                error_message = traceback.format_exc()  # maui
+                self._log("{}", error_message, level="error")  # maui
+                # maui logging error
         # The line width in edge cuts are important. When milling, the line
         # width can represent the diameter of the drill bits to use. The user
         # can use lines thick enough for hole cutting. In addition, the
@@ -1359,103 +1371,102 @@ class KicadFcad:
         # shall thicken the wire using Path.Area for hole cutting.
 
         for info in edges:
-            w,e = info
+            w, e = info
             if w > 1e-7:
                 e.fixTolerance(w)
-            info += [e.firstVertex().Point,e.lastVertex().Point]
+            info += [e.firstVertex().Point, e.lastVertex().Point]
 
         while edges:
-            w,e,pstart,pend = edges.pop(-1)
+            w, e, pstart, pend = edges.pop(-1)
             wstart = wend = w
-            elist = [(w,e)]
+            elist = [(w, e)]
             closed = False
             i = 0
             while i < len(edges):
-                w,e,ps,pe = edges[i]
-                if pstart.distanceToPoint(ps) <= (wstart+w)/2:
+                w, e, ps, pe = edges[i]
+                if pstart.distanceToPoint(ps) <= (wstart + w) / 2:
                     e.reverse()
                     pstart = pe
                     wstart = w
-                    elist.insert(0,(w,e))
-                elif pstart.distanceToPoint(pe) <= (wstart+w)/2:
+                    elist.insert(0, (w, e))
+                elif pstart.distanceToPoint(pe) <= (wstart + w) / 2:
                     pstart = ps
                     wstart = w
-                    elist.insert(0,(w,e))
-                elif pend.distanceToPoint(ps) <= (wend+w)/2:
+                    elist.insert(0, (w, e))
+                elif pend.distanceToPoint(ps) <= (wend + w) / 2:
                     e.reverse()
                     pend = pe
                     wend = w
-                    elist.append((w,e))
-                elif pend.distanceToPoint(pe) <= (wend+w)/2:
+                    elist.append((w, e))
+                elif pend.distanceToPoint(pe) <= (wend + w) / 2:
                     pend = ps
                     wend = w
-                    elist.append((w,e))
+                    elist.append((w, e))
                 else:
                     i += 1
                     continue
                 edges.pop(i)
                 i = 0
-                if pstart.distanceToPoint(pend) <= (wstart+wend)/2:
+                if pstart.distanceToPoint(pend) <= (wstart + wend) / 2:
                     closed = True
                     break
 
             wire = None
-            try:
-                #  tol = max([o[0] for o in elist])
-                #  wire = Part.makeWires([o[1] for o in elist],'',tol,True)
-
+            with contextlib.suppress(Exception):
                 wire = Part.Wire([o[1] for o in elist])
-                #  wire.fixWire(None,tol)
-                #  wire.fix(tol,tol,tol)
-            except Exception:
-                pass
 
             if closed and (not wire or not wire.isClosed()):
-                logger.warning('wire not closed')
+                logger.warning("wire not closed")
                 closed = False
 
             if wire and closed:
                 wires.append(wire)
             elif non_closed is not None:
-                for w,e in elist:
+                for w, e in elist:
                     if w > 5e-7:
                         non_closed[w].append(e)
             else:
-                for w,e in elist:
+                for w, e in elist:
                     if w > 5e-7:
-                        wires.append(self._makeWires(e, name=None, offset=w*0.5))
+                        wires.append(self._makeWires(e, name=None, offset=w * 0.5))
 
-    def makeBoard(self,shape_type='solid',thickness=None,fit_arcs=True,
-            holes=True, minHoleSize=0,ovalHole=True,prefix=''):
+    def makeBoard(
+        self,
+        shape_type="solid",
+        thickness=None,
+        fit_arcs=True,
+        holes=True,
+        minHoleSize=0,
+        ovalHole=True,
+        prefix="",
+    ):
 
         non_closed = defaultdict(list)
         wires = []
 
-        self._pushLog('making board...',prefix=prefix)
-        self._makeEdgeCuts(self.pcb, 'gr', wires, non_closed)
+        self._pushLog("making board...", prefix=prefix)
+        self._makeEdgeCuts(self.pcb, "gr", wires, non_closed)
 
-        self._pushLog('checking footprints...',prefix=prefix)
+        self._pushLog("checking footprints...", prefix=prefix)
         if self.module:
             # try Edge.Cuts first
-            self._makeEdgeCuts(self.module, 'fp', wires, non_closed)
+            self._makeEdgeCuts(self.module, "fp", wires, non_closed)
             # try F.CrtYd and B.CrtYd
-            self._makeEdgeCuts(self.module, 'fp', wires, non_closed, layers=(46, 47))
+            self._makeEdgeCuts(self.module, "fp", wires, non_closed, layers=(46, 47))
         else:
             for m in self.pcb.module:
-                self._makeEdgeCuts(m, 'fp', wires, non_closed, getattr(m, 'at', None))
+                self._makeEdgeCuts(m, "fp", wires, non_closed, getattr(m, "at", None))
 
         self._popLog()
 
-        if not wires and not non_closed:
-            if not wires and not non_closed:
-                self._popLog('no board edges found')
-                return
+        if not wires and not non_closed and not wires and not non_closed:
+            self._popLog("no board edges found")
+            return None
 
         def _addHoles(objs):
-            h = self._cutHoles(None,holes,None,
-                            minSize=minHoleSize,oval=ovalHole)
+            h = self._cutHoles(None, holes, None, minSize=minHoleSize, oval=ovalHole)
             if h:
-                if isinstance(h,(tuple,list)):
+                if isinstance(h, (tuple, list)):
                     objs += h
                 elif holes:
                     objs.append(h)
@@ -1465,41 +1476,39 @@ class KicadFcad:
             objs = []
 
             if wires:
-                objs.append(self._makeWires(wires,'board'))
+                objs.append(self._makeWires(wires, "board"))
 
-            for width,edges in non_closed.items():
-                objs.append(self._makeWires(edges,'board',label=width,offset=width*0.5))
+            for width, edges in non_closed.items():
+                objs.append(self._makeWires(edges, "board", label=width, offset=width * 0.5))
 
-            return self._makeCompound(_addHoles(objs),'board')
+            return self._makeCompound(_addHoles(objs), "board")
 
         def _face():
             if not wires:
-                raise RuntimeError('no closed wire')
+                raise RuntimeError("no closed wire")
 
             # Pick the wire with the largest area as outline
-            areas = [ Part.Face(w).Area for w in wires ]
+            areas = [Part.Face(w).Area for w in wires]
             outer = wires.pop(areas.index(max(areas)))
 
-            objs = [ self._makeWires(outer,'board',label='outline') ]
+            objs = [self._makeWires(outer, "board", label="outline")]
             if wires:
-                objs.append(self._makeWires(wires,'board',label='inner'))
+                objs.append(self._makeWires(wires, "board", label="inner"))
 
-            for width,elist in non_closed.items():
-                wire = self._makeWires(elist,'board',label=width)
+            for width, elist in non_closed.items():
+                wire = self._makeWires(elist, "board", label=width)
                 # thicken non closed wire for hole cutting
-                objs.append(self._makeArea(wire,'board',label=width,
-                                           offset = width*0.5))
+                objs.append(self._makeArea(wire, "board", label=width, offset=width * 0.5))
 
-            return self._makeArea(_addHoles(objs),'board',
-                            op=1,fill=True,fit_arcs=fit_arcs)
+            return self._makeArea(_addHoles(objs), "board", op=1, fill=True, fit_arcs=fit_arcs)
 
         base = []
+
         def _solid():
             base.append(_face())
-            return self._makeSolid(base[0],'board',thickness,
-                    fit_arcs = fit_arcs)
+            return self._makeSolid(base[0], "board", thickness, fit_arcs=fit_arcs)
 
-        if shape_type == 'solid' and not thickness and self._dielectric_layers:
+        if shape_type == "solid" and not thickness and self._dielectric_layers:
             layers = self._dielectric_layers
         else:
             if not thickness:
@@ -1510,135 +1519,144 @@ class KicadFcad:
             layer_save = self.layer
             self.layer = None
             try:
-                func = locals()['_{}'.format(shape_type)]
+                func = locals()[f"_{shape_type}"]
             except KeyError:
-                raise ValueError('invalid shape type: {}'.format(shape_type))
+                raise ValueError(f"invalid shape type: {shape_type}")
 
             thickness = layers[0][1]
             obj = func()
             if self.add_feature:
-                if hasattr(obj.ViewObject,'MapFaceColor'):
+                if hasattr(obj.ViewObject, "MapFaceColor"):
                     obj.ViewObject.MapFaceColor = False
-                obj.ViewObject.ShapeColor = self.colors['board']
+                obj.ViewObject.ShapeColor = self.colors["board"]
 
             if len(layers) > 1:
                 objs = [obj]
                 for offset, t in layers[1:]:
                     if abs(t - layers[0][1]) < 1e-7:
                         if self.add_feature:
-                            obj = self._makeObject('Part::Feature', 'board_solid')
+                            obj = self._makeObject("Part::Feature", "board_solid")
                             obj.Shape = objs[0].Shape
                         else:
                             obj = objs[0].copy()
                     else:
-                        obj = self._makeSolid(base[0], 'board', t)
-                    self._place(obj,Vector(0,0,offset))
+                        obj = self._makeSolid(base[0], "board", t)
+                    self._place(obj, Vector(0, 0, offset))
                     if self.add_feature:
-                        if hasattr(obj.ViewObject,'MapFaceColor'):
+                        if hasattr(obj.ViewObject, "MapFaceColor"):
                             obj.ViewObject.MapFaceColor = False
-                        obj.ViewObject.ShapeColor = self.colors['board']
+                        obj.ViewObject.ShapeColor = self.colors["board"]
                     objs.append(obj)
-                obj = self._makeCompound(objs, 'board')
+                obj = self._makeCompound(objs, "board")
         finally:
             if layer_save:
                 self.setLayer(layer_save)
 
-        self._popLog('board done')
-        fitView();
+        self._popLog("board done")
+        fitView()
         return obj
 
-    def makeHoles(self,shape_type='wire',minSize=0,maxSize=0,
-            oval=False,prefix='',offset=0.0,npth=0,skip_via=False,
-            board_thickness=None,extra_thickness=0.0):
+    def makeHoles(
+        self,
+        shape_type="wire",
+        minSize=0,
+        maxSize=0,
+        oval=False,
+        prefix="",
+        offset=0.0,
+        npth=0,
+        skip_via=False,
+        board_thickness=None,
+        extra_thickness=0.0,
+    ):
 
-        self._pushLog('making holes...',prefix=prefix)
+        self._pushLog("making holes...", prefix=prefix)
 
         holes = defaultdict(list)
         ovals = defaultdict(list)
 
-        width=0
-        def _wire(obj,name,fill=False):
-            return self._makeWires(obj,name,fill=fill,label=width)
+        width = 0
 
-        def _face(obj,name):
-            return _wire(obj,name,True)
+        def _wire(obj, name, fill=False):
+            return self._makeWires(obj, name, fill=fill, label=width)
 
-        def _solid(obj,name):
-            return self._makeWires(obj,name,fill=True,label=width,fit_arcs=True)
+        def _face(obj, name):
+            return _wire(obj, name, True)
+
+        def _solid(obj, name):
+            return self._makeWires(obj, name, fill=True, label=width, fit_arcs=True)
 
         try:
-            func = locals()['_{}'.format(shape_type)]
+            func = locals()[f"_{shape_type}"]
         except KeyError:
-            raise ValueError('invalid shape type: {}'.format(shape_type))
+            raise ValueError(f"invalid shape type: {shape_type}")
 
         oval_count = 0
         count = 0
         skip_count = 0
         if not offset:
-            offset = self.hole_size_offset;
+            offset = self.hole_size_offset
         for m in self.pcb.module:
-            m_at,m_angle = getAt(m)
+            m_at, m_angle = getAt(m)
             for p in m.pad:
-                #print (str(p))
-                if 'drill' not in p:
+                # print (str(p))
+                if "drill" not in p:
                     continue
                 if self.filterNets(p):
                     skip_count += 1
                     continue
-                if p[1]=='np_thru_hole':
-                    if npth<0:
+                if p[1] == "np_thru_hole":
+                    if npth < 0:
                         skip_count += 1
                         continue
                     ofs = abs(offset)
                 else:
-                    if npth>0:
+                    if npth > 0:
                         skip_count += 1
                         continue
                     ofs = -abs(offset)
-                #if 'oval' in str(p.drill):
-                #print(str(p.drill))
+                # if 'oval' in str(p.drill):
+                # print(str(p.drill))
                 # print(p.drill.oval)
-                #if hasattr(p.drill, 'oval'):
-                #if p.drill.oval: #if 'oval' in str(p.drill): #p.drill.oval:
+                # if hasattr(p.drill, 'oval'):
+                # if p.drill.oval: #if 'oval' in str(p.drill): #p.drill.oval:
                 if p.drill.oval:
                     if not oval:
                         continue
-                    #print(str(p.drill[1]))
-                    #if isinstance(p.drill, list):
+                    # print(str(p.drill[1]))
+                    # if isinstance(p.drill, list):
                     #    print('list')
-                    #print(str(p.drill[1]))
-                    #size = Vector(p.drill[1],p.drill[2])
-                    if len (p.drill) == 2:
-                        size = Vector(p.drill[0],p.drill[0])
-                        FreeCAD.Console.PrintWarning('fake oval pad\n')
+                    # print(str(p.drill[1]))
+                    # size = Vector(p.drill[1],p.drill[2])
+                    if len(p.drill) == 2:
+                        size = Vector(p.drill[0], p.drill[0])
+                        FreeCAD.Console.PrintWarning("fake oval pad\n")
                     else:
-                        size = Vector(p.drill[0],p.drill[1])
-                    w = make_oval(size+Vector(ofs,ofs))
-                    ovals[min(size.x,size.y)].append(w)
+                        size = Vector(p.drill[0], p.drill[1])
+                    w = make_oval(size + Vector(ofs, ofs))
+                    ovals[min(size.x, size.y)].append(w)
                     oval_count += 1
-                elif 0 in p.drill and \
-                        p.drill[0]>=minSize and \
-                        (not maxSize or p.drill[0]<=maxSize):
-                    w = make_circle(Vector(p.drill[0]+ofs))
+                elif 0 in p.drill and p.drill[0] >= minSize and (not maxSize or p.drill[0] <= maxSize):
+                    w = make_circle(Vector(p.drill[0] + ofs))
                     holes[p.drill[0]].append(w)
                     count += 1
                 else:
                     skip_count += 1
                     continue
-                at,angle = getAt(p)
-                angle -= m_angle;
+                at, angle = getAt(p)
+                angle -= m_angle
                 if not isZero(angle):
-                    w.rotate(Vector(),Vector(0,0,1),angle)
+                    w.rotate(Vector(), Vector(0, 0, 1), angle)
                 w.translate(at)
                 if m_angle:
-                    w.rotate(Vector(),Vector(0,0,1),m_angle)
+                    w.rotate(Vector(), Vector(0, 0, 1), m_angle)
                 w.translate(m_at)
-        self._log('pad holes: {}, skipped: {}',count+skip_count,skip_count)
+        self._log("pad holes: {}, skipped: {}", count + skip_count, skip_count)
         if oval:
-            self._log('oval holes: {}',oval_count)
+            self._log("oval holes: {}", oval_count)
 
         blind_holes = defaultdict(list)
-        if npth<=0:
+        if npth <= 0:
             via_skip = 0
             if skip_via or self.via_bound < 0:
                 via_skip = len(self.pcb.via)
@@ -1652,39 +1670,37 @@ class KicadFcad:
                     if self.filterNets(v):
                         via_skip += 1
                         continue
-                    if hasattr(v,'drill'): # maui
-                        if v.drill>=minSize and (not maxSize or v.drill<=maxSize):
-        
+                    if hasattr(v, "drill"):  # maui
+                        if v.drill >= minSize and (not maxSize or v.drill <= maxSize):
                             z_offsets = [layer_offsets[unquote(n)] for n in v.layers]
                             pos = makeVect(v.at)
                             pos.z = min(z_offsets)
                             dist = max(z_offsets) - pos.z
-        
-                            s = v.drill+ofs
+
+                            s = v.drill + ofs
                             if self.via_bound:
                                 s *= self.via_bound
-                                w = make_rect(Vector(s,s))
+                                w = make_rect(Vector(s, s))
                             else:
                                 w = make_circle(Vector(s))
                             w.translate(pos)
-                            if dist < thickness-0.001:
-                                blind_holes[(pos.z,dist)].append(w)
+                            if dist < thickness - 0.001:
+                                blind_holes[(pos.z, dist)].append(w)
                             else:
                                 holes[v.drill].append(w)
-                        else: # maui
+                        else:  # maui
                             via_skip += 1
-                    else: # maui
+                    else:  # maui
                         via_skip += 1
-                        self._log('drill missing', level='warning') #maui
+                        self._log("drill missing", level="warning")  # maui
             skip_count += via_skip
-            self._log('via holes: {}, skipped: {}',len(self.pcb.via),via_skip)
+            self._log("via holes: {}, skipped: {}", len(self.pcb.via), via_skip)
 
-            if blind_holes and shape_type != 'solid':
-                self._log('skip blind via holes: {}',len(blind_holes))
+            if blind_holes and shape_type != "solid":
+                self._log("skip blind via holes: {}", len(blind_holes))
                 blind_holes = None
 
-        self._log('total holes added: {}',
-                count+oval_count+len(self.pcb.via)-skip_count)
+        self._log("total holes added: {}", count + oval_count + len(self.pcb.via) - skip_count)
 
         objs = []
         if blind_holes or holes or ovals:
@@ -1693,62 +1709,68 @@ class KicadFcad:
                     objs += o
                 for o in holes.values():
                     objs += o
-                objs = func(objs,"holes")
+                objs = func(objs, "holes")
             else:
-                for r in ((ovals,'oval'),(holes,'hole')):
+                for r in ((ovals, "oval"), (holes, "hole")):
                     if not r[0]:
                         continue
-                    for (width,rs) in r[0].items():
-                        objs.append(func(rs,r[1]))
+                    for width, rs in r[0].items():
+                        objs.append(func(rs, r[1]))
 
             if not npth:
-                label=None
-            elif npth>0:
-                label='npth'
+                label = None
+            elif npth > 0:
+                label = "npth"
             else:
-                label='th'
+                label = "th"
 
             if not objs:
-                self._popLog('no holes')
-                return
+                self._popLog("no holes")
+                return None
 
-            if shape_type != 'solid':
-                objs = self._makeCompound(objs,'holes',label=label)
+            if shape_type != "solid":
+                objs = self._makeCompound(objs, "holes", label=label)
             else:
-                if board_thickness:
-                    thickness = board_thickness
-                else:
-                    thickness = self.board_thickness
+                thickness = board_thickness or self.board_thickness
                 thickness += extra_thickness
                 pos = -0.01
-                objs = self._makeSolid(objs,'holes',thickness,label=label)
+                objs = self._makeSolid(objs, "holes", thickness, label=label)
                 if blind_holes:
                     objs = [objs]
-                    for (_,d),o in blind_holes.items():
+                    for (_, d), o in blind_holes.items():
                         if npth >= -1:
                             d += extra_thickness
-                        objs.append(self._makeSolid(func(o,'blind'),'holes',d,label=label))
-                    objs = self._makeCompound(objs,'holes',label=label)
-                self._place(objs,FreeCAD.Vector(0,0,pos))
+                        objs.append(self._makeSolid(func(o, "blind"), "holes", d, label=label))
+                    objs = self._makeCompound(objs, "holes", label=label)
+                self._place(objs, FreeCAD.Vector(0, 0, pos))
 
-        if objs:  #maui
-            self.setColor(objs,'holes')
-        self._popLog('holes done')
+        if objs:  # maui
+            self.setColor(objs, "holes")
+        self._popLog("holes done")
         return objs
 
-
-    def _cutHoles(self,objs,holes,name,label=None,fit_arcs=False,
-                    minSize=0,maxSize=0,oval=True,npth=0,offset=0.0):
+    def _cutHoles(
+        self,
+        objs,
+        holes,
+        name,
+        label=None,
+        fit_arcs=False,
+        minSize=0,
+        maxSize=0,
+        oval=True,
+        npth=0,
+        offset=0.0,
+    ):
         if not holes:
             return objs
 
-        if not isinstance(holes,(Part.Feature,Part.Shape)):
+        if not isinstance(holes, (Part.Feature, Part.Shape)):
             hit = False
             if self.holes_cache is not None:
-                key = '{}.{}.{}.{}.{}.{}.{}'.format(
-                        self.add_feature,minSize,maxSize,oval,npth,offset,self.via_bound)
-                doc = getActiveDoc();
-                if self.add_feature and self.active_doc_uuid!=doc.Uid:
+                key = f"{self.add_feature}.{minSize}.{maxSize}.{oval}.{npth}.{offset}.{self.via_bound}"
+                doc = getActiveDoc()
+                if self.add_feature and self.active_doc_uuid != doc.Uid:
                     self.holes_cache.clear()
                     self.active_doc_uuid = doc.Uid
 
@@ -1757,8 +1779,7 @@ class KicadFcad:
                     if self.add_feature:
                         # access the object's Name to make sure it is not
                         # deleted
-                        self._log("fetch holes '{}' "
-                            "from cache".format(holes.Name))
+                        self._log(f"fetch holes '{holes.Name}' from cache")
                     else:
                         self._log("fetch holes from cache")
                     hit = True
@@ -1767,11 +1788,18 @@ class KicadFcad:
 
             if not hit:
                 self._pushLog()
-                holes = self.makeHoles(shape_type='wire',prefix=None,npth=npth,
-                    minSize=minSize,maxSize=maxSize,oval=oval,offset=offset)
+                holes = self.makeHoles(
+                    shape_type="wire",
+                    prefix=None,
+                    npth=npth,
+                    minSize=minSize,
+                    maxSize=maxSize,
+                    oval=oval,
+                    offset=offset,
+                )
                 self._popLog()
 
-                if isinstance(self.holes_cache,dict):
+                if isinstance(self.holes_cache, dict):
                     self.holes_cache[key] = holes
 
         if not holes:
@@ -1780,12 +1808,12 @@ class KicadFcad:
         if not objs:
             return holes
 
-        objs = (self._makeCompound(objs,name,label=label),holes)
-        return self._makeArea(objs,name,op=1,label=label,fit_arcs=fit_arcs)
+        objs = (self._makeCompound(objs, name, label=label), holes)
+        return self._makeArea(objs, name, op=1, label=label, fit_arcs=fit_arcs)
 
     def _makeCustomPad(self, params):
         wires = []
-        # maui 
+        # maui
         primitive_types = params.primitives
         for key in primitive_types:
             # If there are multiple primitives of the same type (e.g. gr_arc), the node is parsed
@@ -1793,7 +1821,7 @@ class KicadFcad:
             # SexpList if necessary so we can handle both cases the same way.
             primitives = SexpList(getattr(primitive_types, key))
             for primitive in primitives:
-                wire,width = makePrimitve(key, primitive)
+                wire, width = makePrimitve(key, primitive)
                 if not width:
                     if isinstance(wire, Part.Edge):
                         wire = Part.Wire(wire)
@@ -1801,25 +1829,24 @@ class KicadFcad:
                 elif not wire:
                     pass
                 else:
-                    wire = self._makeWires(wire, name=None, offset=width*0.5)
+                    wire = self._makeWires(wire, name=None, offset=width * 0.5)
                     wires += wire.Wires
         # maui end
         if not wires:
-            return
+            return None
         if len(wires) == 1:
             return wires[0]
         return Part.makeCompound(wires)
 
-    def makePads(self,shape_type='face',thickness=0.05,holes=False,
-            fit_arcs=True,prefix=''):
+    def makePads(self, shape_type="face", thickness=0.05, holes=False, fit_arcs=True, prefix=""):
 
-        self._pushLog('making pads...',prefix=prefix)
+        self._pushLog("making pads...", prefix=prefix)
 
-        def _wire(obj,name,label=None,fill=False):
-            return self._makeWires(obj,name,fill=fill,label=label, offset=self.pad_inflate)
+        def _wire(obj, name, label=None, fill=False):
+            return self._makeWires(obj, name, fill=fill, label=label, offset=self.pad_inflate)
 
-        def _face(obj,name,label=None):
-            objs = _wire(obj,name,label,True)
+        def _face(obj, name, label=None):
+            objs = _wire(obj, name, label, True)
 
             if not cut_wires and not cut_non_closed:
                 return objs
@@ -1827,133 +1854,130 @@ class KicadFcad:
             if not isinstance(objs, list):
                 objs = [objs]
 
-            inner_label = label + '_inner' if label else 'inner'
+            inner_label = label + "_inner" if label else "inner"
             if cut_wires:
-                objs.append(self._makeWires(cut_wires,name,label=inner_label))
+                objs.append(self._makeWires(cut_wires, name, label=inner_label))
 
-            for width,elist in cut_non_closed.items():
-                l = '{}_{}'.format(inner_label, width)
-                wire = self._makeWires(elist,name,label=l)
+            for width, elist in cut_non_closed.items():
+                l = f"{inner_label}_{width}"
+                wire = self._makeWires(elist, name, label=l)
                 # thicken non closed wire for hole cutting
-                objs.append(self._makeArea(wire, name, label=l, offset = width*0.5))
+                objs.append(self._makeArea(wire, name, label=l, offset=width * 0.5))
 
-            return self._makeArea(objs, name, op=1,fill=True)
+            return self._makeArea(objs, name, op=1, fill=True)
 
         _solid = _face
 
         try:
-            func = locals()['_{}'.format(shape_type)]
+            func = locals()[f"_{shape_type}"]
         except KeyError:
-            raise ValueError('invalid shape type: {}'.format(shape_type))
+            raise ValueError(f"invalid shape type: {shape_type}")
 
         objs = []
 
         count = 0
         skip_count = 0
-        for i,m in enumerate(self.pcb.module):
-            ref = ''
+        for i, m in enumerate(self.pcb.module):
+            ref = ""
             for t in m.fp_text:
-                if t[0] == 'reference':
+                if t[0] == "reference":
                     ref = t[1]
-                    break;
-            m_at,m_angle = getAt(m)
+                    break
+            m_at, m_angle = getAt(m)
             pads = []
             count += len(m.pad)
 
             cut_wires = []
             cut_non_closed = defaultdict(list)
 
-            self._pushLog('checking edge cuts')
-            self._makeEdgeCuts(m, 'fp', cut_wires, cut_non_closed)
+            self._pushLog("checking edge cuts")
+            self._makeEdgeCuts(m, "fp", cut_wires, cut_non_closed)
             self._popLog()
 
-            for j,p in enumerate(m.pad):
+            for j, p in enumerate(m.pad):
                 if self.filterNets(p) or self.filterLayer(p):
-                    skip_count+=1
+                    skip_count += 1
                     continue
 
                 shape = p[2]
 
-                wp = ''
-                if shape == 'custom':
+                wp = ""
+                if shape == "custom":
                     w = self._makeCustomPad(p)
-                    #Part.show(w)
+                    # Part.show(w)
                     # maui start
                     # print(p.size)
                     # print(p.options.anchor) #maui
-                    make_shape = globals()['make_{}'.format(p.options.anchor)]
+                    make_shape = globals()[f"make_{p.options.anchor}"]
                     # print(make_shape)
-                    wp = make_shape(Vector(*p.size),p)
-                    if shape_type == 'wire':
+                    wp = make_shape(Vector(*p.size), p)
+                    if shape_type == "wire":
                         # keeping visualization of internal reference pad ONLY for footprint loading
                         if w is not None:
-                            w = Part.makeCompound([w,wp])
-                            wp = ''
+                            w = Part.makeCompound([w, wp])
+                            wp = ""
                         else:
-                            w=wp
+                            w = wp
                     # Part.show(wp)
                     # maui end
                 else:
                     try:
-                        make_shape = globals()['make_{}'.format(shape)]
+                        make_shape = globals()[f"make_{shape}"]
                     except KeyError:
-                        raise NotImplementedError(
-                                'pad shape {} not implemented\n'.format(shape))
-                    w = make_shape(Vector(*p.size),p)
+                        raise NotImplementedError(f"pad shape {shape} not implemented\n")
+                    w = make_shape(Vector(*p.size), p)
 
                 if not w:
                     continue
 
                 # kicad put pad shape offset inside drill element? Why?
-                if 'drill' in p and 'offset' in p.drill:
+                if "drill" in p and "offset" in p.drill:
                     w.translate(makeVect(p.drill.offset))
-                    if wp != '': # maui
+                    if wp != "":  # maui
                         wp.translate(makeVect(p.drill.offset))
-                    
-                at,angle = getAt(p)
-                angle -= m_angle;
+
+                at, angle = getAt(p)
+                angle -= m_angle
                 if not isZero(angle):
-                    w.rotate(Vector(),Vector(0,0,1),angle)
-                    if wp != '': # maui
-                        wp.rotate(Vector(),Vector(0,0,1),angle)
+                    w.rotate(Vector(), Vector(0, 0, 1), angle)
+                    if wp != "":  # maui
+                        wp.rotate(Vector(), Vector(0, 0, 1), angle)
                 w.translate(at)
-                if wp != '': # maui
+                if wp != "":  # maui
                     wp.translate(at)
                 if not self.merge_pads:
-                    pads.append(func(w,'pad',
-                        '{}#{}#{}#{}#{}'.format(i,j,p[0],ref,self.netName(p))))
-                    if wp != '': # maui
-                        pads.append(func(wp,'pad',
-                            '{}#{}#{}#{}#{}'.format(i,j,p[0],ref,self.netName(p))))
+                    pads.append(func(w, "pad", f"{i}#{j}#{p[0]}#{ref}#{self.netName(p)}"))
+                    if wp != "":  # maui
+                        pads.append(func(wp, "pad", f"{i}#{j}#{p[0]}#{ref}#{self.netName(p)}"))
                 else:
                     pads.append(w)
 
-            self._makeShape(m, 'fp', pads)
+            self._makeShape(m, "fp", pads)
 
             if not pads:
                 continue
 
             if not self.merge_pads:
                 # maui start
-                #print(pads)
-                opads=[]
+                # print(pads)
+                opads = []
                 for p in pads:
-                    #print(p.TypeId) # wire -> 'Part::TopoShape'
-                    if '<Wire object ' in str(p):
+                    # print(p.TypeId) # wire -> 'Part::TopoShape'
+                    if "<Wire object " in str(p):
                         # shape = Part.makeFace(p,'Part::FaceMakerBullseye')
-                        shape = Part.makeFace(p,'Part::FaceMakerSimple')
+                        shape = Part.makeFace(p, "Part::FaceMakerSimple")
                         Part.show(shape)
-                        s=FreeCAD.ActiveDocument.ActiveObject
+                        s = FreeCAD.ActiveDocument.ActiveObject
                         opads.append(s)
-                        #stop
+                        # stop
                     else:
                         opads.append(p)
-                obj = self._makeCompound(opads,'pads','{}#{}'.format(i,ref))
-                #obj = self._makeCompound(pads,'pads','{}#{}'.format(i,ref))
+                obj = self._makeCompound(opads, "pads", f"{i}#{ref}")
+                # obj = self._makeCompound(pads,'pads','{}#{}'.format(i,ref))
                 # maui end
             else:
-                obj = func(pads,'pads','{}#{}'.format(i,ref))
-            self._place(obj,m_at,m_angle)
+                obj = func(pads, "pads", f"{i}#{ref}")
+            self._place(obj, m_at, m_angle)
             objs.append(obj)
 
         cut_wires = None
@@ -1964,60 +1988,54 @@ class KicadFcad:
         if self.via_bound < 0:
             via_skip = len(self.pcb.via)
         else:
-            for i,v in enumerate(self.pcb.via):
+            for i, v in enumerate(self.pcb.via):
                 layers = [self.findLayer(s)[0] for s in v.layers]
-                if self.layer_type < min(layers)\
-                        or self.layer_type > max(layers)\
-                        or self.filterNets(v):
+                if self.layer_type < min(layers) or self.layer_type > max(layers) or self.filterNets(v):
                     via_skip += 1
                     continue
                 if self.via_bound:
-                    w = make_rect(Vector(v.size*self.via_bound,v.size*self.via_bound))
+                    w = make_rect(Vector(v.size * self.via_bound, v.size * self.via_bound))
                 else:
                     w = make_circle(Vector(v.size))
                 w.translate(makeVect(v.at))
                 if not self.merge_vias:
-                    vias.append(func(w,'via','{}#{}'.format(i,v.size)))
+                    vias.append(func(w, "via", f"{i}#{v.size}"))
                 else:
                     vias.append(w)
 
         if vias:
             if self.merge_vias:
-                objs.append(func(vias,'vias'))
+                objs.append(func(vias, "vias"))
             else:
-                objs.append(self._makeCompound(vias,'vias'))
+                objs.append(self._makeCompound(vias, "vias"))
 
-        self._log('footprints: {}',len(self.pcb.module))
-        self._log('pads: {}, skipped: {}',count,skip_count)
-        self._log('vias: {}, skipped: {}',len(self.pcb.via),via_skip)
-        self._log('total pads added: {}',
-                count-skip_count+len(self.pcb.via)-via_skip)
+        self._log("footprints: {}", len(self.pcb.module))
+        self._log("pads: {}, skipped: {}", count, skip_count)
+        self._log("vias: {}, skipped: {}", len(self.pcb.via), via_skip)
+        self._log("total pads added: {}", count - skip_count + len(self.pcb.via) - via_skip)
 
         if objs:
-            objs = self._cutHoles(objs,holes,'pads',fit_arcs=fit_arcs)
-            if shape_type=='solid':
-                objs = self._makeSolid(objs,'pads', thickness,
-                                    fit_arcs = fit_arcs)
+            objs = self._cutHoles(objs, holes, "pads", fit_arcs=fit_arcs)
+            if shape_type == "solid":
+                objs = self._makeSolid(objs, "pads", thickness, fit_arcs=fit_arcs)
             else:
-                objs = self._makeCompound(objs,'pads',
-                                    fuse=True,fit_arcs=fit_arcs)
-            self.setColor(objs,'pad')
+                objs = self._makeCompound(objs, "pads", fuse=True, fit_arcs=fit_arcs)
+            self.setColor(objs, "pad")
 
-        self._popLog('pads done')
-        fitView();
+        self._popLog("pads done")
+        fitView()
         return objs
 
-# maui 
-    def makeNetTies(self,shape_type='face',thickness=0.05,holes=False,
-            fit_arcs=True,prefix=''):
+    # maui
+    def makeNetTies(self, shape_type="face", thickness=0.05, holes=False, fit_arcs=True, prefix=""):
 
-        self._pushLog('making net ties...',prefix=prefix)
+        self._pushLog("making net ties...", prefix=prefix)
 
-        def _wire(obj,name,label=None,fill=False):
-            return self._makeWires(obj,name,fill=fill,label=label, offset=self.pad_inflate)
+        def _wire(obj, name, label=None, fill=False):
+            return self._makeWires(obj, name, fill=fill, label=label, offset=self.pad_inflate)
 
-        def _face(obj,name,label=None):
-            objs = _wire(obj,name,label,True)
+        def _face(obj, name, label=None):
+            objs = _wire(obj, name, label, True)
 
             if not cut_wires and not cut_non_closed:
                 return objs
@@ -2025,108 +2043,102 @@ class KicadFcad:
             if not isinstance(objs, list):
                 objs = [objs]
 
-            inner_label = label + '_inner' if label else 'inner'
+            inner_label = label + "_inner" if label else "inner"
             if cut_wires:
-                objs.append(self._makeWires(cut_wires,name,label=inner_label))
+                objs.append(self._makeWires(cut_wires, name, label=inner_label))
 
-            for width,elist in cut_non_closed.items():
-                l = '{}_{}'.format(inner_label, width)
-                wire = self._makeWires(elist,name,label=l)
+            for width, elist in cut_non_closed.items():
+                l = f"{inner_label}_{width}"
+                wire = self._makeWires(elist, name, label=l)
                 # thicken non closed wire for hole cutting
-                objs.append(self._makeArea(wire, name, label=l, offset = width*0.5))
+                objs.append(self._makeArea(wire, name, label=l, offset=width * 0.5))
 
-            return self._makeArea(objs, name, op=1,fill=True)
+            return self._makeArea(objs, name, op=1, fill=True)
 
         _solid = _face
 
         try:
-            func = locals()['_{}'.format(shape_type)]
+            func = locals()[f"_{shape_type}"]
         except KeyError:
-            raise ValueError('invalid shape type: {}'.format(shape_type))
+            raise ValueError(f"invalid shape type: {shape_type}")
 
         objs = []
-        ws=[]
-        add_rot=0
+        ws = []
+        add_rot = 0
 
         count = 0
         skip_count = 0
-        for i,m in enumerate(self.pcb.module):
-            ref = ''
+        for i, m in enumerate(self.pcb.module):
+            ref = ""
             for t in m.fp_text:
-                if t[0] == 'reference':
+                if t[0] == "reference":
                     ref = t[1]
-                    break;
-            m_at,m_angle = getAt(m)
+                    break
+            m_at, m_angle = getAt(m)
             nt = []
             count += len(m.fp_poly)
 
             cut_wires = []
             cut_non_closed = defaultdict(list)
 
-            for j,pl in enumerate(m.fp_poly):
+            for j, pl in enumerate(m.fp_poly):
                 if unquote(pl.layer) == self.layer:
-                    shape='fp_poly'
+                    shape = "fp_poly"
                     nt = make_fp_poly(pl)
                 if not nt:
                     continue
+                ws.append(nt)
+            add_rot = 0
+            if hasattr(m, "model"):
+                # print(m.model[0].rotate.xyz[2])
+                with contextlib.suppress(BaseException):
+                    add_rot = m.model[0].rotate.xyz[2]
+
+            if len(ws) > 0:
+                ws = _face(ws, "net-ties")
+                if shape_type == "solid":
+                    objs = self._makeSolid(ws, "net-ties", thickness, fit_arcs=fit_arcs)
                 else:
-                    ws.append(nt)
-            add_rot=0
-            if hasattr(m, 'model'):
-                #print(m.model[0].rotate.xyz[2])
-                try:
-                    add_rot=m.model[0].rotate.xyz[2]
-                except:
-                    pass
+                    objs = self._makeCompound(ws, "net-ties", fuse=True, fit_arcs=fit_arcs)
+                self.setColor(objs, "NetTie")
 
-            if len (ws)>0:
-                ws = _face(ws,'net-ties')
-                if shape_type=='solid':
-                    objs = self._makeSolid(ws,'net-ties', thickness,
-                                        fit_arcs = fit_arcs)
-                else:
-                    objs = self._makeCompound(ws,'net-ties',
-                                        fuse=True,fit_arcs=fit_arcs)
-                self.setColor(objs,'NetTie')
-            
-        self._popLog('Net Tie poly done')
-        fitView();
-        return objs # obj  //additional rotation in deg
-        
+        self._popLog("Net Tie poly done")
+        fitView()
+        return objs  # obj  //additional rotation in deg
 
-    def makeSketches(self, fit_arcs=True,prefix=''):
+    def makeSketches(self, fit_arcs=True, prefix=""):
 
-        self._pushLog('making sketches...',prefix=prefix)
+        self._pushLog("making sketches...", prefix=prefix)
 
-        #def _wire(obj,name,label=None,fill=False):
+        # def _wire(obj,name,label=None,fill=False):
         #    return self._makeWires(obj,name,fill=fill,label=label, offset=self.pad_inflate)
 
         width = 0
-        def _line(edges,label,offset=0,fill=False):
+
+        def _line(edges, label, offset=0, fill=False):
             wires = findWires(edges)
-            return self._makeWires(wires,label, offset=offset,
-                    fill=fill, label=label, fit_arcs=fit_arcs)
+            return self._makeWires(wires, label, offset=offset, fill=fill, label=label, fit_arcs=fit_arcs)
 
-        def _wire(edges,label,fill=False):
-            return _line(edges,label,width*0.5,fill) #*0.5,fill)
+        def _wire(edges, label, fill=False):
+            return _line(edges, label, width * 0.5, fill)  # *0.5,fill)
 
-        def _face(edges,label):
-            return _wire(edges,label,True)
+        def _face(edges, label):
+            return _wire(edges, label, True)
 
-        _solid = _face        
-        
+        _solid = _face
+
         obj = []
         tbd = []
 
         count = 0
         skip_count = 0
-        for i,m in enumerate(self.pcb.module):
-            ref = ''
+        for i, m in enumerate(self.pcb.module):
+            ref = ""
             for t in m.fp_text:
-                if t[0] == 'reference':
+                if t[0] == "reference":
                     ref = t[1]
-                    break;
-            m_at,m_angle = getAt(m)
+                    break
+            m_at, m_angle = getAt(m)
             pads = []
             count += len(m.pad)
 
@@ -2136,153 +2148,159 @@ class KicadFcad:
             # self._pushLog('checking edge cuts')
             # self._makeEdgeCuts(m, 'fp', cut_wires, cut_non_closed)
             # self._popLog()
-            ws=[]
-            wst=[]
-            objs=[]
-            tl=None
+            ws = []
+            wst = []
+            objs = []
+            tl = None
             _solid = _face
-            
+
             # test creating pads from gr_poly
             # print (' test creating pads from gr_poly')
-            for j,p in enumerate(m.pad):            
-                #print(unquote(p.layers))
+            for j, p in enumerate(m.pad):
+                # print(unquote(p.layers))
                 poly = []
-                #print(self.layer,unquote(p.layers))
+                # print(self.layer,unquote(p.layers))
                 if self.layer in str(unquote(p.layers)):
                     shape = p[2]
                     w = 0
-                    if shape == 'custom':
+                    if shape == "custom":
                         w = self._makeCustomPad(p)
                     if not w:
-                        continue            
+                        continue
                     # Part.show(w)
-                    at,angle = getAt(p)
-                    angle -= m_angle;
+                    at, angle = getAt(p)
+                    angle -= m_angle
                     if not isZero(angle):
-                        w.rotate(Vector(),Vector(0,0,1),angle)
+                        w.rotate(Vector(), Vector(0, 0, 1), angle)
                     w.translate(at)
-    
+
                     poly.append(w)
-                    self._makeShape(m, 'fp', poly)
-        
+                    self._makeShape(m, "fp", poly)
+
                     if not poly:
                         continue
-                    shape_type='solid'
+                    shape_type = "solid"
                     try:
-                        func = locals()['_{}'.format(shape_type)]
+                        func = locals()[f"_{shape_type}"]
                     except KeyError:
-                        raise ValueError('invalid shape type: {}'.format(shape_type))
-                        
-                    #print(poly)
+                        raise ValueError(f"invalid shape type: {shape_type}")
+
+                    # print(poly)
                     for wr in poly:
-                        objp = func(wr.Edges,'pads') #,'{}#{}'.format(i,ref))
-                        self._place(objp,m_at,m_angle)
+                        objp = func(wr.Edges, "pads")  # ,'{}#{}'.format(i,ref))
+                        self._place(objp, m_at, m_angle)
                         objs.append(objp)
-            if len(objs)>0:
+            if len(objs) > 0:
                 for o in objs:
-                    self.setPadColor(o,unquote(self.layer_name))
-            #print (objs)
+                    self.setPadColor(o, unquote(self.layer_name))
+            # print (objs)
             # end test creating pads from gr_poly
-                    
-            for j,l in enumerate(m.fp_line):
+
+            for j, l in enumerate(m.fp_line):
                 if unquote(l.layer) == self.layer:
-                    #print(j,l)
-                    try: #avoiding null lenght lines
-                        ws.append((Part.Wire(make_gr_line(l))))
-                        #wst.append(Part.Face(makeThickLine(makeVect(l.start),makeVect(l.end),l.width)))
-                        #print ('l.width',hasattr(l,'width'))
-                        #print ('l.stroke',hasattr(l,'stroke'))
-                        if hasattr(l,'stroke'):
-                            #print(l.stroke.width)
-                            wst.append(makeThickLine(makeVect(l.start),makeVect(l.end),l.stroke.width/2.0))
+                    # print(j,l)
+                    try:  # avoiding null lenght lines
+                        ws.append(Part.Wire(make_gr_line(l)))
+                        # wst.append(Part.Face(makeThickLine(makeVect(l.start),makeVect(l.end),l.width)))
+                        # print ('l.width',hasattr(l,'width'))
+                        # print ('l.stroke',hasattr(l,'stroke'))
+                        if hasattr(l, "stroke"):
+                            # print(l.stroke.width)
+                            wst.append(makeThickLine(makeVect(l.start), makeVect(l.end), l.stroke.width / 2.0))
                         else:
-                            wst.append(makeThickLine(makeVect(l.start),makeVect(l.end),l.width/2.0))
-                        #self._makeShape(m, 'fp', ws)
+                            wst.append(makeThickLine(makeVect(l.start), makeVect(l.end), l.width / 2.0))
+                        # self._makeShape(m, 'fp', ws)
                     except:
                         pass
-            for j,l in enumerate(m.fp_rect):
+            for j, l in enumerate(m.fp_rect):
                 if unquote(l.layer) == self.layer:
-                    #print(j,l)
-                    try: #avoiding null lenght lines
-                        rc=Part.Wire(make_gr_rect(l))
+                    # print(j,l)
+                    try:  # avoiding null lenght lines
+                        rc = Part.Wire(make_gr_rect(l))
                         ws.append(rc)
-                        if hasattr(l,'stroke'):
-                            #print(l.stroke.width)
+                        if hasattr(l, "stroke"):
+                            # print(l.stroke.width)
                             width = l.stroke.width
                         else:
                             width = l.width
                         for e in rc.Edges:
-                            wst.append(makeThickLine(makeVect([e.Vertexes[0].X,-e.Vertexes[0].Y]),makeVect([e.Vertexes[1].X,-e.Vertexes[1].Y]),width/2.0))
+                            wst.append(
+                                makeThickLine(
+                                    makeVect([e.Vertexes[0].X, -e.Vertexes[0].Y]),
+                                    makeVect([e.Vertexes[1].X, -e.Vertexes[1].Y]),
+                                    width / 2.0,
+                                ),
+                            )
                     except:
                         pass
-            for j,a in enumerate(m.fp_arc):
+            for j, a in enumerate(m.fp_arc):
                 if unquote(a.layer) == self.layer:
-                    #print(j,l.start)
+                    # print(j,l.start)
                     ac = Part.Wire(make_gr_arc(a))
-                    ws.append((Part.Wire(make_gr_arc(a))))
-                    if hasattr(a,'stroke'):
-                        width = a.stroke.width
-                    else:
-                        width = a.width
-                    aco=_wire(ac.Edges,self.layer)
+                    ws.append(Part.Wire(make_gr_arc(a)))
+                    width = a.stroke.width if hasattr(a, "stroke") else a.width
+                    aco = _wire(ac.Edges, self.layer)
                     wst.append(aco.Shape)
                     tbd.append(aco)
-                    #doc=FreeCAD.ActiveDocument
-                    #doc.recompute()
-                    #try:
+                    # doc=FreeCAD.ActiveDocument
+                    # doc.recompute()
+                    # try:
                     #    doc.removeObject(doc.getObject(aco.Name).Outlist[0].Name)
-                    #except:
+                    # except:
                     #    pass
-                    #doc.removeObject(aco.Name)
-                    #if hasattr(a, 'angle'):
+                    # doc.removeObject(aco.Name)
+                    # if hasattr(a, 'angle'):
                     #    wst.append(makeArc(makeVect(a.start),makeVect(a.end),a.angle))
-                    #else:
+                    # else:
                     #    wst.append(Part.ArcOfCircle(makeVect(a.start),makeVect(a.mid),makeVect(a.end)).toShape())
-            for j,c in enumerate(m.fp_circle):
+            for j, c in enumerate(m.fp_circle):
                 if unquote(c.layer) == self.layer:
-                    #print(j,l.start)
-                    ws.append((Part.Wire(make_gr_circle(c))))
+                    # print(j,l.start)
+                    ws.append(Part.Wire(make_gr_circle(c)))
                     ##ws.append((Part.Wire(make_gr_circle(c).Edges)))
-                    if hasattr(c,'stroke'):
-                        cc=make_gr_circle_outl(c,c.stroke.width)
+                    if hasattr(c, "stroke"):
+                        cc = make_gr_circle_outl(c, c.stroke.width)
                     else:
-                        cc=make_gr_circle_outl(c,c.width)
-                    if isinstance(cc,list):
+                        cc = make_gr_circle_outl(c, c.width)
+                    if isinstance(cc, list):
                         wst.append(Part.Wire(cc[0]))
                         wst.append(Part.Wire(cc[1]))
                     else:
                         wst.append(Part.Wire(cc))
-                    #wst.append((Part.Wire(make_gr_circle(c,c.width)
-                    
+                    # wst.append((Part.Wire(make_gr_circle(c,c.width)
+
                     # Part.show(Part.Wire(make_gr_circle(c,c.width).Edges))
                     # wst.append((Part.Wire(make_gr_circle(c,c.width).Edges)))
                     if 0:
-                        ce=make_gr_circle_outl(c,-c.width)
+                        ce = make_gr_circle_outl(c, -c.width)
                         if ce is not None:
                             wst.append(Part.Wire(ce))
-                        ci=Part.Wire(make_gr_circle_outl(c,+c.width))
+                        ci = Part.Wire(make_gr_circle_outl(c, +c.width))
                         wst.append(ci)
                     # try:
                     #     wst.append((Part.Wire(make_gr_circle(c,c.width))))
                     # except:
                     #     wst.append((make_gr_circle(c,c.width)))
-                    #manca_thick_circle
-            for j,pl in enumerate(m.fp_poly):
+                    # manca_thick_circle
+            for j, pl in enumerate(m.fp_poly):
                 if unquote(pl.layer) == self.layer:
-                    pln=Part.Wire(make_gr_poly(pl))
-                    ws.append((pln))
-                    if hasattr(pl,'stroke'):
-                        width = pl.stroke.width
-                    else:
-                        width = pl.width
+                    pln = Part.Wire(make_gr_poly(pl))
+                    ws.append(pln)
+                    width = pl.stroke.width if hasattr(pl, "stroke") else pl.width
                     for e in pln.Edges:
-                        #aco=_wire(e,self.layer)
-                        wst.append(makeThickLine(makeVect([e.Vertexes[0].X,-e.Vertexes[0].Y]),makeVect([e.Vertexes[1].X,-e.Vertexes[1].Y]),width/2.0))
-                    #plno=_wire(pln.Edges,self.layer)
+                        # aco=_wire(e,self.layer)
+                        wst.append(
+                            makeThickLine(
+                                makeVect([e.Vertexes[0].X, -e.Vertexes[0].Y]),
+                                makeVect([e.Vertexes[1].X, -e.Vertexes[1].Y]),
+                                width / 2.0,
+                            ),
+                        )
+                    # plno=_wire(pln.Edges,self.layer)
                     ##wst.append(pln)
-                    #wst.append(plno.Shape)
-            
-            add_rot=0
+                    # wst.append(plno.Shape)
+
+            add_rot = 0
             ## if hasattr(m, 'model'):
             ##     #print(m.model[0].rotate.xyz[2])
             ##     try:
@@ -2290,193 +2308,181 @@ class KicadFcad:
             ##     except:
             ##         pass
 
-            if len (wst)>0:
+            if len(wst) > 0:
                 Part.show(Part.makeCompound(wst))
                 tl = FreeCAD.ActiveDocument.ActiveObject
-                tl.Label = self.layer+'_outline_'
-                self._place(tl,m_at,m_angle+add_rot)
+                tl.Label = self.layer + "_outline_"
+                self._place(tl, m_at, m_angle + add_rot)
                 # del(wst)
-            
-            #Draft.make_sketch(ws, autoconstraints=False)
-            #sp=FreeCAD.ActiveDocument.ActiveObject
-            #sk = Draft.make_sketch(ws, autoconstraints=False)
-            #sp.ViewObject.Visibility=False
+
+            # Draft.make_sketch(ws, autoconstraints=False)
+            # sp=FreeCAD.ActiveDocument.ActiveObject
+            # sk = Draft.make_sketch(ws, autoconstraints=False)
+            # sp.ViewObject.Visibility=False
 
             if not ws:
                 continue
 
             obj = self._makeSketch(ws, self.layer_name)
-            self._place(obj,m_at,m_angle+add_rot)
-            obj.Label= self.layer+'_'
-            #objs.append(obj)
+            self._place(obj, m_at, m_angle + add_rot)
+            obj.Label = self.layer + "_"
+            # objs.append(obj)
 
         if obj:
-            self.setSketchColor(obj,unquote(self.layer_name))
+            self.setSketchColor(obj, unquote(self.layer_name))
 
-        self._popLog('sketch done')
-        fitView();
-        return obj,tl,tbd #,add_rot # obj, thicklines, to be deleted, additional rotation in deg
+        self._popLog("sketch done")
+        fitView()
+        return obj, tl, tbd  # ,add_rot # obj, thicklines, to be deleted, additional rotation in deg
 
-    def setSketchColor(self,obj,otype):
+    def setSketchColor(self, obj, otype):
         if not self.add_feature:
             return
         try:
             color = self.colors[otype][self.layer_type]
         except KeyError:
             color = self.colors[otype][0]
-        #print (color)
-        #if 
+        # print (color)
+        # if
         obj.ViewObject.LineColor = color
 
-    def setPadColor(self,obj,otype):
+    def setPadColor(self, obj, otype):
         if not self.add_feature:
             return
         try:
             color = self.colors[otype][self.layer_type]
         except KeyError:
             color = self.colors[otype][0]
-        #print (color)
-        #if 
+        # print (color)
+        # if
         obj.ViewObject.ShapeColor = color
-# maui 
 
-    def setColor(self,obj,otype):
+    # maui
+
+    def setColor(self, obj, otype):
         if not self.add_feature:
             return
         try:
             color = self.colors[otype][self.layer_type]
         except KeyError:
             color = self.colors[otype][0]
-        if hasattr(obj.ViewObject,'MapFaceColor'):
+        if hasattr(obj.ViewObject, "MapFaceColor"):
             obj.ViewObject.MapFaceColor = False
         obj.ViewObject.ShapeColor = color
 
+    def makeTracks(self, shape_type="face", fit_arcs=True, thickness=0.05, holes=False, prefix=""):
 
-    def makeTracks(self,shape_type='face',fit_arcs=True,
-                    thickness=0.05,holes=False,prefix=''):
-
-        self._pushLog('making tracks...',prefix=prefix)
+        self._pushLog("making tracks...", prefix=prefix)
 
         width = 0
-        def _line(edges,label,offset=0,fill=False):
+
+        def _line(edges, label, offset=0, fill=False):
             wires = findWires(edges)
-            return self._makeWires(wires,'track', offset=offset,
-                    fill=fill, label=label, fit_arcs=fit_arcs)
+            return self._makeWires(wires, "track", offset=offset, fill=fill, label=label, fit_arcs=fit_arcs)
 
-        def _wire(edges,label,fill=False):
-            return _line(edges,label,width*0.5,fill)
+        def _wire(edges, label, fill=False):
+            return _line(edges, label, width * 0.5, fill)
 
-        def _face(edges,label):
-            return _wire(edges,label,True)
+        def _face(edges, label):
+            return _wire(edges, label, True)
 
         _solid = _face
 
         try:
-            func = locals()['_{}'.format(shape_type)]
+            func = locals()[f"_{shape_type}"]
         except KeyError:
-            raise ValueError('invalid shape type: {}'.format(shape_type))
+            raise ValueError(f"invalid shape type: {shape_type}")
 
         tracks = defaultdict(lambda: defaultdict(list))
         count = 0
-        for tp,ss in (('segment',self.pcb.segment), ('arc',getattr(self.pcb, 'arc', []))):
+        for tp, ss in (("segment", self.pcb.segment), ("arc", getattr(self.pcb, "arc", []))):
             for s in ss:
                 if self.filterNets(s):
                     continue
                 if unquote(s.layer) == self.layer:
                     if self.merge_tracks:
-                        tracks[''][s.width].append((tp,s))
+                        tracks[""][s.width].append((tp, s))
                     else:
-                        tracks[self.netName(s)][s.width].append((tp,s))
+                        tracks[self.netName(s)][s.width].append((tp, s))
                     count += 1
 
         objs = []
         i = 0
-        for (name,sss) in tracks.items():
-            for (width,ss) in sss.items():
-                self._log('making {} tracks {} of width {:.2f}, ({}/{})',
-                        len(ss),name,width,i,count)
-                i+=len(ss)
+        for name, sss in tracks.items():
+            for width, ss in sss.items():
+                self._log("making {} tracks {} of width {:.2f}, ({}/{})", len(ss), name, width, i, count)
+                i += len(ss)
                 edges = []
-                for tp,s in ss:
-                    if tp == 'segment':
+                for tp, s in ss:
+                    if tp == "segment":
                         if s.start != s.end:
-                            edges.append(Part.makeLine(
-                                makeVect(s.start),makeVect(s.end)))
+                            edges.append(Part.makeLine(makeVect(s.start), makeVect(s.end)))
                         else:
-                            self._log('Line (Track) through identical points {}',
-                                    s.start, level="warning")
-                    elif tp == 'arc':
+                            self._log("Line (Track) through identical points {}", s.start, level="warning")
+                    elif tp == "arc":
                         if s.start == s.mid:
-                            self._log('Arc (Track) with invalid point {}', s, level="warning")
+                            self._log("Arc (Track) with invalid point {}", s, level="warning")
                         elif s.start != s.end:
-                            edges.append(Part.ArcOfCircle(
-                                makeVect(s.end), makeVect(s.mid), makeVect(s.start)).toShape())
+                            edges.append(
+                                Part.ArcOfCircle(makeVect(s.end), makeVect(s.mid), makeVect(s.start)).toShape(),
+                            )
                         else:
                             start = makeVect(s.start)
                             middle = makeVect(s.mid)
                             r = start.distanceToPoint(middle)
-                            edges.append(Part.makeCircle(r, (middle-start)/2))
+                            edges.append(Part.makeCircle(r, (middle - start) / 2))
                     else:
-                        self._log('Unknown track type: {}', tp, level='warning')
-                if self.merge_tracks:
-                    label = '{}'.format(width)
-                else:
-                    label = '{}#{}'.format(width,name)
-                objs.append(func(edges,label=label))
+                        self._log("Unknown track type: {}", tp, level="warning")
+                label = f"{width}" if self.merge_tracks else f"{width}#{name}"
+                objs.append(func(edges, label=label))
 
         if objs:
-            objs = self._cutHoles(objs,holes,'tracks',fit_arcs=fit_arcs)
+            objs = self._cutHoles(objs, holes, "tracks", fit_arcs=fit_arcs)
 
-            if shape_type == 'solid':
-                objs = self._makeSolid(objs,'tracks',thickness,
-                                        fit_arcs=fit_arcs)
+            if shape_type == "solid":
+                objs = self._makeSolid(objs, "tracks", thickness, fit_arcs=fit_arcs)
             else:
-                objs = self._makeCompound(objs,'tracks',fuse=True,
-                        fit_arcs=fit_arcs)
+                objs = self._makeCompound(objs, "tracks", fuse=True, fit_arcs=fit_arcs)
 
-            self.setColor(objs,'track')
+            self.setColor(objs, "track")
 
-        self._popLog('tracks done')
-        fitView();
+        self._popLog("tracks done")
+        fitView()
         return objs
 
-    def _makePolygons(self, fields, name, poly_holes,
-            shape_type='face', thickness=0.05, prefix=''):
+    def _makePolygons(self, fields, name, poly_holes, shape_type="face", thickness=0.05, prefix=""):
 
         if not fields:
             return []
 
         count = len(fields)
-        self._pushLog(f'making {count} polygons...',prefix=prefix)
+        self._pushLog(f"making {count} polygons...", prefix=prefix)
 
-        def _wire(obj,fill=False):
+        def _wire(obj, fill=False):
 
-            offset = self.zone_inflate + thickness*0.5
+            offset = self.zone_inflate + thickness * 0.5
 
-            if not poly_holes \
-                    or (self.add_feature and self.make_sketch and self.zone_merge_holes):
-                obj = [obj]+poly_holes
+            if not poly_holes or (self.add_feature and self.make_sketch and self.zone_merge_holes):
+                obj = [obj, *poly_holes]
             elif poly_holes:
-                obj = (self._makeWires(obj,f'{name}_outline'),
-                       self._makeWires(poly_holes,f'{name}_hole'))
-                return self._makeArea(obj,name,offset=offset, op=1, fill=fill)
+                obj = (self._makeWires(obj, f"{name}_outline"), self._makeWires(poly_holes, f"{name}_hole"))
+                return self._makeArea(obj, name, offset=offset, op=1, fill=fill)
 
-            return self._makeWires(obj,name,fill=fill, offset=offset)
-
+            return self._makeWires(obj, name, fill=fill, offset=offset)
 
         def _face(obj):
-            return _wire(obj,True)
+            return _wire(obj, True)
 
         _solid = _face
 
         try:
-            func = locals()['_{}'.format(shape_type)]
+            func = locals()[f"_{shape_type}"]
         except KeyError:
-            raise ValueError('invalid shape type: {}'.format(shape_type))
+            raise ValueError(f"invalid shape type: {shape_type}")
 
         objs = []
-        for idx,p in enumerate(fields):
-            if (hasattr(p, 'layer') or hasattr(p, 'layers')) and self.filterLayer(p):
+        for idx, p in enumerate(fields):
+            if (hasattr(p, "layer") or hasattr(p, "layers")) and self.filterLayer(p):
                 continue
             poly_holes = []
             table = {}
@@ -2487,8 +2493,8 @@ class KicadFcad:
 
             # `table` uses a pair of vertex as the key to store the index of
             # an edge.
-            for i in range(len(pts)-1):
-                table[str((pts[i],pts[i+1]))] = i
+            for i in range(len(pts) - 1):
+                table[str((pts[i], pts[i + 1]))] = i
 
             # This is how kicad represents holes in zone polygon
             #  ---------------------------
@@ -2505,68 +2511,63 @@ class KicadFcad:
             # cancel out those '=' double edges, which will surely cause
             # problem if left alone. The algorithm assumes we start with a
             # point of the outer polygon.
-            def build(start,end):
+            def build(start, end):
                 results = []
-                while start<end:
+                while start < end:
                     # We used the reverse edge as key to search for an
                     # identical edge of oppsite direction. NOTE: the
                     # algorithm only works if the following assumption is
                     # true, that those hole digging double edges are of
                     # equal length without any branch in the middle
-                    key = str((pts[start+1],pts[start]))
+                    key = str((pts[start + 1], pts[start]))
                     try:
                         i = table[key]
                         del table[key]
                     except KeyError:
                         # `KeyError` means its a normal edge, add the line.
-                        results.append(Part.makeLine(
-                            makeVect(pts[start]),makeVect(pts[start+1])))
+                        results.append(Part.makeLine(makeVect(pts[start]), makeVect(pts[start + 1])))
                         start += 1
                         continue
 
                     # We found the start of a double edge, treat all edges
                     # in between as holes and recurse. Both of the double
                     # edges are skipped.
-                    h = build(start+1,i)
+                    h = build(start + 1, i)
                     if h:
                         poly_holes.append(Part.Wire(h))
-                    start = i+1
+                    start = i + 1
                 return results
 
-            edges = build(0,len(pts)-1)
+            edges = build(0, len(pts) - 1)
 
-            self._log('region {}/{}, holes: {}',idx+1,count,len(poly_holes))
+            self._log("region {}/{}, holes: {}", idx + 1, count, len(poly_holes))
 
             objs.append(func(Part.Wire(edges)))
 
             self._popLog()
 
-        self._popLog(f'polygons done')
+        self._popLog("polygons done")
         return objs
 
-    def makePolys(self,shape_type='face',thickness=0.05, fit_arcs=True, holes=False, prefix=''):
-        '''For making outlier gr_poly as if it was zone, e.g. export from Gerber viewer
-        '''
+    def makePolys(self, shape_type="face", thickness=0.05, fit_arcs=True, holes=False, prefix=""):
+        """For making outlier gr_poly as if it was zone, e.g. export from Gerber viewer"""
         poly_holes = []
-        objs = self._makePolygons(getattr(self.pcb, 'gr_poly', None), 'poly',
-                                    poly_holes, shape_type, thickness, prefix)
+        objs = self._makePolygons(getattr(self.pcb, "gr_poly", None), "poly", poly_holes, shape_type, thickness, prefix)
         if not objs:
-            return
+            return None
 
-        objs = self._cutHoles(objs,holes,'polys')
-        if shape_type == 'solid':
-            objs = self._makeSolid(objs,'polys',thickness,fit_arcs=fit_arcs)
+        objs = self._cutHoles(objs, holes, "polys")
+        if shape_type == "solid":
+            objs = self._makeSolid(objs, "polys", thickness, fit_arcs=fit_arcs)
         else:
-            objs = self._makeCompound(objs,'polys',
-                            fuse=holes,fit_arcs=fit_arcs)
-        self.setColor(objs,'zone')
-        fitView();
+            objs = self._makeCompound(objs, "polys", fuse=holes, fit_arcs=fit_arcs)
+        self.setColor(objs, "zone")
+        fitView()
         return objs
 
-    def makeZones(self,shape_type='face',thickness=0.05, fit_arcs=True,
-                    holes=False, prefix=''):
+    def makeZones(self, shape_type="face", thickness=0.05, fit_arcs=True, holes=False, prefix=""):
 
-        self._pushLog('making zones...',prefix=prefix)
+        self._pushLog("making zones...", prefix=prefix)
 
         z = None
         zone_holes = []
@@ -2574,94 +2575,96 @@ class KicadFcad:
         for z in self.pcb.zone:
             if self.filterNets(z) or self.filterLayer(z):
                 continue
-            try: #maui
-                objs += self._makePolygons(z.filled_polygon, 'zone', zone_holes,
-                                       shape_type, thickness, prefix)
-            except Exception as e:# maui logging error
-                # traceback.print_exc() # maui 
-                error_message = traceback.format_exc() #maui
-                # self._log('{}',error_message,level='error') # maui 
-                self._log('{}','error on \'self._makePolygons\' on Zones',level='warning') # maui
-                pass  # maui logging error
-                
+            try:  # maui
+                objs += self._makePolygons(z.filled_polygon, "zone", zone_holes, shape_type, thickness, prefix)
+            except Exception:  # maui logging error
+                # traceback.print_exc() # maui
+                traceback.format_exc()  # maui
+                # self._log('{}',error_message,level='error') # maui
+                self._log("{}", "error on 'self._makePolygons' on Zones", level="warning")  # maui
+                # maui logging error
+
         if objs:
-            objs = self._cutHoles(objs,holes,'zones')
-            if shape_type == 'solid':
-                objs = self._makeSolid(objs,'zones',thickness,fit_arcs=fit_arcs)
+            objs = self._cutHoles(objs, holes, "zones")
+            if shape_type == "solid":
+                objs = self._makeSolid(objs, "zones", thickness, fit_arcs=fit_arcs)
             else:
-                objs = self._makeCompound(objs,'zones',
-                                fuse=holes,fit_arcs=fit_arcs)
-            self.setColor(objs,'zone')
+                objs = self._makeCompound(objs, "zones", fuse=holes, fit_arcs=fit_arcs)
+            self.setColor(objs, "zone")
 
-        self._popLog('zones done')
-        fitView();
+        self._popLog("zones done")
+        fitView()
         return objs
-
 
     def isBottomLayer(self):
         return self.layer_type == 31
 
+    def makeCopper(self, shape_type="face", thickness=0.05, fit_arcs=True, holes=False, z=0, prefix="", fuse=False):
 
-    def makeCopper(self,shape_type='face',thickness=0.05,fit_arcs=True,
-                    holes=False, z=0, prefix='',fuse=False):
+        self._pushLog("making copper layer {}...", self.layer, prefix=prefix)
 
-        self._pushLog('making copper layer {}...',self.layer,prefix=prefix)
-
-        holes = self._cutHoles(None,holes,None)
+        holes = self._cutHoles(None, holes, None)
 
         objs = []
 
-        if shape_type=='solid':
+        if shape_type == "solid":
             solid = True
             sub_fit_arcs = fit_arcs
             if fuse:
-                shape_type = 'face'
+                shape_type = "face"
         else:
             solid = False
             sub_fit_arcs = False
 
-        for (name,offset) in (('Pads',thickness),
-                              ('Tracks',0.5*thickness),
-                              ('Zones',0),
-                              ('Polys',thickness)):
-
-            obj = getattr(self,'make{}'.format(name))(fit_arcs=sub_fit_arcs,
-                        holes=holes,shape_type=shape_type,prefix=None,
-                        thickness=thickness)
+        for name, offset in (("Pads", thickness), ("Tracks", 0.5 * thickness), ("Zones", 0), ("Polys", thickness)):
+            obj = getattr(self, f"make{name}")(
+                fit_arcs=sub_fit_arcs,
+                holes=holes,
+                shape_type=shape_type,
+                prefix=None,
+                thickness=thickness,
+            )
             if not obj:
                 continue
-            if shape_type=='solid':
+            if shape_type == "solid":
                 ofs = offset if self.layer_type < 16 else -offset
-                self._place(obj,Vector(0,0,ofs))
+                self._place(obj, Vector(0, 0, ofs))
             objs.append(obj)
 
         if not objs:
-            return
+            return None
 
-        if shape_type=='solid':
+        if shape_type == "solid":
             self._log("making solid")
-            obj = self._makeCompound(objs,'copper')
+            obj = self._makeCompound(objs, "copper")
             self._log("done solid")
         else:
-            obj = self._makeArea(objs,'copper',fit_arcs=fit_arcs)
-            self.setColor(obj,'copper')
+            obj = self._makeArea(objs, "copper", fit_arcs=fit_arcs)
+            self.setColor(obj, "copper")
             if solid:
                 self._log("making solid")
-                obj = self._makeSolid(obj,'copper',thickness)
+                obj = self._makeSolid(obj, "copper", thickness)
                 self._log("done solid")
-                self.setColor(obj,'copper')
+                self.setColor(obj, "copper")
 
-        self._place(obj,Vector(0,0,z))
+        self._place(obj, Vector(0, 0, z))
 
-        self._popLog('done copper layer {}',self.layer)
-        fitView();
+        self._popLog("done copper layer {}", self.layer)
+        fitView()
         return obj
 
+    def makeCoppers(
+        self,
+        shape_type="face",
+        fit_arcs=True,
+        prefix="",
+        holes=False,
+        board_thickness=None,
+        thickness=None,
+        fuse=False,
+    ):
 
-    def makeCoppers(self,shape_type='face',fit_arcs=True,prefix='',
-            holes=False,board_thickness=None,thickness=None,fuse=False):
-
-        self._pushLog('making all copper layers...',prefix=prefix)
+        self._pushLog("making all copper layers...", prefix=prefix)
 
         layer_save = self.layer
         objs = []
@@ -2672,48 +2675,52 @@ class KicadFcad:
         if not board_thickness or not thickness:
             for layer, name in self._copperLayers():
                 layers.append(layer)
-                _,offset, t = self._stackup_map[name]
+                _, offset, t = self._stackup_map[name]
                 offsets.append(offset)
                 thicknesses.append(t)
         else:
             for layer, name in self._copperLayers():
                 layers.append(layer)
-                if not hasattr(thickness,'get'):
+                if not hasattr(thickness, "get"):
                     thicknesses.append(float(thickness))
                 else:
-                    for key in (layer, str(layer), name, None, ''):
+                    for key in (layer, str(layer), name, None, ""):
                         try:
                             thicknesses.append(float(thickness.get(key)))
                             break
                         except Exception:
                             pass
                 if not len(layers) == len(thicknesses):
-                    raise RuntimeError('No copper thickness found for layer ' % name)
+                    raise RuntimeError("No copper thickness found for layer ")
 
-            if len(layers) == 1:
-                z_step = 0
-            else:
-                z_step = (board_thickness+thicknesses[-1])/(len(layers)-1)
-            offsets = [ board_thickness - i*z_step for i,_ in enumerate(layers) ]
+            z_step = 0 if len(layers) == 1 else (board_thickness + thicknesses[-1]) / (len(layers) - 1)
+            offsets = [board_thickness - i * z_step for i, _ in enumerate(layers)]
 
         thickness = max(thicknesses)
 
         if not layers:
-            raise ValueError('no copper layer found')
+            raise ValueError("no copper layer found")
 
         if not holes:
             hole_shapes = None
         elif fuse:
             # make only npth holes
-            hole_shapes = self._cutHoles(None,holes,None,npth=1)
+            hole_shapes = self._cutHoles(None, holes, None, npth=1)
         else:
-            hole_shapes = self._cutHoles(None,holes,None)
+            hole_shapes = self._cutHoles(None, holes, None)
 
         try:
-            for layer,t,z in zip(layers, thicknesses, offsets):
+            for layer, t, z in zip(layers, thicknesses, offsets):
                 self.setLayer(layer)
-                copper = self.makeCopper(shape_type,t,fit_arcs=fit_arcs,
-                                    holes=hole_shapes,z=z,prefix=None,fuse=fuse)
+                copper = self.makeCopper(
+                    shape_type,
+                    t,
+                    fit_arcs=fit_arcs,
+                    holes=hole_shapes,
+                    z=z,
+                    prefix=None,
+                    fuse=fuse,
+                )
                 if copper:
                     objs.append(copper)
         finally:
@@ -2721,165 +2728,183 @@ class KicadFcad:
                 self.setLayer(layer_save)
 
         if not objs:
-            self._popLog('no copper found')
-            return
+            self._popLog("no copper found")
+            return None
 
-        if shape_type=='solid' and fuse:
+        if shape_type == "solid" and fuse:
             # make copper for plated through holes
-            hole_coppers = self.makeHoles(shape_type='solid',prefix=None,
-                oval=True,npth=-2,board_thickness=board_thickness,extra_thickness=thickness)
+            hole_coppers = self.makeHoles(
+                shape_type="solid",
+                prefix=None,
+                oval=True,
+                npth=-2,
+                board_thickness=board_thickness,
+                extra_thickness=thickness,
+            )
             if hole_coppers:
-                self.setColor(hole_coppers,'copper')
-                self._place(hole_coppers,FreeCAD.Vector(0,0,-thickness*0.5))
-                objs.append(hole_coppers);
+                self.setColor(hole_coppers, "copper")
+                self._place(hole_coppers, FreeCAD.Vector(0, 0, -thickness * 0.5))
+                objs.append(hole_coppers)
 
             # connect coppers with pad with plated through holes, and fuse
-            objs = self._makeFuse(objs,'coppers')
-            self.setColor(objs,'copper')
+            objs = self._makeFuse(objs, "coppers")
+            self.setColor(objs, "copper")
 
             if holes:
                 # make plated through holes with inward offset
-                drills = self.makeHoles(shape_type='solid',prefix=None,
-                        board_thickness=board_thickness,extra_thickness=4*thickness,
-                        oval=True,npth=-1,offset=thickness,
-                        skip_via=self.via_skip_hole)
+                drills = self.makeHoles(
+                    shape_type="solid",
+                    prefix=None,
+                    board_thickness=board_thickness,
+                    extra_thickness=4 * thickness,
+                    oval=True,
+                    npth=-1,
+                    offset=thickness,
+                    skip_via=self.via_skip_hole,
+                )
                 if drills:
-                    self._place(drills,FreeCAD.Vector(0,0,-thickness))
-                    objs = self._makeCut(objs,drills,'coppers')
-                    self.setColor(objs,'copper')
+                    self._place(drills, FreeCAD.Vector(0, 0, -thickness))
+                    objs = self._makeCut(objs, drills, "coppers")
+                    self.setColor(objs, "copper")
 
-        self._popLog('done making all copper layers')
-        fitView();
+        self._popLog("done making all copper layers")
+        fitView()
         return objs
 
-
-    def loadParts(self,z=0,combo=False,prefix=''):
+    def loadParts(self, z=0, combo=False, prefix=""):
 
         if not os.path.isdir(self.part_path):
-            raise Exception('cannot find kicad package3d directory')
+            raise Exception("cannot find kicad package3d directory")
 
-        self._pushLog('loading parts on layer {}...',self.layer,prefix=prefix)
-        self._log('Kicad package3d path: {}',self.part_path)
+        self._pushLog("loading parts on layer {}...", self.layer, prefix=prefix)
+        self._log("Kicad package3d path: {}", self.part_path)
 
         at_bottom = self.isBottomLayer()
         if z == 0:
-            if at_bottom:
-                z = -0.1
-            else:
-                z = self.pcb.general.thickness + 0.1
+            z = -0.1 if at_bottom else self.pcb.general.thickness + 0.1
 
-        if self.add_feature or combo:
-            parts = []
-        else:
-            parts = {}
+        parts = [] if self.add_feature or combo else {}
 
-        for (module_idx,m) in enumerate(self.pcb.module):
+        for module_idx, m in enumerate(self.pcb.module):
             if unquote(m.layer) != self.layer:
                 continue
-            ref = '?'
-            value = '?'
+            ref = "?"
+            value = "?"
             for t in m.fp_text:
-                if t[0] == 'reference':
+                if t[0] == "reference":
                     ref = t[1]
-                if t[0] == 'value':
+                if t[0] == "value":
                     value = t[1]
 
-            m_at,m_angle = getAt(m)
-            m_at += Vector(0,0,z)
+            m_at, m_angle = getAt(m)
+            m_at += Vector(0, 0, z)
             objs = []
-            for (model_idx,model) in enumerate(m.model):
+            for model_idx, model in enumerate(m.model):
                 path = os.path.splitext(model[0])[0]
-                self._log('loading model {}/{} {} {} {}...',
-                        model_idx,len(m.model), ref,value,model[0])
-                for e in ('.stp','.STP','.step','.STEP'):
-                    filename = os.path.join(self.part_path,path+e)
+                self._log("loading model {}/{} {} {} {}...", model_idx, len(m.model), ref, value, model[0])
+                for e in (".stp", ".STP", ".step", ".STEP"):
+                    filename = os.path.join(self.part_path, path + e)
                     mobj = loadModel(filename)
                     if not mobj:
                         continue
-                    at = product(Vector(*model.at.xyz),Vector(25.4,25.4,25.4))
+                    at = product(Vector(*model.at.xyz), Vector(25.4, 25.4, 25.4))
                     rot = [-float(v) for v in reversed(model.rotate.xyz)]
-                    pln = Placement(at,Rotation(*rot))
+                    pln = Placement(at, Rotation(*rot))
                     if not self.add_feature:
                         if combo:
                             obj = mobj[0].copy()
                             obj.Placement = pln
                         else:
-                            obj = {'shape':mobj[0].copy(),'color':mobj[1]}
-                            obj['shape'].Placement = pln
+                            obj = {"shape": mobj[0].copy(), "color": mobj[1]}
+                            obj["shape"].Placement = pln
                         objs.append(obj)
                     else:
-                        obj = self._makeObject('Part::Feature','model',
-                            label='{}#{}#{}'.format(module_idx,model_idx,ref),
-                            links='Shape',shape=mobj[0])
+                        obj = self._makeObject(
+                            "Part::Feature",
+                            "model",
+                            label=f"{module_idx}#{model_idx}#{ref}",
+                            links="Shape",
+                            shape=mobj[0],
+                        )
                         obj.ViewObject.DiffuseColor = mobj[1]
                         obj.Placement = pln
                         objs.append(obj)
-                    self._log('loaded')
+                    self._log("loaded")
                     break
 
             if not objs:
                 continue
 
-            pln = Placement(m_at,Rotation(Vector(0,0,1),m_angle))
+            pln = Placement(m_at, Rotation(Vector(0, 0, 1), m_angle))
             if at_bottom:
-                pln = pln.multiply(Placement(Vector(),
-                                    Rotation(Vector(1,0,0),180)))
+                pln = pln.multiply(Placement(Vector(), Rotation(Vector(1, 0, 0), 180)))
 
-            label = '{}#{}'.format(module_idx,ref)
+            label = f"{module_idx}#{ref}"
             if self.add_feature or combo:
-                obj = self._makeCompound(objs,'part',label,force=True)
+                obj = self._makeCompound(objs, "part", label, force=True)
                 obj.Placement = pln
                 parts.append(obj)
             else:
-                parts[label] = {'pos':pln, 'models':objs}
+                parts[label] = {"pos": pln, "models": objs}
 
         if parts:
             if combo:
-                parts = self._makeCompound(parts,'parts')
+                parts = self._makeCompound(parts, "parts")
             elif self.add_feature:
-                grp = self._makeObject('App::DocumentObjectGroup','parts')
+                grp = self._makeObject("App::DocumentObjectGroup", "parts")
                 for o in parts:
                     grp.addObject(o)
                 parts = grp
 
-        self._popLog('done loading parts on layer {}',self.layer)
-        fitView();
+        self._popLog("done loading parts on layer {}", self.layer)
+        fitView()
         return parts
 
-
-    def loadAllParts(self,combo=False):
+    def loadAllParts(self, combo=False):
         layer = self.layer
         objs = []
         try:
             self.setLayer(0)
             objs.append(self.loadParts(combo=combo))
         except Exception as e:
-            self._log('{}',e,level='error')
+            self._log("{}", e, level="error")
         try:
             self.setLayer(31)
             objs.append(self.loadParts(combo=combo))
         except Exception as e:
-            self._log('{}',e,level='error')
+            self._log("{}", e, level="error")
         finally:
             self.setLayer(layer)
-        fitView();
+        fitView()
         return objs
 
+    def make(
+        self,
+        copper_thickness=0.05,
+        fit_arcs=True,
+        load_parts=False,
+        board_thickness=None,
+        combo=True,
+        fuseCoppers=False,
+    ):
 
-    def make(self,copper_thickness=0.05,fit_arcs=True,load_parts=False,
-            board_thickness=None, combo=True, fuseCoppers=False):
-
-        self._pushLog('making pcb...',prefix='')
+        self._pushLog("making pcb...", prefix="")
 
         if combo > 1:
             fuseCoppers = True
 
         objs = []
-        objs.append(self.makeBoard(prefix=None,thickness=board_thickness))
+        objs.append(self.makeBoard(prefix=None, thickness=board_thickness))
 
-        coppers = self.makeCoppers(shape_type='solid',holes=True,prefix=None,
-                fit_arcs=fit_arcs,thickness=copper_thickness,fuse=fuseCoppers,
-                board_thickness=board_thickness)
+        coppers = self.makeCoppers(
+            shape_type="solid",
+            holes=True,
+            prefix=None,
+            fit_arcs=fit_arcs,
+            thickness=copper_thickness,
+            fuse=fuseCoppers,
+            board_thickness=board_thickness,
+        )
 
         if coppers:
             if not fuseCoppers:
@@ -2894,42 +2919,40 @@ class KicadFcad:
             layer = self.layer
             try:
                 self.layer = None
-                if combo > 1:
-                    objs = self._makeFuse(objs,'pcb')
-                else:
-                    objs = self._makeCompound(objs,'pcb')
+                objs = self._makeFuse(objs, "pcb") if combo > 1 else self._makeCompound(objs, "pcb")
                 if self.add_feature and load_parts:
-                    try:
+                    with contextlib.suppress(Exception):
                         objs.ViewObject.SelectionStyle = 1
-                    except Exception:
-                        pass
             finally:
                 self.setLayer(layer)
 
-        self._popLog('all done')
-        fitView();
+        self._popLog("all done")
+        fitView()
         return objs
+
 
 def getTestFile(name):
     import glob
+
     if not os.path.exists(name):
         path = os.path.dirname(os.path.abspath(__file__))
-        path = os.path.join(path,'tests')
+        path = os.path.join(path, "tests")
         if name:
-            path = os.path.join(path,name)
+            path = os.path.join(path, name)
     else:
         path = name
     if os.path.isdir(path):
-        return glob.glob(os.path.join(path,'*.kicad_pcb'))
+        return glob.glob(os.path.join(path, "*.kicad_pcb"))
     if os.path.isfile(path):
         return [path]
-    path += '.kicad_pcb'
+    path += ".kicad_pcb"
     if os.path.isfile(path):
         return [path]
-    raise RuntimeError('Cannot find {}'.format(name))
+    raise RuntimeError(f"Cannot find {name}")
 
-def test(names=''):
-    if not isinstance(names,(tuple,list)):
+
+def test(names=""):
+    if not isinstance(names, (tuple, list)):
         names = [names]
     files = set()
     for name in names:
@@ -2940,4 +2963,3 @@ def test(names=''):
         pcb.make(fuseCoppers=True)
         pcb.add_feature = False
         Part.show(pcb.make())
-

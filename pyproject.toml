@@ -1,0 +1,122 @@
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+exclude = ["fcad_parser", "dxf_parser"]
+
+[tool.ruff.lint]
+select = [
+  "F",    # Pyflakes — errors
+  "E",    # Pycodestyle — errors
+  "W",    # Pycodestyle — warnings
+  "I",    # isort (native ruff)
+  "UP",   # pyupgrade — modernise syntax
+  "SIM",  # Simplify expressions
+  "RUF",  # Ruff-specific rules
+  "PL",   # Pylint rules
+  "BLE",  # Blind except
+  "PIE",  # Misc pie rules
+  "RET",  # Return
+  "C4",   # Comprehensions
+  "RSE",  # Raise
+  "SLF",  # Self/private
+  "FLY",  # Flynt — f-string conversion
+  "NPY",  # NumPy rules
+  "ICN",  # Import conventions
+  "PERF", # Performance
+  "T10",  # Debugger statements
+  "TID",  # Tidy imports
+  "TRY",  # Try/except patterns
+  "YTT",  # sys.version_info checks
+]
+ignore = [
+  "E402",
+  "E501",
+  "E722",
+  "E721",
+  "E902",
+  "E741",
+  "F403", "F405", "F821",
+  "PLR0911", "PLR0912", "PLR0913", "PLR0914", "PLR0915",
+  "PLR2004",
+  "PLW0602", "PLW0603", "PLW0604",
+  "PLC0415",
+  "PLW2901",
+  "PLW0127",
+  "PLC0205",
+  "BLE001",
+  "SLF001",
+  "T201",
+  "PERF401",
+  "TRY002", "TRY003", "TRY300", "TRY301",
+  "SIM102", "SIM108", "SIM115",
+]
+extend-fixable = ["SIM103", "SIM101", "C416", "C419"]
+
+[tool.ruff.lint.per-file-ignores]
+"test*.py" = ["T20"]
+"makefacedxf.py" = ["RUF001", "RUF003"]
+"fcad_parser/**" = ["ALL"]
+"dxf_parser/**" = ["ALL"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+
+[tool.uv]
+required-version = ">=0.5"
+
+[tool.ty]
+
+[tool.ty.environment]
+python-version = "3.11"
+
+[tool.ty.src]
+exclude = [
+  "fcad_parser",
+  "dxf_parser",
+  "demo",
+  "images",
+  "Resources",
+  "translations",
+  "*.gif",
+  "*.pdf",
+  "*.dxf",
+  "*.FCStd",
+  "*.stp",
+  ".github",
+]
+
+[tool.ty.analysis]
+replace-imports-with-any = [
+  "FreeCAD",
+  "FreeCADGui",
+  "Part",
+  "Draft",
+  "Mesh",
+  "PySide",
+  "PySide.QtGui",
+  "PySide.QtCore",
+  "PySide.QtWidgets",
+  "pivy",
+]
+allowed-unresolved-imports = [
+  "FreeCAD",
+  "FreeCADGui",
+  "Part",
+  "Draft",
+  "Mesh",
+  "PySide",
+  "PySide.QtGui",
+  "PySide.QtCore",
+  "PySide.QtWidgets",
+  "pivy",
+  "fcad_parser.**",
+  "dxf_parser.**",
+]
+
+[tool.ty.rules]
+all = "ignore"
+unused-ignore-comment = "warn"
+
+
