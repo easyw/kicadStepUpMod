@@ -22,6 +22,8 @@ FC_export_min_version="11670"  #11670 latest JM
 from kicad_parser import makeVect, make_gr_rect, make_gr_poly, makeThickLine
 from fcad_parser import unquote #maui
 
+from utils import crc_gen, make_string, make_unicode
+
 global use_AppPart, use_Links, use_LinkGroups
 use_AppPart=False # False
 use_Links=False
@@ -108,32 +110,6 @@ def recompute_active_object():
     except:
         FreeCAD.ActiveDocument.ActiveObject.recompute()
 ##    
-
-def crc_gen_t(data):
-    import binascii
-    import re
-    
-    #data=u'Würfel'
-    content=re.sub(r'[^\x00-\x7F]+','_', data)
-    #make_unicode(hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:])
-    #hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:].encode('utf-8')
-    #print(data +u'_'+ hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:])
-    return u'_'+ make_unicode_t(hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:])
-##
-
-def make_unicode_t(input):
-    if (sys.version_info > (3, 0)):  #py3
-        if isinstance(input, str):
-            return input
-        else:
-            input =  input.decode('utf-8')
-            return input
-    else: #py2
-        if type(input) != unicode:
-            input =  input.decode('utf-8')
-            return input
-        else:
-            return input
 
 def mkColor(*color):
     if len(color)==1:
@@ -294,7 +270,6 @@ def simple_cpy (obj,lbl):
 #
 
 from kicadStepUptools import removesubtree, cfg_read_all
-from kicadStepUptools import make_unicode, make_string
 import fcad_parser
 from fcad_parser import KicadPCB,SexpList
 
@@ -334,7 +309,7 @@ def addtracks(fname = None):
         last_pcb_path=os.path.dirname(fname)
         path, ftname = os.path.split(fname)
         ftname=os.path.splitext(ftname)[0]
-        ftname_sfx=crc_gen_t(make_unicode_t(ftname))
+        ftname_sfx=crc_gen(make_unicode(ftname))
         pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
         pg.SetString("last_pcb_path", make_string(last_pcb_path)) # py3 .decode("utf-8")
         prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")

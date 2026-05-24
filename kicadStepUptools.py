@@ -449,6 +449,7 @@ import tempfile, errno
 import re
 import time
 
+from utils import crc_gen, make_string, make_unicode
 
 max_recursion_limit=5000  # kSU issue#198
 sys.setrecursionlimit(max_recursion_limit)
@@ -1786,34 +1787,6 @@ def open(filename,insert=None):
         fps.addfootprint(filename)
         # onLoadFootprint(filename)
         
-
-def make_unicode(input):
-    if (sys.version_info > (3, 0)):  #py3
-        if isinstance(input, str):
-            return input
-        else:
-            input =  input.decode('utf-8')
-            return input
-    else: #py2
-        if type(input) != unicode:
-            input =  input.decode('utf-8')
-            return input
-        else:
-            return input
-
-def make_string(input):
-    if (sys.version_info > (3, 0)):  #py3
-        if isinstance(input, str):
-            return input
-        else:
-            input =  input.encode('utf-8')
-            return input
-    else:  #py2
-        if type(input) == unicode:
-            input =  input.encode('utf-8')
-            return input
-        else:
-            return input
 
 def PLine(prm1,prm2):
     if hasattr(Part,"LineSegment"):
@@ -6701,17 +6674,6 @@ def PullPCB(file_name=None):
    #    print('Cancel')
 ##
 
-def crc_gen(data):
-    import binascii
-    import re
-    
-    #data=u'Würfel'
-    content=re.sub(r'[^\x00-\x7F]+','_', data)
-    #make_unicode(hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:])
-    #hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:].encode('utf-8')
-    #print(data +u'_'+ hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:])
-    return u'_'+ make_unicode(hex(binascii.crc_hqx(content.encode('utf-8'), 0x0000))[2:])
-##
 def check_lightDir(set_default=False):
     
     pg=FreeCAD.ParamGet("User parameter:BaseApp/Preferences/View")

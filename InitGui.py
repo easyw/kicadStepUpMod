@@ -34,6 +34,8 @@ else:  #py2
 import ksu_locator
 from kicadStepUpCMD import *
 
+from utils import make_string as mk_str, make_unicode as mk_uni
+
 
 ksuWBpath = os.path.dirname(ksu_locator.__file__)
 #sys.path.append(ksuWB + '/Gui')
@@ -275,33 +277,6 @@ class KiCadStepUpWB ( Workbench ):
         prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
         if prefs.IsEmpty():
         #if prefs.GetContents() is None:
-            def mk_str(input):
-                if (sys.version_info > (3, 0)):  #py3
-                    if isinstance(input, str):
-                        return input
-                    else:
-                        input =  input.encode('utf-8')
-                        return input
-                else:  #py2
-                    if type(input) == unicode:
-                        input =  input.encode('utf-8')
-                        return input
-                    else:
-                        return input
-            def mk_uni(input):
-                if (sys.version_info > (3, 0)):  #py3
-                    if isinstance(input, str):
-                        return input
-                    else:
-                        input =  input.decode('utf-8')
-                        return input
-                else: #py2
-                    if type(input) != unicode:
-                        input =  input.decode('utf-8')
-                        return input
-                    else:
-                        return input
-            ##
             FreeCAD.Console.PrintError('Creating first time ksu preferences\n')
             #prefs.SetString('prefix3d_1',make_string(default_prefix3d))
             prefs.SetInt('pcb_color',0)
