@@ -32,7 +32,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.5.7'
+ksuCMD_version__='2.5.8'
 
 global invisible_objs
 invisible_objs=[]
@@ -52,14 +52,23 @@ try:
 except:
     # FreeCAD.Console.PrintWarning('A3 not available\n')
     a3 = False
+try:
+    import CAM
+except:
+    import Path
+    CAM = Path
 
 try:
+    import PathScripts.PathUtils
     from PathScripts.PathUtils import horizontalEdgeLoop
-    from PathScripts.PathUtils import horizontalFaceLoop
+    if hasattr(PathScripts.PathUtils, 'horizontalFaceLoop'):
+        from PathScripts.PathUtils import horizontalFaceLoop
+    else:
+        from PathScripts.PathUtils import horizontalFaceLoops
     from PathScripts.PathUtils import loopdetect
     import PathCommands
 except:
-    FreeCAD.Console.PrintError('Path WB not found\n')
+    FreeCAD.Console.PrintError('Path WB not found in kSU\n')
 
 def reload_lib(lib):
     if (sys.version_info > (3, 0)):
