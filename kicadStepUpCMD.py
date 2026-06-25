@@ -32,7 +32,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.5.8'
+ksuCMD_version__='2.6.1'
 
 global invisible_objs
 invisible_objs=[]
@@ -891,11 +891,14 @@ class ksuTools:
     def Activated(self):
         # do something here...
         import kicadStepUptools
+        global KSUWidget
         reload_lib( kicadStepUptools )
-        kicadStepUptools.KSUWidget.activateWindow()
-        kicadStepUptools.KSUWidget.show()
-        kicadStepUptools.KSUWidget.raise_()
-        FreeCAD.Console.PrintWarning( 'active :)\n' )
+        if kicadStepUptools.singleInstance():
+            kicadStepUptools.initKSUWidget()
+            KSUWidget.activateWindow()
+            KSUWidget.show()
+            KSUWidget.raise_()
+            FreeCAD.Console.PrintWarning( 'active :)\n' )
         #import kicadStepUptools
  
 FreeCADGui.addCommand('ksuTools',ksuTools())

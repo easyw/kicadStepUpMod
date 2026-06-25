@@ -501,7 +501,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "12.7.4"
+___ver___ = "12.8.0"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -743,6 +743,10 @@ FC_export_min_version="11670"  #11670 latest JM
 
 def ZoomFitThread():
     FreeCAD.Console.PrintWarning('thread ViewFitting\n')
+    if FreeCAD.ActiveDocument is not None:
+        FreeCADGui.SendMsgToActiveView("ViewFit")
+    #stop
+def ZoomFit():
     if FreeCAD.ActiveDocument is not None:
         FreeCADGui.SendMsgToActiveView("ViewFit")
     #stop
@@ -1331,6 +1335,7 @@ btn_sm_sizeX=20;btn_sm_sizeY=20;
 btn_md_sizeX=26;btn_md_sizeY=26;
 
 def close_ksu():
+    global KSUWidget
     #def closeEvent(self, e):
     spc="""<font color='white'>****************************************************************************</font><br>"""
     msg=translate("Close",
@@ -1362,7 +1367,7 @@ def close_ksu():
         say(doc.Label)
 ##
 def tabify():
-    #global KSUWidget
+    global KSUWidget
 
     KSUWidget.setFloating(False)  #dock
     KSUWidget.resize(sizeX,sizeY)
@@ -1404,6 +1409,7 @@ def tabify():
         #say ("focus on me!")
     
 def dock():
+    global KSUWidget
     global expanded_view, mingui
     expanded_view=0; mingui=0
     #KSUmw = FreeCADGui.getMainWindow()                 # PySide # the active qt window, = the freecad window since we are inside it 
@@ -1427,6 +1433,7 @@ def dock():
     #say ("now!")
 ##
 def dock_right():
+    global KSUWidget
     global expanded_view, mingui
     expanded_view=0;mingui=0
     KSUmw = FreeCADGui.getMainWindow()                 # PySide # the active qt window, = the freecad window since we are inside it 
@@ -1484,6 +1491,7 @@ def dock_right():
     #say ("now!")
 ##
 def undock():
+    global KSUWidget
     global expanded_view, mingui
     expanded_view=0; mingui=0
     textEdit_dim=textEdit_dim_base
@@ -1504,6 +1512,7 @@ def undock():
     #say ("now!")
 ##
 def temporary_undock():
+    global KSUWidget
     global expanded_view, mingui
     mingui=0
     #expanded_view=0
@@ -1520,7 +1529,7 @@ def temporary_undock():
 ##
 def minimz():
     #clear_console()
-    global mingui
+    global mingui, KSUWidget
     
     #sayerr(mingui)
     if mingui==0:
@@ -1550,6 +1559,7 @@ def minimz():
         #sayw("kicad StepUp version "+str(___ver___))
 ##
 def minimz_alt():
+    global KSUWidget
     KSUWidget.setFloating(True)  #undock
     KSUWidget.setWindowState(QtCore.Qt.WindowMinimized)
     KSUWidget.resize(sizeX,sizeY)
@@ -1779,9 +1789,10 @@ def open(filename,insert=None):
     elif ext==".kicad_mod":
         import kicadStepUptools
         reload_lib( kicadStepUptools )
-        KSUWidget.activateWindow()
-        KSUWidget.show()
-        KSUWidget.raise_()
+        if 0:
+            KSUWidget.activateWindow()
+            KSUWidget.show()
+            KSUWidget.raise_()
         import fps
         fps.addfootprint(filename)
         # onLoadFootprint(filename)
@@ -4496,8 +4507,17 @@ def findModelPath(model_type, path_list):
         for mpath in path_list:
             if (module_path=='not-found'):
                 model=model.replace(u'"', u'')  # strip out '"'
-                # mpath_U = re.sub("\\\\", "/", mpath)
-                # mpath_U = re.sub("//", "/", mpath_U)
+                from pathlib import Path, PureWindowsPath, PurePosixPath
+                #print(pt_win,'pt_win')
+                ## if 0: # not here!
+                ##     if pt_win==True:
+                ##         path_on_os = PureWindowsPath(module_path)
+                ##     else:
+                ##         path_on_os = PurePosixPath(module_path)
+                ##     mpath_U = str(path_on_os)
+                ## if 0:
+                ##     mpath_U = re.sub("\\\\", "/", mpath)
+                ##     mpath_U = re.sub("//", "/", mpath_U)  ## new maui new!!!
                 # mpath_U = mpath_U.replace("\\", "/")
                 mpath_U=mpath
                 utf_path=os.path.join(make_unicode(mpath_U),make_unicode(model))
@@ -6236,11 +6256,12 @@ def onLoadFootprint(file_name=None):
         #        paramGetPoM.SetBool("EnableObserver",False)
                     sayw("disabling PoM Observer")
             routineDrawFootPrint(content,name)
-            if (not pt_lnx): # and (not pt_osx): issue on AppImages hanging on loading 
-                FreeCADGui.SendMsgToActiveView("ViewFit")
-            else:
-                zf= Timer (0.3,ZoomFitThread)
-                zf.start()
+            ZoomFit()
+            # if (not pt_lnx): # and (not pt_osx): issue on AppImages hanging on loading 
+            #     FreeCADGui.SendMsgToActiveView("ViewFit")
+            # else:
+            #     zf= Timer (0.3,ZoomFitThread)
+            #     zf.start()
             #zf= Timer (0.3,ZoomFitThread)
             #zf.start()
             if disable_VBO:
@@ -7137,11 +7158,12 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
             if (zfit):
                 FreeCADGui.SendMsgToActiveView("ViewFit")
             #ImportGui.insert(u"./c0603.step","demo_5D_vrml_from_step")
-            if (not pt_lnx): # and (not pt_osx): issue on AppImages hanging on loading 
-                FreeCADGui.SendMsgToActiveView("ViewFit")
-            else:
-                zf= Timer (0.1,ZoomFitThread)
-                zf.start()
+            ZoomFit()
+            #if 1: #(not pt_lnx): # and (not pt_osx): issue on AppImages hanging on loading 
+            #    FreeCADGui.SendMsgToActiveView("ViewFit")
+            #else:
+            #    zf= Timer (0.1,ZoomFitThread)
+            #    zf.start()
             if keep_pcb_sketch == True:
                 #sayw(sketch_name_sfx+'001')
                 if doc.getObject(sketch_name_sfx+'001') in doc.Objects: #if 1: #try:
@@ -7332,8 +7354,10 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                         msg+=""+mod3d[0]+"<br>error: "+mod3d[5]+"<br>"
                         n_rpt=n_rpt+1
                 n_rpt_max=10
-                zf= Timer (0.3,ZoomFitThread)
-                zf.start()
+                if 0:
+                    ZoomFit()
+                #zf= Timer (0.3,ZoomFitThread)
+                #zf.start()
                 if (show_messages==True) and msg!="":
                     msg="""<b>error in model(s)</b><br>"""+msg
                     QtGui.QApplication.restoreOverrideCursor()
@@ -7368,9 +7392,10 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
 
             msg="running time: "+str(round(running_time,3))+"sec"    
             say(msg)
-            zf= Timer (0.3,ZoomFitThread)
-            zf.start()
-            zf.cancel()
+            ZoomFit()
+            # zf= Timer (0.3,ZoomFitThread)
+            # zf.start()
+            # zf.cancel()
             if SketchLayer != 'Edge.Cuts' and SketchLayer is not None:
                 FreeCADGui.ActiveDocument.ActiveView.viewTop()
             if grid_orig_warn: #adding a warning message because GridOrigin is set in FC Preferences but not set in KiCAD pcbnew file
@@ -7458,14 +7483,15 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
         # doc.undo()
         # adding a timer to allow double transactions during the python code
     QtCore.QTimer.singleShot(0.2,removing_kobjs)
-    if (zfit):
-        FreeCADGui.SendMsgToActiveView("ViewFit")
+    # if (zfit):
+    #     FreeCADGui.SendMsgToActiveView("ViewFit")
     #ImportGui.insert(u"./c0603.step","demo_5D_vrml_from_step")
-    if (not pt_lnx): # and (not pt_osx): issue on AppImages hanging on loading 
-        FreeCADGui.SendMsgToActiveView("ViewFit")
-    else:
-        zf= Timer (0.25,ZoomFitThread)
-        zf.start()
+    ZoomFit()
+    # if 1: #(not pt_lnx): # and (not pt_osx): issue on AppImages hanging on loading 
+    #     FreeCADGui.SendMsgToActiveView("ViewFit")
+    # else:
+    #     zf= Timer (0.25,ZoomFitThread)
+    #     zf.start()
     
         
 ###
@@ -12143,24 +12169,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
     #    say('aux origin not used')
     ## NB use always float() to guarantee number not string!!!
 
-    def get_mod_Ref(m):
-        #if hasattr(m,'property'):
-        if hasattr(m,'property'):
-            for p in m.property: #kv8 fp field
-                #print(str(p[0]),str(p[1]))
-                if 'reference' in str(p[0]).lower():
-                #    if 'reference' in str(p[1]).lower():
-                    Ref = str(p[1])
-                    #print (Ref)
-                    #stop
-                    return Ref
-        if hasattr(m,'fp_text'):
-            for p in m.fp_text: #kv7 fp field
-                #print(str(p[0]),str(p[1]))
-                if 'reference' in str(p[0]).lower():
-                #    if 'reference' in str(p[1]).lower():
-                    Ref = str(p[1])
-                    return Ref
+
         ## try:
         ##     Ref = m.property[0][1] #kv8 fp reference
         ## #elif hasattr(m,'fp_text'):
@@ -22219,9 +22228,12 @@ def singleInstance():
 ##
 
 
-if singleInstance():
+# if singleInstance():
 
+def initKSUWidget ():
+    
     from threading import Timer
+    global KSUWidget
     
     KSUWidget = QtGui.QDockWidget()          # create a new dckwidget
     KSUWidget.ui = Ui_DockWidget()           # myWidget_Ui()             # load the Ui script
@@ -22293,9 +22305,9 @@ if singleInstance():
     #else:
     #    dock_right()
 
-KSUWidget.activateWindow()
-KSUWidget.raise_()
-KSUWidget.hide()
+# KSUWidget.activateWindow()
+# KSUWidget.raise_()
+# KSUWidget.hide()
 
 def getComboView(self,window):
     """ Returns the main Tab.
