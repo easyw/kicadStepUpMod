@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global fps_version
-fps_version = '1.1.3'
+fps_version = '1.1.4'
 
 dvp=False #True
 if dvp:
@@ -361,7 +361,7 @@ def addfootprint(fname = None):
         prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUpGui")
         pcb_color_pos = prefs.GetInt('pcb_color')
         #pcb_color_values = [light_green,blue,red,purple,darkgreen,darkblue,lightblue,yellow,black,white]
-        assign_col=['#41c382','#2474cf','#ff4000','#9a1a85','#3c7f5d','#426091','#005fff','#fff956','#4d4d4d','#f0f0f0']
+        assign_col=['#7BCC52','#41c382','#2474cf','#ff4000','#9a1a85','#3c7f5d','#426091','#005fff','#fff956','#4d4d4d','#f0f0f0']
         #print(pcb_color_pos)
         pcb_transparency = 80
         pcb_col = (assign_col[pcb_color_pos])

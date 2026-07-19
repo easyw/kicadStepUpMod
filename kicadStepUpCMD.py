@@ -1258,9 +1258,10 @@ class ksuToolsLoadFootprint:
         if 1: #reload_Gui:
             reload_lib( kicadStepUptools )
         #FreeCAD.Console.PrintWarning( 'active :)\n' )
-        kicadStepUptools.KSUWidget.activateWindow()
-        kicadStepUptools.KSUWidget.show()
-        kicadStepUptools.KSUWidget.raise_()
+        if 0:
+            kicadStepUptools.KSUWidget.activateWindow()
+            kicadStepUptools.KSUWidget.show()
+            kicadStepUptools.KSUWidget.raise_()
         kicadStepUptools.onLoadFootprint()
 
 FreeCADGui.addCommand('ksuToolsLoadFootprint',ksuToolsLoadFootprint())

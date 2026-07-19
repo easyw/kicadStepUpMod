@@ -501,7 +501,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "12.8.0"
+___ver___ = "12.8.1"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -1787,14 +1787,16 @@ def open(filename,insert=None):
     #elif ext==".emn":
     #    onLoadBoard_idf(filename)
     elif ext==".kicad_mod":
-        import kicadStepUptools
-        reload_lib( kicadStepUptools )
-        if 0:
-            KSUWidget.activateWindow()
-            KSUWidget.show()
-            KSUWidget.raise_()
+        # import kicadStepUptools
+        # reload_lib( kicadStepUptools )
+        # if 0:
+        #     KSUWidget.activateWindow()
+        #     KSUWidget.show()
+        #     KSUWidget.raise_()
         import fps
         fps.addfootprint(filename)
+        #kicadStepUptools.KSUWidget.deleteLater()
+        
         # onLoadFootprint(filename)
         
 
@@ -6772,6 +6774,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
     global ignore_utf8, ignore_utf8_incfg, pcb_path, disable_VBO, use_AppPart, force_oldGroups, use_Links, use_LinkGroups
     global original_filename, edge_width, load_sketch, grid_orig, warning_nbr, running_time, addConstraints
     global conv_offs, zfit, fname_sfx, missingHeight, restore_specular_cls, preset_light
+    global KSUWidget
 
     import fcad_parser
     from fcad_parser import KicadPCB,SexpList

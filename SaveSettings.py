@@ -10,7 +10,11 @@
 #*  Kicad STEPUP (TM) is a TradeMark and cannot be freely usable            *
 #*                                                                          *
 import FreeCAD, sys, os, re
-    
+import PySide
+from PySide import QtGui, QtCore
+from TranslateUtils import translate
+QtWidgets = QtGui
+ 
 def reload_lib(lib):
     if (sys.version_info > (3, 0)):
         import importlib
@@ -27,6 +31,11 @@ def update_ksuGui():
             
     import kicadStepUptools
     reload_lib( kicadStepUptools )
+    global KSUWidget
+    
+    if kicadStepUptools.singleInstance():
+        kicadStepUptools.initKSUWidget()
+    
     if not vrml_materials:
         kicadStepUptools.KSUWidget.ui.cb_materials.setChecked(False)  # Check by default True or False
     else:
@@ -39,3 +48,5 @@ def update_ksuGui():
         kicadStepUptools.KSUWidget.ui.cb_expStep.setChecked(False)  # Check by default True or False
     else:
         kicadStepUptools.KSUWidget.ui.cb_expStep.setChecked(True)  # Check by default True or False
+        
+    kicadStepUptools.KSUWidget.deleteLater()
