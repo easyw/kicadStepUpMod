@@ -49,4 +49,5 @@ def update_ksuGui():
     else:
         kicadStepUptools.KSUWidget.ui.cb_expStep.setChecked(True)  # Check by default True or False
         
-    kicadStepUptools.KSUWidget.deleteLater()
+    kicadStepUptools.KSUWidget.hide()
+    #deleteLater()

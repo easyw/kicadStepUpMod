@@ -27,3 +27,5 @@ FreeCAD.addImportType("zip of STEP/FCStd File Type (*.zip)","ZipStepImport")
 import FreeCAD
 
 #FreeCAD.addImportType("IDF emp File Type (*.emp)","Import_Emp") 
+# import for the FreeCAD Material card
+#FreeCAD.addImportType("FreeCAD Material Card (*.FCMat)", "importFCMat")
