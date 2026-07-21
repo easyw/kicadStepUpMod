@@ -4,7 +4,7 @@ TBD:
 - diffuse color to appearance for exporting step/wrl
     - check hide for multiple 3d models
 - simple copy keep colors w/ FC0.22
-- kicad-embed: fp 3D step
+    - kicad-embed: fp 3D step blacklist/whitelist model embedded name
 - implement fp_rect for hole board loading
 - implement keepout zones load/save for footprints
 - implement edgecut load for footprints

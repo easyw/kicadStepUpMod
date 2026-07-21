@@ -501,7 +501,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "12.8.1"
+___ver___ = "13.1.4"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -525,7 +525,7 @@ global last_fp_path, last_pcb_path, plcmnt, xp, yp, exportFusing, exportS
 global full_placement, shape_col, align_vrml_step_colors
 global timer_Collisions, last_3d_path, expanded_view, mingui
 global textEdit_dim_base, textEdit_dim_hide #textEdit dimensions for hiding showing text content
-global warning_nbr, original_filename, edge_width, load_sketch, grid_orig, dvm, pt_osx, pt_lnx, dqd, running_time
+global warning_nbr, original_filename, edge_width, load_sketch, grid_orig, dvm, pt_osx, pt_lnx, pt_win, dqd, running_time
 global addConstraints, precision, conv_offs, maxRadius, pad_nbr, use_pypro, accept_spline, maxDegree, maxSegments
 global zfit, restore_specular_cls, preset_light
 
@@ -4555,7 +4555,7 @@ def restore_specular(obj_pre_list):
         FreeCAD.Console.PrintWarning('default specular color restored\n')
 
 ##
-def Load_models(pcbThickness,modules):
+def Load_models(pcbThickness,modules,embedded_lst):
     global off_x, off_y, volume_minimum, height_minimum, bbox_all, bbox_list
     global whitelisted_model_elements
     global models3D_prefix, models3D_prefix2, models3D_prefix3, models3D_prefix4,default_prefix3d
@@ -4582,12 +4582,16 @@ def Load_models(pcbThickness,modules):
     botV_name='BotV'+fname_sfx
     stepM_name='Step_Models'+fname_sfx
     stepV_name='Step_Virtual_Models'+fname_sfx
+    embedded_files=[]
+    embedded_files_names=[]
+    mdl_name='no3Dmodel'
     
     my_hide_list=""
 
     for i in range(len(modules)):
         step_module=modules[i][0]
         module_container = step_module
+        mdl_name='no3Dmodel'
         #print(type(step_module))  #maui test py3
         #sayw('added '+str(i)+' model(s)')
         # say(' modelname= '+modules[i][0]+' '+str(i));
@@ -4668,7 +4672,65 @@ def Load_models(pcbThickness,modules):
             step_module=step_module.replace(u'"', u'')  # name with spaces
             encoded=1
             say('adjusting 2nd Local Path')
-            say('step-module-replaced '+step_module)      
+            say('step-module-replaced '+step_module)
+        elif (step_module.find('kicad-embed:') and (step_module.lower().rstrip('"').endswith('.stp') \
+                or step_module.lower().rstrip('"').endswith('.step') or step_module.lower().rstrip('"').endswith('.stpz') \
+                or step_module.lower().rstrip('"').endswith('.igs') or step_module.lower().rstrip('"').endswith('.iges'))):
+            say('EMBEDDED MODEL '+step_module[15:-1])
+            #print('here we need to generate file')
+            try:
+                import zstd
+            except:
+                try: 
+                    import addonmanager_dependency_installer
+                    depsInstaller = addonmanager_dependency_installer.DependencyInstaller([],['zstd'],[])
+                    depsInstaller._install_python_packages()
+                except:
+                    sayw('zstd missing for EMBEDDED MODEL support!')
+            try: #if 1: #
+                import zstd
+                e=embedded_lst
+                #print('embedded file num:',len(e.file))
+                if step_module.lower().rstrip('"').endswith('stp') or step_module.lower().rstrip('"').endswith('step') or step_module.lower().rstrip('"').endswith('stpz') or step_module.endswith('igs') or step_module.lower().rstrip('"').endswith('iges'):
+                    mdl_name=step_module.lstrip('"').lstrip('kicad-embed://').rstrip('"')
+                    #print('embedded mdl_name',mdl_name)
+                else:
+                    mdl_name='no3Dmodel'
+                if len(embedded_lst)>0: 
+                    #print('embedded mdl_name',mdl_name)
+                    for f in e.file:
+                        if mdl_name!='no3Dmodel':
+                            fname=f.name.lower().strip('"')
+                            if fname.endswith('stp') or fname.endswith('step') or fname.endswith('stpz') or fname.endswith('igs') or fname.endswith('iges'):
+                                # print('embedded mdl_name',mdl_name)
+                                # print(embedded_files_names)
+                                if mdl_name not in embedded_files_names and mdl_name in f.name:
+                                    embedded_files_names.append(fname)
+                                    fname_suffix = fname[fname.rindex("."):]
+                                    d=''.join(f.data)
+                                    w=base64.b64decode(d)
+                                    wd=zstd.decompress(w)
+                                    tempdir = tempfile.gettempdir() # get the current temporary directory
+                                    tempfilepath = os.path.join(tempdir,mdl_name)
+                                    #with tempfile.NamedTemporaryFile(mode='wb', delete=False,suffix=fname_suffix) as tf:
+                                    with builtin.open(tempfilepath, 'wb') as tf:
+                                        tf.write(wd)
+                                    #print(tf.name)
+                                    if os.path.exists(tf.name):
+                                        embedded_files.append(tf.name)
+                                        # print (tf.name)
+                                    if mdl_name in f.name:
+                                        step_module=tf.name
+                                        say(u'embedded step_module '+f.name)
+                                        #print('embedded step_module',step_module)
+                                    del d
+                                    del w
+                                    del wd
+            except: #else: #
+                sayw('EMBEDDED MODEL NOT supported!')
+        # print(embedded_files)
+        # print(embedded_files_names)
+        #stop
         if (encoded == 0) and step_module != 'no3Dmodel' and modules[i][4] != 'noLayer':  #test local 3D path without the use of KIPRJMOD or ENV
             step_module_local = re.sub("\\\\", "/", step_module)     #subst '\\' with '/'
             # step_module_local = step_module_local.replace("\\", "/") #subst '\'  with '/'
@@ -4790,15 +4852,23 @@ def Load_models(pcbThickness,modules):
         else:
             model_name='no3Dmodel'
         blacklisted=0
+        #if mdl_name.lower().rfind('.s')!=-1 or mdl_name.lower().rfind('.i')!=-1:
+        #    #print('mdl_name no ext pos',mdl_name.rfind('.'))
+        #    print('mdl_name no ext',mdl_name[:mdl_name.rindex('.')])
         if blacklisted_model_elements != '':
             if blacklisted_model_elements.find(model_name) != -1:
                 if model_name not in whitelisted_3Dmodels:
                     blacklisted=1
+            elif mdl_name.lower().rfind('.s')!=-1 or mdl_name.lower().rfind('.i')!=-1:
+                if blacklisted_model_elements.find(mdl_name[:mdl_name.rindex('.')]) != -1:
+                    if mdl_name[:mdl_name.rindex('.')] not in whitelisted_3Dmodels:
+                        blacklisted=1
         ###
 
         if (blacklisted==0):
             # print(modules[i][4],i,step_module)
             # print(modules[i][4] == 'noLayer')
+            #print('model name',model_name)
             if step_module != 'no3Dmodel' and modules[i][4] != 'noLayer':
                 createScaledObjs=False
                 if model_name=="box_mcad" or model_name=="cylV_mcad" or model_name=="cylH_mcad":
@@ -4838,11 +4908,16 @@ def Load_models(pcbThickness,modules):
                         #module_path_n = re.sub("/", "\\\\", module_path)
                         #sayerr(module_path_n)
                         #ImportGui.insert(module_path_n,FreeCAD.ActiveDocument.Name)
-                        try: #should be fixed NOW
+                        try: #fixed HERE
                             # support for stpZ files
-                            # module_path = re.sub("\\\\", "/", module_path)
-                            # module_path = re.sub("//", "/", module_path)  ## new maui new!!!
+                            # print(module_path)
+                            # ok module_path_raw = r'{}'.format(module_path)
+                            # ok print(module_path_raw)
+                            # ok    module_path = module_path_raw.replace('\\\\', '/')
+                            # ok    module_path = module_path_raw.replace('//', '/')
+                            # Convert path to Windows format
                             from pathlib import Path, PureWindowsPath, PurePosixPath
+                            #print(module_path, 'pre' )
                             import platform
                             if 'win' in (platform.system().lower()):
                             #if pt_win==True:
@@ -4850,6 +4925,13 @@ def Load_models(pcbThickness,modules):
                             else:
                                 path_on_os = PurePosixPath(module_path)
                             module_path = str(path_on_os)
+                            #print(module_path, 'after' )
+                            ## module_path = re.sub("\\\\", "/", module_path)
+                            ## if not (os.path.isfile(module_path)):
+                            ##     print(module_path, 'NOT FOUND' )
+                            ##     module_path = re.sub("//", "/", module_path)  ## new maui new!!!
+                            ##     print(module_path)
+                            ##     #stop
                             if module_path.lower().endswith('stpz'):
                                 import stepZ
                                 stepZ.insert(module_path,FreeCAD.ActiveDocument.Name)
@@ -4997,7 +5079,17 @@ def Load_models(pcbThickness,modules):
                                 newobj=createSolidBBox3(newobj)
                         skip_status="not"
                         #tobefixed volume for App::Part
-                        if model_name not in whitelisted_3Dmodels:
+                        
+                        wlist_skip=False
+                        #if mdl_name.lower().rfind('.s')!=-1 or mdl_name.lower().rfind('.i')!=-1:
+                        #    #print('mdl_name no ext pos',mdl_name.rfind('.'))
+                        #    print('mdl_name no ext',mdl_name[:mdl_name.rindex('.')])
+                        if mdl_name.lower().rfind('.s')!=-1 or mdl_name.lower().rfind('.i')!=-1:
+                            if mdl_name[:mdl_name.rindex('.')] in whitelisted_3Dmodels:
+                                skip_status="not"
+                                # model_name=mdl_name[:mdl_name.rindex('.')]
+                                wlist_skip=True
+                        if model_name not in whitelisted_3Dmodels and not(wlist_skip):
                             if volume_minimum != 0 or height_minimum != 0: #if checking volume or height
                                 if newobj.Shape.Volume>volume_minimum:  #mauitemp min vol
                                     if abs(newobj.Shape.BoundBox.ZLength)>height_minimum:  #mauitemp min height
@@ -5511,6 +5603,11 @@ def Load_models(pcbThickness,modules):
         wmsg+="""... missing module(s) '.step' or '.stp' or .iges' or '.igs'<br>"""
         for i in range(min(len (missings),n_rpt_max)):
             wmsg=wmsg+missings[i]+'<br>'
+        if 'kicad-embed' in missing_models:
+            try:
+                import zstd
+            except:
+                wmsg=wmsg+'<b>py library "zstd" missing for embedding file</b>'+'<br>'
         QtGui.QApplication.restoreOverrideCursor()
         reply = QtGui.QMessageBox.information(None,"Error ...",wmsg+'<br><b>. . . missing '+str(len(missings)-1)+' model(s)</b>' )
         if len (missings) > warning_nbr and warning_nbr != -1: #warning_nbr =-1 for skipping the test
@@ -5525,6 +5622,12 @@ def Load_models(pcbThickness,modules):
     #    FreeCAD.Console.PrintMessage("black-listed module "+ '\n'.join(map(str, blacklisted_models)))
     #    reply = QtGui.QMessageBox.information(None,"Info ...","... black-listed module(s)\n"+ '\n'.join(map(str, blacklisted_models)))
     #    #FreeCAD.Console.PrintMessage("black-listed module "+ '\n'.join(map(str, blacklisted_models)))
+    for f in embedded_files:
+        try:
+            os.remove(f)
+        except:
+            print('file already deleted')
+            pass
     return blacklisted_model_elements
 ###
 
@@ -6759,6 +6862,23 @@ def check_lightDir(set_default=False):
         pass
         #say('HeadlightDirection NOT defined') #pre FC0.22 02.2024
 ##
+def sanitize_file(originalFilename):
+    with pythonopen(original_filename,'rb') as o_f:
+        #line=o_f.read()
+    #    with tempfile.NamedTemporaryFile(mode='wb', delete=False) as tf:
+    #        tf.write(re.sub(b"\\\\",b"/",o_f.read()))
+        with tempfile.NamedTemporaryFile(mode='wb', delete=False) as tf:
+            for line in o_f:
+                if b'\\\\' in line and b'(property' in line:
+                    line=re.sub(b'\\\\\\\\',b'/',line)
+                    line=re.sub(b'\\\\',b'/',line)
+                    #print(line)
+                tf.write(line)
+    tname=tf.name
+    print(tname)
+    return tname
+##
+
 def onLoadBoard(file_name=None,load_models=None,insert=None):
     #name=QtGui.QFileDialog.getOpenFileName(this,tr("Open Image"), "/home/jana", tr("Image Files (*.png *.jpg *.bmp)"))[0]
     #global module_3D_dir
@@ -6783,7 +6903,10 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
     ImportMode_status=0
     import_drawings = False
     objs_pre=[]
+    embedded_files=[]
+
     doc=FreeCAD.ActiveDocument
+    
     if doc is not None:
         objs_pre=doc.Objects
     
@@ -6943,7 +7066,19 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                 start_time=current_milli_time()
                 #filename="C:/Cad/Progetti_K/D-can-term/can-term-test-fcad.kicad_pcb"
                 #filename="c:\\Temp\\backpanel3.kicad_pcb"
-                mypcb = KicadPCB.load(name) #test parser
+                if 1:
+                    mypcb = KicadPCB.load(name) #test parser
+                else:
+                    tname = sanitize_file(name)
+                    mypcb = KicadPCB.load(tname)
+                    if os.path.exists(tname):
+                        os.remove(tname)
+                
+                if hasattr(mypcb, 'embedded_files'):
+                    if len (mypcb.embedded_files)>=1:
+                        emdedded_list=mypcb.embedded_files[0]
+                    else:
+                        emdedded_list=[]
                 off_x=0; off_y=0  #offset of the board & modules
                 grid_orig_warn=False
                 aux_orig_warn=False
@@ -7319,8 +7454,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                 if (zfit):
                     FreeCADGui.SendMsgToActiveView("ViewFit")
                 #else:        
-                Load_models(pcbThickness,modules)
-        
+                Load_models(pcbThickness,modules,emdedded_list)
                 #enable_ReadShapeCompoundMode=False
                 if enable_ReadShapeCompoundMode:
                     paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
@@ -7489,6 +7623,11 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
     # if (zfit):
     #     FreeCADGui.SendMsgToActiveView("ViewFit")
     #ImportGui.insert(u"./c0603.step","demo_5D_vrml_from_step")
+    # try:
+    #     KSUWidget.deleteLater()
+    # except:
+    #     FreeCAD.Console.PrintMessage("KSUWidget already deleted")
+    #     pass
     ZoomFit()
     # if 1: #(not pt_lnx): # and (not pt_osx): issue on AppImages hanging on loading 
     #     FreeCADGui.SendMsgToActiveView("ViewFit")
@@ -8026,6 +8165,20 @@ def say_warning(msg):
         spc="""<font color='white'>*******************************************************************************</font><br>
         """
         msg1 = translate("Say", "Warning ...")
+        QtGui.QApplication.restoreOverrideCursor()
+        #RotateXYZGuiClass().setGeometry(25, 250, 500, 500)
+        diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Warning,
+                                msg1,
+                                msg)
+        diag.setWindowModality(QtCore.Qt.ApplicationModal)
+        diag.exec_()
+
+def say_stopping(msg):
+        QtGui.QApplication.restoreOverrideCursor()
+        # msg="""Select <b>a Compound</b> or <br><b>a Part Design group</b><br>or <b>more than one Part</b> object !<br>"""
+        spc="""<font color='white'>*******************************************************************************</font><br>
+        """
+        msg1 = translate("Say", "Stopping? ...")
         QtGui.QApplication.restoreOverrideCursor()
         #RotateXYZGuiClass().setGeometry(25, 250, 500, 500)
         diag = QtGui.QMessageBox(QtGui.QMessageBox.Icon.Warning,
@@ -22349,4 +22502,7 @@ def getComboView(self,window):
 ## if QtGui.QApplication.style().metaObject().className() == "QStyleSheetStyle":
 ##     form.setStyleSheet('QPushButton {border-radius: 0px; padding: 1px 2px;}')
 
-
+# if singleInstance():
+#     initKSUWidget()
+#    global KSUWidget
+#    KSUWidget.deleteLater()

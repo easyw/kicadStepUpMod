@@ -16,7 +16,7 @@ except ImportError:
 __author__ = "Zheng, Lei"
 __copyright__ = "Copyright 2016, Zheng, Lei"
 __license__ = "MIT"
-__version__ = "1.1.5" #maui
+__version__ = "1.1.6" #maui
 __email__ = "realthunder.dev@gmail.com"
 __status__ = "Prototype"
 
@@ -59,8 +59,17 @@ class KicadPCB(SexpParser):
                'fp_rect', # maui
                'fp_poly', # maui
                'zone', # maui
+               #'embedded_files', # maui
+               #'file', # maui
+               #'type', # maui
+               #'name', # maui
                'pad',
                'model']
+    _embedded_files = ['file', # maui
+               'name',
+               'type',
+               'data',
+               'checksum']
 
     _defaults =('net',
                 ('net_class',
@@ -76,11 +85,16 @@ class KicadPCB(SexpParser):
                 'segment',
                 'arc',
                 'via',
+                'embedded_files',  # maui
+                ['embedded_files'] + _embedded_files,
+                #'embedded_fonts',  # maui
                 'module',
                 ['module'] + _module,
                 ['footprint'] + _module,
                 ('zone',
-                    'filled_polygon'))
+                    'filled_polygon')
+                )
+                
 
     _alias_keys = {'footprint' : 'module'}
     _parse_module = KicadPCB_module
@@ -94,7 +108,14 @@ class KicadPCB(SexpParser):
         return getSexpError(self)
 
     @staticmethod
+##    def load(filename, quote_no_parse=None):
+###        with open(filename,'r') as f:
+###            return KicadPCB(parseSexp(f.read(), quote_no_parse))
+##        with open(filename,'rb') as f:  # maui
+##            return KicadPCB(parseSexp(f.read().decode("UTF-8"), quote_no_parse)) # maui
+##            #return KicadPCB(parseSexp(re.sub("\\\\","/",f.read().decode("UTF-8"))))
+##            #return KicadPCB(parseSexp(re.sub("\\\\","/",f.read().decode("UTF-8")), quote_no_parse))
+
     def load(filename, quote_no_parse=None, encoding='utf-8'):
         with open(filename,'r', encoding=encoding) as f:
             return KicadPCB(parseSexp(f.read(), quote_no_parse))
-

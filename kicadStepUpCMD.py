@@ -32,7 +32,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.6.2'
+ksuCMD_version__='2.6.3'
 
 global invisible_objs
 invisible_objs=[]
@@ -3362,27 +3362,64 @@ def copy_subobject(doc, o,suffix='(copy)'):
     if not hasattr(o, 'Shape') or o.TypeId == 'Sketcher::SketchObject' or o.Shape.isNull():
         return copied_object
     vo_o = o.ViewObject
+    if o.Name.startswith('Link'):
+        oo=o.LinkedObject
+        #print('here2','oo',oo.Label,'o',o.Label)
+        vo_oo=oo.ViewObject
+    else:
+        vo_oo=o.ViewObject
+        oo=o
     try:
-        copy = doc.addObject('Part::Feature', o.Name + '_Shape')
-        copy.Shape = o.Shape
-        #copy.Label = 'Copy of ' + o.Label
-        if suffix=='_':
-            copy.Label = mk_str_u(o.Label)+suffix
+        if 0: #oo.TypeId == 'App::Part':
+            for p in oo.OutList:
+                if p.TypeId == 'Part::Feature':
+                    copy = doc.addObject('Part::Feature', p.Name + '_Shape')
+                    copy.Shape = p.Shape
+                    #copy.Label = 'Copy of ' + o.Label
+                    if suffix=='_':
+                        copy.Label = mk_str_u(p.Label)+suffix
+                    else:
+                        copy.Label = mk_str_u(p.Label)+'.'+suffix
+                    #copy.Placement = get_recursive_inverse_placement(o).inverse()
+                    vo_copy = copy.ViewObject
+                    vo_copy.ShapeAppearance = p.ViewObject.ShapeAppearance
+                    #print('here3',oo.Name,oo.Label)
+                    vo_copy.ShapeColor = p.ViewObject.ShapeColor
+                    vo_copy.LineColor = p.ViewObject.LineColor
+                    vo_copy.PointColor = p.ViewObject.PointColor
+                    vo_copy.DiffuseColor = p.ViewObject.DiffuseColor
+                    vo_copy.Transparency = p.ViewObject.Transparency
+                    #if hasattr(o, 'getGlobalPlacement'):
+                    copy.Placement = p.Placement.multiply(o.Placement.inverse()) #.inverse()) #.multiply(o.Placement) #oo.Placement.multiply(p.Placement) #p.getGlobalPlacement() #oo.Placement #
+                    #print('here1???','p',p.Label,'copy',copy.Label) 
+                    #print(oo.Name,oo.Label)
         else:
-            copy.Label = mk_str_u(o.Label)+'.'+suffix
-        #copy.Placement = get_recursive_inverse_placement(o).inverse()
-        copy.Placement = o.getGlobalPlacement()
-
-        vo_copy = copy.ViewObject
-        vo_copy.ShapeColor = vo_o.ShapeColor
-        vo_copy.LineColor = vo_o.LineColor
-        vo_copy.PointColor = vo_o.PointColor
-        vo_copy.DiffuseColor = vo_o.DiffuseColor
-        vo_copy.Transparency = vo_o.Transparency
+            copy = doc.addObject('Part::Feature', o.Name + '_Shape')
+            copy.Shape = o.Shape
+            #copy.Label = 'Copy of ' + o.Label
+            if suffix=='_':
+                copy.Label = mk_str_u(o.Label)+suffix
+            else:
+                copy.Label = mk_str_u(o.Label)+'.'+suffix
+            #copy.Placement = get_recursive_inverse_placement(o).inverse()
+            vo_copy = copy.ViewObject
+            vo_copy.ShapeAppearance = vo_oo.ShapeAppearance
+            #print('here3',oo.Name,oo.Label)
+            vo_copy.ShapeColor = vo_o.ShapeColor
+            vo_copy.LineColor = vo_o.LineColor
+            vo_copy.PointColor = vo_o.PointColor
+            vo_copy.DiffuseColor = vo_o.DiffuseColor
+            vo_copy.Transparency = vo_o.Transparency
+            #if hasattr(o, 'getGlobalPlacement'):
+            copy.Placement = o.getGlobalPlacement()
+            #print('here3','oo',o.Label,'copy',copy.Label)
+            #print(oo.Name,oo.Label)
+        
     except AttributeError:
         pass
     else:
         copied_object = [copy]
+        #print('here4','copy',copy.Label)
     return copied_object
 
 def get_recursive_inverse_placement(o):
