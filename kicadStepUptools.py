@@ -6862,6 +6862,352 @@ def check_lightDir(set_default=False):
         pass
         #say('HeadlightDirection NOT defined') #pre FC0.22 02.2024
 ##
+# FFC stiffener auto-generation from custom user layer names:
+#   Side.Material_thicknessmm   e.g. 'F.Polyimide_0.1mm' or 'B.tesa8854_0.05mm'
+# trailing text after 'mm' (e.g. an old '_L1'/'_L2' suffix) is tolerated/ignored,
+# so boards named under the older convention keep working without a rename
+FFC_STIFFENER_LAYER_RE = re.compile(
+    r'^(?P<side>F|B)\.(?P<material>FR4|Polyimide|Stainless_Steel|3M468|tesa8854|3M9077)'
+    r'_(?P<thickness>[0-9]+(?:\.[0-9]+)?)mm.*$')
+
+# tie-break stacking order (lower = closer to the PCB) used only when two
+# overlapping stiffener layers have the same drawn area
+FFC_STIFFENER_MATERIAL_PRIORITY = {
+    'Stainless_Steel': 0,
+    'FR4': 1,
+    'Polyimide': 2,
+    '3M468': 3, 'tesa8854': 3, '3M9077': 3,  # tape
+}
+
+# (r,g,b), transparency(0-100) per material. Kept fully opaque: on a complex
+# curved/multi-holed stiffener shape, even mild transparency (~5%) makes OpenGL's
+# alpha-blend triangle sorting visibly fail (self-overlapping "streamer" artifacts
+# on the shape's own curved surfaces), which opaque (0%) rendering avoids entirely.
+FFC_STIFFENER_APPEARANCE = {
+    'FR4':             ((0.65, 0.60, 0.35), 0),
+    'Polyimide':       ((0.45, 0.27, 0.12), 0),
+    'Stainless_Steel': ((0.70, 0.71, 0.73), 0),
+    '3M468':           ((0.90, 0.78, 0.25), 0),
+    'tesa8854':        ((0.88, 0.86, 0.80), 0),
+    '3M9077':          ((0.90, 0.78, 0.25), 0),
+}
+
+def generate_ffc_stiffeners(mypcb, doc, pcbThickness, off_x=0, off_y=0):
+    ## builds one Part::Feature per matching custom layer, extruded from the
+    ## gr_poly/gr_rect graphics drawn on that layer, stacked outward from the PCB
+    ## surface by 'side' (F/B). Layers only stack on top of each other if their
+    ## drawn shapes actually overlap; within an overlapping group, the layer with
+    ## the largest area goes closest to the PCB, ties broken by material (Stainless
+    ## Steel, then FR4, then Polyimide, then tape - closest to PCB first)
+    import kicad_parser
+
+    if not hasattr(mypcb, 'layers'):
+        sayw('FFC stiffener scan: this board has no layers section, skipping')
+        return []
+
+    def layer_matches(item, lname):
+        # lname here is always the *canonical* layer name (e.g. 'User.1'), which is
+        # what gr_poly/gr_rect/... .layer(s) attributes reference, regardless of any
+        # user-assigned display name
+        k_test = getattr(item, 'layer', None)
+        if k_test is None:
+            k_test = getattr(item, 'layers', None)
+        if k_test is None:
+            return False
+        if isinstance(k_test, str):
+            return k_test.strip('"') == lname
+        return lname in [str(l).strip('"') for l in k_test]
+
+    # tokens that can show up after the canonical layer name in a (layers ...) entry
+    # besides the user-assigned display name, e.g. (9 "F.Adhes" user "F.Adhesive")
+    # or (39 "User.1" user "B.Polyimide_0.1mm"); 'front'/'back' are a KiCad layer
+    # side qualifier seen instead of 'user' on some boards, e.g.
+    # (39 "User.1" back "F.3M9077_0.05mm")
+    non_display_tokens = {'signal', 'power', 'mixed', 'jumper', 'user', 'hide', 'front', 'back'}
+
+    stiffeners = []
+    user_layer_names = []
+    for lynbr in mypcb.layers:
+        entry = mypcb.layers['{0}'.format(str(lynbr))]
+        canonical = str(entry[0]).strip('"')
+        ltype = str(entry[1]).strip('"') if len(entry) > 1 else ''
+        display = canonical
+        for extra in entry[1:]:
+            s = str(extra).strip('"')
+            if s not in non_display_tokens:
+                display = s
+                break
+        if ltype in ('user', 'front', 'back') and display != canonical:
+            # only layers actually renamed by the user are plausible stiffener
+            # attempts; the board's standard user layers (Dwgs.User, Margin, ...)
+            # are always present and would otherwise make this fire on every board
+            user_layer_names.append(display)
+        m = FFC_STIFFENER_LAYER_RE.match(display)
+        if not m:
+            continue
+        thickness = float(m.group('thickness'))
+        if thickness <= 0:
+            sayerr("FFC stiffener layer '"+display+"' has invalid thickness, skipped")
+            continue
+        stiffeners.append({'layer': display, 'canonical_layer': canonical,
+                            'side': m.group('side'), 'material': m.group('material'),
+                            'thickness': thickness})
+
+    if not stiffeners:
+        # most boards don't use FFC stiffener layers at all: stay silent then.
+        # only speak up when the user has renamed a layer (an actual attempt at
+        # naming a stiffener) that didn't match the expected pattern
+        if user_layer_names:
+            say("FFC stiffener scan: renamed layer(s) found that don't match the "
+                "'Side.Material_thicknessmm' pattern: "+', '.join(user_layer_names))
+        return []
+
+    def place_on_footprint(shape, m):
+        # footprint-local graphics -> board-absolute: rotate about the footprint's
+        # own origin, then translate to its placement (same convention as the rest
+        # of this file, e.g. the Edge.Cuts-from-fp_poly and pad/drill placement code)
+        at = m.at
+        angle = float(at[2]) if len(at) > 2 else 0.0
+        if angle:
+            shape.rotate(FreeCAD.Vector(0, 0, 0), FreeCAD.Vector(0, 0, 1), angle)
+        shape.translate(FreeCAD.Vector(float(at[0]), -float(at[1]), 0))
+        return shape
+
+    # build the geometry up-front: needed both for the overlap/area-based ordering
+    # below and for the actual solids, so it's only built once per layer.
+    # Board-level (gr_line/gr_arc, already in absolute coords) and footprint-level
+    # (fp_line/fp_arc, transformed to absolute coords) edges are pooled into ONE
+    # combined edge soup before assembling wires: a single outline is sometimes
+    # drawn partly on the board and partly inside a footprint, and assembling them
+    # separately leaves each half open, which OSCD2Dg force-closes with a spurious
+    # straight line.
+    for s in stiffeners:
+        standalone_faces = []
+        all_edges = []
+
+        for lp in mypcb.gr_poly:
+            if not layer_matches(lp, s['canonical_layer']):
+                continue
+            if not hasattr(lp.pts, 'xy'):
+                sayerr("FFC stiffener layer '"+s['layer']+"': arc-based gr_poly not supported, skipped")
+                continue
+            try:
+                standalone_faces.append(Part.Face(kicad_parser.make_gr_poly(lp)))
+            except Exception as e:
+                sayerr("FFC stiffener layer '"+s['layer']+"': failed to build polygon ("+str(e)+")")
+        for r in mypcb.gr_rect:
+            if not layer_matches(r, s['canonical_layer']):
+                continue
+            try:
+                standalone_faces.append(Part.Face(kicad_parser.make_gr_rect(r)))
+            except Exception as e:
+                sayerr("FFC stiffener layer '"+s['layer']+"': failed to build rectangle ("+str(e)+")")
+        for l in mypcb.gr_line:
+            if layer_matches(l, s['canonical_layer']):
+                all_edges.append(kicad_parser.make_gr_line(l))
+        for a in mypcb.gr_arc:
+            if layer_matches(a, s['canonical_layer']):
+                all_edges.append(kicad_parser.make_gr_arc(a))
+        for c in mypcb.gr_curve:
+            if layer_matches(c, s['canonical_layer']):
+                try:
+                    all_edges.append(kicad_parser.make_gr_curve(c))
+                except Exception as e:
+                    sayerr("FFC stiffener layer '"+s['layer']+"': failed to build curve ("+str(e)+")")
+        for ci in mypcb.gr_circle:
+            if layer_matches(ci, s['canonical_layer']):
+                try:
+                    standalone_faces.append(Part.Face(Part.Wire([kicad_parser.make_gr_circle(ci)])))
+                except Exception as e:
+                    sayerr("FFC stiffener layer '"+s['layer']+"': failed to build circle ("+str(e)+")")
+
+        for m in getattr(mypcb, 'module', []):
+            for lp in getattr(m, 'fp_poly', []):
+                if not layer_matches(lp, s['canonical_layer']):
+                    continue
+                if not hasattr(lp.pts, 'xy'):
+                    sayerr("FFC stiffener layer '"+s['layer']+"': arc-based fp_poly not supported, skipped")
+                    continue
+                try:
+                    standalone_faces.append(Part.Face(place_on_footprint(kicad_parser.make_fp_poly(lp), m)))
+                except Exception as e:
+                    sayerr("FFC stiffener layer '"+s['layer']+"': failed to build footprint polygon ("+str(e)+")")
+            for r in getattr(m, 'fp_rect', []):
+                if not layer_matches(r, s['canonical_layer']):
+                    continue
+                try:
+                    standalone_faces.append(Part.Face(place_on_footprint(kicad_parser.make_gr_rect(r), m)))
+                except Exception as e:
+                    sayerr("FFC stiffener layer '"+s['layer']+"': failed to build footprint rectangle ("+str(e)+")")
+            for l in getattr(m, 'fp_line', []):
+                if layer_matches(l, s['canonical_layer']):
+                    all_edges.append(place_on_footprint(kicad_parser.make_gr_line(l), m))
+            for a in getattr(m, 'fp_arc', []):
+                if layer_matches(a, s['canonical_layer']):
+                    all_edges.append(place_on_footprint(kicad_parser.make_gr_arc(a), m))
+            for c in getattr(m, 'fp_curve', []):
+                if layer_matches(c, s['canonical_layer']):
+                    try:
+                        all_edges.append(place_on_footprint(kicad_parser.make_gr_curve(c), m))
+                    except Exception as e:
+                        sayerr("FFC stiffener layer '"+s['layer']+"': failed to build footprint curve ("+str(e)+")")
+            for ci in getattr(m, 'fp_circle', []):
+                if layer_matches(ci, s['canonical_layer']):
+                    try:
+                        standalone_faces.append(Part.Face(place_on_footprint(
+                            Part.Wire([kicad_parser.make_gr_circle(ci)]), m)))
+                    except Exception as e:
+                        sayerr("FFC stiffener layer '"+s['layer']+"': failed to build footprint circle ("+str(e)+")")
+
+        all_faces = list(standalone_faces)
+        if all_edges:
+            try:
+                all_faces.extend(OSCD2Dg_edgestofaces(all_edges, algo=None))
+            except Exception as e:
+                sayerr("FFC stiffener layer '"+s['layer']+"': failed to assemble outline from lines/arcs ("+str(e)+")")
+
+        if not all_faces:
+            s['faces'] = []
+            s['area'] = 0.0
+            continue
+
+        # combine everything found for this layer into one shape: nested loops
+        # become holes (e.g. a stiffener with an inner cutout), disjoint loops
+        # (e.g. the same material reused at several unrelated locations) are
+        # fused into one compound. Same combinator this plugin already trusts
+        # elsewhere for turning a soup of PCB polygons into a real solid shape.
+        if len(all_faces) > 1:
+            try:
+                combined = OSCD2Dg_Overlappingfaces(all_faces).makeshape()
+                # boolean fuse keeps a redundant edge along the seam where two
+                # touching/overlapping faces meet, even though the result is one
+                # continuous region; removeSplitter drops those leftover edges
+                # so the seam doesn't render as a visible line on the solid
+                combined = combined.removeSplitter()
+            except Exception as e:
+                sayerr("FFC stiffener layer '"+s['layer']+"': failed to combine shapes/cut holes ("+str(e)+"), keeping them separate")
+                combined = None
+        else:
+            combined = all_faces[0]
+
+        if combined is not None:
+            s['faces'] = [combined]
+            s['area'] = combined.Area
+        else:
+            s['faces'] = all_faces
+            s['area'] = max(f.Area for f in all_faces)
+
+    stiffeners_ok = []
+    for s in stiffeners:
+        if not s['faces']:
+            sayw("FFC stiffener layer '"+s['layer']+"' has no shapes drawn on it, skipped")
+            continue
+        stiffeners_ok.append(s)
+    stiffeners = stiffeners_ok
+    if not stiffeners:
+        return []
+
+    def shapes_overlap(shape_a, shape_b):
+        try:
+            return shape_a.common(shape_b).Area > 1e-6
+        except Exception:
+            return shape_a.BoundBox.isIntersection(shape_b.BoundBox)
+
+    def layers_overlap(layer_a, layer_b):
+        for fa in layer_a['faces']:
+            for fb in layer_b['faces']:
+                if shapes_overlap(fa, fb):
+                    return True
+        return False
+
+    # stacking is resolved per overlap group, not globally per side: two
+    # stiffeners on the same side only affect each other's height if their
+    # footprints actually overlap in the board plane
+    for side in ('F', 'B'):
+        side_layers = [s for s in stiffeners if s['side'] == side]
+        n = len(side_layers)
+        parent = list(range(n))
+
+        def find(i):
+            while parent[i] != i:
+                parent[i] = parent[parent[i]]
+                i = parent[i]
+            return i
+
+        for i in range(n):
+            for j in range(i+1, n):
+                if layers_overlap(side_layers[i], side_layers[j]):
+                    ri, rj = find(i), find(j)
+                    if ri != rj:
+                        parent[ri] = rj
+
+        groups = {}
+        for i in range(n):
+            groups.setdefault(find(i), []).append(side_layers[i])
+
+        for ovgroup in groups.values():
+            # largest area closest to the PCB; ties broken by material priority
+            # (Stainless Steel, FR4, Polyimide, tape - closest to PCB first)
+            ovgroup.sort(key=lambda s: (-round(s['area'], 4),
+                                         FFC_STIFFENER_MATERIAL_PRIORITY.get(s['material'], 99)))
+            running_offset = 0.0
+            for s in ovgroup:
+                s['base_offset'] = running_offset
+                running_offset += s['thickness']
+
+    # stiffeners live next to the board outline, inside the same Board_Geoms
+    # container DrawPCB already created for this board (whatever type it is:
+    # App::Part / App::LinkGroup / App::DocumentObjectGroup, depending on prefs)
+    boardG_name = 'Board_Geoms'+fname_sfx
+    group = doc.getObject(boardG_name)
+    if group is None:
+        group = doc.addObject('App::DocumentObjectGroup', boardG_name)
+        group.Label = 'Board_Geoms'
+
+    # the innermost layer of each stack touches the PCB body exactly at its
+    # z=0 (top) or z=-pcbThickness (bottom) surface; two faces sitting in the
+    # exact same plane z-fight in the 3D view whenever the stiffener outline
+    # isn't pixel-identical to the board's own Edge.Cuts outline. Nudging the
+    # whole stack a hair into the PCB avoids the coincident-plane condition
+    # without any visible/manufacturing effect.
+    PCB_OVERLAP_EPS = 0.01
+
+    created = []
+    for s in stiffeners:
+        try:
+            offset = s['base_offset']
+            if s['side'] == 'F':
+                z0 = offset - PCB_OVERLAP_EPS
+            else:
+                z0 = -pcbThickness - offset - s['thickness'] + PCB_OVERLAP_EPS
+
+            solids = [f.extrude(FreeCAD.Vector(0, 0, s['thickness'])) for f in s['faces']]
+            shape = solids[0] if len(solids) == 1 else Part.makeCompound(solids)
+            shape.translate(FreeCAD.Vector(-off_x, -off_y, z0))
+
+            obj = doc.addObject('Part::Feature', 'Stiffener_'+s['layer'].replace('.', '_').replace(' ', '_'))
+            obj.Shape = shape
+            obj.Label = s['layer']
+            color, transparency = FFC_STIFFENER_APPEARANCE.get(s['material'], ((0.8, 0.8, 0.8), 0))
+            if getattr(obj, 'ViewObject', None) is not None:
+                obj.ViewObject.ShapeColor = color
+                obj.ViewObject.Transparency = transparency
+            try:
+                if use_LinkGroups:
+                    group.ViewObject.dropObject(obj, obj, '', [])
+                else:
+                    group.addObject(obj)
+            except Exception:
+                group.addObject(obj)
+            created.append(obj)
+        except Exception as e:
+            sayerr("FFC stiffener layer '"+s['layer']+"' could not be built ("+str(e)+"), skipped")
+
+    doc.recompute()
+    if created:
+        say(str(len(created))+' FFC stiffener layer(s) generated')
+    return created
+##
 def sanitize_file(originalFilename):
     with pythonopen(original_filename,'rb') as o_f:
         #line=o_f.read()
@@ -7455,6 +7801,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                     FreeCADGui.SendMsgToActiveView("ViewFit")
                 #else:        
                 Load_models(pcbThickness,modules,emdedded_list)
+                generate_ffc_stiffeners(mypcb,doc,pcbThickness,off_x,off_y)
                 #enable_ReadShapeCompoundMode=False
                 if enable_ReadShapeCompoundMode:
                     paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
