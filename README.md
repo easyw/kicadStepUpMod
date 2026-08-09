@@ -20,6 +20,7 @@ KiCad **StepUp tools** are a FreeCAD Macro and a FreeCAD WorkBench to help in **
 - **design a new footprint in FreeCAD to get the power of Sketch in footprints**
 - **generate Blender compatible VRML files**
 - **translation infrastructure enabled**
+- **auto-generate 3D FFC/FPC stiffener geometry from custom PCB user layers**
 
 Please see [KiCad Info forum](https://forum.kicad.info/search?q=stepup) or [FreeCAD forum](https://forum.freecadweb.org/viewtopic.php?f=24&t=14276) to discuss or report issues regarding this Addon.
 
