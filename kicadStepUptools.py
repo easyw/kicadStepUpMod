@@ -501,7 +501,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "13.1.4"
+___ver___ = "13.1.6"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -4691,6 +4691,8 @@ def Load_models(pcbThickness,modules,embedded_lst):
                 import zstd
                 e=embedded_lst
                 #print('embedded file num:',len(e.file))
+                ##print('embedded checksum:',e.checksum)
+                ##print('embedded type:',e.type)
                 if step_module.lower().rstrip('"').endswith('stp') or step_module.lower().rstrip('"').endswith('step') or step_module.lower().rstrip('"').endswith('stpz') or step_module.endswith('igs') or step_module.lower().rstrip('"').endswith('iges'):
                     mdl_name=step_module.lstrip('"').lstrip('kicad-embed://').rstrip('"')
                     #print('embedded mdl_name',mdl_name)
@@ -7801,8 +7803,8 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                     FreeCADGui.SendMsgToActiveView("ViewFit")
                 #else:        
                 Load_models(pcbThickness,modules,emdedded_list)
-                generate_ffc_stiffeners(mypcb,doc,pcbThickness,off_x,off_y)
                 #enable_ReadShapeCompoundMode=False
+                generate_ffc_stiffeners(mypcb,doc,pcbThickness,off_x,off_y)
                 if enable_ReadShapeCompoundMode:
                     paramGetVS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import/hSTEP")
                     paramGetVS.SetBool("ReadShapeCompoundMode",ReadShapeCompoundMode_status)
