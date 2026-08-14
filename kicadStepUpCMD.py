@@ -553,62 +553,35 @@ def ksu_edges2sketch():
             #print(plane)
             ## _makeSketch(plane,wires,addTo=sketch)
             #Draft.makeSketch(wires,addTo=sketch)
-            _objs_ = []
-            obj_tobd = []
-            use_workaround_1 = False
-            use_workaround_2 = False
+            # Draft.makeSketch resolves the sketch normal's sign from the current
+            # view, so aim the camera down the selection's own plane first.
             active_view = FreeCADGui.ActiveDocument.activeView()
-            rotation_view = active_view.getCameraOrientation()
-            top_rotation = FreeCAD.Rotation(0.0,0.0,0.0,1.0)
-            if rotation_view != top_rotation and len(union.Shape.Edges) < max_geo_admitted:
-                use_workaround_1 = True
-                use_workaround_2 = True
-            if use_workaround_1:
-                FreeCAD.Console.PrintWarning('workaround to avoid issues in Draft.makeSketch from Bottom\n')
-                _objs_ = Draft.downgrade(FreeCAD.ActiveDocument.getObject('union'), delete=False)
-                FreeCAD.ActiveDocument.recompute()
-                _objs_ = []
-                obj_tobd.append(FreeCADGui.Selection.getSelection())
-                _objs_ = Draft.upgrade(FreeCADGui.Selection.getSelection(), delete=True)
-                _objs_ = []
-                FreeCAD.ActiveDocument.recompute()
-                obj_tobd.append(FreeCADGui.Selection.getSelection())
-                _objs_ = Draft.downgrade(FreeCADGui.Selection.getSelection(), delete=True)
-                # print(_objs_)
-                # FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.ActiveObject)
-                sel_objs = FreeCADGui.Selection.getSelection()
-                FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.ActiveObject)
-                # print(len(sel_objs))
-                # for o in sel_objs:
-                #     print (o.Label)
-                #FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.getObject('union'))
-                # FreeCADGui.runCommand('ksuTools2D2Sketch',0)
+            saved_camera = active_view.getCameraOrientation()
+            view_restore_needed = False
+            try:
+                shape_plane = union.Shape.findPlane(1e-3)
+            except Exception:
+                shape_plane = None
+            if shape_plane:
+                normal = shape_plane.Axis
+                target_view_dir = FreeCAD.Vector(-normal.x, -normal.y, -normal.z)
+                forced_rotation = FreeCAD.Rotation(FreeCAD.Vector(0,0,-1), target_view_dir)
+                if forced_rotation != saved_camera:
+                    active_view.setCameraOrientation(forced_rotation)
+                    view_restore_needed = True
+            else:
+                FreeCAD.Console.PrintWarning('e2sk: could not determine the selection\'s plane; sketch orientation may depend on the current view\n')
             if use_draft:
-                #Draft.makeSketch(union,addTo=sketch)
-                if use_workaround_1:
-                    #FreeCADGui.runCommand('ksuTools2D2Sketch',0)
-                    Draft.makeSketch(FreeCADGui.Selection.getSelection(),autoconstraints=True) #,addTo=sketch)
-                else:
-                    Draft.makeSketch(union,autoconstraints=True) #,addTo=sketch)
+                Draft.makeSketch(union,autoconstraints=True) #,addTo=sketch)
                 sketch = doc.ActiveObject
-                p = sketch.Placement
-                # print(p)
-                # print(p.Rotation.Axis)
-                if use_workaround_2 and p.Rotation.Axis.z != 1:
-                    FreeCAD.Console.PrintWarning('workaround on Axis to avoid issues in Draft.makeSketch\n')
-                    p.Rotation.Axis.x = 0
-                    p.Rotation.Axis.y = 0
-                    p.Rotation.Axis.z = 1
-                    p.Base.x = 0
-                    p.Base.y = 0
-                    p.Base.z = 1
-                    # print(p)
                 sketch.Label = "Sketch_converted"
             else:
                 for _e in union.Shape.Edges:
                     if isinstance(_e.Curve,Part.Line) or isinstance(_e.Curve,Part.LineSegment):
                         sketch.addGeometry(P_Line(Base.Vector(_e.firstVertex().Point), Base.Vector(_e.lastVertex().Point)))
                     #sketch.addGeometry(_e.Curve)
+            if view_restore_needed:
+                active_view.setCameraOrientation(saved_camera)
             sk = doc.ActiveObject
             if attach_sketch:
                 sketch.Support = [newface, 'Face1']
@@ -616,16 +589,6 @@ def ksu_edges2sketch():
             #sk.Placement = union.Placement
             if remove_shapes:
                 rmvsubtree([union])
-                if use_workaround_1:
-                    for o in obj_tobd:
-                        #print(o)
-                        for s in o:
-                            try:
-                                FreeCAD.ActiveDocument.removeObject(s.Name)
-                            except:
-                                pass
-                    for o in sel_objs:
-                        FreeCAD.ActiveDocument.removeObject(o.Name)
                 if create_plane:
                     rmvsubtree([newface])
             sketch.MapMode = 'Deactivated'
