@@ -32,7 +32,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.6.3'
+ksuCMD_version__='2.6.4'
 
 global invisible_objs
 invisible_objs=[]
