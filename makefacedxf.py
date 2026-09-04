@@ -23,7 +23,7 @@ use_Links=False
 
 global FC_export_min_version
 FC_export_min_version="11670"  #11670 latest JM
-silks_version = '1.5'
+silks_version = '1.6'
 
 use_LinkGroups = False
 if 'LinkView' in dir(FreeCADGui):
@@ -210,7 +210,7 @@ def makeFaceDXF():
                             imp_objects.append(o)
                         else:
                             FreeCAD.ActiveDocument.removeObject(o.Name)
-            FreeCADGui.SendMsgToActiveView("ViewFit")
+            FreeCADGui.ActiveDocument.ActiveView.fitAll()
             timeP = time.time() - t
             say("loading time = "+str(timeP) + "s")
             #print(imp_objects)
@@ -302,7 +302,7 @@ def makeFaceDXF():
                 newShape.Placement.Base.z-=botOffset+0.07
             timeD = time.time() - t - timeP
             say("displaying time = "+str(timeD) + "s")
-    FreeCADGui.SendMsgToActiveView("ViewFit")
+    FreeCADGui.ActiveDocument.ActiveView.fitAll()
     # doc.recompute(None,True,True)
     #docG.activeView().viewAxonometric()
     docG.activeView().viewTop()

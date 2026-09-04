@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global tracks_version
-tracks_version = '2.7.0'
+tracks_version = '2.7.1'
 
 import kicad_parser
 #import kicad_parser; import importlib; importlib.reload(kicad_parser)
@@ -896,7 +896,7 @@ def addtracks(fname = None):
         say_time()
         
         if FreeCAD.ActiveDocument is not None:
-            FreeCADGui.SendMsgToActiveView("ViewFit")
+            FreeCADGui.ActiveDocument.ActiveView.fitAll()
             # FreeCADGui.ActiveDocument.ActiveView.setAxisCross(True)
             # FreeCADGui.ActiveDocument.activeView().viewAxonometric()
             return add_toberemoved

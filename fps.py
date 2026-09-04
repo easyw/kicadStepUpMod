@@ -3,7 +3,7 @@
 #****************************************************************************
 
 global fps_version
-fps_version = '1.1.4'
+fps_version = '1.1.5'
 
 dvp=False #True
 if dvp:
@@ -868,7 +868,7 @@ def addfootprint(fname = None):
         doc.commitTransaction()
         
         if FreeCAD.ActiveDocument is not None:
-            FreeCADGui.SendMsgToActiveView("ViewFit")
+            FreeCADGui.ActiveDocument.ActiveView.fitAll()
             #FreeCADGui.ActiveDocument.activeView().viewAxonometric()
 
 ###

@@ -501,7 +501,7 @@ import unicodedata
 pythonopen = builtin.open # to distinguish python built-in open function from the one declared here
 
 ## Constant definitions
-___ver___ = "13.1.6"
+___ver___ = "13.1.7"
 __title__ = "kicad_StepUp"
 __author__ = "maurice & mg"
 __Comment__ = 'Kicad STEPUP(TM) (3D kicad board and models exported to STEP) for FreeCAD'
@@ -744,11 +744,11 @@ FC_export_min_version="11670"  #11670 latest JM
 def ZoomFitThread():
     FreeCAD.Console.PrintWarning('thread ViewFitting\n')
     if FreeCAD.ActiveDocument is not None:
-        FreeCADGui.SendMsgToActiveView("ViewFit")
+        FreeCADGui.ActiveDocument.ActiveView.fitAll()
     #stop
 def ZoomFit():
     if FreeCAD.ActiveDocument is not None:
-        FreeCADGui.SendMsgToActiveView("ViewFit")
+        FreeCADGui.ActiveDocument.ActiveView.fitAll()
     #stop
 
 #
@@ -7604,7 +7604,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                 # FreeCAD.ActiveDocument.removeObject("PCB_Sketch_draft")
                 objs_toberemoved.append([FreeCAD.ActiveDocument.getObject("PCB_Sketch_draft")])
                 if (zfit):
-                    FreeCADGui.SendMsgToActiveView("ViewFit")
+                    FreeCADGui.ActiveDocument.ActiveView.fitAll()
                 if 0: # test_face # addConstraints!='none': 
                     say('start adding constraints to pcb sketch')
                     add_constraints(s_name)
@@ -7642,7 +7642,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
             #FreeCAD.ActiveDocument.getObject("PCB_SketchN").Placement = FreeCAD.Placement(FreeCAD.Vector(board_base_point_x,board_base_point_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
             ## FreeCAD.ActiveDocument.getObject("Pcb").Placement = FreeCAD.Placement(FreeCAD.Vector(-off_x,-off_y,0),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
             if (zfit):
-                FreeCADGui.SendMsgToActiveView("ViewFit")
+                FreeCADGui.ActiveDocument.ActiveView.fitAll()
             #ImportGui.insert(u"./c0603.step","demo_5D_vrml_from_step")
             ZoomFit()
             #if 1: #(not pt_lnx): # and (not pt_osx): issue on AppImages hanging on loading 
@@ -7800,7 +7800,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                 ##Load 3D models
                 #Load_models(pcbThickness,modules)
                 if (zfit):
-                    FreeCADGui.SendMsgToActiveView("ViewFit")
+                    FreeCADGui.ActiveDocument.ActiveView.fitAll()
                 #else:        
                 Load_models(pcbThickness,modules,emdedded_list)
                 #enable_ReadShapeCompoundMode=False
@@ -7872,7 +7872,7 @@ def onLoadBoard(file_name=None,load_models=None,insert=None):
                     #say('aliveFalse')
                     Display_info(blacklisted_model_elements)
                 if (zfit):
-                    FreeCADGui.SendMsgToActiveView("ViewFit")
+                    FreeCADGui.ActiveDocument.ActiveView.fitAll()
             if restore_specular_cls:
                 restore_specular(objs_pre)
 
@@ -8306,7 +8306,7 @@ def routineScaleVRML_1():
         #FreeCAD.ActiveDocument.ActiveObject.ViewObject.DisplayMode = 'Shaded'
         FreeCAD.ActiveDocument.ActiveObject.ViewObject.DisplayMode = 1 #Shaded
         if (zfit):
-            FreeCADGui.SendMsgToActiveView("ViewFit")
+            FreeCADGui.ActiveDocument.ActiveView.fitAll()
         msg="""<b>export scaled VRML file for kicad!</b>
             <font color='white'>****************************************************************************</font><br>
             <i>3D settings in kicad Module Editor:</i><br>
@@ -11667,7 +11667,7 @@ def routineDrawFootPrint(content,name):
             #sayerr("view fitting3")
             #sayerr(sys.argv)
             if (zfit):
-                FreeCADGui.SendMsgToActiveView("ViewFit")
+                FreeCADGui.ActiveDocument.ActiveView.fitAll()
         #pads_found=getPadsList(content)
     else:
         sayerr('internal layers not supported or fotprint empty')
@@ -11827,7 +11827,7 @@ def Process_board_outline(doc,board_outline,drills,board_thickness):
         #FreeCADGui.activeDocument().activeView().viewAxometric()
         FreeCADGui.activeDocument().activeView().viewTop()
         if (zfit):
-            FreeCADGui.SendMsgToActiveView("ViewFit")
+            FreeCADGui.ActiveDocument.ActiveView.fitAll()
         #doc.Pcb.ViewObject.ShapeColor=(0.0, 0.5, 0.0, 0.0)
     return lines+1
 
@@ -13764,7 +13764,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                     
                 #FreeCAD.ActiveDocument.addObject("Part::Face", "Face").Sources = (FreeCAD.ActiveDocument.PCB_Sketch_draft001, )
                 if (zfit):
-                    FreeCADGui.SendMsgToActiveView("ViewFit")
+                    FreeCADGui.ActiveDocument.ActiveView.fitAll()
                 cut_base = s_PCB_Sketch_draft
             else:
                 sayerr('empty sketch; module edge board: creating PCB from Footprint Edge.Cuts')
@@ -13969,12 +13969,12 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                     diag.exec_()
                     FreeCADGui.activeDocument().activeView().viewTop()
                     if (zfit):
-                        FreeCADGui.SendMsgToActiveView("ViewFit")
+                        FreeCADGui.ActiveDocument.ActiveView.fitAll()
                     stop #maui
                 if disable_cutting:
                     FreeCADGui.activeDocument().activeView().viewTop()
                     if (zfit):
-                        FreeCADGui.SendMsgToActiveView("ViewFit")
+                        FreeCADGui.ActiveDocument.ActiveView.fitAll()
                     stop #maui
                 #say (PCBs)
                 ## doc = FreeCAD.activeDocument()
@@ -14033,7 +14033,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                     diag.exec_()
                     FreeCADGui.activeDocument().activeView().viewTop()
                     if (zfit):
-                        FreeCADGui.SendMsgToActiveView("ViewFit")
+                        FreeCADGui.ActiveDocument.ActiveView.fitAll()
                     stop #maui
                 i=0
                 for i in range (len(PCBs)):
@@ -14066,7 +14066,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                 diag.exec_()
                 FreeCADGui.activeDocument().activeView().viewTop()
                 if (zfit):
-                    FreeCADGui.SendMsgToActiveView("ViewFit")
+                    FreeCADGui.ActiveDocument.ActiveView.fitAll()
                 stop #maui
             FreeCAD.ActiveDocument.recompute()
             FreeCADGui.activeDocument().activeView().viewTop()
@@ -14131,7 +14131,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                         FreeCAD.ActiveDocument.addObject("Part::Face", "Face_Compound").Sources = (FreeCAD.ActiveDocument.ShapesCompound, )
                     FreeCAD.ActiveDocument.recompute()
                     if (zfit):
-                        FreeCADGui.SendMsgToActiveView("ViewFit")
+                        FreeCADGui.ActiveDocument.ActiveView.fitAll()
                     stop
                 #fusion_wire = edges[0]
                 #for no, e in enumerate(edges):
@@ -14314,7 +14314,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                     diag.exec_()
                     FreeCADGui.activeDocument().activeView().viewTop()
                     if (zfit):
-                        FreeCADGui.SendMsgToActiveView("ViewFit")
+                        FreeCADGui.ActiveDocument.ActiveView.fitAll()
                     stop #maui                
                 #Part.show(cut_base)
                 #stop
@@ -14379,7 +14379,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                 diag.exec_()
                 FreeCADGui.activeDocument().activeView().viewTop()
                 if (zfit):
-                    FreeCADGui.SendMsgToActiveView("ViewFit")
+                    FreeCADGui.ActiveDocument.ActiveView.fitAll()
                 stop #maui                        
             #stop
             #tobechecked
@@ -14523,7 +14523,7 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
     #FreeCADGui.activeDocument().activeView().viewAxometric()
     FreeCADGui.activeDocument().activeView().viewTop()
     if (zfit):
-        FreeCADGui.SendMsgToActiveView("ViewFit")
+        FreeCADGui.ActiveDocument.ActiveView.fitAll()
     #FreeCADGui.SendMsgToActiveView("ViewFit")
     #pads_found=getPadsList(content)
     return PCB_Models, k_index
@@ -16231,7 +16231,7 @@ def Import3DModelF():
                 sayw("enabling ReadShapeCompoundMode")
         
         if (zfit):
-            FreeCADGui.SendMsgToActiveView("ViewFit")
+            FreeCADGui.ActiveDocument.ActiveView.fitAll()
         last_3d_path=os.path.dirname(name)
         pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/kicadStepUp")
         pg.SetString("last_3d_path",make_string(last_3d_path))
@@ -21954,7 +21954,7 @@ def export_pcb(fname=None,sklayer=None,skname=None):
                 #    sel[0].recompute(True)
                 FreeCAD.ActiveDocument.recompute()
                 if (zfit):
-                    FreeCADGui.SendMsgToActiveView("ViewFit")
+                    FreeCADGui.ActiveDocument.ActiveView.fitAll()
                 k = data.rfind(")")  #removing latest ')'
                 newcontent = data[:k] 
             

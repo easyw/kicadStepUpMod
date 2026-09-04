@@ -29,7 +29,7 @@ __url__ =    "http://www.freecadweb.org"
 
 import os,zipfile,FreeCAD,tempfile,sys
 
-___ZipVersion___ = "1.0.5"
+___ZipVersion___ = "1.0.6"
 
 try:
     import __builtin__ as builtin #py2
@@ -103,7 +103,7 @@ def read(filename):
             z.extract(fname, tempdir)
             doc=FreeCAD.ActiveDocument
             ImportGui.insert(tempfilepath,doc.Name)
-            FreeCADGui.SendMsgToActiveView("ViewFit")
+            FreeCADGui.ActiveDocument.ActiveView.fitAll()
             try:
                 os.remove(tempfilepath)
             except OSError:
@@ -122,7 +122,7 @@ def read(filename):
                 FreeCAD.closeDocument(doc.Name)            
             FreeCAD.open(tempfilepath)
             #ImportGui.insert(tempfilepath,doc.Name)
-            FreeCADGui.SendMsgToActiveView("ViewFit")
+            FreeCADGui.ActiveDocument.ActiveView.fitAll()
             try:
                 os.remove(tempfilepath)
             except OSError:
@@ -139,7 +139,7 @@ def read(filename):
             Part.insert(tempfilepath,doc.Name)
             #FreeCAD.open(tempfilepath)
             #ImportGui.insert(tempfilepath,doc.Name)
-            FreeCADGui.SendMsgToActiveView("ViewFit")
+            FreeCADGui.ActiveDocument.ActiveView.fitAll()
             try:
                 os.remove(tempfilepath)
             except OSError:
@@ -157,7 +157,7 @@ def read(filename):
             doc=FreeCAD.ActiveDocument
             import kicadStepUptools 
             kicadStepUptools.open(tempfilepath,doc.Name)
-            FreeCADGui.SendMsgToActiveView("ViewFit")
+            FreeCADGui.ActiveDocument.ActiveView.fitAll()
             try:
                 os.remove(tempfilepath)
             except OSError:

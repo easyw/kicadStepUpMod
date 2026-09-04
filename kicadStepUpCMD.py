@@ -32,7 +32,7 @@ from math import sqrt
 import constrainator
 from constrainator import add_constraints, sanitizeSkBsp
 
-ksuCMD_version__='2.6.4'
+ksuCMD_version__='2.6.5'
 
 global invisible_objs
 invisible_objs=[]
@@ -1699,7 +1699,7 @@ class ksuAsm2Part:
                             part.addObject(copy)
                     copy = part
                 if copy:
-                    FreeCADGui.SendMsgToActiveView("ViewFit")
+                    FreeCADGui.ActiveDocument.ActiveView.fitAll()
                     copy.recompute(True)
                 return copy
         
@@ -1757,7 +1757,7 @@ class ksuAsm2Part:
                 else:
                     Asm2Part()
                 if FreeCAD.ActiveDocument is not None:
-                    FreeCADGui.SendMsgToActiveView("ViewFit")
+                    FreeCADGui.ActiveDocument.ActiveView.fitAll()
             else:
                 FreeCAD.Console.PrintWarning("select one Assembly to convert it to Part hierarchy")
                 FreeCAD.Console.PrintWarning('\n')
@@ -4106,7 +4106,7 @@ class ksuOpDXF:
             last_pcb_path=os.path.dirname(name)
             prefs_.SetString("last_pcb_path", make_string(last_pcb_path))
             _DXF_Import.read(name)
-            FreeCADGui.SendMsgToActiveView("ViewFit")
+            FreeCADGui.ActiveDocument.ActiveView.fitAll()
         
 FreeCADGui.addCommand('ksuOpDXF',ksuOpDXF())
 
@@ -4153,7 +4153,7 @@ class ksuOpEzDXF:
                 last_pcb_path=os.path.dirname(name)
                 prefs_.SetString("last_pcb_path", make_string(last_pcb_path))
                 open_ezdxf(name,True,True)
-                FreeCADGui.SendMsgToActiveView("ViewFit")
+                FreeCADGui.ActiveDocument.ActiveView.fitAll()
         except:
             FreeCAD.Console.PrintError("ezDXF missing; use: \'pip install ezdxf python lib\'\n")
         
@@ -4203,7 +4203,7 @@ class ksuImpDXF:
                 _DXF_Import.read(name)
             last_pcb_path=os.path.dirname(name)
             prefs_.SetString("last_pcb_path", make_string(last_pcb_path))
-            FreeCADGui.SendMsgToActiveView("ViewFit")
+            FreeCADGui.ActiveDocument.ActiveView.fitAll()
         
 FreeCADGui.addCommand('ksuImpDXF',ksuImpDXF())
 ###
@@ -4557,7 +4557,7 @@ class ksuToolsAddTracks:
         # adding a timer to allow double transactions during the python code
         QtCore.QTimer.singleShot(0.2,removing_objs)
         if (not pt_lnx): # and (not pt_osx): issue on AppImages hanging on loading 
-            FreeCADGui.SendMsgToActiveView("ViewFit")
+            FreeCADGui.ActiveDocument.ActiveView.fitAll()
         else:
             zf= Timer (0.25,ZoomFitThread)
             zf.start()        
@@ -4726,14 +4726,14 @@ class ksuExcDemo:
             import ImportGui
             ImportGui.open(fnameDemo)
             FreeCADGui.activeDocument().activeView().viewAxonometric()
-            FreeCADGui.SendMsgToActiveView("ViewFit")
+            FreeCADGui.ActiveDocument.ActiveView.fitAll()
         elif ext.lower()==".dxf":
             #import ImportGui
             import importDXF
             importDXF.open(fnameDemo)
             #ImportGui.open(fnameDemo)
             #FreeCADGui.activeDocument().activeView().viewAxonometric()
-            FreeCADGui.SendMsgToActiveView("ViewFit")
+            FreeCADGui.ActiveDocument.ActiveView.fitAll()
         #if ext==".pdf":
         #    subprocess.Popen([file],shell=True)
         
@@ -4812,7 +4812,7 @@ class checkSolidExpSTEP():
                         msg='Exporting to STEP would create a single solids object!\n'
                         reply = QtGui.QMessageBox.information(None,"Info", msg)
                         FreeCAD.Console.PrintMessage(msg)
-                FreeCADGui.SendMsgToActiveView("ViewFit")
+                FreeCADGui.ActiveDocument.ActiveView.fitAll()
                 FreeCAD.Console.PrintMessage(tempfilepath+u'\n')
 
 FreeCADGui.addCommand('checkSolidExpSTEP',checkSolidExpSTEP())
@@ -5094,7 +5094,7 @@ class Create_BoundBox():
                     bbO.Height=0.01
                 FreeCAD.Console.PrintMessage('BB data x:'+str(bb.XLength)+", y:"+str(bb.YLength)+", z:"+str(bb.ZLength)+'\n')
                 FreeCAD.ActiveDocument.recompute()
-                FreeCADGui.SendMsgToActiveView("ViewFit")
+                FreeCADGui.ActiveDocument.ActiveView.fitAll()
         else:
             doc.addObject("Part::Compound","BBox-Compound")
             BBCompound= doc.ActiveObject
@@ -5152,7 +5152,7 @@ class Create_BoundBox():
             doc.recompute()
             for o in cmpd_objs:
                 o.ViewObject.Visibility=True
-            FreeCADGui.SendMsgToActiveView("ViewFit")
+            FreeCADGui.ActiveDocument.ActiveView.fitAll()
             doc.removeObject(BBCompound.Name)
             for o in toDel_objs:
                 doc.removeObject(o.Name)
@@ -5303,7 +5303,7 @@ def AlignView2Face():
 
                 cam.orientation.setValue(rot.Q)
                 #FreeCADGui.SendMsgToActiveView("ViewSelection")
-                FreeCADGui.SendMsgToActiveView("ViewFit")
+                FreeCADGui.ActiveDocument.ActiveView.fitAll()
                 inv_view = True
                 for s in FreeCADGui.Selection.getSelection():
                     FreeCADGui.Selection.removeSelection(s)
