@@ -4555,6 +4555,102 @@ def restore_specular(obj_pre_list):
         FreeCAD.Console.PrintWarning('default specular color restored\n')
 
 ##
+fp_lib_dirs_cache = {}
+def parseFpLibTables(prj_path):
+    """ Parse project and global 'fp-lib-table' files into a {nickname: lib_dir} map.
+        Project table entries take precedence over global ones. """
+    import glob, json
+
+    tables = []
+    if prj_path:
+        t = os.path.join(prj_path, u'fp-lib-table')
+        if os.path.isfile(t):
+            tables.append(t)
+
+    # collect kicad config dirs (kicad 6+ use versioned sub dirs, kicad 5 the base dir)
+    home = expanduser("~")
+    cfg_dirs = []
+    if os.name == 'nt':
+        appdata = os.getenv('APPDATA', '')
+        if appdata:
+            cfg_dirs.append(os.path.join(appdata, 'kicad'))
+    else:
+        if sys.platform == 'darwin':
+            cfg_dirs.append(os.path.join(home, 'Library', 'Preferences', 'kicad'))
+        cfg_dirs.append(os.path.join(home, '.config', 'kicad'))
+
+    kicad_env = {}  # user path variables from kicad_common.json (KICAD*_3DMODEL_DIR etc.)
+    for c in cfg_dirs:
+        if not os.path.isdir(c):
+            continue
+        vdirs = [d for d in glob.glob(os.path.join(c, '*')) if os.path.isdir(d)]
+        for d in sorted(vdirs, reverse=True) + [c]:  # newest kicad version first
+            t = os.path.join(d, 'fp-lib-table')
+            if os.path.isfile(t) and t not in tables:
+                tables.append(t)
+            j = os.path.join(d, 'kicad_common.json')
+            if os.path.isfile(j):
+                try:
+                    with builtin.open(j, 'r') as jf:
+                        cj = json.load(jf)
+                    env_vars = (cj.get('environment', {}) or {}).get('vars', {}) or {}
+                    for k, v in env_vars.items():
+                        if k not in kicad_env and v:
+                            kicad_env[k] = v
+                except:
+                    pass
+
+    def _expand(u):
+        u = u.replace(u'${KIPRJMOD}', prj_path).replace(u'$(KIPRJMOD)', prj_path)
+        def esub(mo):
+            val = os.getenv(mo.group(2), kicad_env.get(mo.group(2), ''))
+            return val if val else mo.group(0)
+        u = re.sub(r'(\$\{([^}]+)\})', esub, u)
+        u = re.sub(r'(\$\(([^)]+)\))', esub, u)
+        return u
+
+    lib_dirs = {}
+    for t in tables:
+        try:
+            with codecs.open(t, 'r', encoding='utf-8') as f:
+                data = f.read()
+        except:
+            continue
+        for lm in re.finditer(r'\(\s*lib\s', data):
+            chunk = data[lm.start():lm.start() + 2000]
+            nm = re.search(r'\(\s*name\s+"?([^")]+)"?\s*\)', chunk)
+            ur = re.search(r'\(\s*uri\s+"?([^")]+)"?\s*\)', chunk)
+            if nm is None or ur is None:
+                continue
+            nick = nm.group(1).strip()
+            if nick in lib_dirs:  # first table found (project) wins
+                continue
+            p = re.sub("\\\\", "/", _expand(ur.group(1).strip()))
+            if os.path.isfile(p):  # legacy/plugin libs are files -> use their dir
+                p = os.path.dirname(p)
+            lib_dirs[nick] = p
+    return lib_dirs
+##
+def getFpLibDir(fp_lib_id, prj_path):
+    """ Return the directory of the footprint library a footprint belongs to,
+        resolving its lib nickname through project & global fp-lib-table.
+        fp_lib_id is the footprint id from the pcb file, e.g. 'MyLib:MyFootprint'.
+        Returns '' when the library cannot be resolved. """
+    global fp_lib_dirs_cache
+
+    lib_id = make_unicode(str(fp_lib_id)).replace(u'"', u'')
+    if u':' not in lib_id:
+        return ''
+    nickname = lib_id.split(u':', 1)[0]
+    prj = re.sub("\\\\", "/", make_unicode(prj_path))
+    if prj not in fp_lib_dirs_cache:
+        try:
+            fp_lib_dirs_cache[prj] = parseFpLibTables(prj)
+        except Exception as e:
+            sayw('fp-lib-table parsing failed: ' + str(e))
+            fp_lib_dirs_cache[prj] = {}
+    return fp_lib_dirs_cache[prj].get(nickname, '')
+##
 def Load_models(pcbThickness,modules,embedded_lst):
     global off_x, off_y, volume_minimum, height_minimum, bbox_all, bbox_list
     global whitelisted_model_elements
@@ -4880,6 +4976,15 @@ def Load_models(pcbThickness,modules,embedded_lst):
                     if default_prefix3d not in path_list:
                         if os.path.exists(default_prefix3d):
                             path_list.insert(0, default_prefix3d)
+                    ## 3d model paths relative to the footprint library dir (fp-lib-table)
+                    try:
+                        if len(modules[i]) > 14:
+                            fp_lib_dir = getFpLibDir(modules[i][14], last_pcb_path)
+                            if fp_lib_dir != '' and fp_lib_dir not in path_list:
+                                path_list.insert(0, fp_lib_dir)
+                                say('added footprint library path '+fp_lib_dir)
+                    except Exception as e:
+                        sayw('footprint library path lookup failed: '+str(e))
                     model_type = [step_module,step_module_lw,step_module_up,step_module2,step_module2_up,step_module3,step_module3_up,step_module4,step_module4_up,step_module5,step_module5_up]
                     module_path = findModelPath(model_type, path_list)     # Find module in all paths and types specified
                 else:
@@ -13378,6 +13483,10 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                         #     line.append(m.fp_text[0][1]) #fp reference
                         line.append(n_md) #number of models in module
                         line.append(md_hide)
+                        try:
+                            line.append(m[0]) #footprint lib id 'LibNickname:FootprintName'
+                        except:
+                            line.append('')
                         PCB_Models.append(line)
                         n_md+=1
         
