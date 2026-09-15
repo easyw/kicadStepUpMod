@@ -328,6 +328,11 @@ def addtracks(fname = None):
         path, name = os.path.split(fname)
     #filename=os.path.splitext(name)[0]
     filename = fname
+
+    # Return early if file dialog was cancelled
+    if not fname:
+        return []
+
     #importDXF.open(os.path.join(dirname,filename))
     if len(fname) > 0:
         start_time=current_milli_time()
