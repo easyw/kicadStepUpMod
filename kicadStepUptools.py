@@ -719,6 +719,10 @@ def sayerr(msg):
 global use_AppPart, use_Links, use_LinkGroups
 use_AppPart=False # False
 use_Links=False
+links_imp_mode = 'links_not_allowed'  # overridden from prefs in cfg_read_all()
+# honor footprint 3D model '(scale (xyz sx sy sz))': scaled instances are placed as App::Link with
+# ScaleVector (KiCad applies scale in model coordinates, before rotate/offset). Needs 'Links' enabled.
+apply_model_scale = True
 
 use_LinkGroups = False
 if 'LinkView' in dir(FreeCADGui):
@@ -3697,6 +3701,51 @@ def createScaledBBox(name,scale):
     return obj
 ###
 
+def get_model_scale(scale_val):
+    ''' footprint 3D model scale as (sx,sy,sz) floats; accepts [x,y,z] or 'x y z' '''
+    try:
+        if isinstance(scale_val, str):
+            scale_val = scale_val.replace('(xyz','').replace(')','').split()
+        return tuple(float(v) for v in scale_val[:3])
+    except Exception:
+        return (1.0, 1.0, 1.0)
+
+def is_unit_scale(scale_val):
+    return all(abs(v-1.0) < 1e-6 for v in get_model_scale(scale_val))
+
+def can_apply_model_scale():
+    ''' a non-unit model scale can be honored through App::Link.ScaleVector '''
+    return bool(apply_model_scale and use_Links and links_imp_mode == 'links_allowed' \
+                and not use_pypro and 'LinkView' in dir(FreeCADGui))
+
+def keep_as_scaled_source(obj, stepM_name):
+    ''' park an unscaled imported model, hidden, in a container next to Top/Bot;
+        scaled footprint instances are App::Links to it '''
+    name = 'Scaled_Model_Sources'+fname_sfx
+    doc = FreeCAD.ActiveDocument
+    grp = doc.getObject(name)
+    if grp is None:
+        if use_LinkGroups:
+            grp = doc.addObject('App::LinkGroup', name)
+        elif use_AppPart:
+            grp = doc.addObject('App::Part', name)
+        else:
+            grp = doc.addObject('App::DocumentObjectGroup', name)
+        grp.Label = name
+        parent = doc.getObject(stepM_name)
+        if parent is not None:
+            if use_LinkGroups:
+                parent.ViewObject.dropObject(grp, grp, '', [])
+            else:
+                parent.addObject(grp)
+    if use_LinkGroups:
+        grp.ViewObject.dropObject(obj, obj, '', [])
+    else:
+        grp.addObject(obj)
+    obj.ViewObject.Visibility = False
+    grp.ViewObject.Visibility = False
+    return grp
+
 def Display_info(blacklisted_models):
     global bbox_all, bbox_list, fusion, show_messages, last_pcb_path
     global height_minimum, volume_minimum, idf_to_origin, ksu_config_fname
@@ -4592,6 +4641,8 @@ def Load_models(pcbThickness,modules,embedded_lst):
         step_module=modules[i][0]
         module_container = step_module
         mdl_name='no3Dmodel'
+        link_instance=False  # scaled first instance -> Link to a hidden unscaled source
+        mdl_scale=get_model_scale(modules[i][8])
         #print(type(step_module))  #maui test py3
         #sayw('added '+str(i)+' model(s)')
         # say(' modelname= '+modules[i][0]+' '+str(i));
@@ -5120,6 +5171,12 @@ def Load_models(pcbThickness,modules,embedded_lst):
                             stop
                         if skip_status!="skip":
                             loaded_model_objs.append(newobj)
+                            if not is_unit_scale(mdl_scale) and can_apply_model_scale():
+                                # keep the imported (unscaled) model as a hidden source; this instance
+                                # becomes an App::Link carrying the scale in ScaleVector
+                                newobj.Label = 'SRC_'+impLabel+'_'+myTimeStamp+myModelNbr
+                                keep_as_scaled_source(newobj, stepM_name)
+                                link_instance=True
                         else:
                             loaded_model_objs.append(None)
                             FreeCAD.activeDocument().removeObject(newobj.Name)
@@ -5164,9 +5221,12 @@ def Load_models(pcbThickness,modules,embedded_lst):
                             #say (str(i)+" i")
                             idxO=j
                     if loaded_models_skipped[idxO]!="skip":
-                        if use_cache:
+                        if use_cache or link_instance:
                             #mod_cnt+=1
-                            sayw('copying from cache')
+                            if use_cache:
+                                sayw('copying from cache')
+                            else:
+                                sayw('linking scaled instance')
                             ##impPart=copy_objs(loaded_model_objs[idxO],FreeCAD.ActiveDocument, FreeCAD,FreeCADGui)
                             ### FreeCAD.ActiveDocument.addObject('Part::Feature',loaded_model_objs[idxO].Label).Shape=loaded_model_objs[idxO].Shape
                             ### #FreeCAD.ActiveDocument.ActiveObject.Label=obj.Label
@@ -5226,6 +5286,12 @@ def Load_models(pcbThickness,modules,embedded_lst):
                                 pass
                             ##
                             #impPart=reset_prop_shapes2(impPart,FreeCAD.ActiveDocument, FreeCAD,FreeCADGui)
+                            if not is_unit_scale(mdl_scale):
+                                if impPart.TypeId in ('App::Link','App::LinkPython') and 'ScaleVector' in impPart.PropertiesList:
+                                    impPart.ScaleVector = FreeCAD.Vector(*mdl_scale)
+                                    say('model scale '+str(mdl_scale)+' applied to '+impPart.Label)
+                                else:
+                                    sayw('model scale '+str(mdl_scale)+' NOT applied to '+impPart.Label+' (needs Links)')
                             ##resetting placement properties
                             impPart.Placement = FreeCAD.Placement(FreeCAD.Vector(pos_x,pos_y,-pcbThickness),FreeCAD.Rotation(FreeCAD.Vector(0,1,0),180))
                             #obj.Placement = impPart.Placement
@@ -5933,8 +5999,11 @@ def get3DParams (mdl_name,params,rot, virtual):
         # if scale_vrml!='1 1 1':
         if float(xsc_vrml_val)!=1 or float(ysc_vrml_val)!=1 or float(zsc_vrml_val)!=1:
             if "box_mcad" not in params and "cylV_mcad" not in params and "cylH_mcad" not in params:
-                sayw('wrong scale!!! set scale to (1 1 1)')
-            error_scale_module=True
+                if can_apply_model_scale():
+                    say('model scale '+str(scale_vrml)+' will be applied through Link ScaleVector')
+                else:
+                    sayw('wrong scale!!! set scale to (1 1 1)')
+                    error_scale_module=True
     #model_list.append(mdl_name[0])
     #model=model_list[j]+'.wrl'
     model=mdl_name[0]+'.wrl'
@@ -13280,8 +13349,11 @@ def DrawPCB(mypcb,lyr=None,rmv_container=None,keep_sketch=None):
                 # if scale_vrml!='1 1 1':
                 if float(xsc_vrml_val)!=1 or float(ysc_vrml_val)!=1 or float(zsc_vrml_val)!=1:
                     if "box_mcad" not in md[0] and "cylV_mcad" not in md[0] and "cylH_mcad" not in md[0]:
-                        sayw('wrong scale!!! set scale to (1 1 1)')
-                    error_scale_module=True
+                        if can_apply_model_scale():
+                            say('model scale '+str(md.scale.xyz)+' will be applied through Link ScaleVector')
+                        else:
+                            sayw('wrong scale!!! set scale to (1 1 1)')
+                            error_scale_module=True
                 #model_list.append(mdl_name[0])
                 #model=model_list[j]+'.wrl'
                 #if py2:
@@ -17039,8 +17111,11 @@ def getModelsData(mypcb):
             # if scale_vrml!='1 1 1':
             if float(xsc_vrml_val)!=1 or float(ysc_vrml_val)!=1 or float(zsc_vrml_val)!=1:
                 if "box_mcad" not in md[0] and "cylV_mcad" not in md[0] and "cylH_mcad" not in md[0]:
-                    sayw('wrong scale!!! set scale to (1 1 1)')
-                error_scale_module=True
+                    if can_apply_model_scale():
+                        say('model scale '+str(md.scale.xyz)+' will be applied through Link ScaleVector')
+                    else:
+                        sayw('wrong scale!!! set scale to (1 1 1)')
+                        error_scale_module=True
             #model_list.append(mdl_name[0])
             #model=model_list[j]+'.wrl'
             #if py2:
