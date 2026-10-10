@@ -24,6 +24,7 @@ import DraftGeomUtils,DraftVecUtils
 
 try:
     import CAM
+    CAM.Area  # check if CAM.Area is available
 except:
     import Path
     CAM = Path
