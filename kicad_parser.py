@@ -16,7 +16,8 @@ from collections import defaultdict
 from math import sqrt, atan2, degrees, sin, cos, radians, pi, hypot
 import traceback
 import FreeCAD
-import FreeCADGui
+if FreeCAD.GuiUp:
+    import FreeCADGui
 import Part
 from FreeCAD import Console,Vector,Placement,Rotation
 import DraftGeomUtils,DraftVecUtils
@@ -67,10 +68,11 @@ def addObject(doc, tp, name):
     return obj
 
 def updateGui():
-    try:
-        FreeCADGui.updateGui()
-    except Exception:
-        pass
+    if FreeCAD.GuiUp:
+        try:
+            FreeCADGui.updateGui()
+        except Exception:
+            pass
 
 class FCADLogger:
     def __init__(self, tag):
@@ -117,10 +119,11 @@ def getActiveDoc():
     return FreeCAD.ActiveDocument
 
 def fitView():
-    try:
-        FreeCADGui.ActiveDocument.ActiveView.fitAll()
-    except Exception:
-        pass
+    if FreeCAD.GuiUp:
+        try:
+            FreeCADGui.ActiveDocument.ActiveView.fitAll()
+        except Exception:
+            pass
 
 def isZero(f):
     return round(f,DraftGeomUtils.precision())==0
@@ -515,6 +518,22 @@ def recomputeObj(obj):
     obj.recompute()
     obj.purgeTouched()
 
+def shapeWithParentOffset(obj):
+    # Import.insert leaves assembly offset on the parent App::Part
+    shape = obj.Shape.copy()
+    parent = obj.getParentGeoFeatureGroup() if hasattr(obj, 'getParentGeoFeatureGroup') else None
+    if parent is None:
+        return shape
+    try:
+        placed = parent.getGlobalPlacement()
+    except Exception:
+        placed = parent.Placement
+    base = placed.Base
+    if abs(base.x) + abs(base.y) + abs(base.z) < 1e-7:
+        return shape
+    shape.translate(base)
+    return shape
+
 def loadModel(filename):
     mtime = None
     try:
@@ -530,27 +549,47 @@ def loadModel(filename):
     except OSError:
         return
 
-    import ImportGui
     doc = getActiveDoc()
     if not os.path.isfile(filename):
         return
     count = len(doc.Objects)
     dobjs = []
     try:
-        ImportGui.insert(filename,doc.Name)
+        if FreeCAD.GuiUp:
+            import ImportGui
+            ImportGui.insert(filename, doc.Name)
+        else:
+            import Import
+            Import.insert(filename, doc.Name)
         dobjs = doc.Objects[count:]
-        obj = addObject(doc,'Part::Compound','tmp')
-        obj.Links = dobjs
-        recomputeObj(obj)
-        dobjs = [obj]+dobjs
-        obj = (obj.Shape.copy(),obj.ViewObject.DiffuseColor,mtime)
+        if FreeCAD.GuiUp:
+            obj = addObject(doc,'Part::Compound','tmp')
+            obj.Links = dobjs
+            recomputeObj(obj)
+            dobjs = [obj]+dobjs
+            obj = (obj.Shape.copy(),obj.ViewObject.DiffuseColor,mtime)
+        else:
+            shapes = []
+            for created in dobjs:
+                if not hasattr(created, 'isDerivedFrom') or not created.isDerivedFrom('Part::Feature'):
+                    continue
+                shape = getattr(created, 'Shape', None)
+                if shape is not None and not shape.isNull() and shape.Faces:
+                    shapes.append(shapeWithParentOffset(created))
+            if not shapes:
+                return
+            compound = shapes[0] if len(shapes) == 1 else Part.makeCompound(shapes)
+            obj = (compound, None, mtime)
         _model_cache[filename] = obj
         return obj
     except Exception as ex:
         logger.error('failed to load model: {}'.format(ex))
     finally:
         for o in dobjs:
-            doc.removeObject(o.Name)
+            try:
+                doc.removeObject(o.Name)
+            except Exception:
+                pass
 
 class KicadFcad:
     def __init__(self,filename=None,debug=False,**kwds):
