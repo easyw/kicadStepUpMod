@@ -1385,8 +1385,8 @@ class KicadFcad:
 
     def _makeEdgeCuts(self, sexp, ctx, wires, non_closed, at=None, layers=None):
         if not layers:
-            # default to layer Edge.Cuts
-            layers = [44]
+            # Edge.Cuts by name; id 44 is not always present
+            layers = ["Edge.Cuts"]
         for l in layers:
             try:
                 _,layer = self.findLayer(l)
@@ -1416,7 +1416,7 @@ class KicadFcad:
                         if not layer:
                             if self.filterNets(l) or self.filterLayer(l):
                                 continue
-                        elif l.layer != layer:
+                        elif unquote(l.layer) != unquote(layer):
                             continue
                         shape = make_fp_poly(l)
                         if angle:
@@ -1434,14 +1434,18 @@ class KicadFcad:
                         if not layer:
                             if self.filterNets(l) or self.filterLayer(l):
                                 continue
-                        elif l.layer != layer:
+                        elif unquote(l.layer) != unquote(layer):
                             continue
                         shape = make_shape(l)
                         if angle:
                             shape.rotate(Vector(),Vector(0,0,1),angle)
                         if at:
                             shape.translate(at)
-                        edges += [[getattr(l,'width',1e-7), e] for e in shape.Edges]
+                        if hasattr(l,'stroke'):
+                            width = l.stroke.width
+                        else:
+                            width = getattr(l,'width',1e-7)
+                        edges += [[width, e] for e in shape.Edges]
             except Exception as e:# maui logging error
                 # raise
                 # traceback.print_exc() # maui 
@@ -2952,16 +2956,21 @@ class KicadFcad:
     def loadAllParts(self,combo=False):
         layer = self.layer
         objs = []
+        # B.Cu is not always layer id 31
+        copper_names = []
+        for layer_id in self.pcb.layers:
+            name = unquote(self.pcb.layers[layer_id][0])
+            if name.endswith('.Cu'):
+                copper_names.append(name)
+        if not copper_names:
+            copper_names = ['F.Cu','B.Cu']
         try:
-            self.setLayer(0)
-            objs.append(self.loadParts(combo=combo))
-        except Exception as e:
-            self._log('{}',e,level='error')
-        try:
-            self.setLayer(31)
-            objs.append(self.loadParts(combo=combo))
-        except Exception as e:
-            self._log('{}',e,level='error')
+            for name in copper_names:
+                try:
+                    self.setLayer(name)
+                    objs.append(self.loadParts(combo=combo))
+                except Exception as e:
+                    self._log('{}',e,level='error')
         finally:
             self.setLayer(layer)
         fitView();
