@@ -1764,6 +1764,9 @@ class KicadFcad:
                             dist = max(z_offsets) - pos.z
         
                             s = v.drill+ofs
+                            if s <= 0:
+                                via_skip += 1
+                                continue
                             if self.via_bound:
                                 s *= self.via_bound
                                 w = make_rect(Vector(s,s))
@@ -2882,11 +2885,16 @@ class KicadFcad:
                 continue
             ref = '?'
             value = '?'
-            for t in m.fp_text:
-                if t[0] == 'reference':
-                    ref = t[1]
-                if t[0] == 'value':
-                    value = t[1]
+            for prop in SexpList(getattr(m, 'property', [])):
+                if unquote(prop[0]) == 'Reference':
+                    ref = unquote(prop[1])
+                if unquote(prop[0]) == 'Value':
+                    value = unquote(prop[1])
+            for t in getattr(m, 'fp_text', []):
+                if unquote(t[0]) == 'reference':
+                    ref = unquote(t[1])
+                if unquote(t[0]) == 'value':
+                    value = unquote(t[1])
 
             m_at,m_angle = getAt(m)
             m_at += Vector(0,0,z)
@@ -2900,7 +2908,10 @@ class KicadFcad:
                     mobj = loadModel(filename)
                     if not mobj:
                         continue
-                    at = product(Vector(*model.at.xyz),Vector(25.4,25.4,25.4))
+                    if hasattr(model,'offset'):
+                        at = Vector(*[float(v) for v in model.offset.xyz])
+                    else:
+                        at = product(Vector(*model.at.xyz),Vector(25.4,25.4,25.4))
                     rot = [-float(v) for v in reversed(model.rotate.xyz)]
                     pln = Placement(at,Rotation(*rot))
                     if not self.add_feature:
