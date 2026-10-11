@@ -3018,7 +3018,8 @@ class KicadFcad:
                             obj = mobj[0].copy()
                             obj.Placement = pln
                         else:
-                            obj = {'shape':mobj[0].copy(),'color':mobj[1]}
+                            obj = {'shape':mobj[0].copy(),'color':mobj[1],
+                                   'name':os.path.splitext(os.path.basename(filename))[0]}
                             obj['shape'].Placement = pln
                         objs.append(obj)
                     else:
