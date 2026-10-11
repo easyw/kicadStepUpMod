@@ -15,7 +15,9 @@
 from collections import defaultdict
 from math import sqrt, atan2, degrees, sin, cos, radians, pi, hypot
 import traceback
+import base64
 import re
+import tempfile
 import FreeCAD
 if FreeCAD.GuiUp:
     import FreeCADGui
@@ -753,9 +755,40 @@ class KicadFcad:
             self.setNetFilter(*self.nets)
 
         self.missing_models = set()
+        self._embed_dir = None
+        self._embedded_models = {}
+        self._unpack_embedded_models()
+
+    def _unpack_embedded_models(self):
+        # (embedded_files (file (name "x.step") (type model) (data |base64 zstd| ...)))
+        for section in SexpList(getattr(self.pcb, 'embedded_files', [])):
+            for f in SexpList(getattr(section, 'file', [])):
+                name = os.path.basename(unquote(f.name))
+                if not name.lower().endswith(('.step', '.stp')):
+                    continue
+                try:
+                    data = base64.b64decode(''.join(f.data))
+                    try:
+                        import zstd
+                        data = zstd.decompress(data)
+                    except ImportError:
+                        import zstandard
+                        data = zstandard.ZstdDecompressor().decompress(data)
+                except Exception as ex:
+                    logger.warning('failed to unpack embedded model {}: {}'.format(name, ex))
+                    continue
+                if self._embed_dir is None:
+                    self._embed_dir = tempfile.mkdtemp(prefix='kicad-embed-')
+                path = os.path.join(self._embed_dir, name)
+                with open(path, 'wb') as fh:
+                    fh.write(data)
+                self._embedded_models[name] = path
 
     def resolve_model_path(self, filename):
         filename = unquote(filename)
+        if filename.startswith('kicad-embed://'):
+            name = os.path.basename(filename[len('kicad-embed://'):])
+            return self._embedded_models.get(name, filename)
         match = re.search(r'\$\{(\w+)\}', filename)
         if not match:
             if self.part_path and not os.path.isabs(filename):
@@ -2821,7 +2854,8 @@ class KicadFcad:
 
     def loadParts(self,z=0,combo=False,prefix=''):
 
-        if not os.path.isdir(self.part_path):
+        has_library = bool(self.part_path and os.path.isdir(self.part_path))
+        if not has_library and not self._embedded_models:
             raise Exception('cannot find kicad package3d directory')
 
         self._pushLog('loading parts on layer {}...',self.layer,prefix=prefix)
