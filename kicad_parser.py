@@ -15,6 +15,7 @@
 from collections import defaultdict
 from math import sqrt, atan2, degrees, sin, cos, radians, pi, hypot
 import traceback
+import re
 import FreeCAD
 if FreeCAD.GuiUp:
     import FreeCADGui
@@ -750,6 +751,31 @@ class KicadFcad:
             for n in self.pcb.net:
                 self.net_names[n[0]] = n[1]
             self.setNetFilter(*self.nets)
+
+        self.missing_models = set()
+
+    def resolve_model_path(self, filename):
+        filename = unquote(filename)
+        match = re.search(r'\$\{(\w+)\}', filename)
+        if not match:
+            if self.part_path and not os.path.isabs(filename):
+                return os.path.join(self.part_path, filename)
+            return filename
+        variable = match.group(1)
+        rest = filename[match.end():].lstrip('/\\')
+        parent = self.part_path or ''
+        direct = os.path.join(parent, variable)
+        if os.path.isdir(direct):
+            return os.path.join(direct, rest)
+        official = os.path.join(parent, 'KICAD_3DMODEL_DIR')
+        alias = variable == 'KISYS3DMOD' or (
+            variable.startswith('KICAD') and variable.endswith('_3DMODEL_DIR'))
+        if alias and os.path.isdir(official):
+            return os.path.join(official, rest)
+        configured = os.environ.get(variable)
+        if configured and os.path.isdir(configured):
+            return os.path.join(configured, rest)
+        return filename
 
     def findLayer(self,layer, deftype=None):
         try:
@@ -2828,11 +2854,11 @@ class KicadFcad:
             m_at += Vector(0,0,z)
             objs = []
             for (model_idx,model) in enumerate(m.model):
-                path = os.path.splitext(model[0])[0]
+                path = os.path.splitext(self.resolve_model_path(model[0]))[0]
                 self._log('loading model {}/{} {} {} {}...',
                         model_idx,len(m.model), ref,value,model[0])
                 for e in ('.stp','.STP','.step','.STEP'):
-                    filename = os.path.join(self.part_path,path+e)
+                    filename = path+e
                     mobj = loadModel(filename)
                     if not mobj:
                         continue
@@ -2856,6 +2882,8 @@ class KicadFcad:
                         objs.append(obj)
                     self._log('loaded')
                     break
+                else:
+                    self.missing_models.add(model[0])
 
             if not objs:
                 continue
