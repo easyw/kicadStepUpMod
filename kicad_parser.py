@@ -538,6 +538,105 @@ def shapeWithParentOffset(obj):
     shape.translate(base)
     return shape
 
+def getStepFaceColors(filename):
+    '''Per-face (r,g,b,a) of a STEP file, in the order the faces are imported.
+    Returns None when any face has no colour. Used in console mode, where
+    ImportGui and ViewObject.DiffuseColor are not available.'''
+    try:
+        with open(filename, 'r', errors='ignore') as f:
+            text = f.read(8000000)
+    except OSError:
+        return None
+    entities = {}
+    for m in re.finditer(r'#(\d+)\s*=\s*([^;]*);', text):
+        entities[int(m.group(1))] = m.group(2).strip()
+    if not entities:
+        return None
+
+    def head(body):
+        return body.split('(', 1)[0].strip()
+
+    def refs(body):
+        return [int(r) for r in re.findall(r'#(\d+)', body)]
+
+    def unit(value):
+        value = float(value)
+        if value > 1.0:
+            value /= 255.0
+        return max(0.0, min(1.0, value))
+
+    predefined = {'red':(1.,0.,0.), 'green':(0.,1.,0.), 'blue':(0.,0.,1.),
+                  'yellow':(1.,1.,0.), 'magenta':(1.,0.,1.), 'cyan':(0.,1.,1.),
+                  'white':(1.,1.,1.), 'black':(0.,0.,0.)}
+    colours = {}
+    for idx, body in entities.items():
+        kind = head(body)
+        if kind == 'COLOUR_RGB':
+            nums = re.findall(r'[-+]?(?:\d+\.\d*|\.\d+|\d+)(?:[Ee][-+]?\d+)?', body)
+            if len(nums) >= 3:
+                colours[idx] = tuple(unit(n) for n in nums[-3:])
+        elif kind == 'DRAUGHTING_PRE_DEFINED_COLOUR':
+            name = re.search(r"'([^']+)'", body)
+            if name and name.group(1).lower() in predefined:
+                colours[idx] = predefined[name.group(1).lower()]
+
+    # STYLED_ITEM('name', (styles), target); OVER_RIDING_STYLED_ITEM adds a
+    # trailing reference to the item it overrides. Only surface fill styles
+    # carry the face colour; curve and point styles are edge and vertex colours.
+    styled = {}
+    for body in entities.values():
+        kind = head(body)
+        if kind not in ('STYLED_ITEM', 'OVER_RIDING_STYLED_ITEM'):
+            continue
+        linked = refs(body)
+        if kind == 'OVER_RIDING_STYLED_ITEM':
+            linked = linked[:-1]
+        if len(linked) < 2:
+            continue
+        pending = linked[:-1]
+        seen = set()
+        rgb = None
+        while pending:
+            idx = pending.pop()
+            if idx in seen or idx not in entities:
+                continue
+            seen.add(idx)
+            if idx in colours:
+                rgb = colours[idx]
+                break
+            if head(entities[idx]).startswith(('CURVE_STYLE', 'POINT_STYLE')):
+                continue
+            pending.extend(refs(entities[idx]))
+        if rgb is not None:
+            styled[linked[-1]] = rgb
+
+    def facesOf(shell_id):
+        body = entities.get(shell_id, '')
+        if head(body) not in ('CLOSED_SHELL', 'OPEN_SHELL'):
+            return []
+        return [fid for fid in refs(body) if head(entities.get(fid, '')) == 'ADVANCED_FACE']
+
+    solids = []
+    for idx, body in entities.items():
+        if head(body) != 'MANIFOLD_SOLID_BREP':
+            continue
+        shells = [(sid, facesOf(sid)) for sid in refs(body)]
+        if any(faces for _sid, faces in shells):
+            solids.append((idx, shells))
+    if not solids:
+        for idx, body in entities.items():
+            if head(body) in ('CLOSED_SHELL', 'OPEN_SHELL') and facesOf(idx):
+                solids.append((None, [(idx, facesOf(idx))]))
+
+    ordered = []
+    for solid_id, shells in solids:
+        for shell_id, face_ids in shells:
+            for fid in face_ids:
+                ordered.append(styled.get(fid) or styled.get(shell_id) or styled.get(solid_id))
+    if not ordered or any(c is None for c in ordered):
+        return None
+    return [(r, g, b, 1.0) for r, g, b in ordered]
+
 def loadModel(filename):
     mtime = None
     try:
@@ -583,7 +682,7 @@ def loadModel(filename):
             if not shapes:
                 return
             compound = shapes[0] if len(shapes) == 1 else Part.makeCompound(shapes)
-            obj = (compound, None, mtime)
+            obj = (compound, getStepFaceColors(filename), mtime)
         _model_cache[filename] = obj
         return obj
     except Exception as ex:
