@@ -54,6 +54,7 @@ except:
     a3 = False
 try:
     import CAM
+    CAM.Area
 except:
     import Path
     CAM = Path

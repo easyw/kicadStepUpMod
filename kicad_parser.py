@@ -15,14 +15,19 @@
 from collections import defaultdict
 from math import sqrt, atan2, degrees, sin, cos, radians, pi, hypot
 import traceback
+import base64
+import re
+import tempfile
 import FreeCAD
-import FreeCADGui
+if FreeCAD.GuiUp:
+    import FreeCADGui
 import Part
 from FreeCAD import Console,Vector,Placement,Rotation
 import DraftGeomUtils,DraftVecUtils
 
 try:
     import CAM
+    CAM.Area  # check if CAM.Area is available
 except:
     import Path
     CAM = Path
@@ -67,10 +72,11 @@ def addObject(doc, tp, name):
     return obj
 
 def updateGui():
-    try:
-        FreeCADGui.updateGui()
-    except Exception:
-        pass
+    if FreeCAD.GuiUp:
+        try:
+            FreeCADGui.updateGui()
+        except Exception:
+            pass
 
 class FCADLogger:
     def __init__(self, tag):
@@ -117,10 +123,11 @@ def getActiveDoc():
     return FreeCAD.ActiveDocument
 
 def fitView():
-    try:
-        FreeCADGui.ActiveDocument.ActiveView.fitAll()
-    except Exception:
-        pass
+    if FreeCAD.GuiUp:
+        try:
+            FreeCADGui.ActiveDocument.ActiveView.fitAll()
+        except Exception:
+            pass
 
 def isZero(f):
     return round(f,DraftGeomUtils.precision())==0
@@ -515,6 +522,121 @@ def recomputeObj(obj):
     obj.recompute()
     obj.purgeTouched()
 
+def shapeWithParentOffset(obj):
+    # Import.insert leaves assembly offset on the parent App::Part
+    shape = obj.Shape.copy()
+    parent = obj.getParentGeoFeatureGroup() if hasattr(obj, 'getParentGeoFeatureGroup') else None
+    if parent is None:
+        return shape
+    try:
+        placed = parent.getGlobalPlacement()
+    except Exception:
+        placed = parent.Placement
+    base = placed.Base
+    if abs(base.x) + abs(base.y) + abs(base.z) < 1e-7:
+        return shape
+    shape.translate(base)
+    return shape
+
+def getStepFaceColors(filename):
+    '''Per-face (r,g,b,a) of a STEP file, in the order the faces are imported.
+    Returns None when any face has no colour. Used in console mode, where
+    ImportGui and ViewObject.DiffuseColor are not available.'''
+    try:
+        with open(filename, 'r', errors='ignore') as f:
+            text = f.read(8000000)
+    except OSError:
+        return None
+    entities = {}
+    for m in re.finditer(r'#(\d+)\s*=\s*([^;]*);', text):
+        entities[int(m.group(1))] = m.group(2).strip()
+    if not entities:
+        return None
+
+    def head(body):
+        return body.split('(', 1)[0].strip()
+
+    def refs(body):
+        return [int(r) for r in re.findall(r'#(\d+)', body)]
+
+    def unit(value):
+        value = float(value)
+        if value > 1.0:
+            value /= 255.0
+        return max(0.0, min(1.0, value))
+
+    predefined = {'red':(1.,0.,0.), 'green':(0.,1.,0.), 'blue':(0.,0.,1.),
+                  'yellow':(1.,1.,0.), 'magenta':(1.,0.,1.), 'cyan':(0.,1.,1.),
+                  'white':(1.,1.,1.), 'black':(0.,0.,0.)}
+    colours = {}
+    for idx, body in entities.items():
+        kind = head(body)
+        if kind == 'COLOUR_RGB':
+            nums = re.findall(r'[-+]?(?:\d+\.\d*|\.\d+|\d+)(?:[Ee][-+]?\d+)?', body)
+            if len(nums) >= 3:
+                colours[idx] = tuple(unit(n) for n in nums[-3:])
+        elif kind == 'DRAUGHTING_PRE_DEFINED_COLOUR':
+            name = re.search(r"'([^']+)'", body)
+            if name and name.group(1).lower() in predefined:
+                colours[idx] = predefined[name.group(1).lower()]
+
+    # STYLED_ITEM('name', (styles), target); OVER_RIDING_STYLED_ITEM adds a
+    # trailing reference to the item it overrides. Only surface fill styles
+    # carry the face colour; curve and point styles are edge and vertex colours.
+    styled = {}
+    for body in entities.values():
+        kind = head(body)
+        if kind not in ('STYLED_ITEM', 'OVER_RIDING_STYLED_ITEM'):
+            continue
+        linked = refs(body)
+        if kind == 'OVER_RIDING_STYLED_ITEM':
+            linked = linked[:-1]
+        if len(linked) < 2:
+            continue
+        pending = linked[:-1]
+        seen = set()
+        rgb = None
+        while pending:
+            idx = pending.pop()
+            if idx in seen or idx not in entities:
+                continue
+            seen.add(idx)
+            if idx in colours:
+                rgb = colours[idx]
+                break
+            if head(entities[idx]).startswith(('CURVE_STYLE', 'POINT_STYLE')):
+                continue
+            pending.extend(refs(entities[idx]))
+        if rgb is not None:
+            styled[linked[-1]] = rgb
+
+    def facesOf(shell_id):
+        body = entities.get(shell_id, '')
+        if head(body) not in ('CLOSED_SHELL', 'OPEN_SHELL'):
+            return []
+        return [fid for fid in refs(body) if head(entities.get(fid, '')) == 'ADVANCED_FACE']
+
+    solids = []
+    for idx, body in entities.items():
+        if head(body) != 'MANIFOLD_SOLID_BREP':
+            continue
+        shells = [(sid, facesOf(sid)) for sid in refs(body)]
+        if any(faces for _sid, faces in shells):
+            solids.append((idx, shells))
+    if not solids:
+        for idx, body in entities.items():
+            if head(body) in ('CLOSED_SHELL', 'OPEN_SHELL') and facesOf(idx):
+                solids.append((None, [(idx, facesOf(idx))]))
+
+    ordered = []
+    for solid_id, shells in solids:
+        for shell_id, face_ids in shells:
+            for fid in face_ids:
+                ordered.append(styled.get(fid) or styled.get(shell_id) or styled.get(solid_id))
+    if not ordered or any(c is None for c in ordered):
+        return None
+    return [(r, g, b, 1.0) for r, g, b in ordered]
+
 def loadModel(filename):
     mtime = None
     try:
@@ -530,27 +652,47 @@ def loadModel(filename):
     except OSError:
         return
 
-    import ImportGui
     doc = getActiveDoc()
     if not os.path.isfile(filename):
         return
     count = len(doc.Objects)
     dobjs = []
     try:
-        ImportGui.insert(filename,doc.Name)
+        if FreeCAD.GuiUp:
+            import ImportGui
+            ImportGui.insert(filename, doc.Name)
+        else:
+            import Import
+            Import.insert(filename, doc.Name)
         dobjs = doc.Objects[count:]
-        obj = addObject(doc,'Part::Compound','tmp')
-        obj.Links = dobjs
-        recomputeObj(obj)
-        dobjs = [obj]+dobjs
-        obj = (obj.Shape.copy(),obj.ViewObject.DiffuseColor,mtime)
+        if FreeCAD.GuiUp:
+            obj = addObject(doc,'Part::Compound','tmp')
+            obj.Links = dobjs
+            recomputeObj(obj)
+            dobjs = [obj]+dobjs
+            obj = (obj.Shape.copy(),obj.ViewObject.DiffuseColor,mtime)
+        else:
+            shapes = []
+            for created in dobjs:
+                if not hasattr(created, 'isDerivedFrom') or not created.isDerivedFrom('Part::Feature'):
+                    continue
+                shape = getattr(created, 'Shape', None)
+                if shape is not None and not shape.isNull() and shape.Faces:
+                    shapes.append(shapeWithParentOffset(created))
+            if not shapes:
+                return
+            compound = shapes[0] if len(shapes) == 1 else Part.makeCompound(shapes)
+            obj = (compound, getStepFaceColors(filename), mtime)
         _model_cache[filename] = obj
         return obj
     except Exception as ex:
         logger.error('failed to load model: {}'.format(ex))
     finally:
         for o in dobjs:
-            doc.removeObject(o.Name)
+            try:
+                doc.removeObject(o.Name)
+            except Exception:
+                pass
 
 class KicadFcad:
     def __init__(self,filename=None,debug=False,**kwds):
@@ -710,6 +852,62 @@ class KicadFcad:
             for n in self.pcb.net:
                 self.net_names[n[0]] = n[1]
             self.setNetFilter(*self.nets)
+
+        self.missing_models = set()
+        self._embed_dir = None
+        self._embedded_models = {}
+        self._unpack_embedded_models()
+
+    def _unpack_embedded_models(self):
+        # (embedded_files (file (name "x.step") (type model) (data |base64 zstd| ...)))
+        for section in SexpList(getattr(self.pcb, 'embedded_files', [])):
+            for f in SexpList(getattr(section, 'file', [])):
+                name = os.path.basename(unquote(f.name))
+                if not name.lower().endswith(('.step', '.stp')):
+                    continue
+                try:
+                    data = base64.b64decode(''.join(f.data))
+                    try:
+                        import zstd
+                        data = zstd.decompress(data)
+                    except ImportError:
+                        import zstandard
+                        data = zstandard.ZstdDecompressor().decompress(data)
+                except Exception as ex:
+                    logger.warning('failed to unpack embedded model {}: {}'.format(name, ex))
+                    continue
+                if self._embed_dir is None:
+                    self._embed_dir = tempfile.mkdtemp(prefix='kicad-embed-')
+                path = os.path.join(self._embed_dir, name)
+                with open(path, 'wb') as fh:
+                    fh.write(data)
+                self._embedded_models[name] = path
+
+    def resolve_model_path(self, filename):
+        filename = unquote(filename)
+        if filename.startswith('kicad-embed://'):
+            name = os.path.basename(filename[len('kicad-embed://'):])
+            return self._embedded_models.get(name, filename)
+        match = re.search(r'\$\{(\w+)\}', filename)
+        if not match:
+            if self.part_path and not os.path.isabs(filename):
+                return os.path.join(self.part_path, filename)
+            return filename
+        variable = match.group(1)
+        rest = filename[match.end():].lstrip('/\\')
+        parent = self.part_path or ''
+        direct = os.path.join(parent, variable)
+        if os.path.isdir(direct):
+            return os.path.join(direct, rest)
+        official = os.path.join(parent, 'KICAD_3DMODEL_DIR')
+        alias = variable == 'KISYS3DMOD' or (
+            variable.startswith('KICAD') and variable.endswith('_3DMODEL_DIR'))
+        if alias and os.path.isdir(official):
+            return os.path.join(official, rest)
+        configured = os.environ.get(variable)
+        if configured and os.path.isdir(configured):
+            return os.path.join(configured, rest)
+        return filename
 
     def findLayer(self,layer, deftype=None):
         try:
@@ -1286,8 +1484,8 @@ class KicadFcad:
 
     def _makeEdgeCuts(self, sexp, ctx, wires, non_closed, at=None, layers=None):
         if not layers:
-            # default to layer Edge.Cuts
-            layers = [44]
+            # Edge.Cuts by name; id 44 is not always present
+            layers = ["Edge.Cuts"]
         for l in layers:
             try:
                 _,layer = self.findLayer(l)
@@ -1317,7 +1515,7 @@ class KicadFcad:
                         if not layer:
                             if self.filterNets(l) or self.filterLayer(l):
                                 continue
-                        elif l.layer != layer:
+                        elif unquote(l.layer) != unquote(layer):
                             continue
                         shape = make_fp_poly(l)
                         if angle:
@@ -1335,14 +1533,18 @@ class KicadFcad:
                         if not layer:
                             if self.filterNets(l) or self.filterLayer(l):
                                 continue
-                        elif l.layer != layer:
+                        elif unquote(l.layer) != unquote(layer):
                             continue
                         shape = make_shape(l)
                         if angle:
                             shape.rotate(Vector(),Vector(0,0,1),angle)
                         if at:
                             shape.translate(at)
-                        edges += [[getattr(l,'width',1e-7), e] for e in shape.Edges]
+                        if hasattr(l,'stroke'):
+                            width = l.stroke.width
+                        else:
+                            width = getattr(l,'width',1e-7)
+                        edges += [[width, e] for e in shape.Edges]
             except Exception as e:# maui logging error
                 # raise
                 # traceback.print_exc() # maui 
@@ -1661,6 +1863,9 @@ class KicadFcad:
                             dist = max(z_offsets) - pos.z
         
                             s = v.drill+ofs
+                            if s <= 0:
+                                via_skip += 1
+                                continue
                             if self.via_bound:
                                 s *= self.via_bound
                                 w = make_rect(Vector(s,s))
@@ -2755,7 +2960,8 @@ class KicadFcad:
 
     def loadParts(self,z=0,combo=False,prefix=''):
 
-        if not os.path.isdir(self.part_path):
+        has_library = bool(self.part_path and os.path.isdir(self.part_path))
+        if not has_library and not self._embedded_models:
             raise Exception('cannot find kicad package3d directory')
 
         self._pushLog('loading parts on layer {}...',self.layer,prefix=prefix)
@@ -2778,25 +2984,33 @@ class KicadFcad:
                 continue
             ref = '?'
             value = '?'
-            for t in m.fp_text:
-                if t[0] == 'reference':
-                    ref = t[1]
-                if t[0] == 'value':
-                    value = t[1]
+            for prop in SexpList(getattr(m, 'property', [])):
+                if unquote(prop[0]) == 'Reference':
+                    ref = unquote(prop[1])
+                if unquote(prop[0]) == 'Value':
+                    value = unquote(prop[1])
+            for t in getattr(m, 'fp_text', []):
+                if unquote(t[0]) == 'reference':
+                    ref = unquote(t[1])
+                if unquote(t[0]) == 'value':
+                    value = unquote(t[1])
 
             m_at,m_angle = getAt(m)
             m_at += Vector(0,0,z)
             objs = []
             for (model_idx,model) in enumerate(m.model):
-                path = os.path.splitext(model[0])[0]
+                path = os.path.splitext(self.resolve_model_path(model[0]))[0]
                 self._log('loading model {}/{} {} {} {}...',
                         model_idx,len(m.model), ref,value,model[0])
                 for e in ('.stp','.STP','.step','.STEP'):
-                    filename = os.path.join(self.part_path,path+e)
+                    filename = path+e
                     mobj = loadModel(filename)
                     if not mobj:
                         continue
-                    at = product(Vector(*model.at.xyz),Vector(25.4,25.4,25.4))
+                    if hasattr(model,'offset'):
+                        at = Vector(*[float(v) for v in model.offset.xyz])
+                    else:
+                        at = product(Vector(*model.at.xyz),Vector(25.4,25.4,25.4))
                     rot = [-float(v) for v in reversed(model.rotate.xyz)]
                     pln = Placement(at,Rotation(*rot))
                     if not self.add_feature:
@@ -2804,7 +3018,8 @@ class KicadFcad:
                             obj = mobj[0].copy()
                             obj.Placement = pln
                         else:
-                            obj = {'shape':mobj[0].copy(),'color':mobj[1]}
+                            obj = {'shape':mobj[0].copy(),'color':mobj[1],
+                                   'name':os.path.splitext(os.path.basename(filename))[0]}
                             obj['shape'].Placement = pln
                         objs.append(obj)
                     else:
@@ -2816,6 +3031,8 @@ class KicadFcad:
                         objs.append(obj)
                     self._log('loaded')
                     break
+                else:
+                    self.missing_models.add(model[0])
 
             if not objs:
                 continue
@@ -2850,16 +3067,21 @@ class KicadFcad:
     def loadAllParts(self,combo=False):
         layer = self.layer
         objs = []
+        # B.Cu is not always layer id 31
+        copper_names = []
+        for layer_id in self.pcb.layers:
+            name = unquote(self.pcb.layers[layer_id][0])
+            if name.endswith('.Cu'):
+                copper_names.append(name)
+        if not copper_names:
+            copper_names = ['F.Cu','B.Cu']
         try:
-            self.setLayer(0)
-            objs.append(self.loadParts(combo=combo))
-        except Exception as e:
-            self._log('{}',e,level='error')
-        try:
-            self.setLayer(31)
-            objs.append(self.loadParts(combo=combo))
-        except Exception as e:
-            self._log('{}',e,level='error')
+            for name in copper_names:
+                try:
+                    self.setLayer(name)
+                    objs.append(self.loadParts(combo=combo))
+                except Exception as e:
+                    self._log('{}',e,level='error')
         finally:
             self.setLayer(layer)
         fitView();
